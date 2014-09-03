@@ -328,6 +328,9 @@
     <Filter Include="experimental\sabrswaptioncube">
       <UniqueIdentifier>{f0fdcd92-805d-46df-9eed-a1acb9962897}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\basisswap">
+      <UniqueIdentifier>{4f8477bb-4b89-4866-b671-e01411759749}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -3804,6 +3807,18 @@
     <ClInclude Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.hpp">
       <Filter>experimental\sabrswaptioncube</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\basisswap\basisswap.hpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\basisswap\basisswapengine.hpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\basisswap\basisswapratehelpers.hpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\basisswap\spreadyieldtermstructure.hpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6125,6 +6140,15 @@
     </ClCompile>
     <ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp">
       <Filter>experimental\sabrswaptioncube</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\basisswap\basisswap.cpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\basisswap\basisswapengine.cpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\basisswap\basisswapratehelpers.cpp">
+      <Filter>experimental\basisswap</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
