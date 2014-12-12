@@ -127,10 +127,10 @@ namespace QuantLib {
                                        const std::vector<PassiveType>&  strikeValues, // strike payed at excercise dates
                                        const std::vector<PassiveType>&  b76Prices,    // reference European prices
                                        // option's underlying
-						  			   const std::vector<DateType>&     startDates,   // start dates of coupon period
-							 		   const std::vector<DateType>&     payDates,     // pay dates of coupon perid
-									   const std::vector<PassiveType>&  cashFlows,    // fixed coupon payments (absolut value)
-                                       const Option::Type               cop,          // call (1) or put (-1) option
+						  			   const std::vector< std::vector<DateType> >&     startDates,   // start dates of coupon period
+							 		   const std::vector< std::vector<DateType> >&     payDates,     // pay dates of coupon perid
+									   const std::vector< std::vector<PassiveType> >&  cashFlows,    // fixed coupon payments (absolut value)
+                                       const std::vector< Option::Type >               cop,          // call (1) or put (-1) option
 							           // calibration parameters
 									   const PassiveType                tol_vola      // absolut tolerance in short rate volatility
 								);
@@ -143,10 +143,10 @@ namespace QuantLib {
                                        const std::vector<PassiveType>&  strikeValues, // strike payed at excercise dates
                                        const std::vector<PassiveType>&  b76Prices,    // reference European prices
                                        // option's underlying
-						  			   const std::vector<DateType>&     startDates,   // start dates of coupon period
-							 		   const std::vector<DateType>&     payDates,     // pay dates of coupon perid
-									   const std::vector<PassiveType>&  cashFlows,    // fixed coupon payments (absolut value)
-                                       const Option::Type               cop,          // call (1) or put (-1) option
+				  					   const std::vector< std::vector<DateType> >&     startDates,   // start dates of coupon period
+					 				   const std::vector< std::vector<DateType> >&     payDates,     // pay dates of coupon perid
+									   const std::vector< std::vector<PassiveType> >&  cashFlows,    // fixed coupon payments (absolut value)
+									   const std::vector< Option::Type >               cop,          // call (1) or put (-1) option
 							           // calibration parameters
 									   const PassiveType                tol_vola      // absolut tolerance in short rate volatility
 								);
@@ -501,10 +501,10 @@ namespace QuantLib {
                                const std::vector<PassiveType>&  strikeValues, // strike payed at excercise dates
                                const std::vector<PassiveType>&  b76Prices,    // reference European prices
                                // option's underlying
-						  	   const std::vector<DateType>&     startDates,   // start dates of coupon period
-							   const std::vector<DateType>&     payDates,     // pay dates of coupon perid
-							   const std::vector<PassiveType>&  cashFlows,    // fixed coupon payments (absolut value)
-                               const Option::Type               cop,          // call (1) or put (-1) option
+				  			   const std::vector< std::vector<DateType> >&     startDates,   // start dates of coupon period
+					 		   const std::vector< std::vector<DateType> >&     payDates,     // pay dates of coupon perid
+							   const std::vector< std::vector<PassiveType> >&  cashFlows,    // fixed coupon payments (absolut value)
+                               const std::vector< Option::Type >               cop,          // call (1) or put (-1) option
 							   // calibration parameters
 							   const PassiveType                tol_vola      // absolut tolerance in short rate volatility
 							   ) {
@@ -543,15 +543,15 @@ namespace QuantLib {
 			sigma          = sigma_max;
 			// boundaries for prices
 			volaValues_[k] = sigma_min;
-			price_min      = CouponBondOption( exercDates[k], strikeValues[k], startDates, payDates, cashFlows, cop);
+			price_min      = CouponBondOption( exercDates[k], strikeValues[k], startDates[std::min(k,startDates.size()-1)], payDates[std::min(k,payDates.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
 			// QL_REQUIRE (price_min <= b76Prices[k], "Black'76 price too small.");
             if (price_min > b76Prices[k]) continue;  // we relax the calibration condition
 			volaValues_[k] = sigma_max;
-			price_max      = CouponBondOption( exercDates[k], strikeValues[k], startDates, payDates, cashFlows, cop);
+			price_max      = CouponBondOption( exercDates[k], strikeValues[k], startDates[std::min(k,startDates.size()-1)], payDates[std::min(k,payDates.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
 			while ((price_max < b76Prices[k])&&(sigma_max<1.0)) {
 				sigma_max *= 2.0;
 				volaValues_[k] = sigma_max;
-				price_max      = CouponBondOption( exercDates[k], strikeValues[k], startDates, payDates, cashFlows, cop);
+				price_max      = CouponBondOption( exercDates[k], strikeValues[k], startDates[std::min(k,startDates.size()-1)], payDates[std::min(k,payDates.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
 			}
 			QL_REQUIRE (price_max >= b76Prices[k], "Black'76 price too big.");
 			// initialisations for iteration
@@ -565,7 +565,7 @@ namespace QuantLib {
 				// ensure bounded iteration
 				if ((sigma<sigma_min)||(sigma>sigma_max)) sigma = (sigma_min + sigma_max)/2;
 				volaValues_[k] = sigma;
-				price          = CouponBondOption( exercDates[k], strikeValues[k], startDates, payDates, cashFlows, cop);
+				price          = CouponBondOption( exercDates[k], strikeValues[k], startDates[std::min(k,startDates.size()-1)], payDates[std::min(k,payDates.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
 				// new boundaries
 				if (price<=b76Prices[k]){
 					sigma_min = sigma;
@@ -587,10 +587,10 @@ namespace QuantLib {
                                const std::vector<PassiveType>&  strikeValues, // strike payed at excercise dates
                                const std::vector<PassiveType>&  b76Prices,    // reference European prices
                                // option's underlying
-						  	   const std::vector<DateType>&     startDates,   // start dates of coupon period
-							   const std::vector<DateType>&     payDates,     // pay dates of coupon perid
-							   const std::vector<PassiveType>&  cashFlows,    // fixed coupon payments (absolut value)
-                               const Option::Type               cop,          // call (1) or put (-1) option
+				  			   const std::vector< std::vector<DateType> >&     startDates,   // start dates of coupon period
+					 		   const std::vector< std::vector<DateType> >&     payDates,     // pay dates of coupon perid
+							   const std::vector< std::vector<PassiveType> >&  cashFlows,    // fixed coupon payments (absolut value)
+                               const std::vector< Option::Type >               cop,          // call (1) or put (-1) option
 							   // calibration parameters
 							   const PassiveType                tol_vola      // absolut tolerance in short rate volatility
 							   ) {

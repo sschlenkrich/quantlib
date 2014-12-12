@@ -62,10 +62,10 @@ namespace QuantLib {
                                        const std::vector<QuantLib::Real>&  strikeValues, // strike payed at excercise dates
                                        const std::vector<QuantLib::Real>&  b76Prices,    // reference European prices
                                        // option's underlying
-						  			   const std::vector<QuantLib::Time>&  startDates,   // start dates of coupon period
-							 		   const std::vector<QuantLib::Time>&  payDates,     // pay dates of coupon perid
-									   const std::vector<QuantLib::Real>&  cashFlows,    // fixed coupon payments (absolut value)
-                                       const Option::Type                  cop,          // call (1) or put (-1) option
+						  			   const std::vector< std::vector<QuantLib::Time> >&  startDates,   // start dates of coupon period
+							 		   const std::vector< std::vector<QuantLib::Time> >&  payDates,     // pay dates of coupon perid
+									   const std::vector< std::vector<QuantLib::Real> >&  cashFlows,    // fixed coupon payments (absolut value)
+                                       const std::vector< Option::Type >                  cop,          // call (1) or put (-1) option
 							           // calibration parameters
 									   const QuantLib::Real                tol_vola );   // absolut tolerance in short rate volatility
 		// Inspectors
