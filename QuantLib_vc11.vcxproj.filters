@@ -3840,6 +3840,12 @@
     <ClInclude Include="ql\experimental\template\hullwhite\hullwhitemodels.hpp">
       <Filter>experimental\template\hullwhite</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\template\hullwhite\bondoptionengine.hpp">
+      <Filter>experimental\template\hullwhite</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\hullwhite\fixedratebondoption.hpp">
+      <Filter>experimental\template\hullwhite</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6172,6 +6178,12 @@
       <Filter>experimental\basisswap</Filter>
     </ClCompile>
     <ClCompile Include="ql\experimental\template\hullwhite\hullwhitemodels.cpp">
+      <Filter>experimental\template\hullwhite</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\hullwhite\bondoptionengine.cpp">
+      <Filter>experimental\template\hullwhite</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp">
       <Filter>experimental\template\hullwhite</Filter>
     </ClCompile>
   </ItemGroup>

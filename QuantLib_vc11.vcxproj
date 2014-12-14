@@ -530,6 +530,8 @@
     <ClInclude Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\MinimADVariable2.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\templateauxilliaries.hpp" />
+    <ClInclude Include="ql\experimental\template\hullwhite\bondoptionengine.hpp" />
+    <ClInclude Include="ql\experimental\template\hullwhite\fixedratebondoption.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\hullwhitemodels.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\templatehullwhitemodel.hpp" />
     <ClInclude Include="ql\instruments\bonds\cpibond.hpp" />
@@ -1713,6 +1715,8 @@
     <ClCompile Include="ql\experimental\processes\gemanroncoroniprocess.cpp" />
     <ClCompile Include="ql\experimental\processes\klugeextouprocess.cpp" />
     <ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp" />
+    <ClCompile Include="ql\experimental\template\hullwhite\bondoptionengine.cpp" />
+    <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp" />
     <ClCompile Include="ql\experimental\template\hullwhite\hullwhitemodels.cpp" />
     <ClCompile Include="ql\instruments\bonds\cpibond.cpp" />
     <ClCompile Include="ql\instruments\cpicapfloor.cpp" />
