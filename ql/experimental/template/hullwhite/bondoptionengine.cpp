@@ -21,6 +21,44 @@
 
 namespace QuantLib {
 
+	// calibrate model based on given swaptions
+	void BondOptionEngine::calibrateModel( std::vector< boost::shared_ptr<Swaption> > swaptions,
+		                                   bool                                       contTenorSpread,
+										   Real                                       tolVola) {
+		std::sort(swaptions.begin(), swaptions.end(), lessByExerciseFirstDate);
+		// set up inputs for model calibration
+		std::vector<Real>                  exercTimes, strikeVals, b76Prices;
+		std::vector< std::vector<Real> >   startTimes, payTimes, cashFlows;
+		std::vector<Option::Type>          callOrPut;
+		// get discount curve and conventions from model
+		Handle<YieldTermStructure> discCurve = model_->termStructure();
+		DayCounter                 dc        = model_->termStructure()->dayCounter();
+		Date                       today     = model_->termStructure()->referenceDate();
+		// iterate swaptions...
+		for (Size k=0; k<swaptions.size(); ++k) {
+			// skip swaptions with equal exercise date since we calibrate by bootstrapping
+			if ( (k>0) && (swaptions[k]->exercise()->date(0)==swaptions[k-1]->exercise()->date(0)) ) continue;
+			// build an equivalent bond option
+			FixedRateBondOption bondOption(swaptions[k], discCurve, contTenorSpread);
+			// extract option details
+			exercTimes.push_back(dc.dayCount(today,bondOption.exerciseDates()[0]));
+			strikeVals.push_back(bondOption.dirtyStrikeValues()[0]);
+			b76Prices.push_back(swaptions[k]->NPV());  // assume we have an engine and market data attached
+			callOrPut.push_back(bondOption.callOrPut());
+			// extract underlying details
+			std::vector<Real> bondStartTimes, bondPayTimes;
+			for (Size i=0; i<bondOption.cashflowValues().size(); ++k) {
+				bondStartTimes.push_back( dc.dayCount(today,bondOption.startDates()[i]) );
+				bondPayTimes.push_back( dc.dayCount(today,bondOption.payDates()[i]) );
+			}
+			startTimes.push_back(bondStartTimes);
+			payTimes.push_back(bondPayTimes);
+			cashFlows.push_back(bondOption.cashflowValues());
+		}
+		// calibrate Hull White model
+		model_->BermudanCalibration(exercTimes, strikeVals, b76Prices, startTimes, payTimes, cashFlows, callOrPut, tolVola);
+	}
+
 	void BondOptionEngine::calculate() const {
 		std::vector<Time> startTimes;
 		std::vector<Time> payTimes;

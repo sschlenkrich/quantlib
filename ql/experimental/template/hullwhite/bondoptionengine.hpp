@@ -31,16 +31,28 @@ namespace QuantLib {
 		Size                                       dimension_;            // discretisation of numerical solution
 		Real                                       gridRadius_;           // radius of short rate grid
 		Real                                       bermudanTolerance_;    // tolerance for numerical integration
+
+		// utility function to compare swaptions
+		static bool lessByExerciseFirstDate (  boost::shared_ptr<Swaption> a,  boost::shared_ptr<Swaption> b) { return a->exercise()->date(0) < b->exercise()->date(0); }
+
 	public:
 
-	    // constructor with given model and no calibration
+		// constructor with given model and no calibration
 		BondOptionEngine( const boost::shared_ptr<RealHullWhiteModel>&  model,
 						  const Size                                    dimension,
 						  const Real                                    gridRadius,
 						  const Real                                    bermudanTolerance )
 						  : model_(model), dimension_(dimension), gridRadius_(gridRadius), bermudanTolerance_(bermudanTolerance) { }
-        void calculate() const;
+
+		void calculate() const;
+
 		const boost::shared_ptr<RealHullWhiteModel>& model() const { return model_; }
+
+		// calibrate model based on given swaptions
+		void calibrateModel( std::vector< boost::shared_ptr<Swaption> > swaptions,
+			                 bool                                       contTenorSpread,
+							 Real                                       tolVola);
+
     };
 
 }
