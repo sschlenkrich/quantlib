@@ -41,15 +41,15 @@ namespace QuantLib {
 			// build an equivalent bond option
 			FixedRateBondOption bondOption(swaptions[k], discCurve, contTenorSpread);
 			// extract option details
-			exercTimes.push_back(dc.dayCount(today,bondOption.exerciseDates()[0]));
+			exercTimes.push_back(dc.yearFraction(today,bondOption.exerciseDates()[0]));
 			strikeVals.push_back(bondOption.dirtyStrikeValues()[0]);
 			b76Prices.push_back(swaptions[k]->NPV());  // assume we have an engine and market data attached
 			callOrPut.push_back(bondOption.callOrPut());
 			// extract underlying details
 			std::vector<Real> bondStartTimes, bondPayTimes;
-			for (Size i=0; i<bondOption.cashflowValues().size(); ++k) {
-				bondStartTimes.push_back( dc.dayCount(today,bondOption.startDates()[i]) );
-				bondPayTimes.push_back( dc.dayCount(today,bondOption.payDates()[i]) );
+			for (Size i=0; i<bondOption.cashflowValues().size(); ++i) {
+				bondStartTimes.push_back( dc.yearFraction(today,bondOption.startDates()[i]) );
+				bondPayTimes.push_back( dc.yearFraction(today,bondOption.payDates()[i]) );
 			}
 			startTimes.push_back(bondStartTimes);
 			payTimes.push_back(bondPayTimes);

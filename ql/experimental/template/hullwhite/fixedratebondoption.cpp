@@ -12,6 +12,7 @@
 #include <ql/settings.hpp>
 #include <ql/exercise.hpp>
 #include <ql/cashflows/coupon.hpp>
+#include <ql/cashflows/simplecashflow.hpp>
 #include <ql/cashflows/fixedratecoupon.hpp>
 #include <ql/experimental/template/hullwhite/fixedratebondoption.hpp>
 
@@ -71,17 +72,19 @@ namespace QuantLib {
 		Leg fixedLeg = swaption->underlyingSwap()->fixedLeg();
 		Size i=0, j=0;
 		while (i<fixedLeg.size() || j<spreadLeg.size()) {
-			if (i>=fixedLeg.size())  { cashflows_.push_back(spreadLeg[j]); ++j; }
-			if (j>=spreadLeg.size()) { cashflows_.push_back(fixedLeg[i]);  ++i; }
-			if (i<fixedLeg.size() && j<spreadLeg.size()) {
-				boost::shared_ptr<Coupon> fixedCoupon = boost::dynamic_pointer_cast<Coupon>(fixedLeg[i]);
-				if (!fixedCoupon) QL_FAIL("FixedLeg CashFlow is no Coupon.");
-				boost::shared_ptr<Coupon> spreadCoupon = boost::dynamic_pointer_cast<Coupon>(spreadLeg[j]);
-				if (!spreadCoupon) QL_FAIL("SpreadLeg CashFlow is no Coupon.");
-				if (fixedCoupon->accrualStartDate()<=spreadCoupon->accrualStartDate()) { cashflows_.push_back(fixedLeg[i]);  ++i; }
-				else                                                                   { cashflows_.push_back(spreadLeg[j]); ++j; }
-			}  // if ...
+			if (i>=fixedLeg.size())  { cashflows_.push_back(spreadLeg[j]); ++j; continue; }
+			if (j>=spreadLeg.size()) { cashflows_.push_back(fixedLeg[i]);  ++i; continue; }
+			// here we have i<fixedLeg.size() && j<spreadLeg.size()
+			boost::shared_ptr<Coupon> fixedCoupon = boost::dynamic_pointer_cast<Coupon>(fixedLeg[i]);
+			if (!fixedCoupon) QL_FAIL("FixedLeg CashFlow is no Coupon.");
+			boost::shared_ptr<Coupon> spreadCoupon = boost::dynamic_pointer_cast<Coupon>(spreadLeg[j]);
+			if (!spreadCoupon) QL_FAIL("SpreadLeg CashFlow is no Coupon.");
+			if (fixedCoupon->accrualStartDate()<=spreadCoupon->accrualStartDate()) { cashflows_.push_back(fixedLeg[i]);  ++i; }
+			else                                                                   { cashflows_.push_back(spreadLeg[j]); ++j; }
 		}  // while ...
+		// finally, add the notional at the last date
+		boost::shared_ptr<Coupon> lastFloatCoupon = boost::dynamic_pointer_cast<Coupon>(floatLeg.back());
+		cashflows_.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(lastFloatCoupon->nominal(),lastFloatCoupon->accrualEndDate())));
 	}
 
      const std::vector< QuantLib::Date > FixedRateBondOption::startDates() {
