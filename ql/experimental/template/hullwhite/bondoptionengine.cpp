@@ -108,6 +108,7 @@ namespace QuantLib {
 		for (Size i=0; i<std::min(europeansAnalytical.size(),europeansNumerical.size()); ++i) {
 			errorEstimate = std::max(errorEstimate,fabs(europeansNumerical[i]-europeansAnalytical[i]));
 		}
+		results_.errorEstimate = errorEstimate;
 		// if we have an AD-enabeled model report vega(s) here...
 		boost::shared_ptr<MinimADHullWhiteModel> amodel = boost::dynamic_pointer_cast<MinimADHullWhiteModel>(model_);
 		if (amodel) {

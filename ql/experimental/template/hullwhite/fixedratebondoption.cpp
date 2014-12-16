@@ -40,7 +40,10 @@ namespace QuantLib {
 			if (exerciseDates_[k]>(boost::dynamic_pointer_cast<Coupon>(floatLeg[floatIdx])->accrualStartDate())) {
 				dirtyStrikeValues_.push_back(0.0);  // if there is no coupon left the strike is trivially equal to zero
 			} else {
-				dirtyStrikeValues_.push_back((boost::dynamic_pointer_cast<Coupon>(floatLeg[floatIdx]))->nominal());
+				Real nominal      = (boost::dynamic_pointer_cast<Coupon>(floatLeg[floatIdx]))->nominal();
+				Real dfExercise   = discountCurve->discount(exerciseDates_[k]);
+				Real dfSettlement = discountCurve->discount((boost::dynamic_pointer_cast<Coupon>(floatLeg[floatIdx]))->accrualStartDate());
+				dirtyStrikeValues_.push_back(nominal*dfSettlement/dfExercise);				
 			}
 		}
 		// evaluate floating leg deterministic spreads
