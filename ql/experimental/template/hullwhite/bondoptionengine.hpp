@@ -26,11 +26,13 @@ namespace QuantLib {
 
     class BondOptionEngine : public FixedRateBondOption::engine {
 	private:
-		boost::shared_ptr<RealHullWhiteModel>      model_;                    // Hull White model used
+		boost::shared_ptr<RealHullWhiteModel>      model_;                // Hull White model used
 		// discretisation parameters for the numerical solution of Bermudan bond options
 		Size                                       dimension_;            // discretisation of numerical solution
 		Real                                       gridRadius_;           // radius of short rate grid
 		Real                                       bermudanTolerance_;    // tolerance for numerical integration
+		// calibration instruments
+		std::vector< boost::shared_ptr<Swaption> > referenceSwaptions_;
 
 		// utility function to compare swaptions
 		static bool lessByExerciseFirstDate (  boost::shared_ptr<Swaption> a,  boost::shared_ptr<Swaption> b) { return a->exercise()->date(0) < b->exercise()->date(0); }
@@ -49,9 +51,9 @@ namespace QuantLib {
 		const boost::shared_ptr<RealHullWhiteModel>& model() const { return model_; }
 
 		// calibrate model based on given swaptions
-		void calibrateModel( std::vector< boost::shared_ptr<Swaption> > swaptions,
-			                 bool                                       contTenorSpread,
-							 Real                                       tolVola);
+		void calibrateModel( std::vector< boost::shared_ptr<Swaption> >        swaptions,
+			                 const bool                                        contTenorSpread,
+							 const Real                                        tolVola);
 
     };
 

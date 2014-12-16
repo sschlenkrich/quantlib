@@ -22,9 +22,9 @@
 namespace QuantLib {
 
 	// calibrate model based on given swaptions
-	void BondOptionEngine::calibrateModel( std::vector< boost::shared_ptr<Swaption> > swaptions,
-		                                   bool                                       contTenorSpread,
-										   Real                                       tolVola) {
+	void BondOptionEngine::calibrateModel( std::vector< boost::shared_ptr<Swaption> >        swaptions,
+		                                   const bool                                        contTenorSpread,
+										   const Real                                        tolVola) {
 		std::sort(swaptions.begin(), swaptions.end(), lessByExerciseFirstDate);
 		// set up inputs for model calibration
 		std::vector<Real>                  exercTimes, strikeVals, b76Prices;
@@ -35,9 +35,12 @@ namespace QuantLib {
 		DayCounter                 dc        = model_->termStructure()->dayCounter();
 		Date                       today     = model_->termStructure()->referenceDate();
 		// iterate swaptions...
+		referenceSwaptions_.clear();
 		for (Size k=0; k<swaptions.size(); ++k) {
 			// skip swaptions with equal exercise date since we calibrate by bootstrapping
 			if ( (k>0) && (swaptions[k]->exercise()->date(0)==swaptions[k-1]->exercise()->date(0)) ) continue;
+			// save reference swaption
+			referenceSwaptions_.push_back(swaptions[k]);
 			// build an equivalent bond option
 			FixedRateBondOption bondOption(swaptions[k], discCurve, contTenorSpread);
 			// extract option details
@@ -109,22 +112,46 @@ namespace QuantLib {
 			errorEstimate = std::max(errorEstimate,fabs(europeansNumerical[i]-europeansAnalytical[i]));
 		}
 		results_.errorEstimate = errorEstimate;
+        // report adittional results for
+		for (Size i=0; i<referenceSwaptions_.size(); ++i) {
+			std::string name = "black76price_";
+			name += boost::lexical_cast<std::string>( i+1 );
+			results_.additionalResults[name] = referenceSwaptions_[i]->NPV();
+		}
+		for (Size i=0; i<referenceSwaptions_.size(); ++i) {
+			std::string name = "black76vola_";
+			name += boost::lexical_cast<std::string>( i+1 );
+			std::map<std::string,boost::any>::const_iterator stDev = referenceSwaptions_[i]->additionalResults().find("stdDev");
+			if (stDev!=referenceSwaptions_[i]->additionalResults().end()) {
+				results_.additionalResults[name] = 
+					boost::any_cast<Real>(stDev->second) / std::sqrt(model_->termStructure()->dayCounter().yearFraction(today,referenceSwaptions_[i]->exercise()->dates()[0]));
+			}
+		}
+		for (Size i=0; i<referenceSwaptions_.size(); ++i) {
+			std::string name = "black76vega_";
+			name += boost::lexical_cast<std::string>( i+1 );
+			std::map<std::string,boost::any>::const_iterator vega = referenceSwaptions_[i]->additionalResults().find("vega");
+			if (vega!=referenceSwaptions_[i]->additionalResults().end()) {
+				results_.additionalResults[name] = 	boost::any_cast<Real>(vega->second);
+			}
+		}
 		// if we have an AD-enabeled model report vega(s) here...
 		boost::shared_ptr<MinimADHullWhiteModel> amodel = boost::dynamic_pointer_cast<MinimADHullWhiteModel>(model_);
 		if (amodel) {
 			// derivative of Bermudan price w.r.t. short rate vola
 			std::vector<QuantLib::Real> vegas = amodel->bermudanVega();
-			/*
 			// differentiate calibration; short rate vola w.r.t. B76 prices
 			for (Size j=vegas.size(); j>0; --j) {
 				for (Size i=j; i<vegas.size(); ++i) vegas[j-1] -= vegas[i]*amodel->calibrationJacobian()[i][j-1];
 				vegas[j-1] /= amodel->calibrationJacobian()[j-1][j-1];
 			}
 			// finally differentiate reference prices w.r.t. Black'76 volas
-			for (Size i=0; i<std::min(vegas.size(),referenceEuropeanVegas_.size()); ++i) {
-				vegas[i] *= referenceEuropeanVegas_[i];
+			for (Size i=0; i<std::min(vegas.size(),referenceSwaptions_.size()); ++i) {
+				std::map<std::string,boost::any>::const_iterator vega = referenceSwaptions_[i]->additionalResults().find("vega");
+				if (vega!=referenceSwaptions_[i]->additionalResults().end()) {
+					vegas[i] *= boost::any_cast<Real>(vega->second);
+				}
 			}
-			*/
 			// the sum of vegas represents the sensitivity w.r.t. to a parallel shift of the B76 vola surface
 			QuantLib::Real vega=0.0;
 			for (Size i=0; i<vegas.size(); ++i) vega += vegas[i];
