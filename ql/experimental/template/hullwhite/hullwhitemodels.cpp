@@ -21,7 +21,7 @@ namespace QuantLib {
 		for (Size k=0; k<this->volaValues().size(); ++k) avolaValues_[k] = this->volaValues()[k];
 		// clone the passive model
 		amodel_ = boost::shared_ptr< TemplateHullWhiteModel<QuantLib::Time,QuantLib::Real,ActiveType> >(
-			new TemplateHullWhiteModel<QuantLib::Time,QuantLib::Real,ActiveType>(this->termStructure(), this->mean(), this->volaDates(), avolaValues_));
+			new TemplateHullWhiteModel<QuantLib::Time,QuantLib::Real,ActiveType>(this->termStructure(), this->mean(), this->volaTimes(), avolaValues_));
 		amodel_->setEstimateAccuracy(this->estimateAccuracy());
 	}
 

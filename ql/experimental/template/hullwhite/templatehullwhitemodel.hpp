@@ -37,7 +37,7 @@ namespace QuantLib {
 		// attributes defining the model
 		Handle<YieldTermStructure> termStructure_;  // the yield curve is assumed to be passive
 		PassiveType                mean_;           // constant mean reversion parameter
-		std::vector<DateType>      volaDates_;      // time-grid of left-constant short rate volatility values
+		std::vector<DateType>      volaTimes_;      // time-grid of left-constant short rate volatility values
         std::vector<ActiveType>    volaValues_;     // volatility values
 		size_t                     Nvol_;           // number of volatility values
 		// calibration reference prices
@@ -52,8 +52,8 @@ namespace QuantLib {
         // auxilliary functions
 		inline
         ActiveType integralVolaMean( PassiveType (*F)(DateType,PassiveType,DateType,DateType),  // integral function
-			                         DateType     startDate,
-									 DateType     endDate );
+			                         DateType     startTime,
+									 DateType     endTime );
 		void evaluateShortRateGrid( PassiveType r0,      // center of short rate grid
 			                        PassiveType s,       // distance to boundaries
 							        size_t dim );        // number of grid points
@@ -61,14 +61,14 @@ namespace QuantLib {
 		// Construct a Hull White model by passing the attributes
 		TemplateHullWhiteModel( const Handle<YieldTermStructure>& termStructure,
 			                    const PassiveType                mean,
-								const std::vector<DateType>&     volaDates,
+								const std::vector<DateType>&     volaTimes,
 								const std::vector<ActiveType>&   volaValues );
 
 		// Inspectors
 		const Handle<YieldTermStructure>& termStructure() const { return termStructure_; }
 		bool                              calibrateMean() const { return calibrateMean_; }
 		PassiveType                       mean() const { return mean_; }
-		const std::vector<DateType>&      volaDates() const { return volaDates_; }
+		const std::vector<DateType>&      volaTimes() const { return volaTimes_; }
 		const std::vector<ActiveType>&    volaValues() const { return volaValues_; }
 		const std::vector<PassiveType>&   bermudanB76Prices() const { return bermudanB76Prices_; }
 		const std::vector<PassiveType>&   calibIters() const { return calibIters_; }
@@ -87,7 +87,7 @@ namespace QuantLib {
      
 		virtual
 		ActiveType CouponBond( const DateType                  settlement,   // bond settlement date in year fractions
-                               const std::vector<DateType>&    payDates,     // pay dates in year fraction of coupon period
+                               const std::vector<DateType>&    payTimes,     // pay dates in year fraction of coupon period
 							   const std::vector<PassiveType>& cashFlows,    // fixed coupon payments (absolut value)
                                const ActiveType                shortRate,
 							   ActiveType                      *dBond_dr = 0,
@@ -103,17 +103,17 @@ namespace QuantLib {
 		ActiveType CouponBondOption( const DateType                  excercise,    // option's excercise date (equal settlment)
                                      const PassiveType               strike,       // strike payed at excercise date
                                      /* option's underlying */
-									 const std::vector<DateType>&     startDates,   // start dates of coupon period
-									 const std::vector<DateType>&     payDates,     // pay dates of coupon perid
+									 const std::vector<DateType>&     startTimes,   // start dates of coupon period
+									 const std::vector<DateType>&     payTimes,     // pay dates of coupon perid
 									 const std::vector<PassiveType>&  cashFlows,    // fixed coupon payments (absolut value)
                                      const Option::Type               cop);         // call (1) or put (-1) option
 
 		virtual
-		ActiveType BermudanBondOption( const std::vector<DateType>&     exercDates,    // option's exercise dates (equal settlment)
+		ActiveType BermudanBondOption( const std::vector<DateType>&     exercTimes,    // option's exercise dates (equal settlment)
                                        const std::vector<PassiveType>&  strikeValues,  // strike payed at excercise dates
                                        // option's underlying
-						  			   const std::vector<DateType>&     startDates,   // start dates of coupon period
-							 		   const std::vector<DateType>&     payDates,     // pay dates of coupon perid
+						  			   const std::vector<DateType>&     startTimes,   // start dates of coupon period
+							 		   const std::vector<DateType>&     payTimes,     // pay dates of coupon perid
 									   const std::vector<PassiveType>&  cashFlows,    // fixed coupon payments (absolut value)
                                        const Option::Type               cop,          // call (1) or put (-1) option
 							           // discretisation properties
@@ -123,12 +123,12 @@ namespace QuantLib {
 
 		virtual
 		const std::vector<ActiveType>& CalibrateVolatility (
-			                           const std::vector<DateType>&     exercDates,   // option's exercise dates (equal settlment)
+			                           const std::vector<DateType>&     exercTimes,   // option's exercise dates (equal settlment)
                                        const std::vector<PassiveType>&  strikeValues, // strike payed at excercise dates
                                        const std::vector<PassiveType>&  b76Prices,    // reference European prices
                                        // option's underlying
-						  			   const std::vector< std::vector<DateType> >&     startDates,   // start dates of coupon period
-							 		   const std::vector< std::vector<DateType> >&     payDates,     // pay dates of coupon perid
+						  			   const std::vector< std::vector<DateType> >&     startTimes,   // start dates of coupon period
+							 		   const std::vector< std::vector<DateType> >&     payTimes,     // pay dates of coupon perid
 									   const std::vector< std::vector<PassiveType> >&  cashFlows,    // fixed coupon payments (absolut value)
                                        const std::vector< Option::Type >&              cop,          // call (1) or put (-1) option
 							           // calibration parameters
@@ -139,12 +139,12 @@ namespace QuantLib {
 		// this method is uses method CalibrateVolatility(...)
 		virtual
 		const std::vector<ActiveType>& BermudanCalibration (  
-			                           const std::vector<DateType>&     exercDates,   // option's exercise dates (equal settlment)
+			                           const std::vector<DateType>&     exercTimes,   // option's exercise dates (equal settlment)
                                        const std::vector<PassiveType>&  strikeValues, // strike payed at excercise dates
                                        const std::vector<PassiveType>&  b76Prices,    // reference European prices
                                        // option's underlying
-				  					   const std::vector< std::vector<DateType> >&     startDates,   // start dates of coupon period
-					 				   const std::vector< std::vector<DateType> >&     payDates,     // pay dates of coupon perid
+				  					   const std::vector< std::vector<DateType> >&     startTimes,   // start dates of coupon period
+					 				   const std::vector< std::vector<DateType> >&     payTimes,     // pay dates of coupon perid
 									   const std::vector< std::vector<PassiveType> >&  cashFlows,    // fixed coupon payments (absolut value)
 									   const std::vector< Option::Type >&              cop,          // call (1) or put (-1) option
 							           // calibration parameters
@@ -157,12 +157,12 @@ namespace QuantLib {
     TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::TemplateHullWhiteModel(
 								const Handle<YieldTermStructure>& termStructure,
 			                    const PassiveType                mean,
-								const std::vector<DateType>&     volaDates,
+								const std::vector<DateType>&     volaTimes,
 								const std::vector<ActiveType>&   volaValues )
-	    : termStructure_(termStructure), mean_(mean), volaDates_(volaDates), volaValues_(volaValues) {
+	    : termStructure_(termStructure), mean_(mean), volaTimes_(volaTimes), volaValues_(volaValues) {
 			calibrateMean_    = false; // default setting
 			estimateAccuracy_ = true;  // default setting
-		    Nvol_ = std::min(volaDates_.size(),volaValues_.size());
+		    Nvol_ = std::min(volaTimes_.size(),volaValues_.size());
 			europeansAnalytical_.resize(1);
 			europeansNumerical_.resize(1);
 			QL_REQUIRE (Nvol_ > 0, "no short rate volatilities provided.");
@@ -171,48 +171,48 @@ namespace QuantLib {
 	template <class DateType, class PassiveType, class ActiveType> inline ActiveType 
 	TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::integralVolaMean(
 					PassiveType (*F)(DateType,PassiveType,DateType,DateType),  // integral function
-			        DateType     startDate,
-					DateType     endDate ) {
+			        DateType     startTime,
+					DateType     endTime ) {
 		size_t idx_min=0, idx_max=Nvol_-1, i;
 		int sgn = 1;
 		PassiveType tmp0;
-		std::vector<ActiveType> tmp(volaDates_.size()+1);
+		std::vector<ActiveType> tmp(volaTimes_.size()+1);
 		ActiveType res;
-		if (startDate>endDate) {
-			DateType t = startDate;
-			startDate = endDate;
-			endDate = t;
+		if (startTime>endTime) {
+			DateType t = startTime;
+			startTime = endTime;
+			endTime = t;
 			sgn = -1;
 		}
 		// enforce a < x_min <= x_max < b or special treatment
-		while ((startDate>=volaDates_[idx_min])&&(idx_min<Nvol_-1)) ++idx_min;
-		while ((endDate<=volaDates_[idx_max])&&(idx_max>0)) --idx_max;
-		tmp0 = sgn * ( (*F)(endDate,mean_,startDate,endDate) - (*F)(startDate,mean_,startDate,endDate) );
-		if (endDate<=volaDates_[0]) return volaValues_[0] * volaValues_[0] * tmp0;
+		while ((startTime>=volaTimes_[idx_min])&&(idx_min<Nvol_-1)) ++idx_min;
+		while ((endTime<=volaTimes_[idx_max])&&(idx_max>0)) --idx_max;
+		tmp0 = sgn * ( (*F)(endTime,mean_,startTime,endTime) - (*F)(startTime,mean_,startTime,endTime) );
+		if (endTime<=volaTimes_[0]) return volaValues_[0] * volaValues_[0] * tmp0;
 		if (idx_min==Nvol_-1)       return volaValues_[Nvol_-1] * volaValues_[Nvol_-1] * tmp0;
 		if (idx_max<idx_min)        return volaValues_[idx_min] * volaValues_[idx_min] *tmp0;
         // integral a ... x_min
-        //tmp = volaValues_[idx_min]*volaValues_[idx_min]*( (*F)(volaDates_[idx_min],mean_,startDate,endDate) - 
-        //                                                  (*F)(startDate,mean_,startDate,endDate) );
-        tmp.push_back( volaValues_[idx_min]*volaValues_[idx_min]*( (*F)(volaDates_[idx_min],mean_,startDate,endDate) - 
-                                                                   (*F)(startDate,mean_,startDate,endDate) ) );
+        //tmp = volaValues_[idx_min]*volaValues_[idx_min]*( (*F)(volaTimes_[idx_min],mean_,startTime,endTime) - 
+        //                                                  (*F)(startTime,mean_,startTime,endTime) );
+        tmp.push_back( volaValues_[idx_min]*volaValues_[idx_min]*( (*F)(volaTimes_[idx_min],mean_,startTime,endTime) - 
+                                                                   (*F)(startTime,mean_,startTime,endTime) ) );
 		// integral x_min ... x_max
         for (i=idx_min; i<idx_max; ++i) 
 			tmp.push_back( tmp.back() + 
 			               volaValues_[i+1]*volaValues_[i+1]* 
-						   ( (*F)(volaDates_[i+1],mean_,startDate,endDate) - 
-                             (*F)(volaDates_[i],mean_,startDate,endDate) ) );
+						   ( (*F)(volaTimes_[i+1],mean_,startTime,endTime) - 
+                             (*F)(volaTimes_[i],mean_,startTime,endTime) ) );
         // integral x_max ... b
         if (idx_max<Nvol_-1) 
 			tmp.push_back( tmp.back() + 			
 						   volaValues_[idx_max+1]*volaValues_[idx_max+1]*
-						   ( (*F)(endDate,mean_,startDate,endDate) - 
-                             (*F)(volaDates_[idx_max],mean_,startDate,endDate) ) );
+						   ( (*F)(endTime,mean_,startTime,endTime) - 
+                             (*F)(volaTimes_[idx_max],mean_,startTime,endTime) ) );
         else                
 			tmp.push_back( tmp.back() + 			
 						   volaValues_[idx_max]*volaValues_[idx_max]*
-						   ( (*F)(endDate,mean_,startDate,endDate) - 
-                             (*F)(volaDates_[idx_max],mean_,startDate,endDate) ) );
+						   ( (*F)(endTime,mean_,startTime,endTime) - 
+                             (*F)(volaTimes_[idx_max],mean_,startTime,endTime) ) );
 		// finished
 		res = sgn * tmp.back();
 		// reverse elimination
@@ -240,15 +240,15 @@ namespace QuantLib {
     template <class DateType, class PassiveType, class ActiveType> 
 	ActiveType TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::CouponBond(
 							const DateType                  settlement,   // bond settlement date in year fractions
-                            const std::vector<DateType>&    payDates,     // pay dates in year fraction of coupon period
+                            const std::vector<DateType>&    payTimes,     // pay dates in year fraction of coupon period
 							const std::vector<PassiveType>& cashFlows,    // fixed coupon payments (absolut value)
                             const ActiveType                shortRate,
 							ActiveType                      *dBond_dr,
 							const size_t                    idx_start) {
-		size_t Ncfs = std::min(payDates.size(),cashFlows.size());
+		size_t Ncfs = std::min(payTimes.size(),cashFlows.size());
 		ActiveType PV=0, dPV=0;
 		for (size_t i=idx_start; i<Ncfs; ++i) {
-			PV += cashFlows[i]*ZeroBond(settlement,payDates[i],shortRate,dBond_dr);
+			PV += cashFlows[i]*ZeroBond(settlement,payTimes[i],shortRate,dBond_dr);
 			if (dBond_dr) dPV += cashFlows[i]*(*dBond_dr);
 		}
 		if (dBond_dr) (*dBond_dr) = dPV;
@@ -273,29 +273,29 @@ namespace QuantLib {
 						const DateType                  excercise,    // option's excercise date (equal settlment)
                         const PassiveType               strike,       // strike payed at excercise date
                         /* option's underlying, copy vectors */
-						const std::vector<DateType>&           startDates,   // start dates of coupon period
-						const std::vector<DateType>&           payDates,     // pay dates of coupon perid
+						const std::vector<DateType>&           startTimes,   // start dates of coupon period
+						const std::vector<DateType>&           payTimes,     // pay dates of coupon perid
 						const std::vector<PassiveType>&        cashFlows,    // fixed coupon payments (absolut value)
 						const Option::Type              cop){         // call (1) or put (-1) option
 		// use Jamschdian's trick
 		ActiveType rStar, cbStar, meritFunction, derivative, newtonStep, zeroStrike, res;
 		double rTolerance = 1.0e-12; /* intervall Newton's method */
 		size_t i, idx_start, max_iter = 50;
-		size_t Ncfs = std::min(startDates.size(),payDates.size());
+		size_t Ncfs = std::min(startTimes.size(),payTimes.size());
 		Ncfs = std::min(Ncfs,cashFlows.size());
 
-		if ((Ncfs<1)||(startDates[Ncfs-1]<excercise)) { // no cashflows
+		if ((Ncfs<1)||(startTimes[Ncfs-1]<excercise)) { // no cashflows
 			return 0; /* or discounted strike for put */
 		}
 
 		/* consider only coupons with start date after excercise date */
 		idx_start = 0;
-		while ((startDates[idx_start]<excercise)&(idx_start<Ncfs-1)) ++idx_start;
+		while ((startTimes[idx_start]<excercise)&(idx_start<Ncfs-1)) ++idx_start;
 
 		/* solve for rStar by Newton's method */
 		rStar  = 0.0;
 		for (i=0; i<max_iter; ++i) {
-			cbStar = CouponBond( excercise, payDates, cashFlows, rStar, &derivative, idx_start);
+			cbStar = CouponBond( excercise, payTimes, cashFlows, rStar, &derivative, idx_start);
 			meritFunction = cbStar - strike;
 			newtonStep = - meritFunction / derivative;
 			if (fabs(newtonStep)<rTolerance) break;
@@ -312,8 +312,8 @@ namespace QuantLib {
 		// evaluate the corresp. sum of ZCB options
 		res = 0;
 		for (i=idx_start; i<Ncfs; ++i) {
-			zeroStrike = ZeroBond(excercise,payDates[i],rStar);
-			res += cashFlows[i] * ZeroBondOption(excercise,zeroStrike,payDates[i],cop);
+			zeroStrike = ZeroBond(excercise,payTimes[i],rStar);
+			res += cashFlows[i] * ZeroBondOption(excercise,zeroStrike,payTimes[i],cop);
 		}
 		zeroStrike = 0;
 		return res;
@@ -332,11 +332,11 @@ namespace QuantLib {
 
 	template <class DateType, class PassiveType, class ActiveType> 
 	ActiveType TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::BermudanBondOption(
-							const std::vector<DateType>&     exercDates,    // option's exercise dates (equal settlment)
+							const std::vector<DateType>&     exercTimes,    // option's exercise dates (equal settlment)
                             const std::vector<PassiveType>&  strikeValues,  // strike payed at excercise dates
                             // option's underlying
-  				  			const std::vector<DateType>&     startDates,   // start dates of coupon period
-							const std::vector<DateType>&     payDates,     // pay dates of coupon perid
+  				  			const std::vector<DateType>&     startTimes,   // start dates of coupon period
+							const std::vector<DateType>&     payTimes,     // pay dates of coupon perid
 							const std::vector<PassiveType>&  cashFlows,    // fixed coupon payments (absolut value)
 							const Option::Type               cop,          // call (1) or put (-1) option
 							// discretisation properties
@@ -352,14 +352,14 @@ namespace QuantLib {
         std::vector< std::vector< ActiveType > > forwardDF, expectation;
         std::vector< ActiveType > variance, integral1, integral2;
 
-		Ncfs = std::min(startDates.size(),payDates.size());
+		Ncfs = std::min(startTimes.size(),payTimes.size());
 		Ncfs = std::min(Ncfs,cashFlows.size());
 		QL_REQUIRE (Ncfs > 0, "no cashflows found.");
 
 		r0 = termStructure_->forwardRate(0,0,Continuous);	
 		evaluateShortRateGrid( r0, gridRadius, dim );
 
-		Nexc = std::min(exercDates.size(),strikeValues.size());
+		Nexc = std::min(exercTimes.size(),strikeValues.size());
 		V.resize(Nexc+1);      // V[0] Bermudan, V[1..Nexc] European numeric
 		G.resize(Nexc+1);      // slope dV/dr for C2 interpolation
         Z.resize(Nexc+1);      // intermediates in linear solver
@@ -396,10 +396,10 @@ namespace QuantLib {
 		for (long k=Nexc-1; k>=0; --k) {
 			// consider only coupons with start date after excercise date
 			idx_start = 0;
-			while ((startDates[idx_start]<exercDates[k])&(idx_start<Ncfs-1)) ++idx_start;
+			while ((startTimes[idx_start]<exercTimes[k])&(idx_start<Ncfs-1)) ++idx_start;
 			// evaluate pay-off at excercise
 			for (i=0; i<dim; ++i) {
-				V[k+1][k+1][i] = CouponBond( exercDates[k], payDates, cashFlows, shortRateGrid_[i],
+				V[k+1][k+1][i] = CouponBond( exercTimes[k], payTimes, cashFlows, shortRateGrid_[i],
 								             (ActiveType *) 0, idx_start );
 				V[k+1][k+1][i] = (cop*(V[k+1][k+1][i]-strikeValues[k])>0) ? cop*(V[k+1][k+1][i]-strikeValues[k]) : (ActiveType)0.0;         
 				/* evaluate Bermudan option */
@@ -415,22 +415,22 @@ namespace QuantLib {
 				}
 			}
 			// variance is independent of r
-			startTime = (k>0) ? exercDates[k-1] : 0;
-			variance[k] = integralVolaMean( TemplateAuxilliaries::func_F2, startTime, exercDates[k] );
+			startTime = (k>0) ? exercTimes[k-1] : 0;
+			variance[k] = integralVolaMean( TemplateAuxilliaries::func_F2, startTime, exercTimes[k] );
 			// evaluate the nasty integrals
 			integral1[k] = integralVolaMean( TemplateAuxilliaries::func_F2, 0, startTime );
-			integral1[k] *= exp(-mean_*(exercDates[k]-startTime)) / mean_;
+			integral1[k] *= exp(-mean_*(exercTimes[k]-startTime)) / mean_;
 			integral2[k] = integralVolaMean( TemplateAuxilliaries::func_F1, 0, startTime  );
-			integral2[k] *= exp(-2.0*mean_*(exercDates[k]-0)) / mean_;
+			integral2[k] *= exp(-2.0*mean_*(exercTimes[k]-0)) / mean_;
 			// forward correction in time-T neutral measure
 			integral1[k] -= integral2[k];
 			// forward rate f(0,t)	    
 			f0 = termStructure_->forwardRate(startTime,startTime,Continuous);	
 			// forward rate f(0,T)	    
-			f1 = termStructure_->forwardRate(exercDates[k],exercDates[k],Continuous);	
+			f1 = termStructure_->forwardRate(exercTimes[k],exercTimes[k],Continuous);	
 			// now we can evaluate E[ r ] and integrate the payoff
 			for (i=0; i<dim; ++i) {
-				expectation[k][i] = f1 + exp(-mean_*(exercDates[k]-startTime))*(shortRateGrid_[i] - f0);
+				expectation[k][i] = f1 + exp(-mean_*(exercTimes[k]-startTime))*(shortRateGrid_[i] - f0);
 				expectation[k][i] += integral1[k];
 				// evaluate expectation for given payoff and density (given by variance and r-expectation)				
 				V[0][k][i] = TemplateAuxilliaries::normalExpectation(shortRateGrid_, V[0][k+1], G[0][k+1], expectation[k][i], variance[k], tol);
@@ -440,7 +440,7 @@ namespace QuantLib {
 				}
 			}
 			for (i=0; i<dim; ++i) {
-				forwardDF[k][i] = ZeroBond(startTime,exercDates[k],shortRateGrid_[i],(ActiveType *) 0);
+				forwardDF[k][i] = ZeroBond(startTime,exercTimes[k],shortRateGrid_[i],(ActiveType *) 0);
 				V[0][k][i] *=  forwardDF[k][i];
 				if (estimateAccuracy_) {
 					for (j=k+1; j<Nexc+1; ++j) V[j][k][i] *= forwardDF[k][i];
@@ -459,7 +459,7 @@ namespace QuantLib {
 		europeansNumerical_.resize(Nexc);
 		for (k=0; k<Nexc; ++k) {
 			europeansNumerical_[k] = TemplateAuxilliaries::interpolCSpline( r0, shortRateGrid_, V[k+1][0], G[k+1][0] );
-			europeansAnalytical_[k] = CouponBondOption( exercDates[k], strikeValues[k], startDates, payDates, cashFlows, cop);
+			europeansAnalytical_[k] = CouponBondOption( exercTimes[k], strikeValues[k], startTimes, payTimes, cashFlows, cop);
 		}
 
 		// Eliminate in reverse order
@@ -497,12 +497,12 @@ namespace QuantLib {
 
 	template <class DateType, class PassiveType, class ActiveType> 
 	const std::vector<ActiveType>& TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::CalibrateVolatility ( 
-		                       const std::vector<DateType>&     exercDates,   // option's exercise dates (equal settlment)
+		                       const std::vector<DateType>&     exercTimes,   // option's exercise dates (equal settlment)
                                const std::vector<PassiveType>&  strikeValues, // strike payed at excercise dates
                                const std::vector<PassiveType>&  b76Prices,    // reference European prices
                                // option's underlying
-				  			   const std::vector< std::vector<DateType> >&     startDates,   // start dates of coupon period
-					 		   const std::vector< std::vector<DateType> >&     payDates,     // pay dates of coupon perid
+				  			   const std::vector< std::vector<DateType> >&     startTimes,   // start dates of coupon period
+					 		   const std::vector< std::vector<DateType> >&     payTimes,     // pay dates of coupon perid
 							   const std::vector< std::vector<PassiveType> >&  cashFlows,    // fixed coupon payments (absolut value)
                                const std::vector< Option::Type >&              cop,          // call (1) or put (-1) option
 							   // calibration parameters
@@ -521,16 +521,16 @@ namespace QuantLib {
 		ActiveType price_max;
 		ActiveType price_last;
 
-		Nexc = std::min(exercDates.size(),strikeValues.size());
+		Nexc = std::min(exercTimes.size(),strikeValues.size());
 		Nexc = std::min(Nexc,b76Prices.size());
 		QL_REQUIRE (Nexc > 0, "no exercises found.");
 
-		volaDates_.resize(Nexc);
+		volaTimes_.resize(Nexc);
 		volaValues_.resize(Nexc);
 		calibIters_.resize(Nexc);
 		bermudanB76Prices_.resize(Nexc);
 		Nvol_ = Nexc;
-		for (k=0; k<Nexc; ++k) volaDates_[k]         = exercDates[k];
+		for (k=0; k<Nexc; ++k) volaTimes_[k]         = exercTimes[k];
 		for (k=0; k<Nexc; ++k) volaValues_[k]        = 0.0; // initialisation
 		for (k=0; k<Nexc; ++k) bermudanB76Prices_[k] = b76Prices[k]; 
 
@@ -543,15 +543,15 @@ namespace QuantLib {
 			sigma          = sigma_max;
 			// boundaries for prices
 			volaValues_[k] = sigma_min;
-			price_min      = CouponBondOption( exercDates[k], strikeValues[k], startDates[std::min(k,startDates.size()-1)], payDates[std::min(k,payDates.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
+			price_min      = CouponBondOption( exercTimes[k], strikeValues[k], startTimes[std::min(k,startTimes.size()-1)], payTimes[std::min(k,payTimes.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
 			// QL_REQUIRE (price_min <= b76Prices[k], "Black'76 price too small.");
             if (price_min > b76Prices[k]) continue;  // we relax the calibration condition
 			volaValues_[k] = sigma_max;
-			price_max      = CouponBondOption( exercDates[k], strikeValues[k], startDates[std::min(k,startDates.size()-1)], payDates[std::min(k,payDates.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
+			price_max      = CouponBondOption( exercTimes[k], strikeValues[k], startTimes[std::min(k,startTimes.size()-1)], payTimes[std::min(k,payTimes.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
 			while ((price_max < b76Prices[k])&&(sigma_max<1.0)) {
 				sigma_max *= 2.0;
 				volaValues_[k] = sigma_max;
-				price_max      = CouponBondOption( exercDates[k], strikeValues[k], startDates[std::min(k,startDates.size()-1)], payDates[std::min(k,payDates.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
+				price_max      = CouponBondOption( exercTimes[k], strikeValues[k], startTimes[std::min(k,startTimes.size()-1)], payTimes[std::min(k,payTimes.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
 			}
 			QL_REQUIRE (price_max >= b76Prices[k], "Black'76 price too big.");
 			// initialisations for iteration
@@ -565,7 +565,7 @@ namespace QuantLib {
 				// ensure bounded iteration
 				if ((sigma<sigma_min)||(sigma>sigma_max)) sigma = (sigma_min + sigma_max)/2;
 				volaValues_[k] = sigma;
-				price          = CouponBondOption( exercDates[k], strikeValues[k], startDates[std::min(k,startDates.size()-1)], payDates[std::min(k,payDates.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
+				price          = CouponBondOption( exercTimes[k], strikeValues[k], startTimes[std::min(k,startTimes.size()-1)], payTimes[std::min(k,payTimes.size()-1)], cashFlows[std::min(k,cashFlows.size()-1)], cop[std::min(k,cop.size()-1)]);
 				// new boundaries
 				if (price<=b76Prices[k]){
 					sigma_min = sigma;
@@ -583,19 +583,19 @@ namespace QuantLib {
 
 	template <class DateType, class PassiveType, class ActiveType> 
 	const std::vector<ActiveType>& TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::BermudanCalibration ( 
-		                       const std::vector<DateType>&     exercDates,   // option's exercise dates (equal settlment)
+		                       const std::vector<DateType>&     exercTimes,   // option's exercise dates (equal settlment)
                                const std::vector<PassiveType>&  strikeValues, // strike payed at excercise dates
                                const std::vector<PassiveType>&  b76Prices,    // reference European prices
                                // option's underlying
-				  			   const std::vector< std::vector<DateType> >&     startDates,   // start dates of coupon period
-					 		   const std::vector< std::vector<DateType> >&     payDates,     // pay dates of coupon perid
+				  			   const std::vector< std::vector<DateType> >&     startTimes,   // start dates of coupon period
+					 		   const std::vector< std::vector<DateType> >&     payTimes,     // pay dates of coupon perid
 							   const std::vector< std::vector<PassiveType> >&  cashFlows,    // fixed coupon payments (absolut value)
                                const std::vector< Option::Type >&              cop,          // call (1) or put (-1) option
 							   // calibration parameters
 							   const PassiveType                tol_vola      // absolut tolerance in short rate volatility
 							   ) {
 	    // in case mean reversion should not be calibrated simply pass call to CalibrateVolatility(...)
-		CalibrateVolatility(exercDates,strikeValues,b76Prices,startDates,payDates,cashFlows,cop,tol_vola);
+		CalibrateVolatility(exercTimes,strikeValues,b76Prices,startTimes,payTimes,cashFlows,cop,tol_vola);
 		if ((!calibrateMean_) | (volaValues_.size()<2)) return volaValues_;  // we require at least two vola values for optimization
 		// solve min_a {0.5 ||F(sigma)||^2} s.t. CBO(sigma,a) = Swaption with F(sigma) = C log(sigma),
 	    // C = tridiag{ [0..0], [1..1, 0], [-1..-1] }, i.e. minimum relative change
@@ -621,11 +621,11 @@ namespace QuantLib {
 			if (fabs(mean1 - mean0)>1.0e-2) {
 				mean0 = mean1 + 1.0e-2;
 				mean_ = mean0;
-				CalibrateVolatility(exercDates,strikeValues,b76Prices,startDates,payDates,cashFlows,cop,tol_vola);
+				CalibrateVolatility(exercTimes,strikeValues,b76Prices,startTimes,payTimes,cashFlows,cop,tol_vola);
 				vola0 = volaValues_;
 			}
 			mean_ = mean1;
-			CalibrateVolatility(exercDates,strikeValues,b76Prices,startDates,payDates,cashFlows,cop,tol_vola);
+			CalibrateVolatility(exercTimes,strikeValues,b76Prices,startTimes,payTimes,cashFlows,cop,tol_vola);
 			vola1 = volaValues_;
 			for (Size k=0; k<volaValues_.size(); ++k) dvola[k] = (vola1[k] - vola0[k])/(mean1 - mean0);
 			for (Size k=0; k<volaValues_.size(); ++k) {
