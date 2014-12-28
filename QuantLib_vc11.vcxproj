@@ -528,6 +528,7 @@
     <ClInclude Include="ql\experimental\processes\gemanroncoroniprocess.hpp" />
     <ClInclude Include="ql\experimental\processes\klugeextouprocess.hpp" />
     <ClInclude Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.hpp" />
+    <ClInclude Include="ql\experimental\template\auxilliaries\templateintegrators.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\MinimADVariable2.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\templateauxilliaries.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\bondoptionengine.hpp" />

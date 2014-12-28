@@ -25,6 +25,8 @@
 #include <ql/termstructures/yieldtermstructure.hpp>
 #include <ql/option.hpp>
 #include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
+#include <ql/experimental/template/auxilliaries/templateintegrators.hpp>
+
 
 namespace QuantLib {
 
@@ -50,13 +52,18 @@ namespace QuantLib {
         std::vector<ActiveType>    europeansAnalytical_;
         std::vector<ActiveType>    europeansNumerical_;  // only evaluated if estimateAccuracy_ == true
         // auxilliary functions
-		inline
-        ActiveType integralVolaMean( PassiveType (*F)(DateType,PassiveType,DateType,DateType),  // integral function
-			                         DateType     startTime,
-									 DateType     endTime );
+		// set up the short rate grid
 		void evaluateShortRateGrid( PassiveType r0,      // center of short rate grid
 			                        PassiveType s,       // distance to boundaries
 							        size_t dim );        // number of grid points
+		// helper class
+		class func_F {
+			PassiveType mean_;
+			DateType T_;
+		public:
+			func_F( PassiveType mean, DateType T) : mean_(mean), T_(T) {}
+			PassiveType operator() ( PassiveType u ) { return exp(-2.0*mean_*(T_ - u)) / 2.0 / mean_; }
+		};
 	public:
 		// Construct a Hull White model by passing the attributes
 		TemplateHullWhiteModel( const Handle<YieldTermStructure>& termStructure,
@@ -168,59 +175,7 @@ namespace QuantLib {
 			QL_REQUIRE (Nvol_ > 0, "no short rate volatilities provided.");
 	}
 
-	template <class DateType, class PassiveType, class ActiveType> inline ActiveType 
-	TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::integralVolaMean(
-					PassiveType (*F)(DateType,PassiveType,DateType,DateType),  // integral function
-			        DateType     startTime,
-					DateType     endTime ) {
-		size_t idx_min=0, idx_max=Nvol_-1, i;
-		int sgn = 1;
-		PassiveType tmp0;
-		std::vector<ActiveType> tmp(volaTimes_.size()+1);
-		ActiveType res;
-		if (startTime>endTime) {
-			DateType t = startTime;
-			startTime = endTime;
-			endTime = t;
-			sgn = -1;
-		}
-		// enforce a < x_min <= x_max < b or special treatment
-		while ((startTime>=volaTimes_[idx_min])&&(idx_min<Nvol_-1)) ++idx_min;
-		while ((endTime<=volaTimes_[idx_max])&&(idx_max>0)) --idx_max;
-		tmp0 = sgn * ( (*F)(endTime,mean_,startTime,endTime) - (*F)(startTime,mean_,startTime,endTime) );
-		if (endTime<=volaTimes_[0]) return volaValues_[0] * volaValues_[0] * tmp0;
-		if (idx_min==Nvol_-1)       return volaValues_[Nvol_-1] * volaValues_[Nvol_-1] * tmp0;
-		if (idx_max<idx_min)        return volaValues_[idx_min] * volaValues_[idx_min] *tmp0;
-        // integral a ... x_min
-        //tmp = volaValues_[idx_min]*volaValues_[idx_min]*( (*F)(volaTimes_[idx_min],mean_,startTime,endTime) - 
-        //                                                  (*F)(startTime,mean_,startTime,endTime) );
-        tmp.push_back( volaValues_[idx_min]*volaValues_[idx_min]*( (*F)(volaTimes_[idx_min],mean_,startTime,endTime) - 
-                                                                   (*F)(startTime,mean_,startTime,endTime) ) );
-		// integral x_min ... x_max
-        for (i=idx_min; i<idx_max; ++i) 
-			tmp.push_back( tmp.back() + 
-			               volaValues_[i+1]*volaValues_[i+1]* 
-						   ( (*F)(volaTimes_[i+1],mean_,startTime,endTime) - 
-                             (*F)(volaTimes_[i],mean_,startTime,endTime) ) );
-        // integral x_max ... b
-        if (idx_max<Nvol_-1) 
-			tmp.push_back( tmp.back() + 			
-						   volaValues_[idx_max+1]*volaValues_[idx_max+1]*
-						   ( (*F)(endTime,mean_,startTime,endTime) - 
-                             (*F)(volaTimes_[idx_max],mean_,startTime,endTime) ) );
-        else                
-			tmp.push_back( tmp.back() + 			
-						   volaValues_[idx_max]*volaValues_[idx_max]*
-						   ( (*F)(endTime,mean_,startTime,endTime) - 
-                             (*F)(volaTimes_[idx_max],mean_,startTime,endTime) ) );
-		// finished
-		res = sgn * tmp.back();
-		// reverse elimination
-		for (size_t i=tmp.size(); i>0; --i) tmp[i-1] = 0;
-		return res;
-	}
-
-    template <class DateType, class PassiveType, class ActiveType> ActiveType 
+	template <class DateType, class PassiveType, class ActiveType> ActiveType 
 	TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::ZeroBond(
 							const DateType    settlement,
 							const DateType    maturity,
@@ -230,7 +185,7 @@ namespace QuantLib {
 		PassiveType B      = (1.0 - exp(-mean_ * (maturity-settlement))) / mean_;
 		PassiveType DF1    = termStructure_->discount(settlement);
 		PassiveType DF2    = termStructure_->discount(maturity);
-		ActiveType  Integr = integralVolaMean(TemplateAuxilliaries::func_F1,0,settlement);
+		ActiveType  Integr = TemplateAuxilliaries::PieceWiseConstantIntegral<PassiveType,ActiveType,func_F>(volaTimes_, TemplateAuxilliaries::sqr(volaValues_), func_F(mean_,0.0))(0.0,settlement);
 		ActiveType  A      = DF2/DF1*exp(B*fwRate - B*B/2.0*exp(-2.0*mean_*(settlement-0))*Integr);
 		ActiveType  result = A * exp(-B*shortRate);
 		if (dBond_dr) (*dBond_dr) = - B * result;
@@ -261,8 +216,8 @@ namespace QuantLib {
                         const ActiveType   strike,        // strike payed at excercise date
                         const DateType     maturity,      // payment date of notional 1
 						const Option::Type cop) {         // call (1) or put (-1) option
-		ActiveType sigmaBond = (exp(-mean_*(excercise-0)) - exp(-mean_*(maturity-0)))/mean_ *
-								sqrt(integralVolaMean(TemplateAuxilliaries::func_F1,0,excercise));
+		ActiveType integral  = TemplateAuxilliaries::PieceWiseConstantIntegral<PassiveType,ActiveType,func_F>(volaTimes_, TemplateAuxilliaries::sqr(volaValues_), func_F(mean_,0.0))(0.0,excercise);
+		ActiveType sigmaBond = (exp(-mean_*(excercise-0)) - exp(-mean_*(maturity-0)))/mean_ * sqrt(integral);
 		return termStructure_->discount(excercise) * TemplateAuxilliaries::Black76<ActiveType>(
 					termStructure_->discount(maturity)/termStructure_->discount(excercise),
 					strike, sigmaBond, 1.0, cop);
@@ -408,20 +363,22 @@ namespace QuantLib {
 			// evaluate ZCB() E^T [ V(r) ]
 			// cubic spline interpolation of solution V only for non trivial tolerance
 			// otherwise use simple integration scheme
-			if (tol>0) {
+			if (tol>-1) {
 	            TemplateAuxilliaries::c2splineDerivatives(shortRateGrid_,V[0][k+1],G[0][k+1],Z[0][k+1]);
 				if (estimateAccuracy_) {
 					for (j=k+1; j<Nexc+1; ++j) TemplateAuxilliaries::c2splineDerivatives(shortRateGrid_,V[j][k+1],G[j][k+1],Z[j][k+1]);
 				}
 			}
-			// variance is independent of r
-			startTime = (k>0) ? exercTimes[k-1] : 0;
-			variance[k] = integralVolaMean( TemplateAuxilliaries::func_F2, startTime, exercTimes[k] );
-			// evaluate the nasty integrals
-			integral1[k] = integralVolaMean( TemplateAuxilliaries::func_F2, 0, startTime );
-			integral1[k] *= exp(-mean_*(exercTimes[k]-startTime)) / mean_;
-			integral2[k] = integralVolaMean( TemplateAuxilliaries::func_F1, 0, startTime  );
-			integral2[k] *= exp(-2.0*mean_*(exercTimes[k]-0)) / mean_;
+			{   // separate scope for temporary auxilliary objects
+			    // variance is independent of r
+			    startTime = (k>0) ? exercTimes[k-1] : 0;
+			    variance[k] = TemplateAuxilliaries::PieceWiseConstantIntegral<PassiveType,ActiveType,func_F>(volaTimes_, TemplateAuxilliaries::sqr(volaValues_), func_F(mean_,exercTimes[k]))(startTime,exercTimes[k]);
+			    // evaluate the nasty integrals
+			    integral1[k] = TemplateAuxilliaries::PieceWiseConstantIntegral<PassiveType,ActiveType,func_F>(volaTimes_, TemplateAuxilliaries::sqr(volaValues_), func_F(mean_,startTime    ))(0,startTime);
+			    integral1[k] *= exp(-mean_*(exercTimes[k]-startTime)) / mean_;
+			    integral2[k] = TemplateAuxilliaries::PieceWiseConstantIntegral<PassiveType,ActiveType,func_F>(volaTimes_, TemplateAuxilliaries::sqr(volaValues_), func_F(mean_,0            ))(0,startTime);
+			    integral2[k] *= exp(-2.0*mean_*(exercTimes[k]-0)) / mean_;
+			}
 			// forward correction in time-T neutral measure
 			integral1[k] -= integral2[k];
 			// forward rate f(0,t)	    

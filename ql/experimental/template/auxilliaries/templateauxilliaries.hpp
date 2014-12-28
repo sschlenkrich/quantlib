@@ -25,43 +25,24 @@ namespace TemplateAuxilliaries {
 //	inline double DBL(const ADTAGEO::daglad x) { return x.val(); }
 	inline double DBL(const MinimAD::Variable<QuantLib::Real> x) { return x.value(); }
 
-
-	/////////////////////////////////////////////////////////////////////
-	//
-	//  integral functions for integralVolaMean() method
-	//
-	////////////////////////////////////////////////////////////////////
-
-	// f(u,mean,startDate,endDate) = exp{2*mean(u-startDate)} 
-    // F(u,mean,startDate,endDate) = exp{2*mean(u-startDate)} / (2*mean)
-	template <typename DateType, typename PassiveType> inline
-    PassiveType func_F1 ( DateType     u,
-	                      PassiveType  mean,
-                          DateType     startDate,
-                          DateType     endDate ){
-		return exp(2.0*mean*(u-startDate)) / 2.0 / mean;
+	// square of vector elements
+	template <typename Type> inline
+	std::vector<Type> sqr(std::vector<Type> x) {
+		std::vector<Type> x2(x.size());
+		for (size_t i=0; i<x.size(); ++i) x2[i] = x[i]*x[i];
+		return x2;
 	}
 
-    // f(u,mean,startDate,endDate) = exp{-2*mean(endDate-u)} 
-    // F(u,mean,startDate,endDate) = exp{-2*mean(endDate-u)} / (2*mean)
-    template <typename DateType, typename PassiveType> inline
-    PassiveType func_F2 ( DateType     u,
-	                      PassiveType  mean,
-                          DateType     startDate,
-                          DateType     endDate ){
-	    return exp(-2.0*mean*(endDate-u)) / 2.0 / mean;
-	}
-
-	/////////////////////////////////////////////////////////////////////
-	//
 	//  normal distribution and Black76 functions
-	//
-	////////////////////////////////////////////////////////////////////
-
 
 	template <typename Type> inline
 	Type Phi( Type x) {
 		return 0.5*(erf(x*M_SQRT1_2)+1.0);
+	}
+
+	template <typename Type> inline
+	Type phi( Type x) {
+		return M_SQRT1_2 * M_1_SQRTPI * exp(-x*x/2.0);
 	}
 
 	template <typename Type> inline
@@ -92,11 +73,19 @@ namespace TemplateAuxilliaries {
 		return F * exp(-d1*d1/2.0) * sqrt( T / 2.0 / M_PI);
 	}
 
-	/////////////////////////////////////////////////////////////////////
-	//
+	template <typename Type> inline
+	Type Bachelier(Type F,        // forward price
+		           Type K,        // strike
+			       Type sigma,    // Normal volatility
+			       Type T,        // Time to expiry
+			       int  cop       // call (1) or put (-1) option
+				) {
+		Type d = cop*(F-K);
+		Type h = d/sigma/sqrt(T);
+		return d*Phi(h) + phi(h)*sigma*sqrt(T);
+	}
+
 	//  cubic interpolation and integration of expectation
-	//
-	////////////////////////////////////////////////////////////////////
     
     //  solve A X = Y by LU decomposition where A = tridiag { a, b, c }
     template <typename DateType, typename ValueType> inline void
@@ -205,14 +194,15 @@ namespace TemplateAuxilliaries {
 		return res;
 	}
 
+	// old reference implementation only for comparison!!!
 	template <typename PassiveType, typename ActiveType> inline
-	ActiveType normalExpectation(
+	ActiveType normalExpectation3(
 				std::vector<PassiveType>&   x,  //  grid points of payoff
 				std::vector<ActiveType>&    v,  //  payoff
                 ActiveType                  mu,  //  expectation of normal distribution
 			    ActiveType                  var  //  variance sigma^2 of normal distribution
 			      ) {
-		std::vector<ActiveType> sums(x.size());
+		std::vector<ActiveType> sums;
 		sums.push_back((ActiveType)0.0);
 		ActiveType res, Q1, Q2 = Phi((x[0]-mu)/sqrt(var));
 		for (size_t i=0; i<x.size()-1; ++i) {
@@ -227,6 +217,119 @@ namespace TemplateAuxilliaries {
 		return res;
 	}
 
+	// extrapolate via call/put
+	template <typename PassiveType, typename ActiveType> inline
+	ActiveType normalExpectation2(
+				std::vector<PassiveType>&   x,  //  grid points of payoff
+				std::vector<ActiveType>&    v,  //  payoff
+                ActiveType                  mu,  //  expectation of normal distribution
+			    ActiveType                  var  //  variance sigma^2 of normal distribution
+			      ) {
+		std::vector<ActiveType> sums;
+		ActiveType res, Q1, Q12, Q2 = Phi((x[0]-mu)/sqrt(var));
+		// low rate extrapolation
+		if (x.size()>0) {
+			ActiveType tmp = v[0]*Q2;
+			if (x.size()>1) {
+				tmp -= (v[1]-v[0])/(x[1]-x[0])*Bachelier(mu,(ActiveType)x[0],sqrt(var),(ActiveType)(1.0),-1);
+			}
+			sums.push_back( tmp );
+		}
+		else {
+		    sums.push_back((ActiveType)(0.0));
+		}
+		// intervall integrations
+		for (size_t i=0; i<x.size()-1; ++i) {
+			Q1  = Q2;
+			Q2  = Phi((x[i+1]-mu)/sqrt(var));
+			//Q12 = Phi(((x[i]+x[i+1])/2.0-mu)/sqrt(var));
+			sums.push_back( sums.back() + v[i+1]*Q2 - v[i]*Q1 - 0.5*(Q1 + Q2)*(v[i+1] - v[i]) );
+			//sums.push_back( sums.back() + v[i+1]*Q2 - v[i]*Q1 - Q12*(v[i+1] - v[i]) );
+		}
+		// high rate extrapolation
+		if (x.size()>1) {
+			sums.push_back( sums.back() + v[v.size()-1]*(1.0-Q2) +
+				(v[v.size()-1]-v[v.size()-2])/(x[x.size()-1]-x[x.size()-2])*Bachelier(mu,(ActiveType)x[x.size()-1],sqrt(var),(ActiveType)(1.0),+1) );
+			}
+		// reset intermediates
+		Q2  = 0;
+		Q1  = 0;
+		Q12 = 0;
+
+		res = sums.back();
+		for (size_t i=x.size(); i>0; --i) sums[i-1] = 0.0;
+		return res;
+	}
+
+	// extrapolate via call/put, partial integration
+	template <typename PassiveType, typename ActiveType> inline
+	ActiveType normalExpectation1(
+				std::vector<PassiveType>&   x,  //  grid points of payoff
+				std::vector<ActiveType>&    v,  //  payoff
+                ActiveType                  mu,  //  expectation of normal distribution
+			    ActiveType                  var  //  variance sigma^2 of normal distribution
+			      ) {
+		std::vector<ActiveType> sums;
+		ActiveType res, Q1, Q2 = Phi((x[0]-mu)/sqrt(var));
+		// low rate extrapolation
+		if (x.size()>1) sums.push_back( -(v[1]-v[0])/(x[1]-x[0])*Bachelier(mu,(ActiveType)x[0],sqrt(var),(ActiveType)(1.0),-1) );
+		else            sums.push_back((ActiveType)(0.0));
+		// intervall integrations
+		for (size_t i=0; i<x.size()-1; ++i) {
+			Q1  = Q2;
+			Q2  = Phi((x[i+1]-mu)/sqrt(var));
+			sums.push_back( sums.back() - 0.5*(Q1 + Q2)*(v[i+1] - v[i]) );
+		}
+		// high rate extrapolation
+		if (x.size()>1) {
+			sums.push_back( sums.back() +
+				(v[v.size()-1]-v[v.size()-2])/(x[x.size()-1]-x[x.size()-2])*Bachelier(mu,(ActiveType)x[x.size()-1],sqrt(var),(ActiveType)(1.0),+1) );
+			}
+		// initial mass
+		sums.push_back( sums.back() + v[v.size()-1] );
+		// reset intermediates
+		Q2  = 0;
+		Q1  = 0;
+		res = sums.back();
+		for (size_t i=x.size(); i>0; --i) sums[i-1] = 0.0;
+		return res;
+	}
+
+	// integrate via derivatives (partial integration)
+	template <typename PassiveType, typename ActiveType> inline
+	ActiveType normalExpectation0(
+				std::vector<PassiveType>&   x,  //  grid points of payoff
+				std::vector<ActiveType>&    v,  //  payoff
+				std::vector<ActiveType>&    g,  //  payoff
+                ActiveType                  mu,  //  expectation of normal distribution
+			    ActiveType                  var  //  variance sigma^2 of normal distribution
+			      ) {
+		std::vector<ActiveType> sums;
+		ActiveType res, Q1, Q2 = Phi((x[0]-mu)/sqrt(var));
+		// low rate extrapolation
+		if (x.size()>1) sums.push_back( -(v[1]-v[0])/(x[1]-x[0])*Bachelier(mu,(ActiveType)x[0],sqrt(var),(ActiveType)(1.0),-1) );
+		else    	    sums.push_back((ActiveType)(0.0));
+		// intervall integrations
+		for (size_t i=0; i<x.size()-1; ++i) {
+			Q1  = Q2;
+			Q2  = Phi((x[i+1]-mu)/sqrt(var));
+			sums.push_back( sums.back() - 0.5*(Q1*g[i] + Q2*g[i+1])*(x[i+1] - x[i]) );
+		}
+		// high rate extrapolation
+		if (x.size()>1) {
+			sums.push_back( sums.back() + 
+				(v[v.size()-1]-v[v.size()-2])/(x[x.size()-1]-x[x.size()-2])*Bachelier(mu,(ActiveType)x[x.size()-1],sqrt(var),(ActiveType)(1.0),+1) );
+			}
+		// initial mass
+		sums.push_back( sums.back() + v[v.size()-1] );
+		// reset intermediates
+		Q2  = 0;
+		Q1  = 0;
+		res = sums.back();
+		for (size_t i=x.size(); i>0; --i) sums[i-1] = 0.0;
+		return res;
+	}
+
 	template <typename PassiveType, typename ActiveType> inline
 	ActiveType normalExpectation(
 				std::vector<PassiveType>&   x,  //  grid points of payoff
@@ -236,7 +339,12 @@ namespace TemplateAuxilliaries {
 			    ActiveType                      var,  //  variance sigma^2 of normal distribution
 			    PassiveType                     tol   //  tolerance for accuracy
 			      ) {
-	    if (tol<=0) return normalExpectation( x, v, mu, var );
+
+		if ((std::min(x.size(),v.size())<2)||(x.size()!=v.size())) return 0;
+	    if (tol<=-2) return normalExpectation2( x, v, mu, var );
+	    if (tol<=-1) return normalExpectation1( x, v, mu, var );
+	    if (tol<=-0) return normalExpectation0( x, v, g, mu, var );
+		if ((g.size()<2)||(g.size()!=x.size())) return 0;
 		PassiveType x0, x1, x2, h, err, tmp, lambda, sum1;
 		ActiveType  v0, v1, v2;
 		ActiveType  y0, y1, y2, sum2, res;
@@ -246,7 +354,8 @@ namespace TemplateAuxilliaries {
 			x0 = DBL(mu);
 			v0 = interpolCSpline(x0,x,v,g);
 			y0 = v0 * exp(-(x0-mu)*(x0-mu)/2.0/var);
-			h = (1-2*i)*tol; // first stupid guess
+			//h = (1-2*i)*tol; // first stupid guess
+			h = (1-2*i)*x[x.size()-1]/x.size()*2;
 			x2 = x0 + h;
 			v2 = interpolCSpline(x2,x,v,g);
 			y2 = v2 * exp(-(x2-mu)*(x2-mu)/2.0/var);				      

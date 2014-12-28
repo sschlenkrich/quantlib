@@ -3846,6 +3846,9 @@
     <ClInclude Include="ql\experimental\template\hullwhite\fixedratebondoption.hpp">
       <Filter>experimental\template\hullwhite</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\templateintegrators.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
