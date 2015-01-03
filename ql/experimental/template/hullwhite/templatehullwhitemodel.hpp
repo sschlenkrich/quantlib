@@ -283,6 +283,7 @@ namespace QuantLib {
 		shortRateGrid_.resize(dim);
 		PassiveType vol = s / TemplateAuxilliaries::PhiInv(dim /(dim+1.0));
 		for (size_t i=0; i<dim; ++i) shortRateGrid_[i] = TemplateAuxilliaries::PhiInv((i+1.0)/(dim+1.0))*vol + r0;
+        //shortRateGrid_ = TemplateAuxilliaries::GaußTschebyschowIntegral().getGrid(r0-s, r0+s, dim);
 	}
 
 	template <class DateType, class PassiveType, class ActiveType> 
@@ -363,7 +364,7 @@ namespace QuantLib {
 			// evaluate ZCB() E^T [ V(r) ]
 			// cubic spline interpolation of solution V only for non trivial tolerance
 			// otherwise use simple integration scheme
-			if (tol>-1) {
+			if (tol>0) {
 	            TemplateAuxilliaries::c2splineDerivatives(shortRateGrid_,V[0][k+1],G[0][k+1],Z[0][k+1]);
 				if (estimateAccuracy_) {
 					for (j=k+1; j<Nexc+1; ++j) TemplateAuxilliaries::c2splineDerivatives(shortRateGrid_,V[j][k+1],G[j][k+1],Z[j][k+1]);

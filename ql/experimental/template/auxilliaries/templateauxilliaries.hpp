@@ -15,6 +15,8 @@
 
 #include <boost/math/special_functions/erf.hpp>
 #include <ql/experimental/template/auxilliaries/MinimADVariable2.hpp>
+#include <ql/experimental/template/auxilliaries/templateintegrators.hpp>
+
 
 
 namespace TemplateAuxilliaries {
@@ -106,7 +108,8 @@ namespace TemplateAuxilliaries {
 		for (size_t i=1; i<dim; ++i) z[i] = y[i] - a[i]*z[i-1];
 		// backward substitution, eliminate input
 		y[dim-1] = z[dim-1]/b[dim-1];
-		for (long i=dim-2; i>=0; --i) y[i] = (z[i] - c[i]*y[i+1])/b[i];
+		//for (long i=dim-2; i>=0; --i) y[i] = (z[i] - c[i]*y[i+1])/b[i];
+		for (size_t i=dim-1; i>0; --i) y[i-1] = (z[i-1] - c[i-1]*y[i])/b[i-1];
 	}
 
 	//  (Log) Cubic interpolation requires precomputed derivatives g[i] = y'[i]
@@ -330,6 +333,44 @@ namespace TemplateAuxilliaries {
 		return res;
 	}
 
+	// integration x_0, ..., x_N plus extrapolation via Bachelier formula
+	template <typename PassiveType, typename ActiveType> inline
+	ActiveType normalExpectation(
+				std::vector<PassiveType>&   x,    //  grid points of payoff
+				std::vector<ActiveType>&    v,    //  payoff
+                ActiveType                  mu,   //  expectation of normal distribution
+			    ActiveType                  var,  //  variance sigma^2 of normal distribution
+				std::string                 method="" //  integration method  
+			      ) {
+		ActiveType res=0.0;
+		if (x.size()==0) return res;
+
+	    // low rate extrapolation
+		ActiveType Q = Phi((x[0]-mu)/sqrt(var));
+		res = v[0]*Q;
+		if (x.size()==1) return res;  
+		res -= (v[1]-v[0])/(x[1]-x[0])*Bachelier(mu,(ActiveType)x[0],sqrt(var),(ActiveType)(1.0),-1);
+
+		// high rate extrapolation
+		Q = Phi((x[x.size()-1]-mu)/sqrt(var));
+		res += v[v.size()-1]*(1.0-Q);
+		res += (v[v.size()-1]-v[v.size()-2])/(x[x.size()-1]-x[x.size()-2])*Bachelier(mu,(ActiveType)x[x.size()-1],sqrt(var),(ActiveType)(1.0),+1);
+
+		// switch methods...
+
+		// default intervall integrations
+		ActiveType dQ, Q1, Q2 = Phi((x[0]-mu)/sqrt(var));
+		for (size_t i=0; i<x.size()-1; ++i) {
+			Q1  = Q2;
+			Q2  = Phi((x[i+1]-mu)/sqrt(var));
+			dQ  = Q2 - Q1;  // this may lead to cancellations
+			if (dQ<1.0e-16) dQ = phi((0.5*(x[i]+x[i+1])-mu)/sqrt(var)) * (x[i+1]-x[i]);  // reduce rounding errors
+			res += 0.5 * (v[i] + v[i+1]) * dQ;
+		}
+		return res;
+	}
+
+
 	template <typename PassiveType, typename ActiveType> inline
 	ActiveType normalExpectation(
 				std::vector<PassiveType>&   x,  //  grid points of payoff
@@ -341,9 +382,7 @@ namespace TemplateAuxilliaries {
 			      ) {
 
 		if ((std::min(x.size(),v.size())<2)||(x.size()!=v.size())) return 0;
-	    if (tol<=-2) return normalExpectation2( x, v, mu, var );
-	    if (tol<=-1) return normalExpectation1( x, v, mu, var );
-	    if (tol<=-0) return normalExpectation0( x, v, g, mu, var );
+	    if (tol<=0) return normalExpectation( x, v, mu, var );
 		if ((g.size()<2)||(g.size()!=x.size())) return 0;
 		PassiveType x0, x1, x2, h, err, tmp, lambda, sum1;
 		ActiveType  v0, v1, v2;
