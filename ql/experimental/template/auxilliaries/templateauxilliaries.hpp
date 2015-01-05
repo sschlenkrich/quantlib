@@ -197,147 +197,13 @@ namespace TemplateAuxilliaries {
 		return res;
 	}
 
-	// old reference implementation only for comparison!!!
-	template <typename PassiveType, typename ActiveType> inline
-	ActiveType normalExpectation3(
-				std::vector<PassiveType>&   x,  //  grid points of payoff
-				std::vector<ActiveType>&    v,  //  payoff
-                ActiveType                  mu,  //  expectation of normal distribution
-			    ActiveType                  var  //  variance sigma^2 of normal distribution
-			      ) {
-		std::vector<ActiveType> sums;
-		sums.push_back((ActiveType)0.0);
-		ActiveType res, Q1, Q2 = Phi((x[0]-mu)/sqrt(var));
-		for (size_t i=0; i<x.size()-1; ++i) {
-			Q1 = Q2;
-			Q2 = Phi((x[i+1]-mu)/sqrt(var));
-			sums.push_back( sums.back() + v[i+1]*Q2 - v[i]*Q1 - 0.5*(Q1 + Q2)*(v[i+1] - v[i]) );
-		}
-		Q2 = 0;
-		Q1 = 0;
-		res = sums.back();
-		for (size_t i=x.size(); i>0; --i) sums[i-1] = 0.0;
-		return res;
-	}
-
-	// extrapolate via call/put
-	template <typename PassiveType, typename ActiveType> inline
-	ActiveType normalExpectation2(
-				std::vector<PassiveType>&   x,  //  grid points of payoff
-				std::vector<ActiveType>&    v,  //  payoff
-                ActiveType                  mu,  //  expectation of normal distribution
-			    ActiveType                  var  //  variance sigma^2 of normal distribution
-			      ) {
-		std::vector<ActiveType> sums;
-		ActiveType res, Q1, Q12, Q2 = Phi((x[0]-mu)/sqrt(var));
-		// low rate extrapolation
-		if (x.size()>0) {
-			ActiveType tmp = v[0]*Q2;
-			if (x.size()>1) {
-				tmp -= (v[1]-v[0])/(x[1]-x[0])*Bachelier(mu,(ActiveType)x[0],sqrt(var),(ActiveType)(1.0),-1);
-			}
-			sums.push_back( tmp );
-		}
-		else {
-		    sums.push_back((ActiveType)(0.0));
-		}
-		// intervall integrations
-		for (size_t i=0; i<x.size()-1; ++i) {
-			Q1  = Q2;
-			Q2  = Phi((x[i+1]-mu)/sqrt(var));
-			//Q12 = Phi(((x[i]+x[i+1])/2.0-mu)/sqrt(var));
-			sums.push_back( sums.back() + v[i+1]*Q2 - v[i]*Q1 - 0.5*(Q1 + Q2)*(v[i+1] - v[i]) );
-			//sums.push_back( sums.back() + v[i+1]*Q2 - v[i]*Q1 - Q12*(v[i+1] - v[i]) );
-		}
-		// high rate extrapolation
-		if (x.size()>1) {
-			sums.push_back( sums.back() + v[v.size()-1]*(1.0-Q2) +
-				(v[v.size()-1]-v[v.size()-2])/(x[x.size()-1]-x[x.size()-2])*Bachelier(mu,(ActiveType)x[x.size()-1],sqrt(var),(ActiveType)(1.0),+1) );
-			}
-		// reset intermediates
-		Q2  = 0;
-		Q1  = 0;
-		Q12 = 0;
-
-		res = sums.back();
-		for (size_t i=x.size(); i>0; --i) sums[i-1] = 0.0;
-		return res;
-	}
-
-	// extrapolate via call/put, partial integration
-	template <typename PassiveType, typename ActiveType> inline
-	ActiveType normalExpectation1(
-				std::vector<PassiveType>&   x,  //  grid points of payoff
-				std::vector<ActiveType>&    v,  //  payoff
-                ActiveType                  mu,  //  expectation of normal distribution
-			    ActiveType                  var  //  variance sigma^2 of normal distribution
-			      ) {
-		std::vector<ActiveType> sums;
-		ActiveType res, Q1, Q2 = Phi((x[0]-mu)/sqrt(var));
-		// low rate extrapolation
-		if (x.size()>1) sums.push_back( -(v[1]-v[0])/(x[1]-x[0])*Bachelier(mu,(ActiveType)x[0],sqrt(var),(ActiveType)(1.0),-1) );
-		else            sums.push_back((ActiveType)(0.0));
-		// intervall integrations
-		for (size_t i=0; i<x.size()-1; ++i) {
-			Q1  = Q2;
-			Q2  = Phi((x[i+1]-mu)/sqrt(var));
-			sums.push_back( sums.back() - 0.5*(Q1 + Q2)*(v[i+1] - v[i]) );
-		}
-		// high rate extrapolation
-		if (x.size()>1) {
-			sums.push_back( sums.back() +
-				(v[v.size()-1]-v[v.size()-2])/(x[x.size()-1]-x[x.size()-2])*Bachelier(mu,(ActiveType)x[x.size()-1],sqrt(var),(ActiveType)(1.0),+1) );
-			}
-		// initial mass
-		sums.push_back( sums.back() + v[v.size()-1] );
-		// reset intermediates
-		Q2  = 0;
-		Q1  = 0;
-		res = sums.back();
-		for (size_t i=x.size(); i>0; --i) sums[i-1] = 0.0;
-		return res;
-	}
-
-	// integrate via derivatives (partial integration)
-	template <typename PassiveType, typename ActiveType> inline
-	ActiveType normalExpectation0(
-				std::vector<PassiveType>&   x,  //  grid points of payoff
-				std::vector<ActiveType>&    v,  //  payoff
-				std::vector<ActiveType>&    g,  //  payoff
-                ActiveType                  mu,  //  expectation of normal distribution
-			    ActiveType                  var  //  variance sigma^2 of normal distribution
-			      ) {
-		std::vector<ActiveType> sums;
-		ActiveType res, Q1, Q2 = Phi((x[0]-mu)/sqrt(var));
-		// low rate extrapolation
-		if (x.size()>1) sums.push_back( -(v[1]-v[0])/(x[1]-x[0])*Bachelier(mu,(ActiveType)x[0],sqrt(var),(ActiveType)(1.0),-1) );
-		else    	    sums.push_back((ActiveType)(0.0));
-		// intervall integrations
-		for (size_t i=0; i<x.size()-1; ++i) {
-			Q1  = Q2;
-			Q2  = Phi((x[i+1]-mu)/sqrt(var));
-			sums.push_back( sums.back() - 0.5*(Q1*g[i] + Q2*g[i+1])*(x[i+1] - x[i]) );
-		}
-		// high rate extrapolation
-		if (x.size()>1) {
-			sums.push_back( sums.back() + 
-				(v[v.size()-1]-v[v.size()-2])/(x[x.size()-1]-x[x.size()-2])*Bachelier(mu,(ActiveType)x[x.size()-1],sqrt(var),(ActiveType)(1.0),+1) );
-			}
-		// initial mass
-		sums.push_back( sums.back() + v[v.size()-1] );
-		// reset intermediates
-		Q2  = 0;
-		Q1  = 0;
-		res = sums.back();
-		for (size_t i=x.size(); i>0; --i) sums[i-1] = 0.0;
-		return res;
-	}
 
 	// integration x_0, ..., x_N plus extrapolation via Bachelier formula
 	template <typename PassiveType, typename ActiveType> inline
 	ActiveType normalExpectation(
 				std::vector<PassiveType>&   x,    //  grid points of payoff
 				std::vector<ActiveType>&    v,    //  payoff
+				std::vector<ActiveType>&    g,  //  derivatives of payoff for interpolation
                 ActiveType                  mu,   //  expectation of normal distribution
 			    ActiveType                  var,  //  variance sigma^2 of normal distribution
 				std::string                 method="" //  integration method  
@@ -346,26 +212,30 @@ namespace TemplateAuxilliaries {
 		if (x.size()==0) return res;
 
 	    // low rate extrapolation
-		ActiveType Q = Phi((x[0]-mu)/sqrt(var));
-		res = v[0]*Q;
+		ActiveType Q0 = Phi((x[0]-mu)/sqrt(var));
+		res = v[0]*Q0;
 		if (x.size()==1) return res;  
 		res -= (v[1]-v[0])/(x[1]-x[0])*Bachelier(mu,(ActiveType)x[0],sqrt(var),(ActiveType)(1.0),-1);
+		//res -= g[0]*Bachelier(mu,(ActiveType)x[0],sqrt(var),(ActiveType)(1.0),-1);
 
 		// high rate extrapolation
-		Q = Phi((x[x.size()-1]-mu)/sqrt(var));
-		res += v[v.size()-1]*(1.0-Q);
+		ActiveType QN = Phi((x[x.size()-1]-mu)/sqrt(var));
+		res += v[v.size()-1]*(1.0-QN);
 		res += (v[v.size()-1]-v[v.size()-2])/(x[x.size()-1]-x[x.size()-2])*Bachelier(mu,(ActiveType)x[x.size()-1],sqrt(var),(ActiveType)(1.0),+1);
+		//res += g[x.size()-1]*Bachelier(mu,(ActiveType)x[x.size()-1],sqrt(var),(ActiveType)(1.0),+1);
 
 		// switch methods...
 
 		// default intervall integrations
-		ActiveType dQ, Q1, Q2 = Phi((x[0]-mu)/sqrt(var));
+		// boundaries
+		res += v[v.size()-1]*QN - v[0]*Q0;
+		// replication via Put-Spreads
+		ActiveType B1, B2 = Bachelier(mu,(ActiveType)x[0],sqrt(var),(ActiveType)(1.0),-1);
 		for (size_t i=0; i<x.size()-1; ++i) {
-			Q1  = Q2;
-			Q2  = Phi((x[i+1]-mu)/sqrt(var));
-			dQ  = Q2 - Q1;  // this may lead to cancellations
-			if (dQ<1.0e-16) dQ = phi((0.5*(x[i]+x[i+1])-mu)/sqrt(var)) * (x[i+1]-x[i]);  // reduce rounding errors
-			res += 0.5 * (v[i] + v[i+1]) * dQ;
+			B1  = B2;
+			B2  = Bachelier(mu,(ActiveType)x[i+1],sqrt(var),(ActiveType)(1.0),-1);
+			res -= (v[i+1] - v[i]) / (x[i+1] - x[i]) * (B2 - B1);
+			//res -= 0.5 * (g[i] + g[i+1]) * (B2 - B1);
 		}
 		return res;
 	}
@@ -382,8 +252,8 @@ namespace TemplateAuxilliaries {
 			      ) {
 
 		if ((std::min(x.size(),v.size())<2)||(x.size()!=v.size())) return 0;
-	    if (tol<=0) return normalExpectation( x, v, mu, var );
 		if ((g.size()<2)||(g.size()!=x.size())) return 0;
+	    if (tol<=0) return normalExpectation( x, v, g, mu, var );
 		PassiveType x0, x1, x2, h, err, tmp, lambda, sum1;
 		ActiveType  v0, v1, v2;
 		ActiveType  y0, y1, y2, sum2, res;

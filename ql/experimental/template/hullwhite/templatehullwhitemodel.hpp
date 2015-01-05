@@ -362,9 +362,9 @@ namespace QuantLib {
 				V[0][k+1][i] = (V[k+1][k+1][i]>V[0][k+1][i]) ? V[k+1][k+1][i] : V[0][k+1][i];
 			}
 			// evaluate ZCB() E^T [ V(r) ]
-			// cubic spline interpolation of solution V only for non trivial tolerance
+			// cubic spline interpolation of solution V only if required for integration (for non trivial tolerance)
 			// otherwise use simple integration scheme
-			if (tol>0) {
+			if (1) {  // (tol>0)
 	            TemplateAuxilliaries::c2splineDerivatives(shortRateGrid_,V[0][k+1],G[0][k+1],Z[0][k+1]);
 				if (estimateAccuracy_) {
 					for (j=k+1; j<Nexc+1; ++j) TemplateAuxilliaries::c2splineDerivatives(shortRateGrid_,V[j][k+1],G[j][k+1],Z[j][k+1]);
