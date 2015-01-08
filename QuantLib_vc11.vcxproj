@@ -535,6 +535,8 @@
     <ClInclude Include="ql\experimental\template\hullwhite\fixedratebondoption.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\hullwhitemodels.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\templatehullwhitemodel.hpp" />
+    <ClInclude Include="ql\experimental\template\qgaussian\quasigaussianmodels.hpp" />
+    <ClInclude Include="ql\experimental\template\qgaussian\templatequasigaussian.hpp" />
     <ClInclude Include="ql\instruments\bonds\cpibond.hpp" />
     <ClInclude Include="ql\instruments\cpicapfloor.hpp" />
     <ClInclude Include="ql\instruments\cpiswap.hpp" />
@@ -1719,6 +1721,7 @@
     <ClCompile Include="ql\experimental\template\hullwhite\bondoptionengine.cpp" />
     <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp" />
     <ClCompile Include="ql\experimental\template\hullwhite\hullwhitemodels.cpp" />
+    <ClCompile Include="ql\experimental\template\qgaussian\quasigaussianmodels.cpp" />
     <ClCompile Include="ql\instruments\bonds\cpibond.cpp" />
     <ClCompile Include="ql\instruments\cpicapfloor.cpp" />
     <ClCompile Include="ql\instruments\cpiswap.cpp" />

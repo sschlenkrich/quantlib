@@ -340,6 +340,9 @@
     <Filter Include="experimental\template\hullwhite">
       <UniqueIdentifier>{db05000a-2e6f-4554-bee6-95a4ac87080e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\template\qgaussian">
+      <UniqueIdentifier>{e3babc89-3df7-4bc9-93ed-65a09bb0e4a7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -3849,6 +3852,12 @@
     <ClInclude Include="ql\experimental\template\auxilliaries\templateintegrators.hpp">
       <Filter>experimental\template\auxilliaries</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\template\qgaussian\templatequasigaussian.hpp">
+      <Filter>experimental\template\qgaussian</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\qgaussian\quasigaussianmodels.hpp">
+      <Filter>experimental\template\qgaussian</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6188,6 +6197,9 @@
     </ClCompile>
     <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp">
       <Filter>experimental\template\hullwhite</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\qgaussian\quasigaussianmodels.cpp">
+      <Filter>experimental\template\qgaussian</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
