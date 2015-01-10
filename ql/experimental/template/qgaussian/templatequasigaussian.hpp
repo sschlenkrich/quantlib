@@ -27,6 +27,8 @@
 #include <ql/option.hpp>
 #include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
 #include <ql/experimental/template/auxilliaries/templateintegrators.hpp>
+#include <ql/experimental/template/auxilliaries/templatesvd.hpp>
+
 
 
 namespace QuantLib {
@@ -104,13 +106,13 @@ namespace QuantLib {
 			}
 		};
 
-		bool checkModelParameters(bool throwException=true){
+		inline bool checkModelParameters(bool throwException=true){
 			bool ok = true;
 			// check yield curve...
 			// non-zero dimension
 			if (d_<1)               { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel number of factors larger zero required."); }
 			// non-empty time-grid
-			size_t n=times_size();
+			size_t n=times_.size();
 			if (n<1)                { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel non-empty time-grid required."); }
 			// dimensions of time-dependent parameters
 			if (lambda_.size()!=d_) { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel wrong lambda dimension."); }
@@ -131,7 +133,7 @@ namespace QuantLib {
 			}
 			// plausible parameter values
 			// ascending time-grid
-			for (size_t k=0; k<times_size()-1; ++k) {
+			for (size_t k=0; k<times_.size()-1; ++k) {
 				if (times_[k]>=times_[k+1]) { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel ascending time-grid required."); }
 			}
 			// non-negative values
@@ -152,7 +154,7 @@ namespace QuantLib {
 			}
 			// plausible correlation values
 			for (size_t i=0; i<d_; ++i) {
-				for (size_t j=i; j<d_ ++j) {
+				for (size_t j=i; j<d_; ++j) {
 					if (Gamma_[i][j]<0.0) {
 						ok = false;
 						if (throwException) QL_REQUIRE(false,"QuasiGaussianModel Gamma[i][j]>=0 required."); 
@@ -182,7 +184,89 @@ namespace QuantLib {
 			return ok;
 		}
 
+		// evaluate Df^T with Df^T * Df = Gamma and H*Hf^-1 via singular value decomposition
+		// return false (and throw exception) on error
+		inline bool factorMatrices(bool throwException=true){
+			bool ok = true;
+			// row-wise matrices
+			size_t dim = d_;
+			PassiveType *A  = new PassiveType[dim*dim];
+			PassiveType *U  = new PassiveType[dim*dim];
+			PassiveType *S  = new PassiveType[dim*dim];
+			PassiveType *VT = new PassiveType[dim*dim];
+			// dummy auxilliary variables
+			PassiveType work;
+			int lwork, info;
+			// Gamma = U S V^T
+			for (size_t i=0; i<dim; ++i) {
+				for (size_t j=0; j<dim; ++j) {
+					A[i*dim+j] = Gamma_[i][j];
+				}
+			}
+			TemplateAuxilliaries::svd("S","S",(int*)&dim,(int*)&dim,A,(int*)&dim,S,U,(int*)&dim,VT,(int*)&dim,&work,&lwork,&info);
+			// check min(S)>0
+			PassiveType minS=S[0];
+			for (size_t i=1; i<dim; ++i) if (S[i*dim+i]<minS) minS = S[i*dim+i];
+			if (minS<=0) { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel non-singular Gamma required."); }
+			// evaluate Df^T = U S^{1/2}
+			DfT_.resize(dim);
+			for (size_t i=0; i<dim; ++i) {
+				DfT_[i].resize(dim);
+				for (size_t j=0; j<dim; ++j) {
+					DfT_[i][j] = U[i*dim+j]*sqrt(S[j*dim+j]);
+				}
+			}
+			// H*Hf = [ exp{-chi_i*delta_j} ] = U S V^T
+			for (size_t i=0; i<dim; ++i) {
+				for (size_t j=0; j<dim; ++j) {
+					A[i*dim+j] = exp(-chi_[i]*delta_[j]);
+				}
+			}
+			TemplateAuxilliaries::svd("S","S",(int*)&dim,(int*)&dim,A,(int*)&dim,S,U,(int*)&dim,VT,(int*)&dim,&work,&lwork,&info);
+			// check min(S)>0
+			minS=S[0];
+			for (size_t i=1; i<dim; ++i) if (S[i*dim+i]<minS) minS = S[i*dim+i];
+			if (minS<=0) { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel non-singular Gamma required."); }
+			// evaluate H*Hf^-1 = V S^{-1} U^T
+			for (size_t i=0; i<dim; ++i) {
+				for (size_t j=0; j<dim; ++j) {
+					HHfInv_[i][j] = 0.0;
+					for (size_t k=0; k<dim; ++k) HHfInv_[i][j] += U[j*dim+k] * VT[k*dim+j] / S[k*dim+k];
+				}
+			}
+			// finished
+			return ok;
+		}
+
 		public:  // for debugging purpose we allow unsafe aaccess to restricted members, IN GENERAL NO CHECK FOR DIMENSIONS!
+
+		// Constructor
+		TemplateQuasiGaussianModel() { checkModelParameters(); factorMatrices(); }
+
+		TemplateQuasiGaussianModel(
+			const Handle<YieldTermStructure>& termStructure,
+		    // number of yield curve factors (excluding stoch. vol)
+		    size_t                     d,       // (d+1)-dimensional Brownian motion for [x(t), z(t)]^T
+		    // unique grid for time-dependent parameters
+		    const VecD &                times_,   // time-grid of left-constant model parameter values
+		    // time-dependent parameters, left-piecewise constant on times_-grid
+		    const MatA &                lambda,  // volatility
+		    const MatA &                alpha,   // shift
+		    const MatA &                b,       // f-weighting
+		    const VecA &                eta,     // vol-of-vol
+		    // time-homogeneous parameters
+		    const VecP &                delta,   // maturity of benchmark rates f(t,t+delta_i) 		
+		    const VecP &                chi,     // mean reversions
+		    const MatP &                Gamma,   // (benchmark rate) correlation matrix
+		    // stochastic volatility process parameters
+		    PassiveType                theta   // mean reversion speed
+			) : termStructure_(termStructure), d_(d), times_(times), lambda_(lambda), alpha_(alpha), b_(b), eta_(eta),
+			    delta_(delta), chi_(chi), Gamma_(Gamma), theta_(theta), z0_((PassiveType)1.0) {
+                checkModelParameters();
+				// calculate  DfT_
+				// calculate  HHfInv_
+				factorMatrices();
+			}
 
 		// helpers
 

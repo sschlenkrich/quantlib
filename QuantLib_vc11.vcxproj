@@ -531,6 +531,7 @@
     <ClInclude Include="ql\experimental\template\auxilliaries\templateintegrators.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\MinimADVariable2.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\templateauxilliaries.hpp" />
+    <ClInclude Include="ql\experimental\template\auxilliaries\templatesvd.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\bondoptionengine.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\fixedratebondoption.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\hullwhitemodels.hpp" />
