@@ -13,7 +13,7 @@
 			   dx(t)     = [ y(t)*1 - a*x(t) ] dt                                        + sqrt[z(t)]*sigma_x^T(t,x,y) dW
 			   dy(t)     = [ z(t)*sigma_x^T(t,x,y)*sigma_x(t,x,y) - a*y(t) - y(t)*a ] dt
 			   dz(t)     = theta [ z0 - z(t) ] dt                                        + eta(t)*sqrt[z(t)]           dZ
-			   d beta(t) = r(t)*beta(t) dt  (bank account numeraire)
+			   ds(t)     = r(t) dt  ( s(t) = int_0^t r(s) ds, for bank account numeraire)
 			   
 		   All methods are template based to allow incorporation of Automatic Differentiation
 		   tools
@@ -69,7 +69,7 @@ namespace QuantLib {
 
 		// additional parameters (calculated at initialisation via SVD)
 		MatP                       DfT_;     // factorized correlation matrix Df^T with Df^T * Df = Gamma
-		MatP                       HHfInv_;  // weighting matrix H*Hf^-1 = [ exp{-chi_i*delta_j} ]^-1
+		MatP                       HHfInv_;  // weighting matrix H*Hf^-1 = [ exp{-chi_j*delta_i} ]^-1
 
 		// lightweight container holding the current state of the yield curve
 		class State {
@@ -77,7 +77,7 @@ namespace QuantLib {
 		    VecA        x;
 			MatA        y;
 			ActiveType  z;
-			ActiveType  beta;
+			ActiveType  s;
 			// constructor
 			State( VecA X, size_t d) {
 				QL_REQUIRE(X.size()==d+d*d+1+1,"TemplateQuasiGaussianModel::State Constructor: Dimensions mismatch.");
@@ -88,8 +88,8 @@ namespace QuantLib {
 					y[i].resize(d);
 					for (size_t j=0; j<d; ++j) y[i][j] = X[d+i*d+j];  // y row-wise
 				}
-				z    = X[d+d*d  ];
-				beta = X[d+d*d+1];
+				z = X[d+d*d  ];
+				s = X[d+d*d+1];
 			}
 			inline void toVec(VecA& X) {
 				size_t d = x.size();
@@ -102,7 +102,7 @@ namespace QuantLib {
 				for (size_t k=0; k<d; ++k) X[k]       = x[k];
 				for (size_t k=0; k<d; ++k) X[d+i*d+j] = y[i][j];
 				X[d+d*d  ]                            = z;
-				X[d+d*d+1]                            = beta;
+				X[d+d*d+1]                            = s;
 			}
 		};
 
@@ -170,7 +170,7 @@ namespace QuantLib {
 						if (throwException) QL_REQUIRE(false,"QuasiGaussianModel Gamma[i][j]=Gamma[j][i] required."); 
 					}
 					if (i<j) {
-						if((Gamma_[i][j-1]>=Gamma_[i][j])|(Gamma_[i+1][j]>=Gamma_[i][j])) {
+						if((Gamma_[i][j-1]<=Gamma_[i][j])|(Gamma_[i+1][j]<=Gamma_[i][j])) {
 							ok = false;
 							if (throwException) QL_REQUIRE(false,"QuasiGaussianModel Gamma descending sub-diagonals required."); 
 						}
@@ -192,12 +192,12 @@ namespace QuantLib {
 			size_t dim = d_;
 			PassiveType *A  = new PassiveType[dim*dim];
 			PassiveType *U  = new PassiveType[dim*dim];
-			PassiveType *S  = new PassiveType[dim*dim];
+			PassiveType *S  = new PassiveType[dim];
 			PassiveType *VT = new PassiveType[dim*dim];
 			// dummy auxilliary variables
 			PassiveType work;
 			int lwork, info;
-			// Gamma = U S V^T
+			// Gamma = V^T S U
 			for (size_t i=0; i<dim; ++i) {
 				for (size_t j=0; j<dim; ++j) {
 					A[i*dim+j] = Gamma_[i][j];
@@ -206,35 +206,41 @@ namespace QuantLib {
 			TemplateAuxilliaries::svd("S","S",(int*)&dim,(int*)&dim,A,(int*)&dim,S,U,(int*)&dim,VT,(int*)&dim,&work,&lwork,&info);
 			// check min(S)>0
 			PassiveType minS=S[0];
-			for (size_t i=1; i<dim; ++i) if (S[i*dim+i]<minS) minS = S[i*dim+i];
+			for (size_t i=1; i<dim; ++i) if (S[i]<minS) minS = S[i];
 			if (minS<=0) { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel non-singular Gamma required."); }
-			// evaluate Df^T = U S^{1/2}
+			// evaluate Df^T = V^T S^{1/2}
 			DfT_.resize(dim);
 			for (size_t i=0; i<dim; ++i) {
 				DfT_[i].resize(dim);
 				for (size_t j=0; j<dim; ++j) {
-					DfT_[i][j] = U[i*dim+j]*sqrt(S[j*dim+j]);
+					DfT_[i][j] = VT[i*dim+j]*sqrt(S[j]);
 				}
 			}
-			// H*Hf = [ exp{-chi_i*delta_j} ] = U S V^T
+			// [ Hf H^{-1} ] = [ exp{-chi_j*delta_i} ] = V^T S U
 			for (size_t i=0; i<dim; ++i) {
 				for (size_t j=0; j<dim; ++j) {
-					A[i*dim+j] = exp(-chi_[i]*delta_[j]);
+					A[i*dim+j] = exp(-chi_[j]*delta_[i]);
 				}
 			}
 			TemplateAuxilliaries::svd("S","S",(int*)&dim,(int*)&dim,A,(int*)&dim,S,U,(int*)&dim,VT,(int*)&dim,&work,&lwork,&info);
 			// check min(S)>0
 			minS=S[0];
-			for (size_t i=1; i<dim; ++i) if (S[i*dim+i]<minS) minS = S[i*dim+i];
+			for (size_t i=1; i<dim; ++i) if (S[i]<minS) minS = S[i];
 			if (minS<=0) { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel non-singular Gamma required."); }
-			// evaluate H*Hf^-1 = V S^{-1} U^T
+			// evaluate H*Hf^-1 = U^T S^{-1} V
+			HHfInv_.resize(dim);
 			for (size_t i=0; i<dim; ++i) {
+				HHfInv_[i].resize(dim);
 				for (size_t j=0; j<dim; ++j) {
 					HHfInv_[i][j] = 0.0;
-					for (size_t k=0; k<dim; ++k) HHfInv_[i][j] += U[j*dim+k] * VT[k*dim+j] / S[k*dim+k];
+					for (size_t k=0; k<dim; ++k) HHfInv_[i][j] += U[k*dim+i] * VT[j*dim+k] / S[k];
 				}
 			}
 			// finished
+			delete A;
+			delete U;
+			delete S;
+			delete VT;
 			return ok;
 		}
 
@@ -248,7 +254,7 @@ namespace QuantLib {
 		    // number of yield curve factors (excluding stoch. vol)
 		    size_t                     d,       // (d+1)-dimensional Brownian motion for [x(t), z(t)]^T
 		    // unique grid for time-dependent parameters
-		    const VecD &                times_,   // time-grid of left-constant model parameter values
+		    const VecD &                times,   // time-grid of left-constant model parameter values
 		    // time-dependent parameters, left-piecewise constant on times_-grid
 		    const MatA &                lambda,  // volatility
 		    const MatA &                alpha,   // shift
@@ -277,7 +283,7 @@ namespace QuantLib {
 			if ((t <= times_[0]) | (times_.size()<2)) return 0;
 			if (t >  times_[times_.size()-2 ])        return times_.size()-1;
 			// bisection search
-			size_t a = 0, b = times_.size()-2
+			size_t a = 0, b = times_.size()-2;
 			while (b-a>1) {
 			    size_t s = (a + b) / 2;
 				if (t <= times_[s]) b = s;
@@ -285,6 +291,10 @@ namespace QuantLib {
 			}
 			return b;
 		}
+
+		// inspectors
+		inline const MatP& DfT()    { return DfT_;    }
+		inline const MatP& HHfInv() { return HHfInv_; }
 
 		// parameter functions (no dimension checks)
 		inline ActiveType lambda( size_t i, DateType t) { return lambda_[maxidx(i)][idx(t)]; }
@@ -370,8 +380,9 @@ namespace QuantLib {
 		// initial values for simulation
 		inline VecP initialValues() {
 			VecP X(size());
-			for (size_t k=0; k<d_ + d_*d_; ++k)       X[k] = 0.0;  // x(0), y(0)
-			for (size_t k=d_ + d_*d_; k<size(); ++k)  X[k] = 1.0;  // z(0), beta(0)
+			for (size_t k=0; k<d_ + d_*d_; ++k) X[k] = 0.0;  // x(0), y(0)
+			X[d_+d_*d_]                              = 1.0;  // z(0)
+			X[d_+d_*d_+1]                            = 0.0;  // s(0)
 			return X;
 		}
 
@@ -396,8 +407,8 @@ namespace QuantLib {
 			}
 			// z-variable theta [ z0 - z(t) ]
 			a[d_+d_*d_] = theta_*(z0_ - state.z);
-			// beta-variable r(t)*beta(t)
-			a[d_+d_*d_+1] = shortRate(t,state.x)*state.beta;
+			// s-variable r(t)
+			a[d_+d_*d_+1] = shortRate(t,state.x);
 			// finished
 			return a;
 		}
