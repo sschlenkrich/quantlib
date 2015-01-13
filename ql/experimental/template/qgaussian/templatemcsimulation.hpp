@@ -175,7 +175,34 @@ namespace QuantLib {
 			}
 		}
 
+
 	public:
+
+		// model type definition
+		typedef ProcessType process_type;
+
+		// input for payoffs
+		// combine model/process and simulated paths
+		class Path {
+		protected:
+			boost::shared_ptr<ProcessType>           process_;
+			TemplateMCSimulation*                    sim_;
+			size_t                                   idx_;
+		public:
+			Path(const boost::shared_ptr<ProcessType>           process,
+				 TemplateMCSimulation*                          sim,
+				 const size_t                                   idx )
+				 : process_(process), sim_(sim), idx_(idx) {}
+
+			inline ActiveType numeraire(DateType obsTime) {
+				return process_->numeraire(obsTime,sim_->state(idx_,obsTime));
+			}
+
+			inline ActiveType zeroBond(DateType obsTime, DateType payTime) {
+				return process_->zeroBond(obsTime, payTime, sim_->state(idx_,obsTime) );
+			}
+		};
+
 
 		TemplateMCSimulation( const boost::shared_ptr<ProcessType> process,
 			                  const VecD&                          simTimes,
@@ -233,18 +260,39 @@ namespace QuantLib {
 
 		// inspectors
 
+		inline const boost::shared_ptr<process_type> process() { return process_; }
+
 		inline const VecD& simTimes() { return simTimes_; }
 		inline const VecD& obsTimes() { return obsTimes_; }
-		inline size_t      nPaths()   { return X_.size(); }     
+		inline size_t      nPaths()   { return X_.size(); }
 
-		inline const MatA& path(const size_t path) {
-			QL_REQUIRE(path<X_.size(),"TemplateMCSimulation: path out of bounds.");
-			return X_[path]; 
+		inline const boost::shared_ptr<Path> path(const size_t idx) {
+			return boost::shared_ptr<Path>(new Path(process_,this,idx));
 		}
 
-		inline const MatA& brownian(const size_t path) {
-			QL_REQUIRE(path<dW_.size(),"TemplateMCSimulation: path out of bounds.");
-			return dW_[path]; 
+		inline const MatA& observedPath(const size_t idx) {
+			QL_REQUIRE(idx<X_.size(),"TemplateMCSimulation: path out of bounds.");
+			return X_[idx]; 
+		}
+
+		inline const VecA state(const size_t idx, const DateType t) {
+			QL_REQUIRE(idx<X_.size(),"TemplateMCSimulation: path out of bounds.");
+			size_t t_idx = TemplateAuxilliaries::idx(obsTimes_,t);
+			if (t==obsTimes_[t_idx]) return X_[idx][t_idx];
+			QL_REQUIRE(timeInterpolation_,"TemplateMCSimulation: time interpolation not allowed");
+			// allow extrapolation
+			if (t<obsTimes_[0])                   return X_[idx][0];
+			if (t>obsTimes_[obsTimes_.size()-1])  return X_[idx][X_[idx].size()-1];
+			VecA X(X_[idx][t_idx-1]);
+			// linear state interpolation (this is very crude) 
+			DateType rho = (t-obsTimes_[t_idx-1])/(obsTimes_[t_idx] - obsTimes_[t_idx-1]);
+			for (size_t k=0; k<X.size(); ++k) X[k] = (1.0-rho)*X[k] + rho*X_[idx][t_idx][k];
+			return X;
+		}
+
+		inline const MatA& brownian(const size_t idx) {
+			QL_REQUIRE(idx<dW_.size(),"TemplateMCSimulation: path out of bounds.");
+			return dW_[idx]; 
 		}
 
 

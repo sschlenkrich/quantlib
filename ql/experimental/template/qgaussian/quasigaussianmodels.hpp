@@ -17,6 +17,7 @@
 //#include <ql/experimental/template/auxilliaries/MinimADVariable2.hpp>
 #include <ql/experimental/template/qgaussian/templatequasigaussian.hpp>
 #include <ql/experimental/template/qgaussian/templatemcsimulation.hpp>
+#include <ql/experimental/template/qgaussian/templatemcpayoff.hpp>
 
 
 namespace QuantLib {
@@ -24,7 +25,11 @@ namespace QuantLib {
 	// basic binding of template parameters
 	typedef TemplateQuasiGaussianModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQuasiGaussianModel;
 
-	typedef TemplateMCSimulation<QuantLib::Time,QuantLib::Real,QuantLib::Real, typename RealQuasiGaussianModel> RealQGMCSimulation;
+	typedef TemplateMCSimulation<QuantLib::Time,QuantLib::Real,QuantLib::Real, QuantLib::RealQuasiGaussianModel> RealQGMCSimulation;
+
+	typedef TemplateMCPayoff< QuantLib::Time,QuantLib::Real,QuantLib::Real, QuantLib::RealQGMCSimulation, QuantLib::RealQGMCSimulation::Path > RealQGMCPayoff;
+
+	typedef RealQGMCPayoff::Pricer RealQGMCPayoffPricer;
 
 
 }

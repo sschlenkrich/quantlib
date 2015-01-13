@@ -79,7 +79,7 @@ namespace QuantLib {
 			ActiveType  z;
 			ActiveType  s;
 			// constructor
-			State( VecA X, size_t d) {
+			State( const VecA& X, const size_t d) {
 				QL_REQUIRE(X.size()==d+d*d+1+1,"TemplateQuasiGaussianModel::State Constructor: Dimensions mismatch.");
 				x.resize(d);
 				y.resize(d);
@@ -106,7 +106,7 @@ namespace QuantLib {
 			}
 		};
 
-		inline bool checkModelParameters(bool throwException=true){
+		inline bool checkModelParameters(const bool throwException=true){
 			bool ok = true;
 			// check yield curve...
 			// non-zero dimension
@@ -186,7 +186,7 @@ namespace QuantLib {
 
 		// evaluate Df^T with Df^T * Df = Gamma and H*Hf^-1 via singular value decomposition
 		// return false (and throw exception) on error
-		inline bool factorMatrices(bool throwException=true){
+		inline bool factorMatrices(const bool throwException=true){
 			bool ok = true;
 			// row-wise matrices
 			size_t dim = d_;
@@ -246,13 +246,14 @@ namespace QuantLib {
 
 		public:  // for debugging purpose we allow unsafe aaccess to restricted members, IN GENERAL NO CHECK FOR DIMENSIONS!
 
+
 		// Constructor
 		TemplateQuasiGaussianModel() { checkModelParameters(); factorMatrices(); }
 
 		TemplateQuasiGaussianModel(
 			const Handle<YieldTermStructure>& termStructure,
 		    // number of yield curve factors (excluding stoch. vol)
-		    size_t                     d,       // (d+1)-dimensional Brownian motion for [x(t), z(t)]^T
+		    const size_t                d,       // (d+1)-dimensional Brownian motion for [x(t), z(t)]^T
 		    // unique grid for time-dependent parameters
 		    const VecD &                times,   // time-grid of left-constant model parameter values
 		    // time-dependent parameters, left-piecewise constant on times_-grid
@@ -265,7 +266,7 @@ namespace QuantLib {
 		    const VecP &                chi,     // mean reversions
 		    const MatP &                Gamma,   // (benchmark rate) correlation matrix
 		    // stochastic volatility process parameters
-		    PassiveType                theta   // mean reversion speed
+		    const PassiveType           theta   // mean reversion speed
 			) : termStructure_(termStructure), d_(d), times_(times), lambda_(lambda), alpha_(alpha), b_(b), eta_(eta),
 			    delta_(delta), chi_(chi), Gamma_(Gamma), theta_(theta), z0_((PassiveType)1.0) {
                 checkModelParameters();
@@ -276,45 +277,33 @@ namespace QuantLib {
 
 		// helpers
 
-		inline size_t maxidx( size_t i ) { return (i<d_) ? i : d_-1; }
+		inline size_t maxidx( const size_t i ) { return (i<d_) ? i : d_-1; }
 
-	    // evaluate n s.t. t[n-1] < t <= t[n]
-		inline size_t idx( DateType t) {
-			if ((t <= times_[0]) | (times_.size()<2)) return 0;
-			if (t >  times_[times_.size()-2 ])        return times_.size()-1;
-			// bisection search
-			size_t a = 0, b = times_.size()-2;
-			while (b-a>1) {
-			    size_t s = (a + b) / 2;
-				if (t <= times_[s]) b = s;
-				else                a = s;
-			}
-			return b;
-		}
+		inline size_t idx( const DateType t ) { return TemplateAuxilliaries::idx(times_,t); }
 
 		// inspectors
 		inline const MatP& DfT()    { return DfT_;    }
 		inline const MatP& HHfInv() { return HHfInv_; }
 
 		// parameter functions (no dimension checks)
-		inline ActiveType lambda( size_t i, DateType t) { return lambda_[maxidx(i)][idx(t)]; }
-		inline ActiveType alpha ( size_t i, DateType t) { return alpha_[maxidx(i)][idx(t)];  }
-		inline ActiveType b     ( size_t i, DateType t) { return b_[maxidx(i)][idx(t)];      }
-		inline ActiveType eta   ( DateType t)           { return eta_[idx(t)];       }
+		inline ActiveType lambda( const size_t i, const DateType t) { return lambda_[maxidx(i)][idx(t)]; }
+		inline ActiveType alpha ( const size_t i, const DateType t) { return alpha_[maxidx(i)][idx(t)];  }
+		inline ActiveType b     ( const size_t i, const DateType t) { return b_[maxidx(i)][idx(t)];      }
+		inline ActiveType eta   ( const DateType t)                 { return eta_[idx(t)];       }
 
 		// analytic formulas
 
-		inline ActiveType G(size_t i, DateType t, DateType T) { return (1.0-exp(-chi_[i]*(T-t)))/chi_[i]; }
+		inline ActiveType G(const size_t i, const DateType t, const DateType T) { return (1.0-exp(-chi_[i]*(T-t)))/chi_[i]; }
 
 		inline
-        ActiveType shortRate ( DateType t, const VecA& x ) {
+        ActiveType shortRate ( const DateType t, const VecA& x ) {
 		    ActiveType r = termStructure_->forwardRate(t,t,Continuous);
 			for (size_t k=0; k<d_; ++k) r += x[k];
 			return r;
         }
 
 		inline
-		ActiveType forwardRate( DateType t, DateType T, const VecA& x, const MatA&  y) {
+		ActiveType forwardRate( const DateType t, const DateType T, const VecA& x, const MatA&  y) {
 			ActiveType f = termStructure_->forwardRate(t,T,Continuous);
 			for (size_t i=0; i<d_; ++i) {
 				ActiveType tmp = x[i];
@@ -325,7 +314,7 @@ namespace QuantLib {
 		}
 
 		inline
-		ActiveType ZeroBond( DateType t, DateType T, const VecA& x, const MatA&  y) {
+		ActiveType ZeroBond( const DateType t, const DateType T, const VecA& x, const MatA&  y) {
 		    PassiveType DF1  = termStructure_->discount(t);
 		    PassiveType DF2  = termStructure_->discount(T);
 		    ActiveType  Gx   = 0;   // G^T * x
@@ -341,14 +330,14 @@ namespace QuantLib {
 		}
 
 		inline  // diagonal vector
-		VecA sigma_f( DateType t, const VecA& x, const MatA&  y) {
+		VecA sigma_f( const DateType t, const VecA& x, const MatA&  y) {
 			VecA res(d_);
 			for (size_t k=0; k<d_; ++k) res[k] = lambda(k,t) * (alpha(k,t) + b(k,t)*forwardRate(t,t+delta_[k],x,y));
 			return res;
 		}
 
 		inline  // sigma_x^T
-		MatA sigma_xT( DateType t, const VecA& x, const MatA&  y) {
+		MatA sigma_xT( const DateType t, const VecA& x, const MatA&  y) {
 			MatA tmp(d_), res(d_);
 			VecA sigmaf = sigma_f(t,x,y);
 			// tmp = sigma_f * Df^T
@@ -387,7 +376,7 @@ namespace QuantLib {
 		}
 
 		// a[t,X(t)]
-		inline VecA drift( DateType t, VecA X) {
+		inline VecA drift( const DateType t, const VecA& X) {
 			VecA a(size());
 			State state(X,d_);
 			// x-variable [ y(t)*1 - chi*x(t) ]
@@ -414,7 +403,7 @@ namespace QuantLib {
 		}
 
 		// b[t,X(t)]
-		inline MatA diffusion( DateType t, VecA X) {
+		inline MatA diffusion( const DateType t, const VecA& X) {
 			MatA b(size());
 			for (size_t k=0; k<size(); ++k) b[k].resize(factors());
 			State state(X,d_);
@@ -440,6 +429,15 @@ namespace QuantLib {
 			return b;
 		}
 
+		inline ActiveType numeraire(const DateType t, const VecA& X) {
+			State state(X,d_);
+			return exp(state.s);
+		}
+
+		inline ActiveType zeroBond(const DateType t, const DateType T, const VecA& X) {
+			State state(X,d_);
+			return ZeroBond(t, T, state.x, state.y);
+		}
 
 	};
 

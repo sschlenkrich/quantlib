@@ -35,6 +35,24 @@ namespace TemplateAuxilliaries {
 		return x2;
 	}
 
+
+	// find index in ascending vector
+	// evaluate n s.t. t[n-1] < t <= t[n]
+	template <typename Type> inline
+	size_t idx(const std::vector<Type>& times, const Type t) {
+		if ((t <= times[0]) | (times.size()<2)) return 0;
+		if (t >  times[times.size()-2 ])        return times.size()-1;
+		// bisection search
+		size_t a = 0, b = times.size()-2;
+		while (b-a>1) {
+		    size_t s = (a + b) / 2;
+			if (t <= times[s]) b = s;
+			else                a = s;
+		}
+		return b;
+	}
+
+
 	//  normal distribution and Black76 functions
 
 	template <typename Type> inline
