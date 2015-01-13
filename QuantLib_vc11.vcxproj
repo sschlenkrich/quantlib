@@ -537,6 +537,7 @@
     <ClInclude Include="ql\experimental\template\hullwhite\hullwhitemodels.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\templatehullwhitemodel.hpp" />
     <ClInclude Include="ql\experimental\template\qgaussian\quasigaussianmodels.hpp" />
+    <ClInclude Include="ql\experimental\template\qgaussian\templatemcsimulation.hpp" />
     <ClInclude Include="ql\experimental\template\qgaussian\templatequasigaussian.hpp" />
     <ClInclude Include="ql\instruments\bonds\cpibond.hpp" />
     <ClInclude Include="ql\instruments\cpicapfloor.hpp" />

@@ -3861,6 +3861,9 @@
     <ClInclude Include="ql\experimental\template\auxilliaries\templatesvd.hpp">
       <Filter>experimental\template\auxilliaries</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\template\qgaussian\templatemcsimulation.hpp">
+      <Filter>experimental\template\qgaussian</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">

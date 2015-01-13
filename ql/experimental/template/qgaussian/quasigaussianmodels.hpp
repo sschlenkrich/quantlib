@@ -16,12 +16,16 @@
 //#include <ql/experimental/templatehullwhite/adtageo/adtageo.hpp>
 //#include <ql/experimental/template/auxilliaries/MinimADVariable2.hpp>
 #include <ql/experimental/template/qgaussian/templatequasigaussian.hpp>
+#include <ql/experimental/template/qgaussian/templatemcsimulation.hpp>
 
 
 namespace QuantLib {
 
 	// basic binding of template parameters
 	typedef TemplateQuasiGaussianModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQuasiGaussianModel;
+
+	typedef TemplateMCSimulation<QuantLib::Time,QuantLib::Real,QuantLib::Real, typename RealQuasiGaussianModel> RealQGMCSimulation;
+
 
 }
 

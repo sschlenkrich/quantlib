@@ -308,14 +308,14 @@ namespace QuantLib {
 
 		inline
         ActiveType shortRate ( DateType t, const VecA& x ) {
-		    ActiveType r = termStructure_forwardRate(t,t,Continuous);
+		    ActiveType r = termStructure_->forwardRate(t,t,Continuous);
 			for (size_t k=0; k<d_; ++k) r += x[k];
 			return r;
         }
 
 		inline
 		ActiveType forwardRate( DateType t, DateType T, const VecA& x, const MatA&  y) {
-			ActiveType f = termStructure_forwardRate(t,T,Continuous);
+			ActiveType f = termStructure_->forwardRate(t,T,Continuous);
 			for (size_t i=0; i<d_; ++i) {
 				ActiveType tmp = x[i];
 				for (size_t j=0; j<d_; ++j) tmp += y[i][j]*G(j,t,T);
@@ -352,14 +352,14 @@ namespace QuantLib {
 			MatA tmp(d_), res(d_);
 			VecA sigmaf = sigma_f(t,x,y);
 			// tmp = sigma_f * Df^T
-			for (size_z i=0; i<d_; ++i) {
+			for (size_t i=0; i<d_; ++i) {
 				tmp[i].resize(d_);
 				for (size_t j=0; j<d_; ++j) {
 					tmp[i][j] = sigmaf[i] * DfT_[i][j];
 				}
 			}
 			// res = H*Hf^-1 * tmp
-			for (size_z i=0; i<d_; ++i) {
+			for (size_t i=0; i<d_; ++i) {
 				res[i].resize(d_);
 				for (size_t j=0; j<d_; ++j) {
 					res[i][j] = 0;
@@ -397,16 +397,16 @@ namespace QuantLib {
 			}
 			// y-variable [ z(t)*sigma_x^T(t,x,y)*sigma_x(t,x,y) - chi*y(t) - y(t)*chi ]
 			MatA sigmaxT = sigma_xT(t,state.x,state.y);
-			for (i=0; i<d_; ++i) {
-				for (j=0; j<d_; ++j) {
+			for (size_t i=0; i<d_; ++i) {
+				for (size_t j=0; j<d_; ++j) {
 					a[d_+i*d_+j] = 0.0;
 					for (size_t k=0; k<d_; ++k) a[d_+i*d_+j] += sigmaxT[i][k]*sigmaxT[k][j];
 					a[d_+i*d_+j] *= state.z;
 					a[d_+i*d_+j] -= (chi_[i]+chi_[j])*state.y[i][j];
 				}
 			}
-			// z-variable theta [ z0 - z(t) ]
-			a[d_+d_*d_] = theta_*(z0_ - state.z);
+			// z-variable theta [ z0 - z(t)^+ ]  (full truncation)
+			a[d_+d_*d_] = theta_*(z0_ - ((state.z>0)?(state.z):(0.0)));
 			// s-variable r(t)
 			a[d_+d_*d_+1] = shortRate(t,state.x);
 			// finished
@@ -415,15 +415,15 @@ namespace QuantLib {
 
 		// b[t,X(t)]
 		inline MatA diffusion( DateType t, VecA X) {
-			Mat b(size());
+			MatA b(size());
 			for (size_t k=0; k<size(); ++k) b[k].resize(factors());
 			State state(X,d_);
-			ActiveType sqrtz = sqrt(abs(state.z));
+			ActiveType sqrtz = ((state.z>0)?(sqrt(state.z)):(0.0));   // full truncation
 			MatA sigmaxT = sigma_xT(t,state.x,state.y);
 			// x-variable sqrt[z(t)]*sigma_x^T(t,x,y)
 			for (size_t i=0; i<d_; ++i) {
 				for (size_t j=0; j<d_; ++j) b[i][j] =  sqrtz * sigmaxT[i][j];
-				b[i][d] = 0.0;
+				b[i][d_] = 0.0;
 			}
 			// y-variable 0
 			for (size_t i=d_; i<d_+d_*d_; ++i) {
@@ -432,10 +432,10 @@ namespace QuantLib {
 				}
 			}
 			// z-variable eta(t)*sqrt[z(t)]
-			for (size_t j=0; j<d_+1; ++j) b[d_+d_*d_][j] = 0.0;
-			b[d_+d_*d_][d] = eta(t)*sqrtz;
-			// beta-variable 0
-			for (size_t j=0; j<d_+2; ++j) b[d_+d_*d_][j] = 0.0;
+			for (size_t j=0; j<d_; ++j) b[d_+d_*d_][j] = 0.0;
+			b[d_+d_*d_][d_] = eta(t)*sqrtz;
+			// s-variable 0
+			for (size_t j=0; j<d_+1; ++j) b[d_+d_*d_+1][j] = 0.0;
 			// finished
 			return b;
 		}
