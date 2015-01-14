@@ -61,7 +61,7 @@ namespace QuantLib {
 		// we may precompute and store the Brownian increments
 		bool storeBrownians_;
 		// Brownian increments dW (nPaths x k*nSimTimes x nFactors), k = 2 for Richardson Extrapolation
-		std::vector< std::vector< std::vector<QuantLib::Real> > > dW_;
+		std::vector< MatD > dW_;
 
 		// paths stored X_[paths][obsTimes][size]
 		std::vector< MatA > X_;
@@ -131,6 +131,7 @@ namespace QuantLib {
 		}
 
 		// integrate X1 = X0 + drift()*dt + diffusion()*dW*sqrt(dt)
+		/*
 		inline VecA evolve( const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const std::vector<QuantLib::Real> & dW  ) {
 			VecA X1 = X0;
 			VecA a = process_->drift(t0, X0);
@@ -142,30 +143,34 @@ namespace QuantLib {
 			}
 			return X1;
 		}
+		*/
 
 		// simulate a single path X_[path]
 		inline void simulatePath(const size_t path) {
 			QL_REQUIRE(path<X_.size(),"TemplateMCSimulation: path index out of bounds.");
-			std::vector< std::vector<QuantLib::Real> > dWt = getBrownianIncrements(path);
+			MatD dWt = getBrownianIncrements(path);
 			// initialisation
 			VecA X0 = process_->initialValues();
+			VecA X1(X0.size()), X12(X0.size());
+			VecD dW( process_->factors() );
 			X_[path][0]    = X0;
 			size_t obs_idx = 1;
 			for (size_t sim_idx=1; sim_idx<simTimes_.size(); ++sim_idx) {
 				DateType dt = simTimes_[sim_idx]-simTimes_[sim_idx-1];
-				VecA X1;
 				if (richardsonExtrapolation_) {
 					// full Euler step
-					std::vector<QuantLib::Real> dW(dWt[2*(sim_idx-1)]);
-					for (size_t k=0; k<dW.size(); ++k) dW[k] = (dW[k] + dWt[2*(sim_idx-1)+1][k])/sqrt(2.0);
-					X1 = evolve(simTimes_[sim_idx-1],X0,dt,dW);
+					for (size_t k=0; k<dW.size(); ++k) dW[k] = (dWt[2*(sim_idx-1)][k] + dWt[2*(sim_idx-1)+1][k])/sqrt(2.0);
+					//X1 = evolve(simTimes_[sim_idx-1],X0,dt,dW);
+					process_->evolve(simTimes_[sim_idx-1],X0,dt,dW,X1);
 					// two half size Euler steps
-					VecA X12 = evolve(simTimes_[sim_idx-1],X0,dt/2.0, dWt[2*(sim_idx-1)]);
-					X0 = evolve(simTimes_[sim_idx-1]+dt/2.0,X12,dt/2.0,dWt[2*(sim_idx-1)+1]);
+					//VecA X12 = evolve(simTimes_[sim_idx-1],X0,dt/2.0, dWt[2*(sim_idx-1)]);
+					//X0 = evolve(simTimes_[sim_idx-1]+dt/2.0,X12,dt/2.0,dWt[2*(sim_idx-1)+1]);
+					process_->evolve(simTimes_[sim_idx-1],        X0,  dt/2.0, dWt[2*(sim_idx-1)],   X12);
+					process_->evolve(simTimes_[sim_idx-1]+dt/2.0, X12, dt/2.0, dWt[2*(sim_idx-1)+1], X0);
 					// extrapolation
 					for (size_t k=0; k<X1.size(); ++k) X1[k] = 2*X0[k] - X1[k];
 				} else { // only full Euler step
-					X1 = evolve(simTimes_[sim_idx-1],X0,dt,dWt[sim_idx-1]);
+					process_->evolve(simTimes_[sim_idx-1],X0,dt,dWt[sim_idx-1], X1);
 				}
 				if (simTimes_[sim_idx]==obsTimes_[obs_idx]) {
 					X_[path][obs_idx]=X1;
@@ -230,9 +235,13 @@ namespace QuantLib {
 			while ((obs_idx<obsTimes_.size()) && (obsTimes_[obs_idx]<=0)) ++obs_idx;
 			// we alway start at t=0
 			simTimes_.push_back(0.0);
+			// we use some tolerance for checking equal dates to avoid rounding issues
+			// maybe even a larger tolerance than one day could make sense
+			DateType OneDay = 1.0/365.25;
 			while ((sim_idx<simTimes.size()) || (obs_idx<obsTimes_.size())) {
-				if  ((sim_idx<simTimes.size())&&(obs_idx<obsTimes_.size())&&(simTimes[sim_idx]==obsTimes_[obs_idx])) {
-					simTimes_.push_back(simTimes[sim_idx]);
+				if  ((sim_idx<simTimes.size())&&(obs_idx<obsTimes_.size())&&
+					(abs(simTimes[sim_idx]-obsTimes_[obs_idx])<OneDay)) {
+					simTimes_.push_back(obsTimes_[obs_idx]);
 					++sim_idx;
 					++obs_idx;
 					continue;

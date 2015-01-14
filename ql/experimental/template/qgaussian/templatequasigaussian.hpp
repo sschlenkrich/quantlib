@@ -390,7 +390,7 @@ namespace QuantLib {
 				for (size_t j=0; j<d_; ++j) {
 					a[d_+i*d_+j] = 0.0;
 					for (size_t k=0; k<d_; ++k) a[d_+i*d_+j] += sigmaxT[i][k]*sigmaxT[k][j];
-					a[d_+i*d_+j] *= state.z;
+					a[d_+i*d_+j] *= ((state.z>0)?(state.z):(0.0));  // full truncation
 					a[d_+i*d_+j] -= (chi_[i]+chi_[j])*state.y[i][j];
 				}
 			}
@@ -428,6 +428,20 @@ namespace QuantLib {
 			// finished
 			return b;
 		}
+
+		// integrate X1 = X0 + drift()*dt + diffusion()*dW*sqrt(dt)
+		inline void evolve( const DateType t0, const VecA& X0, const DateType dt, const VecD& dW, VecA& X1 ) {
+			// ensure X1 has size of X0
+			VecA a = drift(t0, X0);
+			MatA b = diffusion(t0, X0);
+			for (size_t i=0; i<X1.size(); ++i) {
+				X1[i] = 0.0;
+				for (size_t j=0; j<dW.size(); ++j) X1[i] += b[i][j]*dW[j];
+				X1[i] = X0[i] + a[i]*dt + X1[i]*sqrt(dt);
+			}
+			return;
+		}
+
 
 		inline ActiveType numeraire(const DateType t, const VecA& X) {
 			State state(X,d_);
