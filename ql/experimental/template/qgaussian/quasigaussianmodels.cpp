@@ -13,7 +13,7 @@
 
 namespace QuantLib {
 
-    RealQuasiGaussianModel ufo;
+    // nothing to implement
 
 }
 
