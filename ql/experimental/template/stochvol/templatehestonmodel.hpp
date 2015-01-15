@@ -11,6 +11,7 @@
 #define quantlib_templatehestonmodels_hpp
 
 #include <complex>
+#include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <ql/errors.hpp>
 #include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
@@ -26,6 +27,10 @@ namespace QuantLib {
     //using namespace std;
 	
 	// heston model with analytic vanilla pricing 
+	//    dS(t) = S(t) sqrt[ v(t) ] dW(t)
+    //    dv(t) = kappa [theta - v(t)] dt + sigma sqrt[ v(t) ] dZ(t)
+    //    dW(t) dZ(t) = rho dt
+
 	template <class DateType, class PassiveType, class ActiveType>
 	class TemplateHestonModel {
     //typedef std::complex<Real> complex;
@@ -178,6 +183,48 @@ namespace QuantLib {
         }; // class IntegrandGatheral
 
 	};  // TemplateHestonModel        
+
+	// general stochastic volatility model with constant parameters and analytic vanilla pricing formula
+	//
+	//    dS(t) = lambda [ b S(T) + (1-b) L ] sqrt[z(t)] dW(t)
+	//    dz(t) = theta [ m - z(t) ] dt + eta sqrt[z(t)] dZ(t)
+	//    dW(t) dZ(t) = rho dt
+	//
+	template <class DateType, class PassiveType, class ActiveType>
+	class TemplateStochVolModel {
+	protected:
+		boost::shared_ptr< TemplateHestonModel<DateType,PassiveType,ActiveType> > hestonModel_;
+		ActiveType                                                                shift_;
+	public:
+		TemplateStochVolModel ( const ActiveType   lambda,
+			                    const ActiveType   b,
+								const ActiveType   L,
+								const ActiveType   theta,
+								const ActiveType   m,
+								const ActiveType   eta,
+								const ActiveType   z0,
+								const ActiveType   rho )
+		: hestonModel_(new TemplateHestonModel<DateType,PassiveType,ActiveType>(
+		    // state transformations ~S(t) = S(t) + (1-b)/b L, v(t) = z(t) lambda^2 b^2
+			theta,                // kappa
+			m*lambda*lambda*b*b,  // theta
+			eta*lambda*b,         // sigma
+			rho,                  // rho
+			z0*lambda*lambda*b*b  // v0
+			) ), shift_( (1.0-b)/b*L ) {}
+
+        // undiscounted expectation of vanilla payoff
+        ActiveType vanillaOption(const PassiveType forwardPrice,
+                                 const PassiveType strikePrice,
+                                 const DateType    term,
+                                 const int         callOrPut,
+                                 const PassiveType accuracy,
+                                 const size_t      maxEvaluations) {
+			return hestonModel_->vanillaOption( forwardPrice+shift_, strikePrice+shift_, term, callOrPut, accuracy, maxEvaluations );
+		}
+
+
+	};
 
 
 }
