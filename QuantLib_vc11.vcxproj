@@ -540,6 +540,8 @@
     <ClInclude Include="ql\experimental\template\qgaussian\templatemcpayoff.hpp" />
     <ClInclude Include="ql\experimental\template\qgaussian\templatemcsimulation.hpp" />
     <ClInclude Include="ql\experimental\template\qgaussian\templatequasigaussian.hpp" />
+    <ClInclude Include="ql\experimental\template\stochvol\hestonmodels.hpp" />
+    <ClInclude Include="ql\experimental\template\stochvol\templatehestonmodel.hpp" />
     <ClInclude Include="ql\instruments\bonds\cpibond.hpp" />
     <ClInclude Include="ql\instruments\cpicapfloor.hpp" />
     <ClInclude Include="ql\instruments\cpiswap.hpp" />
@@ -1725,6 +1727,7 @@
     <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp" />
     <ClCompile Include="ql\experimental\template\hullwhite\hullwhitemodels.cpp" />
     <ClCompile Include="ql\experimental\template\qgaussian\quasigaussianmodels.cpp" />
+    <ClCompile Include="ql\experimental\template\stochvol\hestonmodels.cpp" />
     <ClCompile Include="ql\instruments\bonds\cpibond.cpp" />
     <ClCompile Include="ql\instruments\cpicapfloor.cpp" />
     <ClCompile Include="ql\instruments\cpiswap.cpp" />

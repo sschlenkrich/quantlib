@@ -343,6 +343,9 @@
     <Filter Include="experimental\template\qgaussian">
       <UniqueIdentifier>{e3babc89-3df7-4bc9-93ed-65a09bb0e4a7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\template\stochvol">
+      <UniqueIdentifier>{31656015-7fda-4b72-8955-256980fbbd24}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -3867,6 +3870,12 @@
     <ClInclude Include="ql\experimental\template\qgaussian\templatemcpayoff.hpp">
       <Filter>experimental\template\qgaussian</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\template\stochvol\hestonmodels.hpp">
+      <Filter>experimental\template\stochvol</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\stochvol\templatehestonmodel.hpp">
+      <Filter>experimental\template\stochvol</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6209,6 +6218,9 @@
     </ClCompile>
     <ClCompile Include="ql\experimental\template\qgaussian\quasigaussianmodels.cpp">
       <Filter>experimental\template\qgaussian</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\stochvol\hestonmodels.cpp">
+      <Filter>experimental\template\stochvol</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
