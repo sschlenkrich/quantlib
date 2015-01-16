@@ -186,7 +186,7 @@ namespace QuantLib {
 
 	// general stochastic volatility model with constant parameters and analytic vanilla pricing formula
 	//
-	//    dS(t) = lambda [ b S(T) + (1-b) L ] sqrt[z(t)] dW(t)
+	//    dS(t) = lambda [ b S(t) + (1-b) L ] sqrt[z(t)] dW(t)
 	//    dz(t) = theta [ m - z(t) ] dt + eta sqrt[z(t)] dZ(t)
 	//    dW(t) dZ(t) = rho dt
 	//
@@ -222,10 +222,67 @@ namespace QuantLib {
                                  const size_t      maxEvaluations) {
 			return hestonModel_->vanillaOption( forwardPrice+shift_, strikePrice+shift_, term, callOrPut, accuracy, maxEvaluations );
 		}
-
-
 	};
 
+
+    // general stochastic volatility model interface with time-dependent parameters and parameter averaging pricing formula
+	//
+	//    dS(t) = lambda(t) [ b(t) S(t) + (1-b(t)) L ] sqrt[z(t)] dW(t)
+	//    dz(t) = theta [ m - z(t) ] dt + eta(t) sqrt[z(t)] dZ(t)
+	//    dW(t) dZ(t) = rho dt
+	//
+	template <class DateType, class PassiveType, class ActiveType>
+	class TemplateTimeDependentStochVolModel {
+	public:
+		// inspectors
+        virtual const ActiveType  lambda( DateType t) = 0;
+	    virtual const ActiveType  b( DateType t)      = 0;
+	    virtual const ActiveType  L()                 = 0;
+	    virtual const ActiveType  theta()             = 0;
+	    virtual const ActiveType  m()                 = 0;
+	    virtual const ActiveType  eta( DateType t)    = 0;
+	    virtual const ActiveType  z0()                = 0;
+	    virtual const ActiveType  rho()               = 0;
+		// averaging formula implementations
+        virtual const ActiveType  averageLambda( DateType T) = 0;
+	    virtual const ActiveType  averageB     ( DateType T) = 0;
+	    virtual const ActiveType  averageEta   ( DateType T) = 0;
+
+		// averaging using Gauss-Lobatto integration
+		class GaussLobatto : public TemplateTimeDependentStochVolModel {
+		protected:
+			// Gauss Lobatto options
+			PassiveType absAccuracy_ = 1;
+			PassiveType relAccuracy_ = 1.0e-4;
+			size_t      maxEvaluations_ = 1000;
+			//eta averaging
+			struct f1 {
+				GaussLobatto* m_;
+				DateType s_;
+				f1(GaussLobatto* m, DateType s) : m_(m), s_(s) {}
+				inline ActiveType operator() ( DateType t ) { return m_->lambda(t)*m_->lambda(t) * exp(-m_->theta()*(t-s_)); }
+			};
+			struct I1 {
+				GaussLobatto* m_;
+				DateType T_;
+				I1( GaussLobatto* m, DateType T ) : m_(m), T_(T) {}
+				inline ActiveType operator() ( DateType s ) {
+					return TemplateAuxilliaries::GaussLobatto<ActiveType>(m_->maxEvaluations(),  m_->absAccuracy(), m_->relAccuracy()).integrate(f1(m,s),s,T_);
+				};
+
+			}
+		public:
+			// inspectors
+			inline PassiveType absAccuracy() const { return absAccuracy_; }
+			inline PassiveType relAccuracy() const { return relAccuracy_; }
+			inline size_t      maxEvaluations() const { return maxEvaluations_; } 
+		    // averaging...
+			const ActiveType  averageEta   ( DateType T) {
+
+				return 0;
+			}
+		};
+	};
 
 }
 
