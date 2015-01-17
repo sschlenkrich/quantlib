@@ -13,6 +13,7 @@
 #ifndef quantlib_templateintegrators_hpp
 #define quantlib_templateintegrators_hpp
 
+#include <boost/function.hpp>
 //#include <boost/math/special_functions/erf.hpp>
 //#include <ql/experimental/template/auxilliaries/MinimADVariable2.hpp>
 
