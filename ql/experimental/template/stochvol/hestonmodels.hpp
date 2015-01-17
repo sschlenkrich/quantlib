@@ -10,6 +10,7 @@
 #ifndef quantlib_hestonmodels_hpp
 #define quantlib_hestonmodels_hpp
 
+#include <ql/types.hpp>
 #include <ql/experimental/template/auxilliaries/MinimADVariable2.hpp>
 #include <ql/experimental/template/stochvol/templatehestonmodel.hpp>
 
@@ -23,7 +24,10 @@ namespace QuantLib {
     typedef TemplateHestonModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealHestonModel;
     typedef TemplateHestonModel<QuantLib::Time,QuantLib::Real, MinimAD::Variable<Real> > MinimADHestonModel;
 
-	typedef TemplateStochVolModel <QuantLib::Time,QuantLib::Real,QuantLib::Real> RealStochVolModel;
+	typedef TemplateStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealStochVolModel;
+
+	typedef TemplateTimeDependentStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealTDStochVolModel;
+	typedef TemplateTimeDependentStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real>::PWCNumerical RealPWCNumericalStochVolModel;
 
     class ActiveHestonModel : public RealHestonModel {
     private:

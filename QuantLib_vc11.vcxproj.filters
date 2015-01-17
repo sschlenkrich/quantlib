@@ -3876,6 +3876,12 @@
     <ClInclude Include="ql\experimental\template\stochvol\templatehestonmodel.hpp">
       <Filter>experimental\template\stochvol</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\Complex.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\gausslobatto.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">

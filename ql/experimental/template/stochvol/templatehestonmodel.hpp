@@ -14,6 +14,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <ql/errors.hpp>
+#include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
 #include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
 #include <ql/experimental/template/auxilliaries/Complex.hpp>
 
@@ -235,27 +236,105 @@ namespace QuantLib {
 	class TemplateTimeDependentStochVolModel {
 	public:
 		// inspectors
-        virtual const ActiveType  lambda( DateType t) = 0;
-	    virtual const ActiveType  b( DateType t)      = 0;
-	    virtual const ActiveType  L()                 = 0;
-	    virtual const ActiveType  theta()             = 0;
-	    virtual const ActiveType  m()                 = 0;
-	    virtual const ActiveType  eta( DateType t)    = 0;
-	    virtual const ActiveType  z0()                = 0;
-	    virtual const ActiveType  rho()               = 0;
+        virtual ActiveType  lambda( const DateType t) = 0;
+	    virtual ActiveType  b(      const DateType t) = 0;
+	    virtual ActiveType  L()                       = 0;
+	    virtual ActiveType  theta()                   = 0;
+	    virtual ActiveType  m()                       = 0;
+	    virtual ActiveType  eta(    const DateType t) = 0;
+	    virtual ActiveType  z0()                      = 0;
+	    virtual ActiveType  rho()                     = 0;
+		// helper functions for vol averaging
+
+/*
+Function A_CIR(c1, c2, dt, z0, theta, eta)
+    gamma = (theta ^ 2 + 2 * eta ^ 2 * c2) ^ 0.5
+    t1 = theta * z0 / eta ^ 2 * (theta + gamma) * dt
+    t2 = 1 + (theta + gamma + c1 * eta ^ 2) * (Exp(gamma * dt) - 1) / 2 / gamma
+    If t2 <= 0 Then
+        A_CIR = "Error! Log of negative argument."
+        Exit Function
+    End If
+    A_CIR = t1 - 2 * theta * z0 / eta ^ 2 * Log(t2)
+End Function
+
+Function B_CIR(c1, c2, dt, z0, theta, eta)
+    gamma = (theta ^ 2 + 2 * eta ^ 2 * c2) ^ 0.5
+    numer = (2 * c2 - theta * c1) * (1 - Exp(-gamma * dt)) + gamma * c1 * (1 + Exp(-gamma * dt))
+    denum = (theta + gamma + c1 * eta ^ 2) * (1 - Exp(-gamma * dt)) + 2 * gamma * Exp(-gamma * dt)
+    B_CIR = numer / denum
+End Function
+*/
+
 		// averaging formula implementations
-        virtual const ActiveType  averageLambda( DateType T) = 0;
-	    virtual const ActiveType  averageB     ( DateType T) = 0;
-	    virtual const ActiveType  averageEta   ( DateType T) = 0;
+        virtual ActiveType  averageLambda( const DateType T) = 0;
+	    virtual ActiveType  averageB     ( const DateType T) = 0;
+	    virtual ActiveType  averageEta   ( const DateType T) = 0;
+
+
+		// embeded classes
+
+		class PieceWiseConstant : TemplateTimeDependentStochVolModel {
+		protected:
+		    // check for dimensions
+		    bool isConsistent_;
+		    // time grid
+		    std::vector<DateType>     times_;
+            // time-dependent model parameters
+            std::vector<ActiveType>   lambda_;
+	        std::vector<ActiveType>   b_;
+	        std::vector<ActiveType>   eta_;
+            // time-homogeneous model parameters
+		    ActiveType                L_;
+	        ActiveType                theta_;
+	        ActiveType                m_;
+	        ActiveType                z0_;
+	        ActiveType                rho_;
+			// helper
+			inline size_t idx( const DateType t ) { return TemplateAuxilliaries::idx(times_,t); }
+		public:
+			// constructor
+			PieceWiseConstant( const std::vector<DateType>&    times,
+				               const std::vector<ActiveType>&  lambda,
+							   const std::vector<ActiveType>&  b,
+							   const std::vector<ActiveType>&  eta,
+							   const ActiveType                L,
+							   const ActiveType                theta,
+							   const ActiveType                m,
+							   const ActiveType                z0,
+							   const ActiveType                rho )
+			    : times_(times), lambda_(lambda), b_(b), eta_(eta), L_(L), theta_(theta), m_(m), z0_(z0), rho_(rho) {
+                isConsistent_ = true;
+				QL_REQUIRE(times_.size()>0,"TemplateTimeDependentStochVolModel::PieceWiseConstant: non-empty times required");
+				for (size_t k=0; k<times_.size()-1; ++k) QL_REQUIRE(times_[k]<times_[k+1],"TemplateTimeDependentStochVolModel::PieceWiseConstant: ascending time-grid required");
+				QL_REQUIRE(lambda_.size()==times_.size(),"TemplateTimeDependentStochVolModel::PieceWiseConstant: lambda dimension mismatch");
+				QL_REQUIRE(b_.size()     ==times_.size(),"TemplateTimeDependentStochVolModel::PieceWiseConstant: b dimension mismatch");
+				QL_REQUIRE(eta_.size()   ==times_.size(),"TemplateTimeDependentStochVolModel::PieceWiseConstant: eta dimension mismatch");
+			}
+			// inspectors
+			virtual ActiveType  lambda( const DateType t)  { return lambda_[idx(t)]; }
+	        virtual ActiveType  b(      const DateType t)  { return b_[idx(t)];      }
+	        virtual ActiveType  eta(    const DateType t)  { return eta_[idx(t)];    }
+			virtual ActiveType  L()                        { return L_;              }
+			virtual ActiveType  theta()                    { return theta_;          }
+			virtual ActiveType  m()                        { return m_;              }
+			virtual ActiveType  z0()                       { return z0_;             }
+			virtual ActiveType  rho()                      { return rho_;            }
+
+		};
 
 		// averaging using Gauss-Lobatto integration
 		class GaussLobatto : public TemplateTimeDependentStochVolModel {
 		protected:
 			// Gauss Lobatto options
-			PassiveType absAccuracy_ = 1;
-			PassiveType relAccuracy_ = 1.0e-4;
-			size_t      maxEvaluations_ = 1000;
-			//eta averaging
+			PassiveType absAccuracy_;
+			PassiveType relAccuracy_;
+			size_t      maxEvaluations_;
+			// ode solver step size
+			DateType    dt_;
+			// abbreviation
+#define _integr_ TemplateAuxilliaries::GaussLobatto<ActiveType>(m_->maxEvaluations(),  m_->absAccuracy(), m_->relAccuracy()).integrate
+			//eta averaging Piterbarg, Th. 9.3.6
 			struct f1 {
 				GaussLobatto* m_;
 				DateType s_;
@@ -266,23 +345,178 @@ namespace QuantLib {
 				GaussLobatto* m_;
 				DateType T_;
 				I1( GaussLobatto* m, DateType T ) : m_(m), T_(T) {}
-				inline ActiveType operator() ( DateType s ) {
-					return TemplateAuxilliaries::GaussLobatto<ActiveType>(m_->maxEvaluations(),  m_->absAccuracy(), m_->relAccuracy()).integrate(f1(m,s),s,T_);
-				};
-
-			}
+				inline ActiveType operator() ( DateType s ) { return _integr_(f1(m_,s),s,T_); }
+			};
+			struct f2 {
+				GaussLobatto* m_;
+				DateType r_;
+				DateType T_;
+				f2(GaussLobatto* m, DateType r, DateType T ) : m_(m), r_(r), T_(T) {}
+				inline ActiveType operator() ( DateType s ) { return m_->lambda(s)*m_->lambda(s) * exp(-2.0*m_->theta()*(s-r_)) * I1(m_,T_)(s); }
+			};
+			struct I2 {  // rho_T(r)
+				GaussLobatto* m_;
+				DateType T_;
+				I2( GaussLobatto* m, DateType T ) : m_(m), T_(T) {}
+				inline ActiveType operator() ( DateType r ) { return _integr_(f2(m_,r,T_),r,T_); }
+			};
+			struct f3 {
+				GaussLobatto* m_;
+				DateType T_;
+				f3(GaussLobatto* m, DateType T ) : m_(m), T_(T) {}
+				inline ActiveType operator() ( DateType t ) { return m_->eta(t)*m_->eta(t) * I2(m_,T_)(t); }
+			};
+			struct I3 {  // numerator
+				GaussLobatto* m_;
+				I3( GaussLobatto* m ) : m_(m) {}
+				inline ActiveType operator() ( DateType T ) { return _integr_(f3(m_,T),0,T); }
+			};
+			struct I4 {  // denumerator
+				GaussLobatto* m_;
+				I4( GaussLobatto* m ) : m_(m) {}
+				inline ActiveType operator() ( DateType T ) { return _integr_(I2(m_,T),0,T); }
+			};
+			// b averaging, Piterbarg, (9.36) rearranged for exp{...}
+			struct f4 {
+				GaussLobatto* m_;
+				f4(GaussLobatto* m ) : m_(m) {}
+				inline ActiveType operator() ( DateType s ) { return m_->lambda(s) * m_->lambda(s); }
+			};
+			struct I5 {
+				GaussLobatto* m_;
+				I5( GaussLobatto* m ) : m_(m) {}
+				inline ActiveType operator() ( DateType t ) { return _integr_(f4(m_),0,t); }
+			};
+			struct f5 {
+				GaussLobatto* m_;
+				DateType      t_, s_;
+				f5(GaussLobatto* m, DateType t, DateType s ) : m_(m), t_(t), s_(s) {}
+				inline ActiveType operator() ( DateType u ) { return m_->eta(u) * m_->eta(u) * exp(- m_->theta() * (t_-u + s_-u) ); }
+			};
+			struct I6 {
+				GaussLobatto* m_;
+				DateType      t_;
+				I6( GaussLobatto* m, DateType t ) : m_(m), t_(t) {}
+				inline ActiveType operator() ( DateType s ) { return _integr_(f5(m_,t_,s),0,s); }
+			};
+			struct f6 {
+				GaussLobatto* m_;
+				DateType      t_;
+				f6(GaussLobatto* m, DateType t ) : m_(m), t_(t) {}
+				inline ActiveType operator() ( DateType s ) { return m_->lambda(s) * m_->lambda(s) * I6(m_,t_)(s) ; }
+			};
+			struct I7 {
+				GaussLobatto* m_;
+				I7( GaussLobatto* m ) : m_(m) {}
+				inline ActiveType operator() ( DateType t ) { return _integr_(f6(m_,t),0,t); }
+			};
+			struct f7 { // \hat{v}(t)^2
+				GaussLobatto* m_;
+				f7(GaussLobatto* m ) : m_(m) {}
+				inline ActiveType operator() ( DateType t ) { return m_->z0() * m_->z0() * I5(m_)(t) + m_->z0() * I7(m_)(t); }
+			};
+			struct f8 { // numerator integrand
+				GaussLobatto* m_;
+				f8(GaussLobatto* m ) : m_(m) {}
+				inline ActiveType operator() ( DateType t ) { return f7(m_)(t) * m_->lambda(t) * m_->lambda(t) * m_->b(t); }
+			};
+			struct f9 { // denumerator integrand
+				GaussLobatto* m_;
+				f9(GaussLobatto* m ) : m_(m) {}
+				inline ActiveType operator() ( DateType t ) { return f7(m_)(t) * m_->lambda(t) * m_->lambda(t); }
+			};
+			struct I8 {
+				GaussLobatto* m_;
+				I8( GaussLobatto* m ) : m_(m) {}
+				inline ActiveType operator() ( DateType T ) { return _integr_(f8(m_),0,T); }
+			};
+			struct I9 {
+				GaussLobatto* m_;
+				I9( GaussLobatto* m ) : m_(m) {}
+				inline ActiveType operator() ( DateType T ) { return _integr_(f9(m_),0,T); }
+			};
+#undef _integr_
+			// Riccati ODE for vol averaging
+			struct riccati_f {
+				GaussLobatto* m_;
+				DateType      u_;
+				DateType      v_;
+				DateType      T_;
+				ActiveType    b_;
+				riccati_f ( GaussLobatto* m, DateType u, DateType v, DateType T, ActiveType b )
+					: m_(m), u_(u), v_(v), T_(T), b_(m->averageB(T)) {}
+				inline void operator() ( DateType t, const std::vector<ActiveType>& y, std::vector<ActiveType>& f ) {
+				    // assume y.size()==f.size()==2
+				    f[0] = - m_->theta() * m_->z0() * y[1];
+				    f[1] = (m_->theta() - m_->rho() * m_->eta(t) * b_ * u_ * m_->lambda(t) ) * y[1]
+					       - m_->eta(t) * m_->eta(t) * y[1] * y[1] / 2.0
+						   - v_ * m_->lambda(t) * m_->lambda(t) ;
+				}
+			};
 		public:
+			// constructor
+			GaussLobatto( const PassiveType absAccuracy = 1,
+			              const PassiveType relAccuracy = 1.0e-4,
+			              const size_t      maxEvaluations = 1000,
+						  const DateType    dt = 1)
+						  : absAccuracy_(absAccuracy), relAccuracy_(relAccuracy), maxEvaluations_(maxEvaluations), dt_(dt) {}
 			// inspectors
 			inline PassiveType absAccuracy() const { return absAccuracy_; }
 			inline PassiveType relAccuracy() const { return relAccuracy_; }
 			inline size_t      maxEvaluations() const { return maxEvaluations_; } 
 		    // averaging...
-			const ActiveType  averageEta   ( DateType T) {
-
-				return 0;
+			virtual ActiveType  averageEta   ( const DateType T) {
+				ActiveType num = I3(this)(T);
+				ActiveType den = I4(this)(T);
+				return sqrt(num / den);
+			}
+			virtual ActiveType  averageB     ( const DateType T) {
+				ActiveType num = I8(this)(T);
+				ActiveType den = I9(this)(T);
+				return num / den;
+			}
+			virtual ActiveType  averageLambda( const DateType T) {
+				return 0; // todo...
 			}
 		};
+
+	    // piecewise constant parameters and numerical integration
+        class PWCNumerical : public PieceWiseConstant, GaussLobatto {
+		public:
+			PWCNumerical( const std::vector<DateType>&    times,
+				          const std::vector<ActiveType>&  lambda,
+					      const std::vector<ActiveType>&  b,
+					      const std::vector<ActiveType>&  eta,
+					      const ActiveType                L,
+					      const ActiveType                theta,
+					      const ActiveType                m,
+					      const ActiveType                z0,
+				          const ActiveType                rho,
+                          const PassiveType               absAccuracy = 1,
+			              const PassiveType               relAccuracy = 1.0e-4,
+			              const size_t                    maxEvaluations = 1000,
+					      const DateType                  dt = 1 )
+					      : PieceWiseConstant(times,lambda,b,eta,L,theta,m,z0,rho),
+					        GaussLobatto(absAccuracy,relAccuracy,maxEvaluations,dt) {}
+						
+			// inspectors
+			virtual ActiveType  lambda( const DateType t)  { return PieceWiseConstant::lambda(t);    }
+	        virtual ActiveType  b(      const DateType t)  { return PieceWiseConstant::b(t) ;        }
+	        virtual ActiveType  eta(    const DateType t)  { return PieceWiseConstant::eta(t);       }
+			virtual ActiveType  L()                        { return PieceWiseConstant::L();          }
+			virtual ActiveType  theta()                    { return PieceWiseConstant::theta();      }
+			virtual ActiveType  m()                        { return PieceWiseConstant::m();          }
+			virtual ActiveType  z0()                       { return PieceWiseConstant::z0();         }
+			virtual ActiveType  rho()                      { return PieceWiseConstant::rho();        }
+			// averaging formula implementations
+			virtual ActiveType  averageLambda( const DateType T) { return GaussLobatto::averageLambda( T ); }
+			virtual ActiveType  averageB     ( const DateType T) { return GaussLobatto::averageB( T );      }
+			virtual ActiveType  averageEta   ( const DateType T) { return GaussLobatto::averageEta( T );    }
+		};
+		  
 	};
+
+
 
 }
 

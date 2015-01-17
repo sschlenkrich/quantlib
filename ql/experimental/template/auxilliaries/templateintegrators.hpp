@@ -111,6 +111,36 @@ namespace TemplateAuxilliaries {
 		}
 	};
 
+
+	// 4th order Runge Kutta step for y' = f(t,y)
+	// via y1   = y0 + b^T k dt
+	//     k_i  = f(t+c_i dt, y0 + a_i^T k dt)
+	template <typename DateType, typename ActiveType>
+	void rungeKuttaStep( const std::vector<ActiveType>&                                                                      y0, 
+		                 const DateType                                                                                      t, 
+		                 const boost::function< void (DateType, const std::vector<ActiveType>&, std::vector<ActiveType>&) >& f,
+						 const DateType                                                                                      dt,
+						 const std::vector<ActiveType>&                                                                      y1  ) {
+		std::vector<ActiveType> k1(y.size()), k2(y.size()), k3(y.size()), k4(y.size());
+		y1 = y0;
+		// k1 = f(t,y0)
+		f( t,        y0, k1);
+		for (size_t i=0; i<y0.size(); ++i) y1[i] += 1.0/6.0 * dt * k1[i];
+		// k2 = f(t + 0.5dt, y0 + 0.5 k1)
+		for (size_t i=0; i<y0.size(); ++i) k1[i] = y0[i] + 0.5*k1[i];
+		f( t+0.5*dt, k1, k2);
+		for (size_t i=0; i<y0.size(); ++i) y1[i] += 1.0/3.0 * dt * k2[i];
+		// k3 = f(t + 0.5dt, y0 + 0.5 k2)
+		for (size_t i=0; i<y0.size(); ++i) k2[i] = y0[i] + 0.5*k2[i];
+		f( t+0.5*dt, k2, k3);
+		for (size_t i=0; i<y0.size(); ++i) y1[i] += 1.0/3.0 * dt * k3[i];
+		// k4 = f(t + dt, y0 + k3)
+		for (size_t i=0; i<y0.size(); ++i) k3[i] = y0[i] + k3[i];
+		f( t+1.0*dt, k3, k4);
+		for (size_t i=0; i<y0.size(); ++i) y1[i] += 1.0/6.0 * dt * k4[i];
+		return;
+	}
+
 }
 
 #endif  /* quantlib_templateintegrators_hpp */
