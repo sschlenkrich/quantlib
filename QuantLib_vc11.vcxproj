@@ -530,6 +530,7 @@
     <ClInclude Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\Complex.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\gausslobatto.hpp" />
+    <ClInclude Include="ql\experimental\template\auxilliaries\solver1d.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\templateintegrators.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\MinimADVariable2.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\templateauxilliaries.hpp" />

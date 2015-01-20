@@ -17,6 +17,7 @@
 #include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
 #include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
 #include <ql/experimental/template/auxilliaries/Complex.hpp>
+#include <ql/experimental/template/auxilliaries/solver1d.hpp>
 
 
 
@@ -244,8 +245,14 @@ namespace QuantLib {
 	    virtual ActiveType  eta(    const DateType t) = 0;
 	    virtual ActiveType  z0()                      = 0;
 	    virtual ActiveType  rho()                     = 0;
-		// helper functions for vol averaging
-
+		// helper functions for vol averaging, Piterbarg, 10.2.4
+		inline static ActiveType A_CIR ( ActiveType c1, ActiveType c2, ActiveType z0, ActiveType theta, ActiveType eta, DateType dt ) {
+            ActiveType gamma = sqrt((theta*theta + 2.0 * eta*eta * c2));
+            ActiveType t1 = theta*z0/eta/eta * (theta + gamma)*dt;
+            ActiveType t2 = 1.0 + (theta + gamma + c1 * eta*eta) * (exp(gamma * dt) - 1.0) / 2.0 / gamma;
+            QL_REQUIRE(t2>0,"A_CIR: require positive log()-argument");
+            return t1 - 2.0*theta*z0/eta/eta*log(t2);
+		}
 /*
 Function A_CIR(c1, c2, dt, z0, theta, eta)
     gamma = (theta ^ 2 + 2 * eta ^ 2 * c2) ^ 0.5
@@ -257,7 +264,15 @@ Function A_CIR(c1, c2, dt, z0, theta, eta)
     End If
     A_CIR = t1 - 2 * theta * z0 / eta ^ 2 * Log(t2)
 End Function
-
+*/
+		inline static ActiveType B_CIR ( ActiveType c1, ActiveType c2, ActiveType z0, ActiveType theta, ActiveType eta, DateType dt ) {
+            ActiveType gamma = sqrt((theta*theta + 2.0 * eta*eta * c2));
+			ActiveType emGdt = exp(-gamma * dt);
+            ActiveType numer = (2.0*c2 - theta*c1)*(1.0 - emGdt) + gamma*c1*(1.0 + emGdt);
+            ActiveType denum = (theta + gamma + c1*eta*eta) * (1.0 - emGdt) + 2.0*gamma*emGdt;
+			return numer / denum;
+		}		
+/*
 Function B_CIR(c1, c2, dt, z0, theta, eta)
     gamma = (theta ^ 2 + 2 * eta ^ 2 * c2) ^ 0.5
     numer = (2 * c2 - theta * c1) * (1 - Exp(-gamma * dt)) + gamma * c1 * (1 + Exp(-gamma * dt))
@@ -332,14 +347,38 @@ End Function
 			std::vector<DateType>               times_;
 			inline std::vector<DateType> getTimes( const DateType T ) {
 				std::vector<DateType> times;
-				times.pushback(0.0);
+				times.push_back(0.0);
 				for (size_t k=0; k<times_.size(); ++k) {
-					if (times_[k]>0.0 && times_[k]<T) times.pushback(times_[k]);
+					if (times_[k]>0.0 && times_[k]<T) times.push_back(times_[k]);
 					if (times_[k]>=T) break;
 				}
-				times.pushback(T);
+				times.push_back(T);
 				return times;
 			}
+
+			class AverageLambdaObjective {
+			protected:
+				ActiveType z0_;
+				ActiveType theta_;
+				ActiveType eta_;
+				DateType   dt_;
+				ActiveType target_;
+			public:
+				AverageLambdaObjective ( const ActiveType z0,
+				                         const ActiveType theta,
+				                         const ActiveType eta,
+				                         const DateType   dt,
+				                         const ActiveType target )
+										 : z0_(z0), theta_(theta), eta_(eta), dt_(dt), target_(target) {}
+				ActiveType operator() ( const ActiveType avLambda2c ) {
+					ActiveType A = A_CIR(0, -avLambda2c, z0_, theta_, eta_, dt_);
+					ActiveType B = B_CIR(0, -avLambda2c, z0_, theta_, eta_, dt_);
+					ActiveType res = A - B*z0_ - target_;
+					return res;
+				}
+			};
+
+
 		public:
 			// constructor
 			MidPointIntegration ( TemplateTimeDependentStochVolModel* model,
@@ -354,11 +393,11 @@ End Function
 				f[f.size()-1] = 0.0;
 				for (size_t k=f.size()-1; k>0; --k) {
 					ActiveType lambda = model_->lambda((times[k-1]+times[k])/2.0);
-					ActiveType tmp    = exp(-model_->theta()(times[k]-times[k-1]));
+					ActiveType tmp    = exp(-model_->theta()*(times[k]-times[k-1]));
 					f[k-1] = lambda*lambda/model_->theta()*(1.0 - tmp) + tmp*f[k];
 				}
 				ActiveType sum = 0.0;
-				for (size_t k=0; k<w.size() ++k) {
+				for (size_t k=0; k<w.size(); ++k) {
 					ActiveType lambda  = model_->lambda((times[k]+times[k+1])/2.0);
 					ActiveType lambda2 = lambda*lambda;
 					ActiveType theta   = model_->theta();
@@ -370,7 +409,7 @@ End Function
 					sum  += w[k];
 				}
 				ActiveType eta2=0.0;
-				for (size_t k=0; k<w.size() ++k) {
+				for (size_t k=0; k<w.size(); ++k) {
 					ActiveType eta = model_->eta((times[k]+times[k+1])/2.0);
 					eta2 += w[k] * eta * eta;
 				}
@@ -399,7 +438,7 @@ End Function
 					ActiveType v3        = z0/theta*(S2+S3)*(1.0-expmThdT);
 					ActiveType v4        = (times[k+1]-times[k]) - (1.0-expmThdT)/theta -
 						                   (1.0-expmThdT)*(1.0-expmThdT)/2.0/theta;
-					ActiveTye  laEtaTh   = lambda*eta/theta;
+					ActiveType laEtaTh   = lambda*eta/theta;
 					v4                  *= z0*laEtaTh*laEtaTh/2.0;
 					ActiveType theta2    = theta*theta;
 					ActiveType v5        = z0*lambda2/theta2/2.0*S1*(1.0-expmThdT)*(1.0-expmThdT);
@@ -408,7 +447,7 @@ End Function
 					S2                   = expmThdT*S2 + laEtaTh*laEtaTh/2.0*(1.0-expmThdT)*(1.0-expmThdT);
 					S1                   = expmThdT*expmThdT*S1 + eta*eta/theta/2.0*(1.0 - expmThdT*expmThdT);
 					// gathering things together...
-					w[k]                 = lambda * ( v1 + v3 + v4 + v5 );
+					w[k]                 = lambda2 * ( v1 + v3 + v4 + v5 );
 					sum                 += w[k];
 				}
 				ActiveType b=0;
@@ -419,8 +458,36 @@ End Function
 				return b;
 			}
 			
-			virtual ActiveType  averageLambda     ( const DateType T) { return 0; };
-		}
+			virtual ActiveType  averageLambda     ( const DateType T) {
+				ActiveType b   = averageB(T);
+				ActiveType eta = averageEta(T);  // maybe better use time-dep eta
+				std::vector<DateType> times(getTimes(T));
+				// c = h''(zeta) / h'(zeta)
+				ActiveType zeta = 0.0;
+				for (size_t k=0; k<times.size()-1; ++k) {
+					ActiveType lambda    = model_->lambda((times[k]+times[k+1])/2.0);
+					zeta += lambda*lambda*(times[k+1]-times[k]);
+				}
+				ActiveType avLambda2 = zeta / (times[times.size()-1] - times[0]);
+				zeta *= model_->z0();
+				ActiveType c = -(b*b/4.0 + 1.0/zeta)/2.0;
+				// Psi_{z lambda^2}
+				ActiveType A = 0.0, B = 0.0;
+				for (size_t k=0; k<times.size()-1; ++k) {
+					DateType  t = (times[k]+times[k+1])/2.0;
+					DateType dt = (times[k+1]-times[k]);
+					ActiveType lambda = model_->lambda(t);
+					A = A + A_CIR(B, -c*lambda*lambda, model_->z0(), model_->theta(), eta, dt);
+					B = B_CIR(B, -c*lambda*lambda, model_->z0(), model_->theta(), eta, dt);
+				}
+				ActiveType target = A - B*model_->z0();
+				AverageLambdaObjective f(model_->z0(), model_->theta(), eta, T, target);
+				ActiveType avLambda2c = avLambda2 * c;
+				avLambda2c = TemplateAuxilliaries::solve1d<ActiveType>(f, 1.0e-8, avLambda2c, avLambda2c, 10);
+				ActiveType avLambda = sqrt(avLambda2c / c);
+				return avLambda;
+			};
+		};
 
 		// averaging using Gauss-Lobatto integration
 		class GaussLobatto  {
@@ -583,6 +650,7 @@ End Function
 			}
 		};
 
+
 	    // piecewise constant parameters and numerical integration
         class PWCNumerical : public TemplateTimeDependentStochVolModel {
 		private:
@@ -618,7 +686,44 @@ End Function
 			virtual ActiveType  averageB     ( const DateType T) { return gl_->averageB( T );      }
 			virtual ActiveType  averageEta   ( const DateType T) { return gl_->averageEta( T );    }
 		};
-		  
+
+			    // piecewise constant parameters and numerical integration
+        class PWCAnalytical : public TemplateTimeDependentStochVolModel {
+		private:
+			boost::shared_ptr<PieceWiseConstant>    pwc_;
+			boost::shared_ptr<MidPointIntegration>  mp_;
+		public:
+			PWCAnalytical(const std::vector<DateType>&    times,
+				          const std::vector<ActiveType>&  lambda,
+					      const std::vector<ActiveType>&  b,
+					      const std::vector<ActiveType>&  eta,
+					      const ActiveType                L,
+					      const ActiveType                theta,
+					      const ActiveType                m,
+					      const ActiveType                z0,
+				          const ActiveType                rho,
+                          const PassiveType               absAccuracy = 1,
+			              const PassiveType               relAccuracy = 1.0e-4,
+			              const size_t                    maxEvaluations = 1000,
+					      const DateType                  dt = 1 )
+ 		        :    pwc_(new PieceWiseConstant(times,lambda,b,eta,L,theta,m,z0,rho)),
+				     mp_(new MidPointIntegration(this,times)) {}						
+			// inspectors
+			virtual ActiveType  lambda( const DateType t)  { return pwc_->lambda(t);    }
+	        virtual ActiveType  b(      const DateType t)  { return pwc_->b(t) ;        }
+	        virtual ActiveType  eta(    const DateType t)  { return pwc_->eta(t);       }
+			virtual ActiveType  L()                        { return pwc_->L();          }
+			virtual ActiveType  theta()                    { return pwc_->theta();      }
+			virtual ActiveType  m()                        { return pwc_->m();          }
+			virtual ActiveType  z0()                       { return pwc_->z0();         }
+			virtual ActiveType  rho()                      { return pwc_->rho();        }
+			// averaging formula implementations
+			virtual ActiveType  averageLambda( const DateType T) { return mp_->averageLambda( T ); }
+			virtual ActiveType  averageB     ( const DateType T) { return mp_->averageB( T );      }
+			virtual ActiveType  averageEta   ( const DateType T) { return mp_->averageEta( T );    }
+		};
+
+
 	};
 
 
