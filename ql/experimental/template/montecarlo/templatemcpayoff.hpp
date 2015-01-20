@@ -103,7 +103,7 @@ namespace QuantLib {
 		public:
 			VanillaOption( DateType obsTime, DateType payTime, PassiveType strike, PassiveType callOrPut ) : TemplateMCPayoff(obsTime), payTime_(payTime), strike_(strike), callOrPut_(callOrPut) { }
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
-				if (payTime_<=observationTime()) return (ActiveType)0.0;
+				if (payTime_<observationTime()) return (ActiveType)0.0;
 				ActiveType DF = p->zeroBond(observationTime(),payTime_);
 				ActiveType S  = p->asset(observationTime());
 				ActiveType V  = callOrPut_ * DF * (S - strike_);

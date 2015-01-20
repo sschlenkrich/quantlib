@@ -18,6 +18,7 @@
 #include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
 #include <ql/experimental/template/auxilliaries/Complex.hpp>
 #include <ql/experimental/template/auxilliaries/solver1d.hpp>
+#include <ql/experimental/template/templatestochasticprocess.hpp>
 
 
 
@@ -53,22 +54,22 @@ namespace QuantLib {
         kappa_(kappa), theta_(theta), sigma_(sigma), rho_(rho), v0_(v0) {}
                               
         // inspectors
-        const ActiveType& kappa() const { return kappa_; }
-        const ActiveType& theta() const { return theta_; }
-        const ActiveType& sigma() const { return sigma_; }
-        const ActiveType& rho()   const { return rho_;   }
-        const ActiveType& v0()    const { return v0_;    }
+        inline ActiveType kappa() const { return kappa_; }
+        inline ActiveType theta() const { return theta_; }
+        inline ActiveType sigma() const { return sigma_; }
+        inline ActiveType rho()   const { return rho_;   }
+        inline ActiveType v0()    const { return v0_;    }
         // maths
-        bool fellerConstraint() {
+        inline bool fellerConstraint() {
             return (sigma >= 0.0 && sigma*sigma < 2.0*kappa*theta);
         }
         // undiscounted expectation of vanilla payoff
-        ActiveType vanillaOption(const PassiveType forwardPrice,
-                                 const PassiveType strikePrice,
-                                 const DateType    term,
-                                 const int         callOrPut,
-                                 const PassiveType accuracy,
-                                 const size_t      maxEvaluations) {
+        inline ActiveType vanillaOption(const PassiveType forwardPrice,
+                                        const PassiveType strikePrice,
+                                        const DateType    term,
+                                        const int         callOrPut,
+                                        const PassiveType accuracy,
+                                        const size_t      maxEvaluations) {
             const ActiveType c_inf = _MIN_(10.0, _MAX_(0.0001, sqrt(1.0-rho_*rho_)/sigma_)) * (v0_ + kappa_*theta_*term);
             TemplateAuxilliaries::GaussLobatto<ActiveType> integrator(maxEvaluations, accuracy);
             IntegrandGatheral gatheral1( *this, forwardPrice, strikePrice, term, 1 );
@@ -216,12 +217,12 @@ namespace QuantLib {
 			) ), shift_( (1.0-b)/b*L ) {}
 
         // undiscounted expectation of vanilla payoff
-        ActiveType vanillaOption(const PassiveType forwardPrice,
-                                 const PassiveType strikePrice,
-                                 const DateType    term,
-                                 const int         callOrPut,
-                                 const PassiveType accuracy,
-                                 const size_t      maxEvaluations) {
+        inline ActiveType vanillaOption(const PassiveType forwardPrice,
+                                        const PassiveType strikePrice,
+                                        const DateType    term,
+                                        const int         callOrPut,
+                                        const PassiveType accuracy,
+                                        const size_t      maxEvaluations) {
 			return hestonModel_->vanillaOption( forwardPrice+shift_, strikePrice+shift_, term, callOrPut, accuracy, maxEvaluations );
 		}
 	};
@@ -234,9 +235,9 @@ namespace QuantLib {
 	//    dW(t) dZ(t) = rho dt
 	//
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateTimeDependentStochVolModel {
+	class TemplateTimeDependentStochVolModel : public TemplateStochasticProcess<DateType,PassiveType,ActiveType> {
 	public:
-		// inspectors
+		// abstract inspectors
         virtual ActiveType  lambda( const DateType t) = 0;
 	    virtual ActiveType  b(      const DateType t) = 0;
 	    virtual ActiveType  L()                       = 0;
@@ -245,6 +246,7 @@ namespace QuantLib {
 	    virtual ActiveType  eta(    const DateType t) = 0;
 	    virtual ActiveType  z0()                      = 0;
 	    virtual ActiveType  rho()                     = 0;
+	    virtual ActiveType  S0()                      = 0;
 		// helper functions for vol averaging, Piterbarg, 10.2.4
 		inline static ActiveType A_CIR ( ActiveType c1, ActiveType c2, ActiveType z0, ActiveType theta, ActiveType eta, DateType dt ) {
             ActiveType gamma = sqrt((theta*theta + 2.0 * eta*eta * c2));
@@ -253,18 +255,7 @@ namespace QuantLib {
             QL_REQUIRE(t2>0,"A_CIR: require positive log()-argument");
             return t1 - 2.0*theta*z0/eta/eta*log(t2);
 		}
-/*
-Function A_CIR(c1, c2, dt, z0, theta, eta)
-    gamma = (theta ^ 2 + 2 * eta ^ 2 * c2) ^ 0.5
-    t1 = theta * z0 / eta ^ 2 * (theta + gamma) * dt
-    t2 = 1 + (theta + gamma + c1 * eta ^ 2) * (Exp(gamma * dt) - 1) / 2 / gamma
-    If t2 <= 0 Then
-        A_CIR = "Error! Log of negative argument."
-        Exit Function
-    End If
-    A_CIR = t1 - 2 * theta * z0 / eta ^ 2 * Log(t2)
-End Function
-*/
+
 		inline static ActiveType B_CIR ( ActiveType c1, ActiveType c2, ActiveType z0, ActiveType theta, ActiveType eta, DateType dt ) {
             ActiveType gamma = sqrt((theta*theta + 2.0 * eta*eta * c2));
 			ActiveType emGdt = exp(-gamma * dt);
@@ -272,19 +263,59 @@ End Function
             ActiveType denum = (theta + gamma + c1*eta*eta) * (1.0 - emGdt) + 2.0*gamma*emGdt;
 			return numer / denum;
 		}		
-/*
-Function B_CIR(c1, c2, dt, z0, theta, eta)
-    gamma = (theta ^ 2 + 2 * eta ^ 2 * c2) ^ 0.5
-    numer = (2 * c2 - theta * c1) * (1 - Exp(-gamma * dt)) + gamma * c1 * (1 + Exp(-gamma * dt))
-    denum = (theta + gamma + c1 * eta ^ 2) * (1 - Exp(-gamma * dt)) + 2 * gamma * Exp(-gamma * dt)
-    B_CIR = numer / denum
-End Function
-*/
 
-		// averaging formula implementations
-        virtual ActiveType  averageLambda( const DateType T) = 0;
-	    virtual ActiveType  averageB     ( const DateType T) = 0;
-	    virtual ActiveType  averageEta   ( const DateType T) = 0;
+		// abstract averaging formula definitions
+        inline virtual ActiveType  averageLambda( const DateType T) = 0;
+	    inline virtual ActiveType  averageB     ( const DateType T) = 0;
+	    inline virtual ActiveType  averageEta   ( const DateType T) = 0;
+
+        // undiscounted expectation of vanilla payoff
+        inline ActiveType vanillaOption(const PassiveType forwardPrice,
+                                        const PassiveType strikePrice,
+                                        const DateType    term,
+                                        const int         callOrPut,
+                                        const PassiveType accuracy,
+                                        const size_t      maxEvaluations) {
+				TemplateStochVolModel<DateType,PassiveType,ActiveType> model(averageLambda(term), averageB(term),L(),theta(),m(),averageEta(term),z0(),rho());
+			    return model.vanillaOption( forwardPrice, strikePrice, term, callOrPut, accuracy, maxEvaluations );
+		}
+
+		// stochastic process interface
+		// dimension of X
+		inline virtual size_t size() { return 2; }
+		// stochastic factors of x and z (maybe distinguish if trivially eta=0)
+		inline virtual size_t factors() { return 2; }
+		// initial values for simulation
+		inline virtual VecP initialValues() {
+			VecP X(2);
+			X[0] = S0();
+			X[1] = z0();
+			return X;
+		}
+		// a[t,X(t)]
+		inline virtual VecA drift( const DateType t, const VecA& X) {
+			VecA a(2);
+			// S-variable drift-less
+			a[0] = 0.0;
+            // z-variable theta [ m - z(t)^+ ]  (full truncation)
+			a[1] = theta()*(m() - ((X[1]>0)?(X[1]):(0.0)));
+			return a;
+		}
+		// b[t,X(t)]
+		inline virtual MatA diffusion( const DateType t, const VecA& X) {
+			MatA B(2);
+			B[0].resize(2);
+			B[1].resize(2);
+			ActiveType sqrtz = ( (X[1]>0) ? (sqrt(X[1])) : (0.0) );   // full truncation
+			// S-variable lambda(t) [ b(t) S(t) + (1-b(t)) L ] sqrt[z(t)] dW(t)
+			B[0][0] = lambda(t) * (b(t) * X[0] + (1.0-b(t)) * L()) * sqrtz;
+			B[0][1] = 0.0;
+			// z-variable
+			B[1][0] = sqrt(rho())*eta(t)*sqrtz;
+			B[1][1] = sqrt(1-rho())*eta(t)*sqrtz;
+			// finished
+			return B;
+		}
 
 
 		// embeded classes
@@ -305,6 +336,7 @@ End Function
 	        ActiveType                m_;
 	        ActiveType                z0_;
 	        ActiveType                rho_;
+	        ActiveType                S0_;
 			// helper
 			inline size_t idx( const DateType t ) { return TemplateAuxilliaries::idx(times_,t); }
 		public:
@@ -317,8 +349,9 @@ End Function
 							   const ActiveType                theta,
 							   const ActiveType                m,
 							   const ActiveType                z0,
-							   const ActiveType                rho )
-			    : times_(times), lambda_(lambda), b_(b), eta_(eta), L_(L), theta_(theta), m_(m), z0_(z0), rho_(rho) {
+							   const ActiveType                rho,
+							   const ActiveType                S0 )
+			    : times_(times), lambda_(lambda), b_(b), eta_(eta), L_(L), theta_(theta), m_(m), z0_(z0), rho_(rho), S0_(S0) {
                 isConsistent_ = true;
 				QL_REQUIRE(times_.size()>0,"TemplateTimeDependentStochVolModel::PieceWiseConstant: non-empty times required");
 				for (size_t k=0; k<times_.size()-1; ++k) QL_REQUIRE(times_[k]<times_[k+1],"TemplateTimeDependentStochVolModel::PieceWiseConstant: ascending time-grid required");
@@ -335,6 +368,7 @@ End Function
 			virtual ActiveType  m()                        { return m_;              }
 			virtual ActiveType  z0()                       { return z0_;             }
 			virtual ActiveType  rho()                      { return rho_;            }
+			virtual ActiveType  S0()                       { return S0_;            }
 
 		};
 
@@ -666,11 +700,12 @@ End Function
 					      const ActiveType                m,
 					      const ActiveType                z0,
 				          const ActiveType                rho,
+						  const ActiveType                S0,
                           const PassiveType               absAccuracy = 1,
 			              const PassiveType               relAccuracy = 1.0e-4,
 			              const size_t                    maxEvaluations = 1000,
 					      const DateType                  dt = 1 )
- 		        :    pwc_(new PieceWiseConstant(times,lambda,b,eta,L,theta,m,z0,rho)),
+ 		        :    pwc_(new PieceWiseConstant(times,lambda,b,eta,L,theta,m,z0,rho,S0)),
 				     gl_(new GaussLobatto(this,absAccuracy,relAccuracy,maxEvaluations,dt)) {}						
 			// inspectors
 			virtual ActiveType  lambda( const DateType t)  { return pwc_->lambda(t);    }
@@ -681,6 +716,7 @@ End Function
 			virtual ActiveType  m()                        { return pwc_->m();          }
 			virtual ActiveType  z0()                       { return pwc_->z0();         }
 			virtual ActiveType  rho()                      { return pwc_->rho();        }
+			virtual ActiveType  S0()                       { return pwc_->S0();         }
 			// averaging formula implementations
 			virtual ActiveType  averageLambda( const DateType T) { return gl_->averageLambda( T ); }
 			virtual ActiveType  averageB     ( const DateType T) { return gl_->averageB( T );      }
@@ -702,11 +738,12 @@ End Function
 					      const ActiveType                m,
 					      const ActiveType                z0,
 				          const ActiveType                rho,
+						  const ActiveType                S0,
                           const PassiveType               absAccuracy = 1,
 			              const PassiveType               relAccuracy = 1.0e-4,
 			              const size_t                    maxEvaluations = 1000,
 					      const DateType                  dt = 1 )
- 		        :    pwc_(new PieceWiseConstant(times,lambda,b,eta,L,theta,m,z0,rho)),
+ 		        :    pwc_(new PieceWiseConstant(times,lambda,b,eta,L,theta,m,z0,rho,S0)),
 				     mp_(new MidPointIntegration(this,times)) {}						
 			// inspectors
 			virtual ActiveType  lambda( const DateType t)  { return pwc_->lambda(t);    }
@@ -717,6 +754,7 @@ End Function
 			virtual ActiveType  m()                        { return pwc_->m();          }
 			virtual ActiveType  z0()                       { return pwc_->z0();         }
 			virtual ActiveType  rho()                      { return pwc_->rho();        }
+			virtual ActiveType  S0()                       { return pwc_->S0();         }
 			// averaging formula implementations
 			virtual ActiveType  averageLambda( const DateType T) { return mp_->averageLambda( T ); }
 			virtual ActiveType  averageB     ( const DateType T) { return mp_->averageB( T );      }
