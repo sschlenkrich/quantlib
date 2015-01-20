@@ -66,8 +66,21 @@ namespace QuantLib {
 
 		// default implementation for single-asset models
 		inline virtual ActiveType asset(const VecA& X) { return X[0]; }
-		
+
+		// options for z-integration
+	    enum VolEvolv {
+			FullTruncation         = 0,
+			LogNormalApproximation = 1,
+			Other                  = -1
+		};
+
+		// default full truncation
+		virtual inline VolEvolv volEvolv() = 0;
+
 	};
+
+	typedef TemplateStochasticProcess<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealStochasticProcess;
+
 
 }
 

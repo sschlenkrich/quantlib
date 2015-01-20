@@ -27,7 +27,6 @@ namespace QuantLib {
 	typedef TemplateStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealStochVolModel;
 
 	typedef TemplateTimeDependentStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealTDStochVolModel;
-	typedef TemplateTimeDependentStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real>::PWCNumerical RealPWCNumericalStochVolModel;
 	typedef TemplateTimeDependentStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real>::PWCAnalytical RealPWCStochVolModel;
 
     class ActiveHestonModel : public RealHestonModel {

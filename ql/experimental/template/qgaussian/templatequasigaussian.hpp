@@ -67,6 +67,7 @@ namespace QuantLib {
 		// stochastic volatility process parameters
 		PassiveType                theta_;   // mean reversion speed
 		PassiveType                z0_;      // mean reversion level z0=z(0)=1
+		VolEvolv                   volEvolv_; // use FullTruncation or LogNormalApproximation for volatility process integration
 
 		// additional parameters (calculated at initialisation via SVD)
 		MatP                       DfT_;     // factorized correlation matrix Df^T with Df^T * Df = Gamma
@@ -267,9 +268,10 @@ namespace QuantLib {
 		    const VecP &                chi,     // mean reversions
 		    const MatP &                Gamma,   // (benchmark rate) correlation matrix
 		    // stochastic volatility process parameters
-		    const PassiveType           theta   // mean reversion speed
+		    const PassiveType           theta,   // mean reversion speed
+			const VolEvolv              volEvolv = FullTruncation
 			) : termStructure_(termStructure), d_(d), times_(times), lambda_(lambda), alpha_(alpha), b_(b), eta_(eta),
-			    delta_(delta), chi_(chi), Gamma_(Gamma), theta_(theta), z0_((PassiveType)1.0) {
+			    delta_(delta), chi_(chi), Gamma_(Gamma), theta_(theta), z0_((PassiveType)1.0), volEvolv_(volEvolv) {
                 checkModelParameters();
 				// calculate  DfT_
 				// calculate  HHfInv_
@@ -285,6 +287,8 @@ namespace QuantLib {
 		// inspectors
 		inline const MatP& DfT()    { return DfT_;    }
 		inline const MatP& HHfInv() { return HHfInv_; }
+		inline VolEvolv volEvolv()  { return volEvolv_; }  
+
 
 		// parameter functions (no dimension checks)
 		inline ActiveType lambda( const size_t i, const DateType t) { return lambda_[maxidx(i)][idx(t)]; }
@@ -359,6 +363,18 @@ namespace QuantLib {
 			return res;
 		}
 
+		// conditional moments of vol process used for z-integration, Piterbarg, 8.3.3.
+		// E[ z(T) | z(t) ]
+		inline virtual ActiveType expectationZ( DateType t, ActiveType zt, DateType dT ) {
+			return z0_ + (zt - z0_)*exp(-theta_*dT);
+		}
+		// Var[ z(T) | z(t) ]
+		inline virtual ActiveType varianceZ( DateType t, ActiveType zt, DateType dT ) {
+			ActiveType expmThDT = exp(-theta_*dT);
+			ActiveType onemETDT = 1 - expmThDT;
+			ActiveType eta2oThe = eta(idx(t+dT/2.0))*eta(idx(t+dT/2.0))/theta_;  // approx eta(t)=eta for s \in [t, t+dT]
+			return zt*eta2oThe*expmThDT*onemETDT + z0_*eta2oThe/2.0*onemETDT*onemETDT; 
+		}
 
 		// subset of QL's StochasticProcess interface for X = [ x, y, z, d ] (y row-wise)
 		// with dX = a[t,X(t)] dt + b[t,X(t)] dW
@@ -435,11 +451,21 @@ namespace QuantLib {
 			// ensure X1 has size of X0
 			VecA a = drift(t0, X0);
 			MatA b = diffusion(t0, X0);
+			// default via full truncation
 			for (size_t i=0; i<X1.size(); ++i) {
 				X1[i] = 0.0;
 				for (size_t j=0; j<dW.size(); ++j) X1[i] += b[i][j]*dW[j];
 				X1[i] = X0[i] + a[i]*dt + X1[i]*sqrt(dt);
 			}
+			if (volEvolv()==LogNormalApproximation) {
+				ActiveType e = expectationZ(t0, X0[X0.size()-2], dt);
+				ActiveType v = varianceZ(t0, X0[X0.size()-2], dt);
+				ActiveType dZ = dW[dW.size()-2];  // last risk factor is for vol process
+				ActiveType si = sqrt(log(1.0 + v/e/e));
+				ActiveType mu = log(e) - si*si/2.0;
+				X1[X1.size()-2] = exp(mu + si*dZ);
+			}
+
 			return;
 		}
 
