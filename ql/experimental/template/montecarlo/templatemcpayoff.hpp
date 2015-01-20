@@ -15,26 +15,28 @@
 #define quantlib_templatemcpayoff_hpp
 
 
-#include <ql/experimental/template/qgaussian/templatequasigaussian.hpp>
-#include <ql/experimental/template/qgaussian/templatemcsimulation.hpp>
+#include <ql/experimental/template/montecarlo/templatemcsimulation.hpp>
 
 
 
 namespace QuantLib {
 
 	// Base class for template payoffs
-    template <class DateType, class PassiveType, class ActiveType, class SimulationType, class PathType>
+    template <class DateType, class PassiveType, class ActiveType>
 	class TemplateMCPayoff {
 	protected:
+		typedef TemplateMCSimulation<DateType, PassiveType, ActiveType>        SimulationType;
+		typedef typename TemplateMCSimulation<DateType, PassiveType, ActiveType>::Path  PathType;
+
 	    DateType observationTime_;
 	public:
 	    TemplateMCPayoff( const DateType observationTime ) : observationTime_(observationTime) { }
 		// inspectors
 		inline DateType observationTime() { return observationTime_; }
 		// generic payoff(observationTime, p) needs to be implemented by derived classes
-        virtual ActiveType at(const boost::shared_ptr<PathType>& p) = 0;
+        inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) = 0;
 		// discounted payoff for NPV valuation
-		inline ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p) / p->numeraire(observationTime_); }
+		inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p) / p->numeraire(observationTime_); }
 
 		// generic pricer
 		class Pricer {
@@ -86,11 +88,29 @@ namespace QuantLib {
 			DateType payTime_;
 		public:
 			Cash( DateType obsTime, DateType payTime ) : TemplateMCPayoff(obsTime), payTime_(payTime) { }
-			virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				if (payTime_<=observationTime()) return (ActiveType)1.0;
 				return p->zeroBond(observationTime(),payTime_);
 			}
 		};
+
+		// call or put exercised at observation time and settled at pay time
+		class VanillaOption : public TemplateMCPayoff {
+		protected:
+			DateType    payTime_;
+			PassiveType callOrPut_;
+			PassiveType strike_;
+		public:
+			VanillaOption( DateType obsTime, DateType payTime, PassiveType strike, PassiveType callOrPut ) : TemplateMCPayoff(obsTime), payTime_(payTime), strike_(strike), callOrPut_(callOrPut) { }
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				if (payTime_<=observationTime()) return (ActiveType)0.0;
+				ActiveType DF = p->zeroBond(observationTime(),payTime_);
+				ActiveType S  = p->asset(observationTime());
+				ActiveType V  = callOrPut_ * DF * (S - strike_);
+				return (V>0.0) ? (V) : ((ActiveType)0.0);
+			}
+		};
+
 
 		// annuity
 		class Annuity : public TemplateMCPayoff {
@@ -102,7 +122,7 @@ namespace QuantLib {
 				     const std::vector<DateType>&    payTimes,
 				     const std::vector<PassiveType>& payWeights)
 				: TemplateMCPayoff(obsTime), payTimes_(payTimes), payWeights_(payWeights) { }
-			virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				ActiveType res = 0.0;
 				size_t N = (payTimes_.size()<payWeights_.size()) ? (payTimes_.size()) : (payWeights_.size());
 				for (size_t k=0; k<N; ++k) {
@@ -139,7 +159,7 @@ namespace QuantLib {
 				}
 				// finished
 			}
-			virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				ActiveType res = 0.0;
 				if (!isConsistent_) return res;
 				// annuity...

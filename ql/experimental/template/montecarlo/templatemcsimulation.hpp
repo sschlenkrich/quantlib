@@ -20,7 +20,7 @@
 
 #include <ql/math/randomnumbers/rngtraits.hpp>
 
-#include <ql/experimental/template/qgaussian/templatequasigaussian.hpp>
+#include <ql/experimental/template/templatestochasticprocess.hpp>
 
 
 
@@ -29,9 +29,11 @@ namespace QuantLib {
 	class TemplateSimulation : public virtual Observable { };
 
 	// Declaration of MC simulation class
-	template <class DateType, class PassiveType, class ActiveType, class ProcessType>
+	template <class DateType, class PassiveType, class ActiveType>
 	class TemplateMCSimulation : public TemplateSimulation {
 	protected:
+
+		typedef TemplateStochasticProcess<DateType, PassiveType, ActiveType> ProcessType;
 
 		// container class definitions
 		typedef std::vector<DateType>                      VecD;
@@ -130,21 +132,6 @@ namespace QuantLib {
 			return;
 		}
 
-		// integrate X1 = X0 + drift()*dt + diffusion()*dW*sqrt(dt)
-		/*
-		inline VecA evolve( const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const std::vector<QuantLib::Real> & dW  ) {
-			VecA X1 = X0;
-			VecA a = process_->drift(t0, X0);
-			MatA b = process_->diffusion(t0, X0);
-			for (size_t i=0; i<X1.size(); ++i) {
-				ActiveType tmp = 0.0;
-				for (size_t j=0; j<dW.size(); ++j) tmp += b[i][j]*dW[j];
-				X1[i] += a[i]*dt + tmp*sqrt(dt);
-			}
-			return X1;
-		}
-		*/
-
 		// simulate a single path X_[path]
 		inline void simulatePath(const size_t path) {
 			QL_REQUIRE(path<X_.size(),"TemplateMCSimulation: path index out of bounds.");
@@ -184,7 +171,7 @@ namespace QuantLib {
 	public:
 
 		// model type definition
-		typedef ProcessType process_type;
+		//typedef ProcessType process_type;
 
 		// input for payoffs
 		// combine model/process and simulated paths
@@ -205,6 +192,10 @@ namespace QuantLib {
 
 			inline ActiveType zeroBond(DateType obsTime, DateType payTime) {
 				return process_->zeroBond(obsTime, payTime, sim_->state(idx_,obsTime) );
+			}
+
+			inline ActiveType asset(DateType obsTime) {
+				return process_->asset(sim_->state(idx_,obsTime) );
 			}
 		};
 
@@ -269,7 +260,7 @@ namespace QuantLib {
 
 		// inspectors
 
-		inline const boost::shared_ptr<process_type> process() { return process_; }
+		inline const boost::shared_ptr<ProcessType> process() { return process_; }
 
 		inline const VecD& simTimes() { return simTimes_; }
 		inline const VecD& obsTimes() { return obsTimes_; }

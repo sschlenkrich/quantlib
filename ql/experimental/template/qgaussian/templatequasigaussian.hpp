@@ -25,6 +25,7 @@
 
 #include <ql/termstructures/yieldtermstructure.hpp>
 #include <ql/option.hpp>
+#include <ql/experimental/template/templatestochasticprocess.hpp>
 #include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
 #include <ql/experimental/template/auxilliaries/templateintegrators.hpp>
 #include <ql/experimental/template/auxilliaries/templatesvd.hpp>
@@ -37,7 +38,7 @@ namespace QuantLib {
 
 	// Declaration of the quasi-Gaussian model class
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateQuasiGaussianModel : public TemplateModel {
+	class TemplateQuasiGaussianModel : public TemplateStochasticProcess<DateType, PassiveType, ActiveType> {
 	protected:
 
 		// container class definitions

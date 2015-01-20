@@ -346,6 +346,9 @@
     <Filter Include="experimental\template\stochvol">
       <UniqueIdentifier>{31656015-7fda-4b72-8955-256980fbbd24}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\template\montecarlo">
+      <UniqueIdentifier>{a30359f9-eff8-4b92-ac8c-1def5a2cd5f5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -3864,12 +3867,6 @@
     <ClInclude Include="ql\experimental\template\auxilliaries\templatesvd.hpp">
       <Filter>experimental\template\auxilliaries</Filter>
     </ClInclude>
-    <ClInclude Include="ql\experimental\template\qgaussian\templatemcsimulation.hpp">
-      <Filter>experimental\template\qgaussian</Filter>
-    </ClInclude>
-    <ClInclude Include="ql\experimental\template\qgaussian\templatemcpayoff.hpp">
-      <Filter>experimental\template\qgaussian</Filter>
-    </ClInclude>
     <ClInclude Include="ql\experimental\template\stochvol\hestonmodels.hpp">
       <Filter>experimental\template\stochvol</Filter>
     </ClInclude>
@@ -3884,6 +3881,15 @@
     </ClInclude>
     <ClInclude Include="ql\experimental\template\auxilliaries\solver1d.hpp">
       <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\templatestochasticprocess.hpp">
+      <Filter>experimental\template</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\montecarlo\templatemcpayoff.hpp">
+      <Filter>experimental\template\montecarlo</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\montecarlo\templatemcsimulation.hpp">
+      <Filter>experimental\template\montecarlo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

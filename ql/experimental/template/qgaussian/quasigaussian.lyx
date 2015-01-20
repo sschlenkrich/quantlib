@@ -139,6 +139,7 @@ Yield curve reconstruction
 \begin{eqnarray*}
 f(t,T) & = & f(0,T)+1^{\top}H(T)H(t)^{-1}\left[x(t)+y(t)G(t,T)\right]\\
  & = & f(0,T)+1^{\top}H(T-t)\left[x(t)+y(t)G(t,T)\right]\\
+ & = & f(0,T)+h(T-t)^{\top}\left[x(t)+y(t)G(t,T)\right]\\
 P(t,T) & = & \frac{P(0,T)}{P(0,t)}\exp\left\{ -G(t,T)^{\top}x(t)-\frac{1}{2}G(t,T)^{\top}y(t)G(t,T)\right\} 
 \end{eqnarray*}
 

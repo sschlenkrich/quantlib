@@ -539,12 +539,13 @@
     <ClInclude Include="ql\experimental\template\hullwhite\fixedratebondoption.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\hullwhitemodels.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\templatehullwhitemodel.hpp" />
+    <ClInclude Include="ql\experimental\template\montecarlo\templatemcpayoff.hpp" />
+    <ClInclude Include="ql\experimental\template\montecarlo\templatemcsimulation.hpp" />
     <ClInclude Include="ql\experimental\template\qgaussian\quasigaussianmodels.hpp" />
-    <ClInclude Include="ql\experimental\template\qgaussian\templatemcpayoff.hpp" />
-    <ClInclude Include="ql\experimental\template\qgaussian\templatemcsimulation.hpp" />
     <ClInclude Include="ql\experimental\template\qgaussian\templatequasigaussian.hpp" />
     <ClInclude Include="ql\experimental\template\stochvol\hestonmodels.hpp" />
     <ClInclude Include="ql\experimental\template\stochvol\templatehestonmodel.hpp" />
+    <ClInclude Include="ql\experimental\template\templatestochasticprocess.hpp" />
     <ClInclude Include="ql\instruments\bonds\cpibond.hpp" />
     <ClInclude Include="ql\instruments\cpicapfloor.hpp" />
     <ClInclude Include="ql\instruments\cpiswap.hpp" />
