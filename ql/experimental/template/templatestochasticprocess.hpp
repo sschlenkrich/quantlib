@@ -14,6 +14,7 @@
 #ifndef quantlib_templatestochasticprocess_hpp
 #define quantlib_templatestochasticprocess_hpp
 
+#include <ql/types.hpp>
 
 namespace QuantLib {
 

@@ -19,8 +19,9 @@
 #define quantlib_templatemcsimulation_hpp
 
 #include <ql/math/randomnumbers/rngtraits.hpp>
-
 #include <ql/experimental/template/templatestochasticprocess.hpp>
+
+#include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
 
 
 

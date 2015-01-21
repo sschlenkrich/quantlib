@@ -12,6 +12,8 @@
 
 #include <ql/types.hpp>
 #include <ql/experimental/template/auxilliaries/MinimADVariable2.hpp>
+
+#include <ql/experimental/template/templatestochasticprocess.hpp>
 #include <ql/experimental/template/stochvol/templatehestonmodel.hpp>
 
 
