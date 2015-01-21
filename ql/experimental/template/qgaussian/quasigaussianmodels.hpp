@@ -20,7 +20,7 @@
 
 #include <ql/experimental/template/qgaussian/templatequasigaussian.hpp>
 #include <ql/experimental/template/templatestochasticprocess.hpp>
-
+#include <ql/experimental/template/qgaussian/templateqgswaptionmodel.hpp>
 
 namespace QuantLib {
 
@@ -28,6 +28,7 @@ namespace QuantLib {
 	// basic binding of template parameters
 	typedef TemplateQuasiGaussianModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQuasiGaussianModel;
 
+	typedef TemplateQGSwaptionModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQGSwaptionModel;
 
 }
 

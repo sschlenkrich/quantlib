@@ -542,6 +542,7 @@
     <ClInclude Include="ql\experimental\template\montecarlo\templatemcpayoff.hpp" />
     <ClInclude Include="ql\experimental\template\montecarlo\templatemcsimulation.hpp" />
     <ClInclude Include="ql\experimental\template\qgaussian\quasigaussianmodels.hpp" />
+    <ClInclude Include="ql\experimental\template\qgaussian\templateqgswaptionmodel.hpp" />
     <ClInclude Include="ql\experimental\template\qgaussian\templatequasigaussian.hpp" />
     <ClInclude Include="ql\experimental\template\stochvol\hestonmodels.hpp" />
     <ClInclude Include="ql\experimental\template\stochvol\templatehestonmodel.hpp" />

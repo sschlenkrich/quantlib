@@ -287,6 +287,9 @@ namespace QuantLib {
 		// inspectors
 		inline const MatP& DfT()    { return DfT_;    }
 		inline const MatP& HHfInv() { return HHfInv_; }
+		inline const VecP& delta()  { return delta_;  }
+		inline const VecP& chi()    { return chi_;    }
+
 		inline VolEvolv volEvolv()  { return volEvolv_; }  
 
 
