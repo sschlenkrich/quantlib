@@ -27,7 +27,7 @@
 #include <ql/types.hpp>
 
 #include <ql/experimental/template/qgaussian/templatequasigaussian.hpp>
-#include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
+//#include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
 
 
 
@@ -49,9 +49,13 @@ namespace QuantLib {
 		// reference to QG modelspecs
 		boost::shared_ptr< TemplateQuasiGaussianModel<DateType,PassiveType,ActiveType> >   model_;
 
-		// numerical integration options
-		size_t      maxEvaluations_;
-		PassiveType absAccuracy_;
+		// time grid for barX, barY evaluation
+		VecD               times_;   
+		MatA               barX_;     // E^A [ x(t) ] 
+		std::vector<MatA>  barY_;     // E^A [ y(t) ] 
+		VecA               x0_;       // = VecA(model_->factors()-1,0.0);
+		MatA               y0_;       // = MatA(model_->factors()-1,x0_);
+
 
 		// swap spec container
 		struct Swap {
@@ -61,44 +65,64 @@ namespace QuantLib {
 			Swap ( const VecD& t, const VecD& w) : times(t), weights(w), N(weights.size()) {}
 		};
 
-
-		class ExpYIntegrand {  // functor (s) = [sigma_x^T(s) sigma_x(s)]_i,j exp{-(chi_i + chi_j)(t-s)}
-		protected:
-			size_t i_, j_;
-			boost::shared_ptr< TemplateQuasiGaussianModel<DateType,PassiveType,ActiveType> >   model_;
-			DateType t_;
-			VecA x0_;
-			MatA y0_;
-		public:
-			ExpYIntegrand( size_t                                                                                  i,
-				           size_t                                                                                  j,
-						   const boost::shared_ptr< TemplateQuasiGaussianModel<DateType,PassiveType,ActiveType> >& model,
-						   DateType                                                                                t)
-						   : i_(i), j_(j), model_(model), t_(t) {
-				x0_ = VecA(model_->factors()-1,0.0);
-				y0_ = MatA(model_->factors()-1,x0_);
+		// E^A [ y(T) ] = H(T) H(t)^-1 E^A [ y(t) ] H(t)^-1 H(T) + int_t^T H(T) H(s)^-1 sigma_x^T sigma_x H(s)^-1 H(T) ds
+		//              = H(T) H(t)^-1 E^A [ y(t) ] H(t)^-1 H(T) + int_t^T [sigma_x^T sigma_x]_i,j exp{-(chi_i + chi_j)(t-s)} |_i,j=1,..,d
+		// via mid-point rule
+		inline MatA expectationAy( DateType t, DateType T, const MatA& barYt ) {
+			MatA barYT = barYt;
+			// H(T) H(t)^-1 E^A [ y(T) ] H(t)^-1 H(T)
+			for (size_t i=0; i<model_->factors()-1; ++i) {
+       			for (size_t j=0; j<model_->factors()-1; ++j) {
+					barYT *= exp(-(model_->chi()[i] + model_->chi()[j]) * (T-t) );
+				}
 			}
-			inline ActiveType operator() (ActiveType s) {
-				MatA sig_xT = model_->sigma_xT(s,x0_,y0_);  // this can be optimised! we only need row i and j
-				ActiveType res = 0.0;
-				for (size_t k=0; k<model_->factors()-1; ++k) res += sig_xT[i][k] * sig_xT[j][k];
-				res *= exp( -(model_->chi()[i] + model_->chi()[j]) * (t_-s) );
-				return res;
+			// int_t^T H(T) H(s)^-1 sigma_x^T sigma_x H(s)^-1 H(T) ds
+			MatA sig_xT = model_->sigma_xT((t+T)/2.0,x0_,y0_);
+			for (size_t i=0; i<model_->factors()-1; ++i) {
+       			for (size_t j=0; j<model_->factors()-1; ++j) {
+					// integrand at (t+T)/s
+                    ActiveType tmp = 0.0;
+					for (size_t k=0; k<model_->factors()-1; ++k) tmp += sig_xT[i][k] * sig_xT[j][k];
+                    tmp *= exp( -(model_->chi()[i] + model_->chi()[j]) * (T-t)/2.0 );
+					// mid-point rule
+					barYT[i][j] += tmp * (T - t);
+				}
 			}
-		};
-
-		// E^A [ y(t) ] = int_0^t H(t) H(s)^-1 sigma_x^T sigma_x H(s)^-1 H(t) ds
-		//              = int_0^t [sigma_x^T sigma_x]_i,j exp{-(chi_i + chi_j)(t-s)}
-		inline ActiveType expectationAy( size_t i, size_t j, DateType t ) {
-			// assume i,j < d
-			TemplateAuxilliaries::GaussLobatto<ActiveType> integrator(maxEvaluations_, absAccuracy_);
-			ExpYIntegrand f(i, j, model_, t);
-			ActiveType res = integrator.integrate( f, 0, t );
+			return MatYT;
 		}
 
-		// E^A [ x(t) ]
-		inline ActiveType expectationAx( const Swap& s, size_t i, DateType t ) {
-			retunr 0;
+		// E^A [ x(T) ] = H(T)H(t)^-1 E^A [ x(t) ] + int_t^T H(T)H(s)^-1 [ E^A[y(s)]*1 + sigma_x^T sigma_x G_A(s) ] ds
+		inline VecA expectationAx( const Swap& s, DateType t, DateType T, const MatA& barYtT, const VecA& barXt ) {
+			VecA barXT = barXt;
+			// H(T)H(t)^-1 E^A [ x(t) ]
+			for (size_t i=0; i<model_->factors()-1; ++i) barXT[i] *= exp(-model_->chi()[i] * (T-t) );
+			// int_t^T H(T)H(s)^-1 [ E^A[y(s)]*1 + sigma_x^T sigma_x G_A(s) ] ds
+			// G_A((t+T)/2)
+			VecA GA(model_->factors()-1);
+			for (size_t i=0; i<model_->factors()-1; ++i) {
+				GA[i] = 0.0;
+				for (size_t j=0; j<s.N; ++j) GA[i] += s.weights[j] * model_->zeroBond(0.0,s.times[j+1],x0_,y0_) * model_->G(i,(t+T)/2.0,s.times[j+1]);
+				GA[i] *= 1.0 / annuity(s,0.0,x0_,y0_);
+			}
+			// v = sigma_x^T [sigma_x G_A(s)]  | s=(t+T)/2
+			MatA sig_xT = model_->sigma_xT((t+T)/2.0,x0_,y0_);
+			VecA u(model_->factors()-1);
+			for (size_t i=0; i<model_->factors()-1; ++i) {
+				u[i] = 0.0;
+				for (size_t j=0; j<model_->factors()-1; ++j) u[i] += sig_xT[j][i]*GA[j];
+			}
+			VecA v(model_->factors()-1);
+			for (size_t i=0; i<model_->factors()-1; ++i) {
+				v[i] = 0.0;
+				for (size_t j=0; j<model_->factors()-1; ++j) v[i] += sig_xT[i][j]*u[j];
+				// E^A[y(s)]*1 + v  | s=(t+T)/2
+				for (size_t j=0; j<model_->factors()-1; ++j) v[i] += barYtT[i][j];
+				// H(T)H(s)^-1 E^A[y(s)]*1 + v  | s=(t+T)/2
+				v[i] *= exp( -model_->chi()[i] * (T-t)/2.0 );
+				// mid-point rule
+				barXT[i] += v[i] * (T - t);
+			}
+			return barXT;
 		}
 
 		// annuity
