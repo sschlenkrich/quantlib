@@ -289,9 +289,10 @@ namespace QuantLib {
 		inline const MatP& HHfInv() { return HHfInv_; }
 		inline const VecP& delta()  { return delta_;  }
 		inline const VecP& chi()    { return chi_;    }
+		inline const ActiveType theta() { return theta_; } 
+		inline const ActiveType z0()    { return z0_;    } 
 
 		inline VolEvolv volEvolv()  { return volEvolv_; }  
-
 
 		// parameter functions (no dimension checks)
 		inline ActiveType lambda( const size_t i, const DateType t) { return lambda_[maxidx(i)][idx(t)]; }

@@ -76,7 +76,7 @@ namespace QuantLib {
 		};
 
 		// default full truncation
-		virtual inline VolEvolv volEvolv() = 0;
+		virtual inline VolEvolv volEvolv() { return FullTruncation; }
 
 	};
 
