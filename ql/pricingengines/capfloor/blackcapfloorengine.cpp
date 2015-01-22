@@ -137,4 +137,85 @@ namespace QuantLib {
             results_.additionalResults["optionletsStdDev"] = stdDevs;
     }
 
+	// mimic BlackCapFloorEngine::calculate() but replace Black with Bachelier formula
+	void BachelierBlackCapFloorEngine::calculate() {
+        Real value = 0.0;
+        Real vega = 0.0;
+        Size optionlets = arguments_.startDates.size();
+        std::vector<Real> values(optionlets, 0.0);
+        std::vector<Real> vegas(optionlets, 0.0);
+        std::vector<Real> stdDevs(optionlets, 0.0);
+        CapFloor::Type type = arguments_.type;
+        Date today = volatility()->referenceDate();
+        Date settlement = termStructure()->referenceDate();
+
+        for (Size i=0; i<optionlets; ++i) {
+            Date paymentDate = arguments_.endDates[i];
+            // handling of settlementDate, npvDate and includeSettlementFlows
+            // should be implemented.
+            // For the time being just discard expired caplets
+            if (paymentDate > settlement) {
+                DiscountFactor d = arguments_.nominals[i] *
+                                   arguments_.gearings[i] *
+                                   termStructure()->discount(paymentDate) *
+                                   arguments_.accrualTimes[i];
+
+                Rate forward = arguments_.forwards[i];
+
+                Date fixingDate = arguments_.fixingDates[i];
+                Time sqrtTime = 0.0;
+                if (fixingDate > today)
+                    sqrtTime = std::sqrt(volatility()->timeFromReference(fixingDate));
+
+                if (type == CapFloor::Cap || type == CapFloor::Collar) {
+                    Rate strike = arguments_.capRates[i];
+                    if (sqrtTime>0.0) {
+                        stdDevs[i] = std::sqrt(volatility()->blackVariance(fixingDate,
+                                                                   strike));
+                        //vegas[i] = blackFormulaStdDevDerivative(strike,forward, stdDevs[i], d, displacement_) * sqrtTime;
+						Real eps = 1.0e-4;
+						vegas[i] = (bachelierBlackFormula(Option::Call,strike,forward,stdDevs[i]+eps*sqrtTime,d) -
+							        bachelierBlackFormula(Option::Call,strike,forward,stdDevs[i]-eps*sqrtTime,d) ) /2.0/eps;
+                    }
+                    // include caplets with past fixing date
+                    // values[i] = blackFormula(Option::Call, strike, forward, stdDevs[i], d, displacement_);
+					values[i] = bachelierBlackFormula(Option::Call,strike,forward,stdDevs[i],d);
+                }
+                if (type == CapFloor::Floor || type == CapFloor::Collar) {
+                    Rate strike = arguments_.floorRates[i];
+                    Real floorletVega = 0.0;
+                    if (sqrtTime>0.0) {
+                        stdDevs[i] = std::sqrt(volatility()->blackVariance(fixingDate,
+                                                                   strike));
+                        //floorletVega = blackFormulaStdDevDerivative(strike,forward, stdDevs[i], d, displacement_) * sqrtTime;
+						Real eps = 1.0e-4;
+						floorletVega = (bachelierBlackFormula(Option::Put,strike,forward,stdDevs[i]+eps*sqrtTime,d) -
+							            bachelierBlackFormula(Option::Put,strike,forward,stdDevs[i]-eps*sqrtTime,d) ) /2.0/eps;
+                    }
+                    //Real floorlet = blackFormula(Option::Put,strike, forward, stdDevs[i], d, displacement_);
+					Real floorlet = bachelierBlackFormula(Option::Put,strike,forward,stdDevs[i],d);
+                    if (type == CapFloor::Floor) {
+                        values[i] = floorlet;
+                        vegas[i] = floorletVega;
+                    } else {
+                        // a collar is long a cap and short a floor
+                        values[i] -= floorlet;
+                        vegas[i] -= floorletVega;
+                    }
+                }
+                value += values[i];
+                vega += vegas[i];
+            }
+        }
+        results_.value = value;
+        results_.additionalResults["vega"] = vega;
+
+        results_.additionalResults["optionletsPrice"] = values;
+        results_.additionalResults["optionletsVega"] = vegas;
+        results_.additionalResults["optionletsAtmForward"] = arguments_.forwards;
+        if (type != CapFloor::Collar)
+            results_.additionalResults["optionletsStdDev"] = stdDevs;
+    }
+
+
 }

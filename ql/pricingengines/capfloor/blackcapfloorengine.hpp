@@ -58,6 +58,23 @@ namespace QuantLib {
         Real displacement_;
     };
 
+    //! Bachelier-formula cap/floor engine
+    /*! \ingroup capfloorengines */
+    class BachelierBlackCapFloorEngine : public BlackCapFloorEngine {
+      public:
+        BachelierBlackCapFloorEngine(const Handle<YieldTermStructure>& discountCurve,
+                            Volatility vol,
+                            const DayCounter& dc = Actual365Fixed() ) : BlackCapFloorEngine(discountCurve,vol,dc,0.0) {}
+        BachelierBlackCapFloorEngine(const Handle<YieldTermStructure>& discountCurve,
+                            const Handle<Quote>& vol,
+                            const DayCounter& dc = Actual365Fixed()) : BlackCapFloorEngine(discountCurve,vol,dc,0.0) {}
+        BachelierBlackCapFloorEngine(const Handle<YieldTermStructure>& discountCurve,
+                            const Handle<OptionletVolatilityStructure>& vol ) : BlackCapFloorEngine(discountCurve,vol,0.0) {}
+        void calculate();
+      private:
+    };
+
+
 }
 
 #endif
