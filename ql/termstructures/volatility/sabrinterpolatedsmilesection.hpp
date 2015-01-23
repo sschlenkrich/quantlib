@@ -55,7 +55,8 @@ namespace QuantLib {
                             = boost::shared_ptr<EndCriteria>(),
                            const boost::shared_ptr<OptimizationMethod>& method
                             = boost::shared_ptr<OptimizationMethod>(),
-                           const DayCounter& dc = Actual365Fixed()
+                           const DayCounter& dc = Actual365Fixed(),
+						   const bool useNormalVols = false
                            );
         //! no quotes
         SabrInterpolatedSmileSection(
@@ -73,7 +74,8 @@ namespace QuantLib {
                             = boost::shared_ptr<EndCriteria>(),
                            const boost::shared_ptr<OptimizationMethod>& method
                             = boost::shared_ptr<OptimizationMethod>(),
-                           const DayCounter& dc = Actual365Fixed()
+                           const DayCounter& dc = Actual365Fixed(),
+						   const bool useNormalVols = false
                            );
         //@}
         //! \name LazyObject interface
@@ -125,6 +127,8 @@ namespace QuantLib {
         const boost::shared_ptr<EndCriteria> endCriteria_;
         const boost::shared_ptr<OptimizationMethod> method_;
 
+		// inputs and interpolation based on normal vols
+		bool useNormalVols_; 
 
         mutable Date evaluationDate_;
 

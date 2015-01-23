@@ -66,7 +66,7 @@ namespace QuantLib {
         return (alpha/D)*multiplier*d;
     }
 
-    void validateSabrParameters(Real alpha,
+	void validateSabrParameters(Real alpha,
                                 Real beta,
                                 Real nu,
                                 Real rho) {

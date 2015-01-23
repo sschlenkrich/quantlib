@@ -138,7 +138,7 @@ namespace QuantLib {
     }
 
 	// mimic BlackCapFloorEngine::calculate() but replace Black with Bachelier formula
-	void BachelierBlackCapFloorEngine::calculate() {
+	void BachelierBlackCapFloorEngine::calculate() const {
         Real value = 0.0;
         Real vega = 0.0;
         Size optionlets = arguments_.startDates.size();
