@@ -98,7 +98,8 @@ namespace QuantLib {
 			return grad;
 		}
 
-		// gradient 
+		// gradient
+		/*
 		VecA swapGradient( const Swap& s, DateType t, const VecA& x, const MatA& y) {
 			VecA grad(x.size());
 			VecA gZCB(x.size());
@@ -115,10 +116,31 @@ namespace QuantLib {
 			}
 			return grad;
 		}
+		*/
+
+		VecA swapGradient( const Swap& s, DateType t, const VecA& x, const MatA& y) {
+			PassiveType eps = 1.0e-7;
+			VecA grad(x.size());
+			VecA xm(x), xp(x);
+			for (size_t k=0; k<x.size(); ++k) {
+				// bump
+				xm[k] -= eps;
+				xp[k] += eps;
+				// recalculate
+				ActiveType ym = swapRate(s,t,xm,y);
+				ActiveType yp = swapRate(s,t,xp,y);
+				// first derivs
+				grad[k] = yp/2.0/eps - ym/2.0/eps;
+				// reset
+				xm[k] = x[k];
+				xp[k] = x[k];
+			}
+			return grad;
+		}
 
 		// hessian via central differences to avoid errors in tedious calculations
 		MatA swapHessian( const Swap& s, DateType t, const VecA& x, const MatA& y) {
-			PassiveType eps = 1.0-7;
+			PassiveType eps = 1.0e-7;
 			MatA hess(x.size());
 			VecA xm(x), xp(x), ym(x.size()), yp(x.size());
 			for (size_t k=0; k<x.size(); ++k) {
@@ -214,10 +236,10 @@ namespace QuantLib {
 			for (size_t j=0; j<x.size(); ++j) num += u[j]*u[j];
 			num = sqrt(num);
 			// swapt rate at (t,x,y)=0
-			VecA x0(x.size(),(ActiveType)0.0);
-			MatA y0(x.size());
-			for (size_t i=0; i<x.size(); ++i) y0[i].resize(x.size(),(ActiveType)0.0);
-			ActiveType den = swapRate(s,0.0,x0,y0);
+			//VecA x0(x.size(),(ActiveType)0.0);
+			//MatA y0(x.size());
+			//for (size_t i=0; i<x.size(); ++i) y0[i].resize(x.size(),(ActiveType)0.0);
+			ActiveType den = swapRate(s,0.0,x0_,y0_);
 			return num / den;
 		}
 
