@@ -38,13 +38,22 @@ namespace QuantLib {
                               Real nu,
                               Real rho);
 
+    Real unsafeNormalSabrVolatility(Rate strike,
+                                    Rate forward,
+                                    Time expiryTime,
+                                    Real alpha,
+                                    Real beta,
+                                    Real nu,
+                                    Real rho);
+
     Real sabrVolatility(Rate strike,
                         Rate forward,
                         Time expiryTime,
                         Real alpha,
                         Real beta,
                         Real nu,
-                        Real rho);
+                        Real rho,
+						bool calcNormalVol=false);
 
     void validateSabrParameters(Real alpha,
                                 Real beta,
