@@ -60,6 +60,9 @@ namespace QuantLib {
 		MatA                       alpha_;   // shift
 		MatA                       b_;       // f-weighting
 		VecA                       eta_;     // vol-of-vol
+		// scaling parameters
+		MatA                       S0_;
+		MatA                       D_;
 		// time-homogeneous parameters
 		VecP                       delta_;   // maturity of benchmark rates f(t,t+delta_i) 		
 		VecP                       chi_;     // mean reversions
@@ -246,6 +249,54 @@ namespace QuantLib {
 			return ok;
 		}
 
+		// required for swap rate gradient calculation
+		inline VecA zcbGradient( const DateType T) {
+			VecA grad(d_);
+			ActiveType DF = termStructure_->discount(T);
+			for (size_t k=0; k<grad.size(); ++k) grad[k] = -DF * G(k,0.0,T);
+			return grad;
+		}
+
+		// simplified swap rate and gradient evaluation for model parameter scaling
+		inline VecA swapGrad(const DateType T0, const DateType TN, PassiveType& swapRate) {
+			PassiveType num = termStructure_->discount(T0) - termStructure_->discount(TN);
+			PassiveType den = 0.0;
+			for (PassiveType Ti = T0; Ti<TN; Ti+=1.0) {
+				PassiveType T = (Ti+1.0>TN) ? (TN) : (Ti+1.0);
+				den += (T-Ti) * termStructure_->discount(T);
+			}
+			swapRate = num / den;
+			// gradient evaluation
+			VecA grad = zcbGradient(T0);
+			VecA gZCB = zcbGradient(TN);
+			for (size_t k=0; k<grad.size(); ++k) grad[k] = (grad[k] - gZCB[k]) / den;
+			ActiveType dSdAnnuity = - swapRate / den;
+			for (PassiveType Ti = T0; Ti<TN; Ti+=1.0) {
+				PassiveType T = (Ti+1.0>TN) ? (TN) : (Ti+1.0);
+				gZCB = zcbGradient(T);
+				for (size_t k=0; k<grad.size(); ++k) grad[k] += dSdAnnuity * (T-Ti) * gZCB[k];
+			}
+			return grad;
+		}
+
+		inline void rescaleAlphaB() {
+			S0_.resize(d_);
+			D_.resize(d_);
+			for (size_t k=0; k<d_; ++k) {
+				S0_[k].resize(times_.size());
+				D_[k].resize(times_.size());
+				for (size_t i=0; i<times_.size(); ++i) {
+					VecA grad = swapGrad(times_[i],times_[i]+delta_[k],S0_[k][i]);
+					D_[k][i] = 0.0;
+					for (size_t j=0; j<d_; ++j) D_[k][i] += grad[j] * exp(-chi_[j]*delta_[i]);
+					// overwrite alpha, b
+					alpha_[k][i] = (1.0 - b_[k][i])*S0_[k][i];
+					b_[k][i] *= D_[k][i];
+				}
+			}
+		}
+
+
 		public:  // for debugging purpose we allow unsafe aaccess to restricted members, IN GENERAL NO CHECK FOR DIMENSIONS!
 
 
@@ -269,13 +320,16 @@ namespace QuantLib {
 		    const MatP &                Gamma,   // (benchmark rate) correlation matrix
 		    // stochastic volatility process parameters
 		    const PassiveType           theta,   // mean reversion speed
-			const VolEvolv              volEvolv = FullTruncation
+			const VolEvolv              volEvolv = FullTruncation,
+			const bool                  useSwapRateScaling = true
 			) : termStructure_(termStructure), d_(d), times_(times), lambda_(lambda), alpha_(alpha), b_(b), eta_(eta),
 			    delta_(delta), chi_(chi), Gamma_(Gamma), theta_(theta), z0_((PassiveType)1.0), volEvolv_(volEvolv) {
                 checkModelParameters();
 				// calculate  DfT_
 				// calculate  HHfInv_
 				factorMatrices();
+				// adjust alpha and beta to approximate swap dynamics
+				if (useSwapRateScaling) rescaleAlphaB();
 			}
 
 		// helpers
