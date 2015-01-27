@@ -263,9 +263,8 @@ namespace QuantLib {
             Real value(Real x) const {
                 QL_REQUIRE(x>0.0, "strike must be positive: " <<
                                   io::rate(x) << " not allowed");
-				if (useNormalVols_) return 0.0; // normalSabrVolatility(x, forward_, t_, alpha_, beta_, nu_, rho_);
 				// default return log-normal vol
-                return sabrVolatility(x, forward_, t_, alpha_, beta_, nu_, rho_);
+                return sabrVolatility(x, forward_, t_, alpha_, beta_, nu_, rho_, useNormalVols_);
             }
             Real primitive(Real) const {
                 QL_FAIL("SABR primitive not implemented");
