@@ -89,7 +89,7 @@ namespace QuantLib {
 		public:
 			Cash( DateType obsTime, DateType payTime ) : TemplateMCPayoff(obsTime), payTime_(payTime) { }
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
-				if (payTime_<=observationTime()) return (ActiveType)1.0;
+				//if (payTime_<=observationTime()) return (ActiveType)1.0;
 				return p->zeroBond(observationTime(),payTime_);
 			}
 		};

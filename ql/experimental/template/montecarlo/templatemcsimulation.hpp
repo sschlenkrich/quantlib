@@ -69,6 +69,12 @@ namespace QuantLib {
 		// paths stored X_[paths][obsTimes][size]
 		std::vector< MatA > X_;
 
+		// adjust simulated zcb by exp{-adj(t,t+dt)(t+dt)} to meet initial yield curve
+		bool applyZcbAdjuster_;
+		VecD zcbObservTimes_;
+		VecD zcbOffsetTimes_;
+		MatA zcbAdjuster_;
+
 		// dummy
 		PassiveType tmp_;
 
@@ -160,7 +166,7 @@ namespace QuantLib {
 				} else { // only full Euler step
 					process_->evolve(simTimes_[sim_idx-1],X0,dt,dWt[sim_idx-1], X1);
 				}
-				if (simTimes_[sim_idx]==obsTimes_[obs_idx]) {
+				if ((obs_idx<obsTimes_.size()) && (simTimes_[sim_idx]==obsTimes_[obs_idx])) {
 					X_[path][obs_idx]=X1;
 					++obs_idx;
 				}
@@ -192,7 +198,8 @@ namespace QuantLib {
 			}
 
 			inline ActiveType zeroBond(DateType obsTime, DateType payTime) {
-				return process_->zeroBond(obsTime, payTime, sim_->state(idx_,obsTime) );
+				return sim_->zcbAdjuster(obsTime, payTime) *
+					   process_->zeroBond(obsTime, payTime, sim_->state(idx_,obsTime) );
 			}
 
 			inline ActiveType asset(DateType obsTime) {
@@ -205,11 +212,14 @@ namespace QuantLib {
 			                  const VecD&                          simTimes,
 							  const VecD&                          obsTimes,
 							  size_t                               nPaths,
+							  const VecD&                          zcbObservTimes,
+							  const VecD&                          zcbOffsetTimes,
 							  BigNatural                           seed = 1234,
 							  bool                                 richardsonExtrapolation = true,
 							  bool                                 timeInterpolation = false,
-							  bool                                 storeBrownians = false )
-							  : process_(process), seed_(seed),
+							  bool                                 storeBrownians = false,
+							  bool                                 adjustZCB = false)
+							  : zcbObservTimes_(zcbObservTimes), zcbOffsetTimes_(zcbOffsetTimes), process_(process), seed_(seed),
 							  richardsonExtrapolation_(richardsonExtrapolation),
 							  timeInterpolation_(timeInterpolation), storeBrownians_(storeBrownians) {
 			// check inputs
@@ -251,6 +261,18 @@ namespace QuantLib {
 			// allocate memory (we don't want surprises during time-consuming simulation)
 			reallocateMemory(nPaths);
 			// ready to simulate...
+			// but first set up zcb adjuster
+			applyZcbAdjuster_ = false;  // default
+			if (zcbObservTimes_.size()>1) {  // we need at least two values for linear interpolation
+				QL_REQUIRE(zcbObservTimes_[0]>=0,"TemplateMCSimulation: zcbObservTimes_[0]>=0 required");
+				for (size_t k=1; k<zcbObservTimes_.size(); ++k) QL_REQUIRE(zcbObservTimes_[k-1]<zcbObservTimes_[k],"TemplateMCSimulation: zcbObservTimes_ in ascending order required");
+				QL_REQUIRE(zcbOffsetTimes_.size()>1,"TemplateMCSimulation: at least two zcbOffsetTimes_ required");
+				QL_REQUIRE(zcbOffsetTimes_[0]>=0,"TemplateMCSimulation: zcbOffsetTimes_[0]>=0 required");
+				for (size_t k=1; k<zcbOffsetTimes_.size(); ++k) QL_REQUIRE(zcbOffsetTimes_[k-1]<zcbOffsetTimes_[k],"TemplateMCSimulation: zcbOffsetTimes_ in ascending order required");
+				// initialise zero adjuster matrix
+				zcbAdjuster_ = MatA(zcbObservTimes_.size(),VecA(zcbOffsetTimes_.size(),0.0));
+				applyZcbAdjuster_ = true;
+			}
 		}
 
 		inline void simulate() {  // the procedure Initialise/PreEvBrownians/Simulate needs to be re-factorised
@@ -296,6 +318,53 @@ namespace QuantLib {
 			return dW_[idx]; 
 		}
 
+		inline void calculateZCBAdjuster() {
+			if (!applyZcbAdjuster_) return; // nothing to do in this case
+			MatA zcb(zcbObservTimes_.size(),VecA(zcbOffsetTimes_.size(),0.0));
+			for (size_t k=0; k<nPaths(); ++k) {
+				for (size_t i=0; i<zcbObservTimes_.size(); ++i) {
+					VecA       s   = state(k,zcbObservTimes_[i]);
+					ActiveType num = process_->numeraire(zcbObservTimes_[i],s);
+					for (size_t j=0; j<zcbOffsetTimes_.size(); ++j) {
+						zcb[i][j] += process_->zeroBond(zcbObservTimes_[i], zcbObservTimes_[i]+zcbOffsetTimes_[j], s ) / num;
+					}
+				}
+			}
+			for (size_t i=0; i<zcbObservTimes_.size(); ++i) {
+				for (size_t j=0; j<zcbOffsetTimes_.size(); ++j) {
+					ActiveType adjDF = process_->zeroBond(0.0, zcbObservTimes_[i]+zcbOffsetTimes_[j], process_->initialValues() );
+					zcb[i][j] /= nPaths();
+					adjDF /= zcb[i][j];
+					zcbAdjuster_[i][j] = - log(adjDF) / (zcbObservTimes_[i]+zcbOffsetTimes_[j]);
+				}
+			}
+		}
+
+		inline const MatA& zcbAdjuster() { return zcbAdjuster_; }
+
+		inline ActiveType zcbAdjuster(const DateType t, const DateType T) {
+			if (!applyZcbAdjuster_) return 1.0; // implement adjuster interpolation
+			DateType dt = T - t;
+			//if (dt<0) return 1.0;
+			// bilinear interpolation
+			size_t obsIdx = TemplateAuxilliaries::idx(zcbObservTimes_,t);
+			size_t offIdx = TemplateAuxilliaries::idx(zcbOffsetTimes_,dt);
+			if (obsIdx<1) obsIdx=1;
+			if (offIdx<1) offIdx=1;
+			DateType rhoObs = ( t-zcbObservTimes_[obsIdx-1])/(zcbObservTimes_[obsIdx]-zcbObservTimes_[obsIdx-1]);
+			DateType rhoOff = (dt-zcbOffsetTimes_[offIdx-1])/(zcbOffsetTimes_[offIdx]-zcbOffsetTimes_[offIdx-1]);
+			// flat extrapolation
+			if (rhoObs<0) rhoObs = 0;
+			if (rhoObs>1) rhoObs = 1;
+			if (rhoOff<0) rhoOff = 0;
+			if (rhoOff>1) rhoOff = 1;
+			//
+			ActiveType z = zcbAdjuster_[obsIdx-1][offIdx-1] * (1.0-rhoObs) * (1.0-rhoOff) +
+				           zcbAdjuster_[obsIdx  ][offIdx-1] * (rhoObs)     * (1.0-rhoOff) +
+				           zcbAdjuster_[obsIdx-1][offIdx  ] * (1.0-rhoObs) * (rhoOff)     +
+				           zcbAdjuster_[obsIdx  ][offIdx  ] * (rhoObs)     * (rhoOff)     ;
+			return exp(-z*T);
+		}
 
 	};
 
