@@ -174,6 +174,55 @@ namespace QuantLib {
 			}
 		};
 
+		// prototypical physically settled European swaption
+		class GeneralSwaption : public TemplateMCPayoff {
+		protected:
+			std::vector<DateType>    floatTimes_;     // T_1, .., T_M
+			std::vector<PassiveType> floatWeights_;   // u_1, .., u_M
+			std::vector<DateType>    fixedTimes_;     // T_1, .., T_N
+			std::vector<PassiveType> fixedWeights_;   // w_1, .., w_N
+			PassiveType              strikeRate_;   // option strike
+			PassiveType              payOrRec_;     // call (+1) or put (-1) option on swap rate
+		public:
+			GeneralSwaption( DateType                        obsTime, 
+				             const std::vector<DateType>&    floatTimes,
+				             const std::vector<PassiveType>& floatWeights,
+				             const std::vector<DateType>&    fixedTimes,
+				             const std::vector<PassiveType>& fixedWeights,
+					         PassiveType                     strikeRate,
+					         PassiveType                     payOrRec      )
+				: TemplateMCPayoff(obsTime),  floatTimes_(floatTimes), floatWeights_(floatWeights),
+				  fixedTimes_(fixedTimes), fixedWeights_(fixedWeights), strikeRate_(strikeRate), payOrRec_(payOrRec) { 
+			    // check consistency of swap
+			    // float leg
+			    QL_REQUIRE(floatWeights.size()>0,"TemplateQGSwaptionModel: empty float weights.");
+			    QL_REQUIRE(floatTimes.size()==floatWeights.size(),"TemplateQGSwaptionModel: float sizes mismatch.");
+			    QL_REQUIRE(floatTimes[0]>0,"TemplateQGSwaptionModel: future float times required");
+			    for (size_t k=1; k<floatTimes.size(); ++k) QL_REQUIRE(floatTimes[k]>floatTimes[k-1],"TemplateQGSwaptionModel: ascending float times required");
+			    // fixed leg
+			    QL_REQUIRE(fixedWeights.size()>0,"TemplateQGSwaptionModel: empty fixed weights.");
+			    QL_REQUIRE(fixedTimes.size()==fixedWeights.size(),"TemplateQGSwaptionModel: fixed sizes mismatch.");
+			    QL_REQUIRE(fixedTimes[0]>0,"TemplateQGSwaptionModel: future fixed times required");
+			    for (size_t k=1; k<fixedTimes.size(); ++k) QL_REQUIRE(fixedTimes[k]>fixedTimes[k-1],"TemplateQGSwaptionModel: ascending fixed times required");
+				// finished
+			}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				ActiveType floatleg = 0.0;
+				ActiveType annuity  = 0.0;
+				// float leg
+				for (size_t k=0; k<floatTimes_.size(); ++k) floatleg += floatWeights_[k] * p->zeroBond(observationTime(),floatTimes_[k]);
+				// annuity
+				for (size_t k=0; k<fixedTimes_.size(); ++k) annuity  += fixedWeights_[k] * p->zeroBond(observationTime(),fixedTimes_[k]);
+				// floatleg - fixedleg...
+				ActiveType res = floatleg - strikeRate_*annuity;
+				// payer or receiver swap...
+				res *= payOrRec_;
+				// exercise option...
+				res = (res>0) ? res : 0.0;
+				return res;
+			}
+		};
+
 
 	};
 

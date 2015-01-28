@@ -8,13 +8,21 @@
 /*! \file templateqgswaptionmodel.hpp
     \brief (Approximate) swaption pricing for multi-factor quasi-Gaussian model with stochastic vol
 	           
-			   r(t) = f(0,t) + 1^T*x(t)
-			   
-			   dx(t)     = [ y(t)*1 - a*x(t) ] dt                                        + sqrt[z(t)]*sigma_x^T(t,x,y) dW
-			   dy(t)     = [ z(t)*sigma_x^T(t,x,y)*sigma_x(t,x,y) - a*y(t) - y(t)*a ] dt
-			   dz(t)     = theta [ z0 - z(t) ] dt                                        + eta(t)*sqrt[z(t)]           dZ
-			   ds(t)     = r(t) dt  ( s(t) = int_0^t r(s) ds, for bank account numeraire)
-			   
+			   dS(t) = lambda [(1-b)L +bS(0)] sqrt(z) dW
+			   dz(t) = theta [z0 - z(t)]dt + eta sqrt(z) dZ
+			    z(0) = z0 = 1,  dW dZ = 0
+
+			   generalised swap rate
+
+			   S(t)  =  [ sum_j u_j P(t,T_j) ] / [ sum_i w_i P(t,T_i) ]
+
+			   single-curve, annual fixed payment use case is
+			   u_1 = 1, u_2 = -1 (float leg), w_i = 1 (annuity with annual year fractions)
+
+			   multi-curve, semi-annual fixed payment use case is
+			   u_1 = 1+spr_1, u_j = spr_j (j=2..M-1), u_M = -1 (float leg with deterministic tenor basis spreads)
+			   w_i = 0.5 (annuity with semi-annual year fractions)
+			   			   
 		   All methods are template based to allow incorporation of Automatic Differentiation
 		   tools
 */
@@ -51,10 +59,14 @@ namespace QuantLib {
 
 		// swap spec container
 		struct Swap {
-			VecD   times;    // T[0], ..., T[N]
-			VecD   weights;  // w[0], ..., w[N-1]
-			size_t N;
-			Swap ( const VecD& t, const VecD& w) : times(t), weights(w), N(weights.size()) {}
+            // float leg
+			VecD   floatTimes;    // T[0], ..., T[M]
+			VecD   floatWeights;  // u[0], ..., u[M]
+            // fixed (annuity) leg
+			VecD   fixedTimes;    // T[0], ..., T[N]
+			VecD   fixedWeights;  // w[0], ..., w[N]
+			Swap ( const VecD& floatT, const VecD& floatW, const VecD& fixedT, const VecD& fixedW)
+				: floatTimes(floatT), floatWeights(floatW), fixedTimes(fixedT), fixedWeights(fixedW) {}
 		};
 
 		// reference to QG modelspecs
@@ -76,18 +88,23 @@ namespace QuantLib {
 		// helper
 		inline size_t idx( const DateType t ) { return TemplateAuxilliaries::idx(times_,t); }
 
+		// float leg
+		inline ActiveType floatLeg( const Swap& s, DateType t, const VecA& x, const MatA& y) {
+			ActiveType flg = 0.0;
+			for (size_t k=0; k<s.floatTimes.size(); ++k) flg += s.floatWeights[k]*model_->ZeroBond(t,s.floatTimes[k],x,y);
+			return flg;
+		}
 
 		// annuity
 		inline ActiveType annuity( const Swap& s, DateType t, const VecA& x, const MatA& y) {
-			ActiveType den = 0.0;
-			for (size_t k=0; k<s.N; ++k) den += s.weights[k]*model_->ZeroBond(t,s.times[k+1],x,y);
-			return den;
+			ActiveType ann = 0.0;
+			for (size_t k=0; k<s.fixedTimes.size(); ++k) ann += s.fixedWeights[k]*model_->ZeroBond(t,s.fixedTimes[k],x,y);
+			return ann;
 		}
 
 		// forward swaprate
 		inline ActiveType swapRate( const Swap& s, DateType t, const VecA& x, const MatA& y) {
-			ActiveType num = model_->ZeroBond(t,s.times[0],x,y) - model_->ZeroBond(t,s.times[s.N],x,y);
-			return num / annuity(s,t,x,y);
+			return floatLeg(s,t,x,y) / annuity(s,t,x,y);
 		}
 
 		// d P(t,T,x,y) / dx  = -P(t,T,x,y) G(t,T) 
@@ -106,66 +123,79 @@ namespace QuantLib {
 			return hess;
 		}
 
+		// float leg gradient
+		inline VecA floatLegGradient( const Swap& s, DateType t, const VecA& x, const MatA& y) {
+			VecA grad(x.size(),0.0);
+			for (size_t k=0; k<s.floatTimes.size(); ++k) {
+				VecA zcbGrad = zcbGradient(t,s.floatTimes[k],x,y);
+				for (size_t i=0; i<x.size(); ++i) grad[i] += s.floatWeights[k] * zcbGrad[i];
+			}
+			return grad;
+		}		
+
 		// annuity gradient
 		inline VecA annuityGradient( const Swap& s, DateType t, const VecA& x, const MatA& y) {
-			//ActiveType den = 0.0;
 			VecA grad(x.size(),0.0);
-			for (size_t k=0; k<s.N; ++k) {
-				//den += s.weights[k]*model_->ZeroBond(t,s.times[k+1],x,y);
-				VecA zcbGrad = zcbGradient(t,s.times[k+1],x,y);
-				for (size_t i=0; i<x.size(); ++i) grad[i] += s.weights[k] * zcbGrad[i];
+			for (size_t k=0; k<s.fixedTimes.size(); ++k) {
+				VecA zcbGrad = zcbGradient(t,s.fixedTimes[k],x,y);
+				for (size_t i=0; i<x.size(); ++i) grad[i] += s.fixedWeights[k] * zcbGrad[i];
 			}
 			return grad;
 		}
 
 		// gradient
 		VecA swapGradient( const Swap& s, DateType t, const VecA& x, const MatA& y) {
-			VecA grad(x.size());
-			VecA gZCB(x.size());
+			//VecA grad(x.size());
+			//VecA gZCB(x.size());
 			// numerator
-			grad = zcbGradient(t,s.times[0],x,y);
-			gZCB = zcbGradient(t,s.times[s.N],x,y);
+			//grad = zcbGradient(t,s.times[0],x,y);
+			//gZCB = zcbGradient(t,s.times[s.N],x,y);
+			VecA grad = floatLegGradient(s,t,x,y);
+			VecA angr = annuityGradient(s,t,x,y);
 			ActiveType annuit = annuity(s,t,x,y);
-			for (size_t k=0; k<grad.size(); ++k) grad[k] = (grad[k] - gZCB[k]) / annuit;
-			// denumerator
 			ActiveType dSdAnnuity = - swapRate(s,t,x,y) / annuit;
-			for (size_t i=0; i<s.N; ++i) {
-				gZCB = zcbGradient(t,s.times[i+1],x,y);
-				for (size_t k=0; k<grad.size(); ++k) grad[k] += dSdAnnuity * s.weights[i] * gZCB[k];
-			}
+			for (size_t k=0; k<grad.size(); ++k) grad[k] = grad[k]/annuit + angr[k]*dSdAnnuity;
 			return grad;
 		}
 
 		// hessian
 		MatA swapHessian( const Swap& s, DateType t, const VecA& x, const MatA& y) {
 			MatA hess(x.size());
-			VecA grad(x.size());
-			VecA gZCB(x.size());
-			VecA dGrad(x.size());
-			VecA dGZCB(x.size());
+			VecA grad(x.size(),0.0);
+			VecA gZCB(x.size(),0.0);
+			VecA dGrad(x.size(),0.0);
+			VecA dGZCB(x.size(),0.0);
 			ActiveType swpRate = swapRate(s,t,x,y);
 			ActiveType annuit  = annuity(s,t,x,y);
 			VecA swapGrad = swapGradient(s,t,x,y);
 			VecA annuGrad = annuityGradient(s,t,x,y);
 			for (size_t i=0; i<x.size(); ++i) {
 			    // numerator
-			    grad  = zcbGradient(t,s.times[0],x,y);
-			    gZCB  = zcbGradient(t,s.times[s.N],x,y);
-				dGrad = zcbHessian(i,t,s.times[0],x,y);
-				dGZCB = zcbHessian(i,t,s.times[s.N],x,y);
-			    for (size_t k=0; k<grad.size(); ++k) {
-					grad[k]  = (grad[k] - gZCB[k]) / annuit;                        // z  = u / v
-					dGrad[k] = (dGrad[k] - dGZCB[k] - grad[k]*annuGrad[i])/annuit;  // z' = (u' - z v') / v
+			    //grad  = zcbGradient(t,s.times[0],x,y);
+			    //gZCB  = zcbGradient(t,s.times[s.N],x,y);
+				//dGrad = zcbHessian(i,t,s.times[0],x,y);
+				//dGZCB = zcbHessian(i,t,s.times[s.N],x,y);
+				for (size_t j=0; j<s.floatTimes.size(); ++j) {
+			    	gZCB  = zcbGradient(t,s.floatTimes[j],x,y);
+					dGZCB = zcbHessian(i,t,s.floatTimes[j],x,y);
+					for (size_t k=0; k<grad.size(); ++k) {
+						grad[k]  += s.floatWeights[j] * gZCB[k] / annuit;                                       // z  = u / v
+						dGrad[k] += s.floatWeights[j] * (dGZCB[k]*annuit - gZCB[k]*annuGrad[i])/annuit/annuit;  // z' = (u'v - uv')/v^2
+					}
+			        //for (size_t k=0; k<grad.size(); ++k) {
+					//    grad[k]  = (grad[k] - gZCB[k]) / annuit;                        // z  = u / v
+					//    dGrad[k] = (dGrad[k] - dGZCB[k] - grad[k]*annuGrad[i])/annuit;  // z' = (u' - z v') / v
+				    // }
 				}
 			    // denumerator
 			    ActiveType dSdAnnuity  = - swpRate / annuit;
 			    ActiveType ddSdAnnuity = - (swapGrad[i] + dSdAnnuity*annuGrad[i])/annuit;   // check + vs -
-			    for (size_t j=0; j<s.N; ++j) {
-			    	gZCB  = zcbGradient(t,s.times[j+1],x,y);
-					dGZCB = zcbHessian(i,t,s.times[j+1],x,y);
+			    for (size_t j=0; j<s.fixedTimes.size(); ++j) {
+			    	gZCB  = zcbGradient(t,s.fixedTimes[j],x,y);
+					dGZCB = zcbHessian(i,t,s.fixedTimes[j],x,y);
 			    	for (size_t k=0; k<grad.size(); ++k) {
-						grad[k]  += dSdAnnuity * s.weights[j] * gZCB[k];
-						dGrad[k] += s.weights[j] * (ddSdAnnuity*gZCB[k] + dSdAnnuity*dGZCB[k]);
+						grad[k]  += s.fixedWeights[j] * dSdAnnuity * gZCB[k];
+						dGrad[k] += s.fixedWeights[j] * (ddSdAnnuity*gZCB[k] + dSdAnnuity*dGZCB[k]);
 					}
 			    }
 				// allocate and copy
@@ -231,7 +261,7 @@ namespace QuantLib {
 			VecA GA(model_->factors()-1);
 			for (size_t i=0; i<model_->factors()-1; ++i) {
 				GA[i] = 0.0;
-				for (size_t j=0; j<s.N; ++j) GA[i] += s.weights[j] * model_->ZeroBond(0.0,s.times[j+1],x0_,y0_) * model_->G(i,(t+T)/2.0,s.times[j+1]);
+				for (size_t j=0; j<s.fixedTimes.size(); ++j) GA[i] += s.fixedWeights[j] * model_->ZeroBond(0.0,s.fixedTimes[j],x0_,y0_) * model_->G(i,(t+T)/2.0,s.fixedTimes[j]);
 				GA[i] *= 1.0 / annuity(s,0.0,x0_,y0_);
 			}
 			// v = sigma_x^T [sigma_x G_A(s)]  | s=(t+T)/2
@@ -416,20 +446,30 @@ namespace QuantLib {
 		// constructor
 		TemplateQGSwaptionModel (
 			const boost::shared_ptr< TemplateQuasiGaussianModel<DateType,PassiveType,ActiveType> >&   model,
-			const VecD&                                                                               swapTimes,    // T[0], ..., T[N]
-			const VecD&                                                                               swapWeights,  // w[0], ..., w[N-1]
-			const VecD&                                                                               modelTimes,   // time grid for numerical integration
-			const bool                                                                                useExpectedXY // evaluate E^A [ x(t) ], E^A [ y(t) ] as expansion points
-			) 	: model_(model), swap_(swapTimes,swapWeights), times_(modelTimes), mp_(new MidPointIntegration(this,modelTimes))   {
+			const VecD&                                                                               floatTimes,    // T[1], ..., T[M]
+			const VecD&                                                                               floatWeights,  // u[1], ..., u[M]
+			const VecD&                                                                               fixedTimes,    // T[1], ..., T[N]
+			const VecD&                                                                               fixedWeights,  // w[1], ..., w[N-1]
+			const VecD&                                                                               modelTimes,    // time grid for numerical integration
+			const bool                                                                                useExpectedXY  // evaluate E^A [ x(t) ], E^A [ y(t) ] as expansion points
+			) 	: model_(model), swap_(floatTimes,floatWeights,fixedTimes,fixedWeights), times_(modelTimes), mp_(new MidPointIntegration(this,modelTimes))   {
 			// check consistency of swap
-			QL_REQUIRE(swap_.weights.size()>0,"TemplateQGSwaptionModel: empty swap weights.");
-			QL_REQUIRE(swap_.times.size()==swap_.weights.size()+1,"TemplateQGSwaptionModel: swap sizes mismatch.");
-			QL_REQUIRE(swap_.times[0]>0,"TemplateQGSwaptionModel: future swap times required");
-			for (size_t k=0; k<swap_.N; ++k) QL_REQUIRE(swap_.times[k+1]>swap_.times[k],"TemplateQGSwaptionModel: ascending swap times required");
+			// float leg
+			QL_REQUIRE(swap_.floatWeights.size()>0,"TemplateQGSwaptionModel: empty float weights.");
+			QL_REQUIRE(swap_.floatTimes.size()==swap_.floatWeights.size(),"TemplateQGSwaptionModel: float sizes mismatch.");
+			QL_REQUIRE(swap_.floatTimes[0]>0,"TemplateQGSwaptionModel: future float times required");
+			for (size_t k=1; k<swap_.floatTimes.size(); ++k) QL_REQUIRE(swap_.floatTimes[k]>swap_.floatTimes[k-1],"TemplateQGSwaptionModel: ascending float times required");
+			// fixed leg
+			QL_REQUIRE(swap_.fixedWeights.size()>0,"TemplateQGSwaptionModel: empty fixed weights.");
+			QL_REQUIRE(swap_.fixedTimes.size()==swap_.fixedWeights.size(),"TemplateQGSwaptionModel: fixed sizes mismatch.");
+			QL_REQUIRE(swap_.fixedTimes[0]>0,"TemplateQGSwaptionModel: future fixed times required");
+			for (size_t k=1; k<swap_.fixedTimes.size(); ++k) QL_REQUIRE(swap_.fixedTimes[k]>swap_.fixedTimes[k-1],"TemplateQGSwaptionModel: ascending fixed times required");
 			// check consistency of times
 			QL_REQUIRE(times_.size()>1,"TemplateQGSwaptionModel: at least two model times required");
 			QL_REQUIRE(times_[0]==0,"TemplateQGSwaptionModel: model times T[0]=0 required");
-			QL_REQUIRE(times_[times_.size()-1]==swap_.times[0],"TemplateQGSwaptionModel: model times T[n]= T_Swap[0] required");
+			for (size_t k=1; k<times_.size(); ++k) QL_REQUIRE(times_[k]>times_[k-1],"TemplateQGSwaptionModel: ascending model times required");
+			QL_REQUIRE(times_[times_.size()-1]>=swap_.floatTimes[0],"TemplateQGSwaptionModel: model times T[n] >= T_float[0] required");
+			QL_REQUIRE(times_[times_.size()-1]<=swap_.fixedTimes[0],"TemplateQGSwaptionModel: model times T[n] <= T_fixed[0] required");
 			// initialise x0_, y0_
 			x0_ = VecA(model_->factors()-1,0.0);
 			y0_ = MatA(model_->factors()-1,x0_);
@@ -494,9 +534,9 @@ namespace QuantLib {
 		virtual ActiveType  averageEta   ( const DateType T) { return mp_->averageEta( T );    }
 
 		// averaging formula implementations for current swap
-		virtual ActiveType  averageLambda()                  { return mp_->averageLambda( swap_.times[0] ); }
-		virtual ActiveType  averageB     ()                  { return mp_->averageB(      swap_.times[0] ); }
-		virtual ActiveType  averageEta   ()                  { return mp_->averageEta(    swap_.times[0] ); }
+		virtual ActiveType  averageLambda()                  { return mp_->averageLambda( swap_.floatTimes[0] ); }
+		virtual ActiveType  averageB     ()                  { return mp_->averageB(      swap_.floatTimes[0] ); }
+		virtual ActiveType  averageEta   ()                  { return mp_->averageEta(    swap_.floatTimes[0] ); }
 
 	};
 
