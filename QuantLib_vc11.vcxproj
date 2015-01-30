@@ -1731,7 +1731,6 @@
     <ClCompile Include="ql\experimental\template\hullwhite\bondoptionengine.cpp" />
     <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp" />
     <ClCompile Include="ql\experimental\template\hullwhite\hullwhitemodels.cpp" />
-    <ClCompile Include="ql\experimental\template\qgaussian\quasigaussianmodels.cpp" />
     <ClCompile Include="ql\experimental\template\stochvol\hestonmodels.cpp" />
     <ClCompile Include="ql\instruments\bonds\cpibond.cpp" />
     <ClCompile Include="ql\instruments\cpicapfloor.cpp" />

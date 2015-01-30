@@ -6234,9 +6234,6 @@
     <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp">
       <Filter>experimental\template\hullwhite</Filter>
     </ClCompile>
-    <ClCompile Include="ql\experimental\template\qgaussian\quasigaussianmodels.cpp">
-      <Filter>experimental\template\qgaussian</Filter>
-    </ClCompile>
     <ClCompile Include="ql\experimental\template\stochvol\hestonmodels.cpp">
       <Filter>experimental\template\stochvol</Filter>
     </ClCompile>
