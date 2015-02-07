@@ -367,7 +367,7 @@ namespace QuantLib {
 
 		inline
 		ActiveType forwardRate( const DateType t, const DateType T, const VecA& x, const MatA&  y) {
-			ActiveType f = termStructure_->forwardRate(t,T,Continuous);
+			ActiveType f = termStructure_->forwardRate(T,T,Continuous);  // check t,T
 			for (size_t i=0; i<d_; ++i) {
 				ActiveType tmp = x[i];
 				for (size_t j=0; j<d_; ++j) tmp += y[i][j]*G(j,t,T);
@@ -518,7 +518,8 @@ namespace QuantLib {
 			if (volEvolv()==LogNormalApproximation) {
 				ActiveType e = expectationZ(t0, X0[X0.size()-2], dt);
 				ActiveType v = varianceZ(t0, X0[X0.size()-2], dt);
-				ActiveType dZ = dW[dW.size()-2];  // last risk factor is for vol process
+				//ActiveType dZ = dW[dW.size()-2];  // last risk factor is for vol process
+				ActiveType dZ = dW[dW.size()-1];  // last risk factor is for vol process
 				ActiveType si = sqrt(log(1.0 + v/e/e));
 				ActiveType mu = log(e) - si*si/2.0;
 				X1[X1.size()-2] = exp(mu + si*dZ);
