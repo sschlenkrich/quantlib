@@ -223,6 +223,49 @@ namespace QuantLib {
 			}
 		};
 
+		// undiscounted correlation between prototypical physically settled European swaption
+		class ModelCorrelation : public TemplateMCPayoff {
+		protected:
+			std::vector<DateType> times_;
+			DateType T1_, T2_;
+			ActiveType swapRate(const boost::shared_ptr<PathType>& p, const DateType t, const DateType TN ) {
+				ActiveType num = p->zeroBond(t,t) - p->zeroBond(t,TN);
+				ActiveType den = 0.0;
+				for (ActiveType Ti = t; Ti<TN; Ti+=1.0) {
+					ActiveType T = (Ti+1.0>TN) ? (TN) : (Ti+1.0);
+					den += (T-Ti) * p->zeroBond(t,T);
+				}
+				return num / den;
+			}
+		public:
+			ModelCorrelation( const std::vector<DateType>&    times,   // observation times
+				              const DateType                  T1,      // swap term one
+							  const DateType                  T2 )     // swap term two
+							  : TemplateMCPayoff(0.0), times_(times), T1_(T1), T2_(T2) {
+				QL_REQUIRE(times_.size()>1,"ModelCorrelation: At least two observation times required.");
+			}
+		    // payoff should NOT be discounted
+		    inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p); }
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				std::vector<ActiveType> dS1(times_.size()-1), dS2(times_.size()-1);
+				ActiveType EdS1 = 0.0, EdS2 = 0.0; 
+				for (size_t i=1; i<times_.size(); ++i) {
+					dS1[i-1] =  swapRate(p,times_[i],times_[i]+T1_) - swapRate(p,times_[i-1],times_[i-1]+T1_);
+					dS2[i-1] =  swapRate(p,times_[i],times_[i]+T2_) - swapRate(p,times_[i-1],times_[i-1]+T2_);
+					EdS1 += dS1[i-1];
+					EdS2 += dS2[i-1];
+				}
+				EdS1 /= dS1.size();
+				EdS2 /= dS2.size();
+				ActiveType Var1=0.0, Var2=0.0, Cov=0.0;
+				for (size_t i=0; i<times_.size()-1; ++i) {
+					Var1 += (dS1[i] - EdS1)*(dS1[i] - EdS1);
+					Var2 += (dS2[i] - EdS2)*(dS2[i] - EdS2);
+					Cov  += (dS1[i] - EdS1)*(dS2[i] - EdS2);
+				}
+				return Cov / sqrt(Var1*Var2);
+			}
+		};
 
 	};
 
