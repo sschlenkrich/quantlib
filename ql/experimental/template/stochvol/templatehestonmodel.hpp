@@ -327,8 +327,8 @@ namespace QuantLib {
 			B[0][0] = lambda(t) * (b(t) * X[0] + (1.0-b(t)) * L()) * sqrtz;
 			B[0][1] = 0.0;
 			// z-variable
-			B[1][0] = sqrt(rho())*eta(t)*sqrtz;
-			B[1][1] = sqrt(1-rho())*eta(t)*sqrtz;
+			B[1][0] = rho()*eta(t)*sqrtz;
+			B[1][1] = sqrt(1-rho()*rho())*eta(t)*sqrtz;
 			// finished
 			return B;
 		}
@@ -348,7 +348,7 @@ namespace QuantLib {
 			if (volEvolv()==LogNormalApproximation) {
 				ActiveType e = expectationZ(t0, X0[1], dt);
 				ActiveType v = varianceZ(t0, X0[1], dt);
-				ActiveType dZ = sqrt(rho())*dW[0] + sqrt(1-rho())*dW[1];
+				ActiveType dZ = rho()*dW[0] + sqrt(1-rho()*rho())*dW[1];
 				ActiveType si = sqrt(log(1.0 + v/e/e));
 				ActiveType mu = log(e) - si*si/2.0;
 				X1[1] = exp(mu + si*dZ);
@@ -452,6 +452,22 @@ namespace QuantLib {
 				}
 			};
 
+			// Prop. 9.1.2
+			class RiccatiODE {
+				TemplateTimeDependentStochVolModel* model_;
+				ActiveType v_;
+				ActiveType u_;
+				ActiveType averageB_;
+			public:
+				RiccatiODE (TemplateTimeDependentStochVolModel* model, ActiveType v, ActiveType u, ActiveType averageB)
+					: model_(model), v_(v), u_(u), averageB_(averageB) {}
+				void operator() (const DateType t, const std::vector<ActiveType>& y, std::vector<ActiveType>& fy) {
+					fy[0] = - model_->theta() * model_->z0() * y[1];
+					fy[1] = (model_->theta() - model_->rho()*model_->eta(t)*averageB_*u_*model_->lambda(t))*y[1]
+						    - model_->eta(t)*model_->eta(t)/2.0*y[1]*y[1] - v_*model_->lambda(t)*model_->lambda(t);
+				}
+			};
+
 		public:
 			// constructor
 			MidPointIntegration ( TemplateTimeDependentStochVolModel* model,
@@ -546,14 +562,20 @@ namespace QuantLib {
 				ActiveType c = -(b*b/4.0 + 1.0/zeta)/2.0;
 				// Psi_{z lambda^2}
 				ActiveType A = 0.0, B = 0.0;
-				for (size_t k=0; k<times.size()-1; ++k) {
-					DateType  t = (times[k]+times[k+1])/2.0;
-					DateType dt = (times[k+1]-times[k]);
+				//std::vector<ActiveType> y1(2,0.0), y0(2,0.0);
+				//RiccatiODE ode(model_,c,0.0,b);
+				for (size_t k=times.size()-1; k>0; --k) {
+					DateType  t = (times[k]+times[k-1])/2.0;
+					DateType dt = (times[k]-times[k-1]);
 					ActiveType lambda = model_->lambda(t);
 					A = A + A_CIR(B, -c*lambda*lambda, model_->z0(), model_->theta(), eta, dt);
 					B = B_CIR(B, -c*lambda*lambda, model_->z0(), model_->theta(), eta, dt);
+					// Riccati ODE via Runge Kutta Method
+					//y1 = y0;
+					//TemplateAuxilliaries::rungeKuttaStep<DateType,ActiveType>(y1,times[k],ode,times[k-1]-times[k],y0);
 				}
 				ActiveType target = A - B*model_->z0();
+				//ActiveType target = y0[0] + y0[1]*model_->z0();
 				AverageLambdaObjective f(model_->z0(), model_->theta(), eta, T, target);
 				ActiveType avLambda2c = avLambda2 * c;
 				avLambda2c = TemplateAuxilliaries::solve1d<ActiveType>(f, 1.0e-8, avLambda2c, avLambda2c, 10);
