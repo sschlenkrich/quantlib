@@ -34,11 +34,13 @@ namespace QuantLib {
       public:
         SabrSmileSection(Time timeToExpiry,
                          Rate forward,
-                         const std::vector<Real>& sabrParameters);
+                         const std::vector<Real>& sabrParameters,
+						 const bool useNormalVols = false);
         SabrSmileSection(const Date& d,
                          Rate forward,
                          const std::vector<Real>& sabrParameters,
-                         const DayCounter& dc = Actual365Fixed());
+                         const DayCounter& dc = Actual365Fixed(),
+						 const bool useNormalVols = false);
         Real minStrike () const { return 0.0; }
         Real maxStrike () const { return QL_MAX_REAL; }
         Real atmLevel() const { return forward_; }
@@ -47,6 +49,7 @@ namespace QuantLib {
         Volatility volatilityImpl(Rate strike) const;
       private:
         Real alpha_, beta_, nu_, rho_, forward_;
+		bool useNormalVols_;
     };
 
 

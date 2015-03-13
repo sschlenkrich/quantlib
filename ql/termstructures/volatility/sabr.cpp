@@ -66,7 +66,36 @@ namespace QuantLib {
         return (alpha/D)*multiplier*d;
     }
 
-    void validateSabrParameters(Real alpha,
+    Real unsafeNormalSabrVolatility(Rate strike,
+                                    Rate forward,
+                                    Time expiryTime,
+                                    Real alpha,
+                                    Real beta,
+                                    Real nu,
+                                    Real rho) {
+		// see Wikipedia
+        Real Fmid   = std::sqrt(forward*strike);
+		Real C      = std::pow(Fmid,beta);
+		Real gamma1 = beta / Fmid;
+		Real gamma2 = - gamma1 * (1.0-beta)/Fmid;
+		Real zeta   = nu/alpha/(1.0-beta)*(std::pow(forward,1.0-beta) - std::pow(strike,1.0-beta));
+		Real D      = std::log((std::sqrt(1.0-2.0*rho*zeta+zeta*zeta) + zeta - rho)/(1.0 - rho));
+		Real mult=0;
+        if (!close(forward, strike))
+            mult = nu * (forward - strike) / D;
+        else { // l'Hospital
+			mult = alpha*std::pow(forward,beta);
+        }
+		Real res  = (2.0*gamma2-gamma1*gamma1)/24.0*alpha*alpha*C*C/nu/nu;
+		res      += rho*gamma1/4.0*alpha*C/nu;
+		res      += (2.0-3.0*rho*rho)/24.0;
+		res       = 1 + res*expiryTime*nu*nu;
+		res      *= mult;
+		return res;
+	}
+
+
+	void validateSabrParameters(Real alpha,
                                 Real beta,
                                 Real nu,
                                 Real rho) {
@@ -86,7 +115,8 @@ namespace QuantLib {
                         Real alpha,
                         Real beta,
                         Real nu,
-                        Real rho) {
+                        Real rho,
+						bool calcNormalVol) {
         QL_REQUIRE(strike>0.0, "strike must be positive: "
                                << io::rate(strike) << " not allowed");
         QL_REQUIRE(forward>0.0, "at the money forward rate must be "
@@ -94,8 +124,8 @@ namespace QuantLib {
         QL_REQUIRE(expiryTime>=0.0, "expiry time must be non-negative: "
                                    << expiryTime << " not allowed");
         validateSabrParameters(alpha, beta, nu, rho);
-        return unsafeSabrVolatility(strike, forward, expiryTime,
-                                    alpha, beta, nu, rho);
+		if (calcNormalVol) return unsafeNormalSabrVolatility(strike, forward, expiryTime, alpha, beta, nu, rho);
+        return unsafeSabrVolatility(strike, forward, expiryTime, alpha, beta, nu, rho);
     }
 
 }

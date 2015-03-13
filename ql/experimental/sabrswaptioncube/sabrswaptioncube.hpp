@@ -13,6 +13,7 @@
 
 
 #include <ql/termstructures/volatility/swaption/swaptionvolstructure.hpp>
+#include <ql/termstructures/volatility/optionlet/optionletvolatilitystructure.hpp>
 #include <ql/termstructures/volatility/sabrsmilesection.hpp>
 #include <ql/math/interpolations/flatextrapolation2d.hpp>
 #include <ql/math/interpolations/bilinearinterpolation.hpp>
@@ -23,12 +24,14 @@ namespace QuantLib {
 
     // bilinear interpolation of SABR parameters
     class SabrSwaptionCube : public SwaptionVolatilityStructure {
+	                         // public OptionletVolatilityStructure {
     private:
         std::vector< Time > optionTimes_, swapTimes_;
         Matrix alpha_, beta_, rho_, nu_, fwd_;
         boost::shared_ptr<Interpolation2D> alphaInterp_, betaInterp_, rhoInterp_, nuInterp_, fwdInterp_;
         Period maxSwapTenor_;
         Date referenceDate_;
+		bool useNormalVols_;
         // we interpolate forward swap rates as well
         // add default swaption propertes for more accurate forward valuation
     public:
@@ -41,7 +44,8 @@ namespace QuantLib {
                            const std::vector< std::vector< Real > >&  nu,
                            const std::vector< std::vector< Real > >&  fwd,
                            BusinessDayConvention                      bdc,
-                           const DayCounter&                          dc = DayCounter());
+                           const DayCounter&                          dc = DayCounter(),
+						   const bool                                 useNormalVols=false);
 
         // implement bilinear parameter interpolation
         virtual boost::shared_ptr<SmileSection> smileSectionImpl(
@@ -58,7 +62,28 @@ namespace QuantLib {
         virtual Rate minStrike() const { return 0; }
         virtual Rate maxStrike() const { return 100; }
 
+		// optionlet interface
+		virtual boost::shared_ptr<SmileSection> smileSectionImpl( Time optionTime) const { return smileSectionImpl(optionTime,0.0); }
+		virtual Volatility volatilityImpl(Time optionTime, Rate strike) const { return volatilityImpl(optionTime,0.0,strike); }
+
     };
+
+	class SABRCapletSurface : public OptionletVolatilityStructure {
+	private:
+		boost::shared_ptr< SwaptionVolatilityStructure > cube_;
+		Real                                             swapTerm_;  // swap term in year fractions!
+	public:
+		SABRCapletSurface ( const boost::shared_ptr< SwaptionVolatilityStructure > cube,
+			                const Real                                             swapTerm) : 
+			OptionletVolatilityStructure(cube->businessDayConvention(), cube->dayCounter()), cube_(cube), swapTerm_(swapTerm) {}
+        virtual const Date& referenceDate() const  { return cube_->referenceDate(); }
+        virtual Date maxDate() const               { return cube_->maxDate();       }
+        virtual Rate minStrike() const             { return cube_->minStrike();     }
+        virtual Rate maxStrike() const             { return cube_->maxStrike();     }
+		// optionlet interface
+		virtual boost::shared_ptr<SmileSection> smileSectionImpl( Time optionTime) const { return cube_->smileSection(optionTime,swapTerm_); }
+		virtual Volatility volatilityImpl(Time optionTime, Rate strike) const            { return cube_->volatility(optionTime,swapTerm_,strike); }
+	};
 
 
 }

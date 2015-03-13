@@ -48,15 +48,32 @@ namespace QuantLib {
         BlackCapFloorEngine(const Handle<YieldTermStructure>& discountCurve,
                             const Handle<OptionletVolatilityStructure>& vol,
                             Real displacement = 0.0);
-        void calculate() const;
-        Handle<YieldTermStructure> termStructure() { return discountCurve_; }
-        Handle<OptionletVolatilityStructure> volatility() { return vol_; }
+        virtual void calculate() const;
+        Handle<YieldTermStructure> termStructure() const { return discountCurve_; }
+        Handle<OptionletVolatilityStructure> volatility() const { return vol_; }
         Real displacement() { return displacement_; }
       private:
         Handle<YieldTermStructure> discountCurve_;
         Handle<OptionletVolatilityStructure> vol_;
         Real displacement_;
     };
+
+    //! Bachelier-formula cap/floor engine
+    /*! \ingroup capfloorengines */
+    class BachelierBlackCapFloorEngine : public BlackCapFloorEngine {
+      public:
+        BachelierBlackCapFloorEngine(const Handle<YieldTermStructure>& discountCurve,
+                            Volatility vol,
+                            const DayCounter& dc = Actual365Fixed() ) : BlackCapFloorEngine(discountCurve,vol,dc,0.0) {}
+        BachelierBlackCapFloorEngine(const Handle<YieldTermStructure>& discountCurve,
+                            const Handle<Quote>& vol,
+                            const DayCounter& dc = Actual365Fixed()) : BlackCapFloorEngine(discountCurve,vol,dc,0.0) {}
+        BachelierBlackCapFloorEngine(const Handle<YieldTermStructure>& discountCurve,
+                            const Handle<OptionletVolatilityStructure>& vol ) : BlackCapFloorEngine(discountCurve,vol,0.0) {}
+        virtual void calculate() const;
+      private:
+    };
+
 
 }
 

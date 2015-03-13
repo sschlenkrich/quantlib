@@ -37,7 +37,8 @@ namespace QuantLib {
                 bool vegaWeighted,
                 const boost::shared_ptr<EndCriteria>& endCriteria,
                 const boost::shared_ptr<OptimizationMethod>& method,
-                const DayCounter& dc)
+                const DayCounter& dc,
+				const bool useNormalVols)
          : SmileSection(optionDate, dc),
            forward_(forward), atmVolatility_(atmVolatility),
            volHandles_(volHandles), strikes_(strikes), actualStrikes_(strikes),
@@ -47,6 +48,7 @@ namespace QuantLib {
            isNuFixed_(isNuFixed), isRhoFixed_(isRhoFixed),
            vegaWeighted_(vegaWeighted),
            endCriteria_(endCriteria), method_(method),
+		   useNormalVols_(useNormalVols),
            evaluationDate_(Settings::instance().evaluationDate()) {
 
             LazyObject::registerWith(forward_);
@@ -68,7 +70,8 @@ namespace QuantLib {
                bool vegaWeighted,
                const boost::shared_ptr<EndCriteria>& endCriteria,
                const boost::shared_ptr<OptimizationMethod>& method,
-               const DayCounter& dc)
+               const DayCounter& dc,
+			   const bool useNormalVols)
          : SmileSection(optionDate, dc),
            forward_(Handle<Quote>(boost::shared_ptr<Quote>(new SimpleQuote(forward)))),
            atmVolatility_(Handle<Quote>(boost::shared_ptr<Quote>(new SimpleQuote(atmVolatility)))),
@@ -79,6 +82,7 @@ namespace QuantLib {
            isNuFixed_(isNuFixed), isRhoFixed_(isRhoFixed),
            vegaWeighted_(vegaWeighted),
            endCriteria_(endCriteria), method_(method),
+		   useNormalVols_(useNormalVols),
            evaluationDate_(Settings::instance().evaluationDate()) {
 
             for (Size i=0; i<volHandles_.size(); ++i)
@@ -93,7 +97,7 @@ namespace QuantLib {
                      exerciseTime(), forwardValue_,
                      alpha_, beta_, nu_, rho_,
                      isAlphaFixed_, isBetaFixed_, isNuFixed_, isRhoFixed_, vegaWeighted_,
-                     endCriteria_, method_));
+                     endCriteria_, method_, 0.002, false, 50, useNormalVols_));
          swap(tmp, sabrInterpolation_);
     }
 

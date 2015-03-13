@@ -118,14 +118,15 @@ namespace QuantLib {
                 const boost::shared_ptr<OptimizationMethod>& optMethod,
                 const Real errorAccept,
                 const bool useMaxError,
-                const Size maxGuesses)
+                const Size maxGuesses,
+				const bool useNormalVols)
             : Interpolation::templateImpl<I1,I2>(xBegin, xEnd, yBegin),
               SABRCoeffHolder(t, forward, alpha, beta, nu, rho,
                               alphaIsFixed,betaIsFixed,nuIsFixed,rhoIsFixed),
               endCriteria_(endCriteria), optMethod_(optMethod),
               errorAccept_(errorAccept), useMaxError_(useMaxError),
               maxGuesses_(maxGuesses), forward_(forward),
-              vegaWeighted_(vegaWeighted)
+              vegaWeighted_(vegaWeighted), useNormalVols_(useNormalVols)
             {
                 // if no optimization method or endCriteria is provided, we provide one
                 if (!optMethod_)
@@ -262,8 +263,8 @@ namespace QuantLib {
             Real value(Real x) const {
                 QL_REQUIRE(x>0.0, "strike must be positive: " <<
                                   io::rate(x) << " not allowed");
-                return sabrVolatility(x, forward_, t_,
-                                      alpha_, beta_, nu_, rho_);
+				// default return log-normal vol
+                return sabrVolatility(x, forward_, t_, alpha_, beta_, nu_, rho_, useNormalVols_);
             }
             Real primitive(Real) const {
                 QL_FAIL("SABR primitive not implemented");
@@ -380,6 +381,7 @@ namespace QuantLib {
             const Size maxGuesses_;
             const Real& forward_;
             bool vegaWeighted_;
+			bool useNormalVols_;
             boost::shared_ptr<ParametersTransformation> transformation_;
             NoConstraint constraint_;
 
@@ -411,7 +413,8 @@ namespace QuantLib {
                                   = boost::shared_ptr<OptimizationMethod>(),
                           const Real errorAccept=0.0020,
                           const bool useMaxError=false,
-                          const Size maxGuesses=50) {
+                          const Size maxGuesses=50,
+						  const bool useNormalVols=false) {
 
             impl_ = boost::shared_ptr<Interpolation::Impl>(new
                 detail::SABRInterpolationImpl<I1,I2>(xBegin, xEnd, yBegin,
@@ -422,7 +425,8 @@ namespace QuantLib {
                                                      vegaWeighted,
                                                      endCriteria,
                                                      optMethod,
-                                                     errorAccept, useMaxError, maxGuesses));
+                                                     errorAccept, useMaxError, maxGuesses,
+													 useNormalVols));
             coeffs_ =
                 boost::dynamic_pointer_cast<detail::SABRCoeffHolder>(
                                                                        impl_);

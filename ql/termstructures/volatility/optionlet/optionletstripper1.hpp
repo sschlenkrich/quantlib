@@ -47,8 +47,8 @@ namespace QuantLib {
                            Rate switchStrikes = Null<Rate>(),
                            Real accuracy = 1.0e-6,
                            Natural maxIter = 100,
-                           const Handle<YieldTermStructure>& discount =
-                                                Handle<YieldTermStructure>());
+                           const Handle<YieldTermStructure>& discount = Handle<YieldTermStructure>(),
+						   const bool useNormalVols = false);
 
         const Matrix& capFloorPrices() const;
         const Matrix& capFloorVolatilities() const;
@@ -71,6 +71,7 @@ namespace QuantLib {
         mutable Rate switchStrike_;
         Real accuracy_;
         Natural maxIter_;
+		bool useNormalVols_;
     };
 
 }

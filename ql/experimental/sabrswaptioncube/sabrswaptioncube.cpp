@@ -24,7 +24,8 @@ namespace QuantLib {
                            const std::vector< std::vector< Real > >&  nu,
                            const std::vector< std::vector< Real > >&  fwd,
                            BusinessDayConvention                      bdc,
-                           const DayCounter&                          dc )
+                           const DayCounter&                          dc,
+						   const bool                                 useNormalVols)
     : SwaptionVolatilityStructure(bdc, dc), 
       optionTimes_(optionTimes), swapTimes_(swapTimes),
       alpha_(optionTimes.size(),swapTimes.size(),0.0), 
@@ -33,7 +34,8 @@ namespace QuantLib {
       nu_(optionTimes.size(),swapTimes.size(),0.0), 
       fwd_(optionTimes.size(),swapTimes.size(),0.0), 
       maxSwapTenor_(100*Years),
-      referenceDate_(Settings::instance().evaluationDate()) {
+      referenceDate_(Settings::instance().evaluationDate()),
+	  useNormalVols_(useNormalVols) {
         // transform input data
         for (Size i=0; i<optionTimes.size(); ++i) {
             for (Size j=0; j<swapTimes.size(); ++j) {
@@ -69,7 +71,7 @@ namespace QuantLib {
         sabrParameters[2] = (*nuInterp_)(swapLength, optionTime);
         sabrParameters[3] = (*rhoInterp_)(swapLength, optionTime);
         Real fwd = (*fwdInterp_)(swapLength, optionTime);
-        return boost::shared_ptr<SmileSection>( new SabrSmileSection(optionTime, fwd, sabrParameters));
+        return boost::shared_ptr<SmileSection>( new SabrSmileSection(optionTime, fwd, sabrParameters,useNormalVols_));
     }
 
 }
