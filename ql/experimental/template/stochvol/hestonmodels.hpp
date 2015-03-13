@@ -15,7 +15,7 @@
 
 #include <ql/experimental/template/templatestochasticprocess.hpp>
 #include <ql/experimental/template/stochvol/templatehestonmodel.hpp>
-
+#include <ql/experimental/template/stochvol/templatetdstochvolmodel.hpp>
 
 
 #define _MIN_( a, b ) ( (a) < (b) ? (a) : (b) )
