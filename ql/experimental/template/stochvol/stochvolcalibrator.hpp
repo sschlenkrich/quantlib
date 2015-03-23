@@ -42,6 +42,27 @@ namespace QuantLib {
 		bool  etaIsFixed_;
 		bool  z0IsFixed_;
 		bool  rhoIsFixed_;
+		// lower boundaries
+		Real  lambdaMin_;
+		Real  bMin_;
+		Real  LMin_;
+		Real  thetaMin_;
+		Real  mMin_;
+		Real  etaMin_;
+		Real  z0Min_;
+		Real  rhoMin_;
+		// upper boundaries
+		Real  lambdaMax_;
+		Real  bMax_;
+		Real  LMax_;
+		Real  thetaMax_;
+		Real  mMax_;
+		Real  etaMax_;
+		Real  z0Max_;
+		Real  rhoMax_;
+		// optimization parameters
+		Real epsfcn_, ftol_, xtol_, gtol_, glAbsAcc_;
+		Size maxfev_, glMaxEval_;
 		// calibration targets
 		Real              exercTime_;
 		Real              forward_;
@@ -49,6 +70,8 @@ namespace QuantLib {
 		std::vector<Real> vols_;
 	public:
 		// parameter transformation
+		Real  direct(const Real x, const Real a, const Real b) const;
+		Real  inverse(const Real y, const Real a, const Real b) const;
 		Array direct(const Array& X) const;
 		Array inverse(const Array& Y) const;
 		// initialize state X with model parameters and apply inverse transformation
@@ -100,7 +123,9 @@ namespace QuantLib {
 		                         const Real  exercTime,
 		                         const Real  forward,
 		                         const std::vector<Real>& strikes,
-		                         const std::vector<Real>& vols );
+		                         const std::vector<Real>& vols,
+		                         const std::vector<Real>& optimizationParams  // { [min], [max], epsfcn, ftol, xtol, gtol, maxfev, glAbsAcc, glMaxEval }							 
+								 );
 
     };
 

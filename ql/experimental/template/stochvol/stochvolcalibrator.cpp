@@ -25,18 +25,26 @@ namespace QuantLib {
 			return N;
 		}
 
+		Real StochVolModelCalibrator::direct(const Real x, const Real a, const Real b) const {
+			return (b-a)*(atan(x)/M_PI + 0.5) + a;
+		}
+
+		Real StochVolModelCalibrator::inverse(const Real y, const Real a, const Real b) const {
+			return tan( ((y-a)/(b-a)-0.5) * M_PI );
+		}
+
 		Array StochVolModelCalibrator::direct(const Array& X) const {
 			QL_REQUIRE(X.size()==xDim(),"StochVolModelCalibrator Error: dimension mismatch.");
 			Array Y(X.size());
 			size_t idx = 0;
-			if (!lambdaIsFixed_ ) { Y[idx] = 2*(atan(X[idx])/M_PI + 0.5);  ++idx; }   // 0 < lambda < 2
-			if (!bIsFixed_		) { Y[idx] = atan(X[idx])/M_PI + 0.5;      ++idx; }   // 0 < b < 1
-			if (!LIsFixed_		) { Y[idx] = exp(X[idx]);                  ++idx; }   // L > 0
-			if (!thetaIsFixed_	) { Y[idx] = exp(X[idx]);                  ++idx; }   // theta > 0
-			if (!mIsFixed_		) { Y[idx] = exp(X[idx]);                  ++idx; }   // m > 0 
-			if (!etaIsFixed_	) { Y[idx] = 1*(atan(X[idx])/M_PI + 0.5);  ++idx; }   // 0 < eta < 1
-			if (!z0IsFixed_		) { Y[idx] = exp(X[idx]);                  ++idx; }   // z0 > 0
-			if (!rhoIsFixed_	) { Y[idx] = atan(X[idx])*2.0/M_PI;        ++idx; }   // -1 < rho < 1
+			if (!lambdaIsFixed_ ) { Y[idx] = direct(X[idx], lambdaMin_, lambdaMax_);    ++idx; }   
+			if (!bIsFixed_		) { Y[idx] = direct(X[idx], bMin_     , bMax_     );    ++idx; }   
+			if (!LIsFixed_		) { Y[idx] = direct(X[idx], LMin_     , LMax_     );    ++idx; }   
+			if (!thetaIsFixed_	) { Y[idx] = direct(X[idx], thetaMin_ , thetaMax_ );    ++idx; }   
+			if (!mIsFixed_		) { Y[idx] = direct(X[idx], mMin_     , mMax_     );    ++idx; }   
+			if (!etaIsFixed_	) { Y[idx] = direct(X[idx], etaMin_   , etaMax_   );    ++idx; }   
+			if (!z0IsFixed_		) { Y[idx] = direct(X[idx], z0Min_    , z0Max_    );    ++idx; }   
+			if (!rhoIsFixed_	) { Y[idx] = direct(X[idx], rhoMin_   , rhoMax_   );    ++idx; }   
 			return Y;
 		}
 
@@ -44,14 +52,14 @@ namespace QuantLib {
 			QL_REQUIRE(Y.size()==xDim(),"StochVolModelCalibrator Error: dimension mismatch.");
 			Array X(Y.size());
 			size_t idx = 0;
-			if (!lambdaIsFixed_ ) { X[idx] = tan((Y[idx]/2-0.5)*M_PI);  ++idx; }
-			if (!bIsFixed_		) { X[idx] = tan((Y[idx]-0.5)*M_PI);    ++idx; } 
-			if (!LIsFixed_		) { X[idx] = log(Y[idx]);               ++idx; } 
-			if (!thetaIsFixed_	) { X[idx] = log(Y[idx]);               ++idx; } 
-			if (!mIsFixed_		) { X[idx] = log(Y[idx]);               ++idx; } 
-			if (!etaIsFixed_	) { X[idx] = tan((Y[idx]/1-0.5)*M_PI);  ++idx; }
-			if (!z0IsFixed_		) { X[idx] = log(Y[idx]);               ++idx; }
-			if (!rhoIsFixed_	) { X[idx] = tan(Y[idx]*M_PI/2.0);      ++idx; }
+			if (!lambdaIsFixed_ ) { X[idx] = inverse(Y[idx], lambdaMin_, lambdaMax_);    ++idx; }
+			if (!bIsFixed_		) { X[idx] = inverse(Y[idx], bMin_     , bMax_     );    ++idx; }
+			if (!LIsFixed_		) { X[idx] = inverse(Y[idx], LMin_     , LMax_     );    ++idx; }
+			if (!thetaIsFixed_	) { X[idx] = inverse(Y[idx], thetaMin_ , thetaMax_ );    ++idx; }
+			if (!mIsFixed_		) { X[idx] = inverse(Y[idx], mMin_     , mMax_     );    ++idx; }
+			if (!etaIsFixed_	) { X[idx] = inverse(Y[idx], etaMin_   , etaMax_   );    ++idx; }
+			if (!z0IsFixed_		) { X[idx] = inverse(Y[idx], z0Min_    , z0Max_    );    ++idx; }
+			if (!rhoIsFixed_	) { X[idx] = inverse(Y[idx], rhoMin_   , rhoMax_   );    ++idx; }
 			return X;
 		}
 
@@ -103,7 +111,7 @@ namespace QuantLib {
 			Array                      volVariance(strikes_.size());
 			for (size_t k=0; k<strikes_.size(); ++k) {
 				callOrPut[k]   = (strikes_[k] < forward_) ? (Option::Put) : (Option::Call);
-				fwPrices[k]    = m->vanillaOption(forward_,strikes_[k],exercTime_,callOrPut[k],1.0e-12,10000);
+				fwPrices[k]    = m->vanillaOption(forward_,strikes_[k],exercTime_,callOrPut[k],glAbsAcc_,glMaxEval_);
 				normalVols[k]  = bachelierBlackFormulaImpliedVol(callOrPut[k],strikes_[k],forward_,exercTime_,fwPrices[k]);
 				volVariance[k] = normalVols[k] - vols_[k];
 			}
@@ -154,17 +162,83 @@ namespace QuantLib {
 		                         const Real  exercTime,
 		                         const Real  forward,
 		                         const std::vector<Real>& strikes,
-		                         const std::vector<Real>& vols )
+		                         const std::vector<Real>& vols,
+		                         const std::vector<Real>& optimizationParams)  // { [min], [max], epsfcn, ftol, xtol, gtol, maxfev, glAbsAcc, glMaxEval }							 								 )
         : lambda_(lambda), b_(b), L_(L), theta_(theta), m_(m), eta_(eta), z0_(z0), rho_(rho),
 		  lambdaIsFixed_(lambdaIsFixed), bIsFixed_(bIsFixed), LIsFixed_(LIsFixed), thetaIsFixed_(thetaIsFixed), mIsFixed_(mIsFixed), etaIsFixed_(etaIsFixed), z0IsFixed_(z0IsFixed), rhoIsFixed_(rhoIsFixed),
 		  exercTime_(exercTime), forward_(forward), strikes_(strikes), vols_(vols) {
+			// default optimisation parameters
+		    // lower boundaries
+		    lambdaMin_ =  0.0;
+		    bMin_      =  0.0;
+		    LMin_      =  0.0;
+		    thetaMin_  =  0.0;
+		    mMin_      =  0.0;
+		    etaMin_    =  0.0;
+		    z0Min_     =  0.0;
+		    rhoMin_    = -1.0;
+		    // upper boundaries
+		    lambdaMax_ =  3.0;
+		    bMax_      =  1.0;
+		    LMax_      =  1.0;
+		    thetaMax_  =  1.0;
+		    mMax_      =  3.0;
+		    etaMax_    =  3.0;
+		    z0Max_     =  3.0;
+		    rhoMax_    =  1.0;
+		    // Levenberg Marquard
+		    epsfcn_     =  1.0e-10;  // relative accuracy function evaluation, compare w/ glAbsAcc
+			ftol_       =  1.0e-8; 
+			xtol_       =  1.0e-8;
+			gtol_       =  1.0e-8;
+			maxfev_     =  10000;
+			// Vanilla option Gauss Lobatto
+			glAbsAcc_   =  1.0e-12;
+		    glMaxEval_  =  10000;
+			// user-defined optimisation parameters
+		    // lower boundaries
+			if (optimizationParams.size()>=8) {
+		        lambdaMin_ = optimizationParams[0];
+		        bMin_      = optimizationParams[1];
+		        LMin_      = optimizationParams[2];
+		        thetaMin_  = optimizationParams[3];
+		        mMin_      = optimizationParams[4];
+		        etaMin_    = optimizationParams[5];
+		        z0Min_     = optimizationParams[6];
+		        rhoMin_    = optimizationParams[7];
+			}
+		    // upper boundaries
+			if (optimizationParams.size()>=16) {
+		        lambdaMax_ = optimizationParams[8];
+		        bMax_      = optimizationParams[9];
+		        LMax_      = optimizationParams[10];
+		        thetaMax_  = optimizationParams[11];
+		        mMax_      = optimizationParams[12];
+		        etaMax_    = optimizationParams[13];
+		        z0Max_     = optimizationParams[14];
+		        rhoMax_    = optimizationParams[15];
+			}
+		    // Levenberg Marquard
+			if (optimizationParams.size()>=21) {
+		        epsfcn_    = optimizationParams[16];
+			    ftol_      = optimizationParams[17];
+			    xtol_      = optimizationParams[18];
+			    gtol_      = optimizationParams[19];
+			    maxfev_    = static_cast<Size>(optimizationParams[20]);
+			}
+			// Vanilla option Gauss Lobatto
+			if (optimizationParams.size()>=23) {
+			    glAbsAcc_  =  optimizationParams[21];
+		        glMaxEval_ =  static_cast<Size>(optimizationParams[22]);
+			}
 			// set up
 			NoConstraint constraint;
 			Array x = initialise();
 			{
 			    Problem problem(*this, constraint, x);
-				LevenbergMarquardt optimizationMethod(1e-4, 1e-4, 1e-4);
-				EndCriteria endCriteria(60000, 100, 1e-4, 1e-4, 1e-4);
+				LevenbergMarquardt optimizationMethod(epsfcn_, xtol_, gtol_);
+				//EndCriteria endCriteria(60000, 100, 1e-4, 1e-4, 1e-4);
+				EndCriteria endCriteria(maxfev_, 100 /* unused */, 0 /* unused */, ftol_, 0 /* unused */);
 				// calibrate
 				optimizationMethod.minimize(problem,endCriteria);
 				update(direct(problem.currentValue()));
