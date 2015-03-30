@@ -470,7 +470,9 @@ namespace QuantLib {
 				}
 			}
 			// z-variable theta [ z0 - z(t)^+ ]  (full truncation)
-			a[d_+d_*d_] = theta_*(z0_ - ((state.z>0)?(state.z):(0.0)));
+			//a[d_+d_*d_] = theta_*(z0_ - ((state.z>0)?(state.z):(0.0)));
+			// push to positive teritory
+			a[d_+d_*d_] = theta_*(z0_ - state.z);
 			// s-variable r(t)
 			a[d_+d_*d_+1] = shortRate(t,state.x);
 			// finished
@@ -509,11 +511,14 @@ namespace QuantLib {
 			// ensure X1 has size of X0
 			VecA a = drift(t0, X0);
 			MatA b = diffusion(t0, X0);
-			// default via full truncation
+			// default via drift and diffusion
 			for (size_t i=0; i<X1.size(); ++i) {
 				X1[i] = 0.0;
 				for (size_t j=0; j<dW.size(); ++j) X1[i] += b[i][j]*dW[j];
 				X1[i] = X0[i] + a[i]*dt + X1[i]*sqrt(dt);
+			}
+			if (volEvolv()==FullTruncation) {
+				if (X1[X1.size()-2]<0.0) X1[X1.size()-2] = 0.0;
 			}
 			if (volEvolv()==LogNormalApproximation) {
 				ActiveType e = expectationZ(t0, X0[X0.size()-2], dt);
