@@ -3900,6 +3900,9 @@
     <ClInclude Include="ql\experimental\template\stochvol\stochvolcalibrator.hpp">
       <Filter>experimental\template\stochvol</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\template\stochvol\templateshiftedsabrmodel.hpp">
+      <Filter>experimental\template\stochvol</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6239,9 +6242,6 @@
     </ClCompile>
     <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp">
       <Filter>experimental\template\hullwhite</Filter>
-    </ClCompile>
-    <ClCompile Include="ql\experimental\template\stochvol\hestonmodels.cpp">
-      <Filter>experimental\template\stochvol</Filter>
     </ClCompile>
     <ClCompile Include="ql\experimental\template\stochvol\stochvolcalibrator.cpp">
       <Filter>experimental\template\stochvol</Filter>

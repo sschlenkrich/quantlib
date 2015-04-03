@@ -16,6 +16,7 @@
 #include <ql/experimental/template/templatestochasticprocess.hpp>
 #include <ql/experimental/template/stochvol/templatehestonmodel.hpp>
 #include <ql/experimental/template/stochvol/templatetdstochvolmodel.hpp>
+#include <ql/experimental/template/stochvol/templateshiftedsabrmodel.hpp>
 
 
 #define _MIN_( a, b ) ( (a) < (b) ? (a) : (b) )
@@ -30,6 +31,9 @@ namespace QuantLib {
 
 	typedef TemplateTimeDependentStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealTDStochVolModel;
 	typedef TemplateTimeDependentStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real>::PWCAnalytical RealPWCStochVolModel;
+
+	typedef TemplateShiftedSABRModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealShiftedSABRModel;
+
 
     class ActiveHestonModel : public RealHestonModel {
     private:
