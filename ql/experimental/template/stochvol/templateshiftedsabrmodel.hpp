@@ -86,9 +86,36 @@ namespace QuantLib {
 			return B;
 		}
 
+		inline virtual bool truncate( const DateType t, VecA& X ) { 
+			// better check dimensions
+			// S >= -lambda
+			bool truncated = false;
+			if ((beta_>0.0) & (X[0]<-lambda_)) {
+				X[0] = -lambda_;
+				truncated = true;
+			}
+			// z >= 0
+			if (X[1]<0.0) {
+				X[1] = 0.0;
+				truncated = true;
+			}
+			return truncated;
+		}
+
+		// integrate X1 = X0 + drift()*dt + diffusion()*dW*sqrt(dt)
+		inline virtual void evolve( const DateType t0, const VecA& X0, const DateType dt, const VecD& dW, VecA& X1 ) {
+			// ensure X1 has size of X0
+			MatA b = diffusion(t0, X0);
+			// S-variable
+			X1[0] = X0[0] + b[0][0]*dW[0]*sqrt(dt);
+			// z-variable
+			X1[1] = X0[1] + (b[1][0]*dW[0]+b[1][1]*dW[1])*sqrt(dt);
+			// truncate
+			truncate(t0+dt, X1);
+			return;
+		}
+
 	};
-
-
 
 }
 

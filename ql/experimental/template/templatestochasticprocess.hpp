@@ -45,6 +45,9 @@ namespace QuantLib {
 		// b[t,X(t)]
 		inline virtual MatA diffusion( const DateType t, const VecA& X) =0;
 
+		// truncate process to its well-defined domain and return true (truncated) or false (not truncated)
+		inline virtual bool truncate( const DateType t, VecA& X ) { return false; } // default do nothing
+
 		// integrate X1 = X0 + drift()*dt + diffusion()*dW*sqrt(dt)
 		// default implementation
 		inline virtual void evolve( const DateType t0, const VecA& X0, const DateType dt, const VecD& dW, VecA& X1 ) {
@@ -56,6 +59,7 @@ namespace QuantLib {
 				for (size_t j=0; j<dW.size(); ++j) X1[i] += b[i][j]*dW[j];
 				X1[i] = X0[i] + a[i]*dt + X1[i]*sqrt(dt);
 			}
+			truncate( t0+dt, X1 );
 			return;
 		}
 

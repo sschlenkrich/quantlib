@@ -168,6 +168,8 @@ namespace QuantLib {
 					process_->evolve(simTimes_[sim_idx-1]+dt/2.0, X12, dt/2.0, dWt[2*(sim_idx-1)+1], X0);
 					// extrapolation
 					for (size_t k=0; k<X1.size(); ++k) X1[k] = 2*X0[k] - X1[k];
+					// extrapolation may lead to ill-defined states
+					process_->truncate( simTimes_[sim_idx], X1 );
 				} else { // only full Euler step
 					process_->evolve(simTimes_[sim_idx-1],X0,dt,dWt[sim_idx-1], X1);
 				}
