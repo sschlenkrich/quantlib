@@ -102,16 +102,36 @@ namespace QuantLib {
 			return truncated;
 		}
 
-		// integrate X1 = X0 + drift()*dt + diffusion()*dW*sqrt(dt)
+		// integrate X = ln(S + lambda) and v = ln(z) unless beta = 0
 		inline virtual void evolve( const DateType t0, const VecA& X0, const DateType dt, const VecD& dW, VecA& X1 ) {
 			// ensure X1 has size of X0
-			MatA b = diffusion(t0, X0);
-			// S-variable
-			X1[0] = X0[0] + b[0][0]*dW[0]*sqrt(dt);
+			// S-variable, need to distinguish normal, log-normal and in between
+			if (beta_==0.0) {
+				X1[0] = X0[0] + X0[1]*dW[0]*sqrt(dt);
+			}
+			if (beta_==1.0) {
+				ActiveType vol = X0[1];
+				X1[0] = (X0[0] + lambda_) * exp(-vol*vol/2.0*dt + vol*dW[0]*sqrt(dt)) - lambda_;
+			}
+			if ((beta_>0.0) & (beta_<1.0)) {
+				X1[0] = -lambda_;  // fall back is absorption
+				// check for absorbtion at -lambda
+				if (X0[0]>-lambda_) {
+				    ActiveType eps  = QL_EPSILON;
+				    ActiveType SpLmin = pow( -X0[1]*X0[1]*dt/log(eps)/2.0, 1.0/2.0/(1.0-beta_) );
+					// only evolve if there is no absorbtion (yet)
+					if ((X0[0] + lambda_)>SpLmin) {
+						ActiveType vol = X0[1] * pow(X0[0] + lambda_, beta_-1.0);
+				        X1[0] = (X0[0] + lambda_) * exp(-vol*vol/2.0*dt + vol*dW[0]*sqrt(dt)) - lambda_;
+					}
+				}
+			}
 			// z-variable
-			X1[1] = X0[1] + (b[1][0]*dW[0]+b[1][1]*dW[1])*sqrt(dt);
-			// truncate
-			truncate(t0+dt, X1);
+			// X1[1] = X0[1] + (b[1][0]*dW[0]+b[1][1]*dW[1])*sqrt(dt);
+			ActiveType dZ = rho_*dW[0] + sqrt(1-rho_*rho_)*dW[1];
+			X1[1] = X0[1] * exp( -nu_*nu_/2.0*dt + nu_*dZ*sqrt(dt) );
+			// truncate, should not be neccessary
+			// truncate(t0+dt, X1);
 			return;
 		}
 
