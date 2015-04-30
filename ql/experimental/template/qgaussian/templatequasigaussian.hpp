@@ -72,6 +72,9 @@ namespace QuantLib {
 		PassiveType                z0_;      // mean reversion level z0=z(0)=1
 		VolEvolv                   volEvolv_; // use FullTruncation or LogNormalApproximation for volatility process integration
 
+		// truncate stochastic process to avoid numerical instabilities (fpn overflow)
+		VecP                       procLimit_;  // [ z-limit, y-limit, x-limit ]; lower/upper limit for x, y; upper limit for z
+
 		// additional parameters (calculated at initialisation via SVD)
 		MatP                       DfT_;     // factorized correlation matrix Df^T with Df^T * Df = Gamma
 		MatP                       HHfInv_;  // weighting matrix H*Hf^-1 = [ exp{-chi_j*delta_i} ]^-1
@@ -185,6 +188,10 @@ namespace QuantLib {
 			// stochastic vol parameters
 			if (theta_<=0.0) { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel theta>0 required."); }
 			if (z0_!=1.0)    { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel z0=1 required.");    }
+			// adjust stochastic process limits to defaults
+			VecP tmp(3,0.0); // [ z-limit, y-limit, x-limit ], default no limit
+			for (size_t k=0; k<tmp.size(); ++k) if (k<procLimit_.size()) tmp[k] = (procLimit_[k]<0.0) ? (0.0) : (procLimit_[k]);
+			procLimit_ = tmp;
             // finished
 			return ok;
 		}
@@ -297,7 +304,7 @@ namespace QuantLib {
 		}
 
 
-		public:  // for debugging purpose we allow unsafe aaccess to restricted members, IN GENERAL NO CHECK FOR DIMENSIONS!
+		public:  
 
 
 		// Constructor
@@ -320,10 +327,11 @@ namespace QuantLib {
 		    const MatP &                Gamma,   // (benchmark rate) correlation matrix
 		    // stochastic volatility process parameters
 		    const PassiveType           theta,   // mean reversion speed
-			const VolEvolv              volEvolv = FullTruncation,
+			const VolEvolv              volEvolv  = FullTruncation,
+			const VecP &                procLimit = VecP(0),     // stochastic process limits
 			const bool                  useSwapRateScaling = true
 			) : termStructure_(termStructure), d_(d), times_(times), lambda_(lambda), alpha_(alpha), b_(b), eta_(eta),
-			    delta_(delta), chi_(chi), Gamma_(Gamma), theta_(theta), z0_((PassiveType)1.0), volEvolv_(volEvolv) {
+			    delta_(delta), chi_(chi), Gamma_(Gamma), theta_(theta), z0_((PassiveType)1.0), volEvolv_(volEvolv), procLimit_(procLimit) {
                 checkModelParameters();
 				// calculate  DfT_
 				// calculate  HHfInv_
@@ -529,8 +537,31 @@ namespace QuantLib {
 				ActiveType mu = log(e) - si*si/2.0;
 				X1[X1.size()-2] = exp(mu + si*dZ);
 			}
-
+			truncate( t0+dt, X1 );
 			return;
+		}
+
+		// truncate process to its well-defined domain and return true (truncated) or false (not truncated)
+		inline virtual bool truncate( const DateType t, VecA& X ) {
+			// ensure X.size()==size()
+			bool trunc = false;
+			if (procLimit_[2]>0.0) {
+  				for (size_t k=0; k<d_; ++k) { // state x
+					if (X[k]<-procLimit_[2]) { X[k]=-procLimit_[2]; trunc = true; }
+					if (X[k]> procLimit_[2]) { X[k]= procLimit_[2]; trunc = true; }
+				}
+			}
+			if (procLimit_[1]>0.0) {
+  				for (size_t k=d_; k<d_+d_*d_; ++k) { // state y
+					if (X[k]<-procLimit_[1]) { X[k]=-procLimit_[1]; trunc = true; }
+					if (X[k]> procLimit_[1]) { X[k]= procLimit_[1]; trunc = true; }
+				}
+			}			
+			if (procLimit_[0]>0.0) { // state s
+				if (X[d_+d_*d_] < 0.0)           { X[d_+d_*d_] = 0.0;    trunc = true; }
+				if (X[d_+d_*d_] > procLimit_[0]) { X[d_+d_*d_] = procLimit_[0]; trunc = true; }
+			}
+			return trunc;
 		}
 
 
