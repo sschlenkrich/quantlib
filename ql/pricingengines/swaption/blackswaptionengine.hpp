@@ -52,15 +52,37 @@ namespace QuantLib {
         BlackSwaptionEngine(const Handle<YieldTermStructure>& discountCurve,
                             const Handle<SwaptionVolatilityStructure>& vol,
                             Real displacement = 0.0);
-        void calculate() const;
-        Handle<YieldTermStructure> termStructure() { return discountCurve_; }
-        Handle<SwaptionVolatilityStructure> volatility() { return vol_; }
+        virtual void calculate() const;
+        Handle<YieldTermStructure> termStructure() const { return discountCurve_; }
+        Handle<SwaptionVolatilityStructure> volatility() const { return vol_; }
         Real displacement() { return displacement_; }
       private:
         Handle<YieldTermStructure> discountCurve_;
         Handle<SwaptionVolatilityStructure> vol_;
         Real displacement_;
     };
+
+
+	class BachelierBlackSwaptionEngine : public BlackSwaptionEngine {
+      public:
+        BachelierBlackSwaptionEngine(const Handle<YieldTermStructure>& discountCurve,
+                                     Volatility vol,
+                                     const DayCounter& dc = Actual365Fixed(),
+                                     Real displacement = 0.0)
+									 : BlackSwaptionEngine(discountCurve, vol, dc, displacement) {}
+        BachelierBlackSwaptionEngine(const Handle<YieldTermStructure>& discountCurve,
+                                     const Handle<Quote>& vol,
+                                     const DayCounter& dc = Actual365Fixed(),
+                                     Real displacement = 0.0)
+									 : BlackSwaptionEngine(discountCurve, vol, dc, displacement) {}
+        BachelierBlackSwaptionEngine(const Handle<YieldTermStructure>& discountCurve,
+                                     const Handle<SwaptionVolatilityStructure>& vol,
+                                     Real displacement = 0.0)
+									 : BlackSwaptionEngine(discountCurve, vol, displacement) {}
+        virtual void calculate() const;
+    };
+
+
 
 }
 
