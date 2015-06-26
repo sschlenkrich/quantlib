@@ -27,6 +27,22 @@ namespace TemplateAuxilliaries {
 //	inline double DBL(const ADTAGEO::daglad x) { return x.val(); }
 	inline double DBL(const MinimAD::Variable<QuantLib::Real> x) { return x.value(); }
 
+
+	// transformation (-inf, +inf) -> (a, b)
+	template <typename Type> inline Type direct(const Type x, const Type a, const Type b) {
+		Type y = (x<0.0) ? (-1.0/(x-1.0)) : (-1.0/(x+1.0)+2.0);
+		y = 0.5*(b-a)*y + a;
+		return y;
+	}
+
+	// transformation (a, b) -> (-inf, +inf)
+	template <typename Type> inline Type inverse(const Type y, const Type a, const Type b) {
+        Type x = 2.0*(y-a)/(b-a);
+		x = (x<1.0) ? (-1.0/x+1.0) : (-1.0/(x-2.0)-1.0);
+		return x;
+	}
+
+
 	// square of vector elements
 	template <typename Type> inline
 	std::vector<Type> sqr(std::vector<Type> x) {

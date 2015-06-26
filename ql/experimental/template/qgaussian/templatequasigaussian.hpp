@@ -108,7 +108,9 @@ namespace QuantLib {
 				}
 				X.resize(d+d*d+1+1);
 				for (size_t k=0; k<d; ++k) X[k]       = x[k];
-				for (size_t k=0; k<d; ++k) X[d+i*d+j] = y[i][j];
+				// this was wrong: for (size_t k=0; k<d; ++k) X[d+i*d+j] = y[i][j];  
+				for (size_t i=0; i<d; ++i)
+				    for (size_t j=0; j<d; ++j) X[d+i*d+j] = y[i][j];
 				X[d+d*d  ]                            = z;
 				X[d+d*d+1]                            = s;
 			}

@@ -37,6 +37,8 @@
 #include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
 #include <ql/experimental/template/qgaussian/templatequasigaussian.hpp>
 #include <ql/experimental/template/stochvol/templatehestonmodel.hpp>
+#include <ql/experimental/template/stochvol/templatetdstochvolmodel.hpp>
+
 
 //#include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
 
