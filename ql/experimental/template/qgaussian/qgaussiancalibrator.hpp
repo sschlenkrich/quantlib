@@ -95,7 +95,7 @@ namespace QuantLib {
 				inline Real b()      { return b_;      }
 				inline Real eta()    { return eta_;    }
 			};
-			std::vector< CalibSwaption > swaptions_;
+			std::vector<  boost::shared_ptr<CalibSwaption> > swaptions_;
 			
 		public:
 			const Size inputSize()  const { return inputSize_; }
@@ -138,6 +138,14 @@ namespace QuantLib {
 		};
 
 	public:
+
+		// inspectors
+		// inline const boost::shared_ptr<RealQuasiGaussianModel> model()        { return model_;        }
+		// inline const boost::shared_ptr<RealMCSimulation>       mcSimulation() { return mcSimulation_; }
+		// inline const std::vector< std::vector< boost::shared_ptr<Swaption> > >& swaptions() { return swaptions_; }
+		// inline const std::vector< std::vector< Real > >& lambda() { return lambda_; }
+		// inline const std::vector< std::vector< Real > >& b()      { return b_;      }
+		// inline const std::vector< std::vector< Real > >& eta()    { return eta_;    }
 
     };
 

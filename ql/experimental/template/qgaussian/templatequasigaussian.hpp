@@ -61,6 +61,7 @@ namespace QuantLib {
 		MatA                       b_;       // f-weighting
 		VecA                       eta_;     // vol-of-vol
 		// scaling parameters
+		bool                       useSwapRateScaling_;
 		MatA                       S0_;
 		MatA                       D_;
 		// time-homogeneous parameters
@@ -333,14 +334,25 @@ namespace QuantLib {
 			const VecP &                procLimit = VecP(0),     // stochastic process limits
 			const bool                  useSwapRateScaling = true
 			) : termStructure_(termStructure), d_(d), times_(times), lambda_(lambda), alpha_(alpha), b_(b), eta_(eta),
-			    delta_(delta), chi_(chi), Gamma_(Gamma), theta_(theta), z0_((PassiveType)1.0), volEvolv_(volEvolv), procLimit_(procLimit) {
+			    delta_(delta), chi_(chi), Gamma_(Gamma), theta_(theta), z0_((PassiveType)1.0), volEvolv_(volEvolv), procLimit_(procLimit), useSwapRateScaling_(useSwapRateScaling) {
                 checkModelParameters();
 				// calculate  DfT_
 				// calculate  HHfInv_
 				factorMatrices();
 				// adjust alpha and beta to approximate swap dynamics
-				if (useSwapRateScaling) rescaleAlphaB();
+				if (useSwapRateScaling_) rescaleAlphaB();
 			}
+
+		// update model parameters (e.g. during calibration)
+		void update( const MatA &                lambda,  // volatility
+		             const MatA &                b,       // f-weighting
+		             const VecA &                eta ) {  // vol-of-vol
+			// perform some checks on inputs...
+		    lambda_ = lambda;
+			b_      = b;
+			eta_    = eta;
+			if (useSwapRateScaling_) rescaleAlphaB();
+		}
 
 		// helpers
 
@@ -349,6 +361,14 @@ namespace QuantLib {
 		inline size_t idx( const DateType t ) { return TemplateAuxilliaries::idx(times_,t); }
 
 		// inspectors
+		inline const Handle<YieldTermStructure> termStructure() { return termStructure_; }
+		inline const VecD& times()   { return times_;  }
+		inline const MatA& lambda()  { return lambda_; }
+		inline const MatA& alpha()   { return alpha_;  }
+		inline const MatA& b()       { return b_;      }
+		inline const VecA& eta()     { return  eta_;   }
+
+
 		inline const MatP& DfT()    { return DfT_;    }
 		inline const MatP& HHfInv() { return HHfInv_; }
 		inline const VecP& delta()  { return delta_;  }
