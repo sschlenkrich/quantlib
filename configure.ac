@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([QuantLib], [1.5],
+AC_INIT([QuantLib], [1.7],
         [quantlib-dev@lists.sourceforge.net],
         [QuantLib])
 AC_PREREQ(2.62)
@@ -307,7 +307,6 @@ AC_CONFIG_FILES([
     ql/experimental/convertiblebonds/Makefile
     ql/experimental/coupons/Makefile
     ql/experimental/credit/Makefile
-    ql/experimental/exercise/Makefile
     ql/experimental/exoticoptions/Makefile
     ql/experimental/finitedifferences/Makefile
     ql/experimental/fx/Makefile
@@ -315,7 +314,6 @@ AC_CONFIG_FILES([
     ql/experimental/lattices/Makefile
     ql/experimental/math/Makefile
     ql/experimental/mcbasket/Makefile
-    ql/experimental/models/Makefile
     ql/experimental/processes/Makefile
     ql/experimental/risk/Makefile
     ql/experimental/shortrate/Makefile
@@ -334,9 +332,10 @@ AC_CONFIG_FILES([
     ql/math/Makefile
     ql/math/copulas/Makefile
     ql/math/distributions/Makefile
-    ql/math/matrixutilities/Makefile
     ql/math/integrals/Makefile
     ql/math/interpolations/Makefile
+    ql/math/matrixutilities/Makefile
+    ql/math/ode/Makefile
     ql/math/optimization/Makefile
     ql/math/randomnumbers/Makefile
     ql/math/solvers1d/Makefile
@@ -408,6 +407,7 @@ AC_CONFIG_FILES([
     m4/Makefile
     Docs/Makefile
     Examples/Makefile
+    Examples/BasketLosses/Makefile
     Examples/BermudanSwaption/Makefile
     Examples/Bonds/Makefile
     Examples/CallableBonds/Makefile
@@ -417,8 +417,10 @@ AC_CONFIG_FILES([
     Examples/EquityOption/Makefile
     Examples/FittedBondCurve/Makefile
     Examples/FRA/Makefile
+    Examples/LatentModel/Makefile
     Examples/Gaussian1dModels/Makefile
     Examples/MarketModels/Makefile
+    Examples/MultidimIntegral/Makefile
     Examples/Replication/Makefile
     Examples/Repo/Makefile
     Examples/Swap/Makefile

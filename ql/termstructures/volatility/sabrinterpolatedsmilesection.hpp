@@ -1,8 +1,9 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
-Copyright (C) 2007 Cristina Duminuco
-Copyright (C) 2006 François du Vignaud
+ Copyright (C) 2007 Cristina Duminuco
+ Copyright (C) 2006 François du Vignaud
+ Copyright (C) 2015 Peter Caspers
 
  This file is part of QuantLib, a free-software/open-source library
  for financial quantitative analysts and developers - http://quantlib.org/
@@ -56,6 +57,7 @@ namespace QuantLib {
                            const boost::shared_ptr<OptimizationMethod>& method
                             = boost::shared_ptr<OptimizationMethod>(),
                            const DayCounter& dc = Actual365Fixed(),
+                           const Real shift = 0.0
 						   const bool useNormalVols = false
                            );
         //! no quotes
@@ -75,6 +77,7 @@ namespace QuantLib {
                            const boost::shared_ptr<OptimizationMethod>& method
                             = boost::shared_ptr<OptimizationMethod>(),
                            const DayCounter& dc = Actual365Fixed(),
+                           const Real shift = 0.0
 						   const bool useNormalVols = false
                            );
         //@}
@@ -126,12 +129,11 @@ namespace QuantLib {
         bool vegaWeighted_;
         const boost::shared_ptr<EndCriteria> endCriteria_;
         const boost::shared_ptr<OptimizationMethod> method_;
-
-		// inputs and interpolation based on normal vols
-		bool useNormalVols_; 
+		
+        // inputs and interpolation based on normal vols
+        bool useNormalVols_; 
 
         mutable Date evaluationDate_;
-
     };
 
     inline void SabrInterpolatedSmileSection::update() {

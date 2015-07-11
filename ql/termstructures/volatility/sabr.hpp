@@ -4,6 +4,7 @@
  Copyright (C) 2006 Ferdinando Ametrano
  Copyright (C) 2006 Mario Pucci
  Copyright (C) 2006 StatPro Italia srl
+ Copyright (C) 2015 Peter Caspers
 
  This file is part of QuantLib, a free-software/open-source library
  for financial quantitative analysts and developers - http://quantlib.org/
@@ -38,6 +39,15 @@ namespace QuantLib {
                               Real nu,
                               Real rho);
 
+    Real unsafeShiftedSabrVolatility(Rate strike,
+                              Rate forward,
+                              Time expiryTime,
+                              Real alpha,
+                              Real beta,
+                              Real nu,
+                              Real rho,
+                              Real shift);
+
     Real unsafeNormalSabrVolatility(Rate strike,
                                     Rate forward,
                                     Time expiryTime,
@@ -54,6 +64,15 @@ namespace QuantLib {
                         Real nu,
                         Real rho,
 						bool calcNormalVol=false);
+
+    Real shiftedSabrVolatility(Rate strike,
+                                 Rate forward,
+                                 Time expriyTime,
+                                 Real alpha,
+                                 Real beta,
+                                 Real nu,
+                                 Real rho,
+                                 Real shift);
 
     void validateSabrParameters(Real alpha,
                                 Real beta,
