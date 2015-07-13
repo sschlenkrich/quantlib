@@ -54,11 +54,11 @@ namespace QuantLib {
         kappa_(kappa), theta_(theta), sigma_(sigma), rho_(rho), v0_(v0) {}
                               
         // inspectors
-        inline ActiveType kappa() const { return kappa_; }
-        inline ActiveType theta() const { return theta_; }
-        inline ActiveType sigma() const { return sigma_; }
-        inline ActiveType rho()   const { return rho_;   }
-        inline ActiveType v0()    const { return v0_;    }
+        inline const ActiveType& kappa() const { return kappa_; }
+        inline const ActiveType& theta() const { return theta_; }
+        inline const ActiveType& sigma() const { return sigma_; }
+        inline const ActiveType& rho()   const { return rho_;   }
+        inline const ActiveType& v0()    const { return v0_;    }
         // maths
         inline bool fellerConstraint() {
             return (sigma >= 0.0 && sigma*sigma < 2.0*kappa*theta);

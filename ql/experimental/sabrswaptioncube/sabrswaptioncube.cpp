@@ -71,7 +71,7 @@ namespace QuantLib {
         sabrParameters[2] = (*nuInterp_)(swapLength, optionTime);
         sabrParameters[3] = (*rhoInterp_)(swapLength, optionTime);
         Real fwd = (*fwdInterp_)(swapLength, optionTime);
-        return boost::shared_ptr<SmileSection>( new SabrSmileSection(optionTime, fwd, sabrParameters,useNormalVols_));
+        return boost::shared_ptr<SmileSection>( new SabrSmileSection(optionTime, fwd, sabrParameters,0.0,useNormalVols_));
     }
 
 }
