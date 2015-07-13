@@ -72,8 +72,10 @@ namespace QuantLib {
                bool vegaWeighted,
                const boost::shared_ptr<EndCriteria>& endCriteria,
                const boost::shared_ptr<OptimizationMethod>& method,
+			   const DayCounter& dc,
                const Real shift,
-			   const bool useNormalVols)    : SmileSection(optionDate, dc, Date(), ShiftedLognormal, shift),
+			   const bool useNormalVols)
+			   : SmileSection(optionDate, dc, Date(), ShiftedLognormal, shift),
            forward_(Handle<Quote>(boost::shared_ptr<Quote>(new SimpleQuote(forward)))),
            atmVolatility_(Handle<Quote>(boost::shared_ptr<Quote>(new SimpleQuote(atmVolatility)))),
            volHandles_(volHandles.size()), strikes_(strikes), actualStrikes_(strikes),

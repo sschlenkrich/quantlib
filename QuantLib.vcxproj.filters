@@ -3985,6 +3985,37 @@
     <ClInclude Include="ql\instruments\futures.hpp">
       <Filter>instruments</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\basisswap\basisswap.hpp" />
+    <ClInclude Include="ql\experimental\basisswap\basisswapengine.hpp" />
+    <ClInclude Include="ql\experimental\basisswap\basisswapratehelpers.hpp" />
+    <ClInclude Include="ql\experimental\basisswap\spreadyieldtermstructure.hpp" />
+    <ClInclude Include="ql\experimental\exercise\all.hpp" />
+    <ClInclude Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.hpp" />
+    <ClInclude Include="ql\experimental\template\auxilliaries\Complex.hpp" />
+    <ClInclude Include="ql\experimental\template\auxilliaries\gausslobatto.hpp" />
+    <ClInclude Include="ql\experimental\template\auxilliaries\solver1d.hpp" />
+    <ClInclude Include="ql\experimental\template\auxilliaries\templateintegrators.hpp" />
+    <ClInclude Include="ql\experimental\template\auxilliaries\MinimADVariable2.hpp" />
+    <ClInclude Include="ql\experimental\template\auxilliaries\templateauxilliaries.hpp" />
+    <ClInclude Include="ql\experimental\template\auxilliaries\templatesvd.hpp" />
+    <ClInclude Include="ql\experimental\template\basismodel\swaptioncfs.hpp" />
+    <ClInclude Include="ql\experimental\template\hullwhite\bondoptionengine.hpp" />
+    <ClInclude Include="ql\experimental\template\hullwhite\fixedratebondoption.hpp" />
+    <ClInclude Include="ql\experimental\template\hullwhite\hullwhitemodels.hpp" />
+    <ClInclude Include="ql\experimental\template\hullwhite\templatehullwhitemodel.hpp" />
+    <ClInclude Include="ql\experimental\template\montecarlo\montecarlomodells.hpp" />
+    <ClInclude Include="ql\experimental\template\montecarlo\templatemcpayoff.hpp" />
+    <ClInclude Include="ql\experimental\template\montecarlo\templatemcsimulation.hpp" />
+    <ClInclude Include="ql\experimental\template\qgaussian\qgaussiancalibrator.hpp" />
+    <ClInclude Include="ql\experimental\template\qgaussian\quasigaussianmodels.hpp" />
+    <ClInclude Include="ql\experimental\template\qgaussian\templateqgswaptionmodel.hpp" />
+    <ClInclude Include="ql\experimental\template\qgaussian\templatequasigaussian.hpp" />
+    <ClInclude Include="ql\experimental\template\stochvol\hestonmodels.hpp" />
+    <ClInclude Include="ql\experimental\template\stochvol\stochvolcalibrator.hpp" />
+    <ClInclude Include="ql\experimental\template\stochvol\templatehestonmodel.hpp" />
+    <ClInclude Include="ql\experimental\template\stochvol\templateshiftedsabrmodel.hpp" />
+    <ClInclude Include="ql\experimental\template\stochvol\templatetdstochvolmodel.hpp" />
+    <ClInclude Include="ql\experimental\template\templatestochasticprocess.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6416,5 +6447,15 @@
     <ClCompile Include="ql\instruments\futures.cpp">
       <Filter>instruments</Filter>
     </ClCompile>
+    <ClCompile Include="ql\experimental\basisswap\basisswap.cpp" />
+    <ClCompile Include="ql\experimental\basisswap\basisswapengine.cpp" />
+    <ClCompile Include="ql\experimental\basisswap\basisswapratehelpers.cpp" />
+    <ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp" />
+    <ClCompile Include="ql\experimental\template\basismodel\swaptioncfs.cpp" />
+    <ClCompile Include="ql\experimental\template\hullwhite\bondoptionengine.cpp" />
+    <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp" />
+    <ClCompile Include="ql\experimental\template\hullwhite\hullwhitemodels.cpp" />
+    <ClCompile Include="ql\experimental\template\qgaussian\qgaussiancalibrator.cpp" />
+    <ClCompile Include="ql\experimental\template\stochvol\stochvolcalibrator.cpp" />
   </ItemGroup>
 </Project>

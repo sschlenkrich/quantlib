@@ -57,7 +57,7 @@ namespace QuantLib {
                            const boost::shared_ptr<OptimizationMethod>& method
                             = boost::shared_ptr<OptimizationMethod>(),
                            const DayCounter& dc = Actual365Fixed(),
-                           const Real shift = 0.0
+                           const Real shift = 0.0,
 						   const bool useNormalVols = false
                            );
         //! no quotes
@@ -77,7 +77,7 @@ namespace QuantLib {
                            const boost::shared_ptr<OptimizationMethod>& method
                             = boost::shared_ptr<OptimizationMethod>(),
                            const DayCounter& dc = Actual365Fixed(),
-                           const Real shift = 0.0
+                           const Real shift = 0.0,
 						   const bool useNormalVols = false
                            );
         //@}

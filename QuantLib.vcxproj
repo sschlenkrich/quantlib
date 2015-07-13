@@ -1760,12 +1760,9 @@
   <ItemGroup>
     <ClCompile Include="ql\rebatedexercise.cpp" />
     <ClInclude Include="ql\experimental\finitedifferences\all.hpp" />
-    <ClCompile Include="ql\cashflows\cpicoupon.cpp" />
-    <ClCompile Include="ql\cashflows\cpicouponpricer.cpp" />
     <ClCompile Include="ql\experimental\basisswap\basisswap.cpp" />
     <ClCompile Include="ql\experimental\basisswap\basisswapengine.cpp" />
     <ClCompile Include="ql\experimental\basisswap\basisswapratehelpers.cpp" />
-    <ClCompile Include="ql\experimental\exercise\rebatedexercise.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\dynprogvppintrinsicvalueengine.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdextoujumpvanillaengine.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdklugeextouspreadengine.cpp" />
@@ -1882,8 +1879,6 @@
     <ClCompile Include="ql\cashflows\conundrumpricer.cpp" />
     <ClCompile Include="ql\cashflows\coupon.cpp" />
     <ClCompile Include="ql\cashflows\couponpricer.cpp" />
-    <ClCompile Include="ql\cashflows\cpicoupon.cpp" />
-    <ClCompile Include="ql\cashflows\cpicouponpricer.cpp" />
     <ClCompile Include="ql\cashflows\digitalcmscoupon.cpp" />
     <ClCompile Include="ql\cashflows\digitalcoupon.cpp" />
     <ClCompile Include="ql\cashflows\digitaliborcoupon.cpp" />

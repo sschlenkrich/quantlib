@@ -70,14 +70,17 @@ namespace QuantLib {
 
      Real SabrSmileSection::varianceImpl(Rate strike) const {
         strike = std::max(0.00001 - shift(),strike);
-        Volatility vol = unsafeShiftedSabrVolatility(
-            strike, forward_, exerciseTime(), alpha_, beta_, nu_, rho_, shift_);
+        Volatility vol=0.0;
+		if (useNormalVols_) vol = unsafeNormalSabrVolatility(strike+shift_, forward_+shift_, exerciseTime(), alpha_, beta_, nu_, rho_);
+		else                vol = unsafeShiftedSabrVolatility(strike, forward_, exerciseTime(), alpha_, beta_, nu_, rho_, shift_);
         return vol * vol * exerciseTime();
      }
 
      Real SabrSmileSection::volatilityImpl(Rate strike) const {
         strike = std::max(0.00001 - shift(),strike);
-        return unsafeShiftedSabrVolatility(strike, forward_, exerciseTime(),
-                                           alpha_, beta_, nu_, rho_, shift_);
+        Volatility vol=0.0;
+		if (useNormalVols_) vol = unsafeNormalSabrVolatility(strike+shift_, forward_+shift_, exerciseTime(), alpha_, beta_, nu_, rho_);
+		else                vol = unsafeShiftedSabrVolatility(strike, forward_, exerciseTime(), alpha_, beta_, nu_, rho_, shift_);
+        return vol;
      }
 }

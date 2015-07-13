@@ -43,7 +43,7 @@ namespace QuantLib {
                          const std::vector<Real>& sabrParameters,
                          const DayCounter& dc = Actual365Fixed(),
                          const Real shift = 0.0,
-.........................const bool useNormalVols = false);
+                         const bool useNormalVols = false);
         Real minStrike () const { return -shift_; }
         Real maxStrike () const { return QL_MAX_REAL; }
         Real atmLevel() const { return forward_; }
