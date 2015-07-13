@@ -322,6 +322,33 @@
     <Filter Include="methods\finitedifferences\utilities">
       <UniqueIdentifier>{be723df5-2e58-41de-8071-8d2e2f62410a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\sabrswaptioncube">
+      <UniqueIdentifier>{f0fdcd92-805d-46df-9eed-a1acb9962897}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experimental\basisswap">
+      <UniqueIdentifier>{4f8477bb-4b89-4866-b671-e01411759749}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experimental\template">
+      <UniqueIdentifier>{fabf8a39-0cd4-41f7-91a6-8fd37f3a2c3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experimental\template\auxilliaries">
+      <UniqueIdentifier>{83eb4a0f-6e9e-4d72-8c17-73d5c16c4f95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experimental\template\hullwhite">
+      <UniqueIdentifier>{db05000a-2e6f-4554-bee6-95a4ac87080e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experimental\template\qgaussian">
+      <UniqueIdentifier>{e3babc89-3df7-4bc9-93ed-65a09bb0e4a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experimental\template\stochvol">
+      <UniqueIdentifier>{31656015-7fda-4b72-8955-256980fbbd24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experimental\template\montecarlo">
+      <UniqueIdentifier>{a30359f9-eff8-4b92-ac8c-1def5a2cd5f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experimental\template\basismodel">
+      <UniqueIdentifier>{1962ba2e-2566-41c0-88b4-1c76448cec8d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -3985,37 +4012,96 @@
     <ClInclude Include="ql\instruments\futures.hpp">
       <Filter>instruments</Filter>
     </ClInclude>
-    <ClInclude Include="ql\experimental\basisswap\basisswap.hpp" />
-    <ClInclude Include="ql\experimental\basisswap\basisswapengine.hpp" />
-    <ClInclude Include="ql\experimental\basisswap\basisswapratehelpers.hpp" />
-    <ClInclude Include="ql\experimental\basisswap\spreadyieldtermstructure.hpp" />
-    <ClInclude Include="ql\experimental\exercise\all.hpp" />
-    <ClInclude Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.hpp" />
-    <ClInclude Include="ql\experimental\template\auxilliaries\Complex.hpp" />
-    <ClInclude Include="ql\experimental\template\auxilliaries\gausslobatto.hpp" />
-    <ClInclude Include="ql\experimental\template\auxilliaries\solver1d.hpp" />
-    <ClInclude Include="ql\experimental\template\auxilliaries\templateintegrators.hpp" />
-    <ClInclude Include="ql\experimental\template\auxilliaries\MinimADVariable2.hpp" />
-    <ClInclude Include="ql\experimental\template\auxilliaries\templateauxilliaries.hpp" />
-    <ClInclude Include="ql\experimental\template\auxilliaries\templatesvd.hpp" />
-    <ClInclude Include="ql\experimental\template\basismodel\swaptioncfs.hpp" />
-    <ClInclude Include="ql\experimental\template\hullwhite\bondoptionengine.hpp" />
-    <ClInclude Include="ql\experimental\template\hullwhite\fixedratebondoption.hpp" />
-    <ClInclude Include="ql\experimental\template\hullwhite\hullwhitemodels.hpp" />
-    <ClInclude Include="ql\experimental\template\hullwhite\templatehullwhitemodel.hpp" />
-    <ClInclude Include="ql\experimental\template\montecarlo\montecarlomodells.hpp" />
-    <ClInclude Include="ql\experimental\template\montecarlo\templatemcpayoff.hpp" />
-    <ClInclude Include="ql\experimental\template\montecarlo\templatemcsimulation.hpp" />
-    <ClInclude Include="ql\experimental\template\qgaussian\qgaussiancalibrator.hpp" />
-    <ClInclude Include="ql\experimental\template\qgaussian\quasigaussianmodels.hpp" />
-    <ClInclude Include="ql\experimental\template\qgaussian\templateqgswaptionmodel.hpp" />
-    <ClInclude Include="ql\experimental\template\qgaussian\templatequasigaussian.hpp" />
-    <ClInclude Include="ql\experimental\template\stochvol\hestonmodels.hpp" />
-    <ClInclude Include="ql\experimental\template\stochvol\stochvolcalibrator.hpp" />
-    <ClInclude Include="ql\experimental\template\stochvol\templatehestonmodel.hpp" />
-    <ClInclude Include="ql\experimental\template\stochvol\templateshiftedsabrmodel.hpp" />
-    <ClInclude Include="ql\experimental\template\stochvol\templatetdstochvolmodel.hpp" />
-    <ClInclude Include="ql\experimental\template\templatestochasticprocess.hpp" />
+    <ClInclude Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.hpp">
+      <Filter>experimental\sabrswaptioncube</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\basisswap\basisswap.hpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\basisswap\basisswapengine.hpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\basisswap\basisswapratehelpers.hpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\basisswap\spreadyieldtermstructure.hpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\MinimADVariable2.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\hullwhite\templatehullwhitemodel.hpp">
+      <Filter>experimental\template\hullwhite</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\templateauxilliaries.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\hullwhite\hullwhitemodels.hpp">
+      <Filter>experimental\template\hullwhite</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\hullwhite\bondoptionengine.hpp">
+      <Filter>experimental\template\hullwhite</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\hullwhite\fixedratebondoption.hpp">
+      <Filter>experimental\template\hullwhite</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\templateintegrators.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\qgaussian\templatequasigaussian.hpp">
+      <Filter>experimental\template\qgaussian</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\qgaussian\quasigaussianmodels.hpp">
+      <Filter>experimental\template\qgaussian</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\templatesvd.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\stochvol\hestonmodels.hpp">
+      <Filter>experimental\template\stochvol</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\stochvol\templatehestonmodel.hpp">
+      <Filter>experimental\template\stochvol</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\Complex.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\gausslobatto.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\solver1d.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\templatestochasticprocess.hpp">
+      <Filter>experimental\template</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\montecarlo\templatemcpayoff.hpp">
+      <Filter>experimental\template\montecarlo</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\montecarlo\templatemcsimulation.hpp">
+      <Filter>experimental\template\montecarlo</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\qgaussian\templateqgswaptionmodel.hpp">
+      <Filter>experimental\template\qgaussian</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\stochvol\templatetdstochvolmodel.hpp">
+      <Filter>experimental\template\stochvol</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\stochvol\stochvolcalibrator.hpp">
+      <Filter>experimental\template\stochvol</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\stochvol\templateshiftedsabrmodel.hpp">
+      <Filter>experimental\template\stochvol</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\qgaussian\qgaussiancalibrator.hpp">
+      <Filter>experimental\template\qgaussian</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\montecarlo\montecarlomodells.hpp">
+      <Filter>experimental\template\montecarlo</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\basismodel\swaptioncfs.hpp">
+      <Filter>experimental\template\basismodel</Filter>
+    </ClInclude>	
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6123,12 +6209,6 @@
     <ClCompile Include="ql\stochasticprocess.cpp" />
     <ClCompile Include="ql\termstructure.cpp" />
     <ClCompile Include="ql\timegrid.cpp" />
-    <ClCompile Include="ql\cashflows\cpicoupon.cpp">
-      <Filter>cashflows</Filter>
-    </ClCompile>
-    <ClCompile Include="ql\cashflows\cpicouponpricer.cpp">
-      <Filter>cashflows</Filter>
-    </ClCompile>
     <ClCompile Include="ql\instruments\cpicapfloor.cpp">
       <Filter>instruments</Filter>
     </ClCompile>
@@ -6447,15 +6527,41 @@
     <ClCompile Include="ql\instruments\futures.cpp">
       <Filter>instruments</Filter>
     </ClCompile>
-    <ClCompile Include="ql\experimental\basisswap\basisswap.cpp" />
-    <ClCompile Include="ql\experimental\basisswap\basisswapengine.cpp" />
-    <ClCompile Include="ql\experimental\basisswap\basisswapratehelpers.cpp" />
-    <ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp" />
-    <ClCompile Include="ql\experimental\template\basismodel\swaptioncfs.cpp" />
-    <ClCompile Include="ql\experimental\template\hullwhite\bondoptionengine.cpp" />
-    <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp" />
-    <ClCompile Include="ql\experimental\template\hullwhite\hullwhitemodels.cpp" />
-    <ClCompile Include="ql\experimental\template\qgaussian\qgaussiancalibrator.cpp" />
-    <ClCompile Include="ql\experimental\template\stochvol\stochvolcalibrator.cpp" />
+	<ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp">
+      <Filter>experimental\sabrswaptioncube</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\basisswap\basisswap.cpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\basisswap\basisswapengine.cpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\basisswap\basisswapratehelpers.cpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\hullwhite\hullwhitemodels.cpp">
+      <Filter>experimental\template\hullwhite</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\hullwhite\bondoptionengine.cpp">
+      <Filter>experimental\template\hullwhite</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp">
+      <Filter>experimental\template\hullwhite</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\stochvol\stochvolcalibrator.cpp">
+      <Filter>experimental\template\stochvol</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\basismodel\swaptioncfs.cpp">
+      <Filter>experimental\template\basismodel</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\qgaussian\qgaussiancalibrator.cpp">
+      <Filter>experimental\template\qgaussian</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\cashflows\cpicoupon.cpp">
+      <Filter>cashflows</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\cashflows\cpicouponpricer.cpp">
+      <Filter>cashflows</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

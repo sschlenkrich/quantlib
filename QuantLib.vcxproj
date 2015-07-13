@@ -1758,6 +1758,8 @@
     <ClInclude Include="ql\volatilitymodel.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ql\cashflows\cpicoupon.cpp" />
+    <ClCompile Include="ql\cashflows\cpicouponpricer.cpp" />
     <ClCompile Include="ql\rebatedexercise.cpp" />
     <ClInclude Include="ql\experimental\finitedifferences\all.hpp" />
     <ClCompile Include="ql\experimental\basisswap\basisswap.cpp" />
