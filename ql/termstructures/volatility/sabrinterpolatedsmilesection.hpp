@@ -130,6 +130,8 @@ namespace QuantLib {
         const boost::shared_ptr<EndCriteria> endCriteria_;
         const boost::shared_ptr<OptimizationMethod> method_;
 		
+		// displaced diffusion SABR
+		Real shift_;
         // inputs and interpolation based on normal vols
         bool useNormalVols_; 
 

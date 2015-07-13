@@ -50,6 +50,7 @@ namespace QuantLib {
            isNuFixed_(isNuFixed), isRhoFixed_(isRhoFixed),
            vegaWeighted_(vegaWeighted),
            endCriteria_(endCriteria), method_(method),
+		   shift_(shift),
 		   useNormalVols_(useNormalVols),
            evaluationDate_(Settings::instance().evaluationDate()) {
 
@@ -85,6 +86,7 @@ namespace QuantLib {
            isNuFixed_(isNuFixed), isRhoFixed_(isRhoFixed),
            vegaWeighted_(vegaWeighted),
            endCriteria_(endCriteria), method_(method),
+		   shift_(shift),
 		   useNormalVols_(useNormalVols),
            evaluationDate_(Settings::instance().evaluationDate()) {
 
@@ -100,7 +102,7 @@ namespace QuantLib {
                      exerciseTime(), forwardValue_,
                      alpha_, beta_, nu_, rho_,
                      isAlphaFixed_, isBetaFixed_, isNuFixed_, isRhoFixed_, vegaWeighted_,
-                     endCriteria_, method_, 0.002, false, 50, useNormalVols_));
+                     endCriteria_, method_, 0.002, false, 50, shift_, useNormalVols_));
          swap(tmp, sabrInterpolation_);
     }
 

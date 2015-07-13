@@ -46,21 +46,25 @@ class SABRWrapper {
                 const std::vector<Real> &params,
                 const std::vector<Real> &addParams)
         : t_(t), forward_(forward), params_(params),
-          shift_(addParams.size() == 0 ? 0.0 : addParams[0]) {
+          shift_(addParams.size() == 0 ? 0.0 : addParams[0]),
+	      useNormalVols_(((addParams.size() > 1)&(addParams[1]>0.0)) ? (true) : (false)) {
         QL_REQUIRE(forward_ + shift_ > 0.0, "forward+shift must be positive: "
                                                  << forward_ << " with shift "
                                                  << shift_ << " not allowed");
         validateSabrParameters(params[0], params[1], params[2], params[3]);
     }
     Real volatility(const Real x) {
-        return shiftedSabrVolatility(x, forward_, t_, params_[0], params_[1],
-                                     params_[2], params_[3], shift_);
+		Real vol=0.0;
+		if (useNormalVols_) vol = unsafeNormalSabrVolatility(x+shift_, forward_+shift_, t_, params_[0], params_[1], params_[2], params_[3]);
+        else                vol = shiftedSabrVolatility(x, forward_, t_, params_[0], params_[1], params_[2], params_[3], shift_);
+		return vol;
     }
 
   private:
     const Real t_, &forward_;
     const std::vector<Real> &params_;
     const Real shift_;
+	const bool useNormalVols_;
 };
 
 struct SABRSpecs {
@@ -133,10 +137,13 @@ struct SABRSpecs {
                    : eps2() * (x[3] > 0.0 ? 1.0 : (-1.0));
         return y;
     }
-    Real weight(const Real strike, const Real forward, const Real stdDev,
-                const std::vector<Real> &addParams) {
-        return blackFormulaStdDevDerivative(strike, forward, stdDev, 1.0,
-                                            addParams[0]);
+    Real weight(const Real strike, const Real forward, const Real stdDev, const std::vector<Real> &addParams) {
+		Real shift = (addParams.size()>0) ? (addParams[0]) : 0.0;
+		bool useNormalVols = ((addParams.size()>1)&(addParams[1]>0.0)) ? (true) : (false);
+		Real vega = 0.0;
+		if (useNormalVols) vega = bachelierBlackFormulaStdDevDerivative(strike+shift, forward+shift, stdDev,1.0);
+		else               vega = blackFormulaStdDevDerivative(strike, forward, stdDev, 1.0, shift);
+		return vega;
     }
     typedef SABRWrapper type;
     boost::shared_ptr<type> instance(const Time t, const Real &forward,
@@ -164,16 +171,18 @@ class SABRInterpolation : public Interpolation {
                           boost::shared_ptr<OptimizationMethod>(),
                       const Real errorAccept = 0.0020,
                       const bool useMaxError = false,
-                      const Size maxGuesses = 50, const Real shift = 0.0) {
+                      const Size maxGuesses = 50,
+					  const Real shift = 0.0,
+					  const bool useNormalVols = false ) {
 
+		Real useNVols = (useNormalVols) ? (1.0) : (0.0);
         impl_ = boost::shared_ptr<Interpolation::Impl>(
             new detail::XABRInterpolationImpl<I1, I2, detail::SABRSpecs>(
                 xBegin, xEnd, yBegin, t, forward,
                 boost::assign::list_of(alpha)(beta)(nu)(rho),
-                boost::assign::list_of(alphaIsFixed)(betaIsFixed)(nuIsFixed)(
-                    rhoIsFixed),
+                boost::assign::list_of(alphaIsFixed)(betaIsFixed)(nuIsFixed)(rhoIsFixed),
                 vegaWeighted, endCriteria, optMethod, errorAccept, useMaxError,
-                maxGuesses, boost::assign::list_of(shift)));
+                maxGuesses, boost::assign::list_of(shift)(useNVols)));
         coeffs_ = boost::dynamic_pointer_cast<
             detail::XABRCoeffHolder<detail::SABRSpecs> >(impl_);
     }
