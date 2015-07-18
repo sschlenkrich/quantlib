@@ -41,11 +41,11 @@ namespace QuantLib {
         inline const Leg&                        fixedLeg() const { return fixedLeg_; }
 		inline const Leg&                        floatLeg() const { return floatLeg_; }
 		// assemble cash flow values and pay times w.r.t. yield curve
-		inline const std::vector<Real>& exerciseTimes()   { return  exerciseTimes_; }
-		inline const std::vector<Real>& fixedTimes()	  { return 	fixedTimes_;	}
-		inline const std::vector<Real>& floatTimes()	  { return 	floatTimes_;	}
-		inline const std::vector<Real>& fixedWeights()    { return 	fixedWeights_;	}
-		inline const std::vector<Real>& floatWeights()    { return 	floatWeights_;	}
+		inline const std::vector<Real>& exerciseTimes() const  { return  exerciseTimes_; }
+		inline const std::vector<Real>& fixedTimes()	const  { return  fixedTimes_;	 }
+		inline const std::vector<Real>& floatTimes()	const  { return  floatTimes_;	 }
+		inline const std::vector<Real>& fixedWeights()  const  { return  fixedWeights_;	 }
+		inline const std::vector<Real>& floatWeights()  const  { return  floatWeights_;	 }
 		
     };
 

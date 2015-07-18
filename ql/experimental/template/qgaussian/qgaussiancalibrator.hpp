@@ -63,7 +63,11 @@ namespace QuantLib {
 			return TemplateAuxilliaries::inverse(y, a, b);
 		}
 
-		class Objective : CostFunction {
+		// parameters for quasi-Gaussian swaption model
+		std::vector< Real > modelTimes_;
+		bool                useExpectedXY_;
+
+		class Objective : public CostFunction {
 		private:
 			// reference to access model, swaptions and targets
 			QuasiGaussianModelCalibrator  *calibrator_;
@@ -95,7 +99,7 @@ namespace QuantLib {
 				inline Real b()      { return b_;      }
 				inline Real eta()    { return eta_;    }
 			};
-			std::vector<  boost::shared_ptr<CalibSwaption> > swaptions_;
+			std::vector< std::vector< boost::shared_ptr<CalibSwaption> > > calibSwaptions_;
 			
 		public:
 			const Size inputSize()  const { return inputSize_; }
@@ -103,7 +107,7 @@ namespace QuantLib {
 
 			Objective( QuasiGaussianModelCalibrator              *calibrator,
 			           const std::vector< std::vector< bool > >&  isInput,
-			           std::vector< std::vector< bool > >&        isOutput );
+			           const std::vector< std::vector< bool > >&  isOutput );
 
 		    // initialize state X with model parameters and apply inverse transformation
 		    Array initialise();
@@ -114,7 +118,7 @@ namespace QuantLib {
 			    //     for j=2d,      isInput[i][j] ? eta    -> inverseEta    -> X[idx], ++idx
 
 			// apply direct transformation and update model parameters
-			void update(const Array& X);
+			void update(const Array& X) const;
 			    // for all isInput[i]
 			    //     for j=0.. d-1, isInput[i][j] ? X[idx] -> inverseLambda -> lambda, ++idx
 			    //     for j=d..2d-1, isInput[i][j] ? X[idx] -> inverseB      -> b     , ++idx
@@ -135,9 +139,38 @@ namespace QuantLib {
 			// 0.5 ||Y||^2
             virtual Real value(const Array& x) const;
 
+			// return the model for a given input state
+			const boost::shared_ptr<RealQuasiGaussianModel> model(const Array& x);
 		};
 
 	public:
+
+		// constructor
+		QuasiGaussianModelCalibrator( boost::shared_ptr<RealQuasiGaussianModel> model,
+			                          boost::shared_ptr<RealMCSimulation>       mcSimulation,
+									  std::vector< std::vector< boost::shared_ptr<Swaption> > > swaptions,
+									  std::vector< std::vector< Real > > lambda,
+                                      std::vector< std::vector< Real > > b,
+                                      std::vector< std::vector< Real > > eta,
+									  Real                               lambdaMin,
+									  Real                               lambdaMax,
+									  Real                               bMin,
+									  Real                               bMax,
+									  Real                               etaMin,
+									  Real                               etaMax,
+									  std::vector< Real >                modelTimes,
+                                      bool                               useExpectedXY);
+
+		const boost::shared_ptr<RealQuasiGaussianModel> calibrate(
+						           const std::vector< std::vector< bool > >&  isInput,
+			                       const std::vector< std::vector< bool > >&  isOutput,
+								   	// optimization parameters
+		                           Real                                       epsfcn = 1.0e-10,
+								   Real                                       ftol   = 1.0e-8,
+								   Real                                       xtol   = 1.0e-8,
+								   Real                                       gtol   = 1.0e-8,
+		                           Size                                       maxfev = 10000    );
+
 
 		// inspectors
 		// inline const boost::shared_ptr<RealQuasiGaussianModel> model()        { return model_;        }
