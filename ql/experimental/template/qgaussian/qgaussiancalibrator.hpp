@@ -35,6 +35,9 @@ namespace QuantLib {
 		// the Quasi-Gaussian model aimed to be calibrated
 		boost::shared_ptr<RealQuasiGaussianModel> model_;
 
+		// the resulting calibrated Quasi-Gaussian model
+		boost::shared_ptr<RealQuasiGaussianModel> calibratedModel_;
+
 		// we may use a MC simulation to adjust for closed form vs MC bias
 		boost::shared_ptr<RealMCSimulation> mcSimulation_;
 
@@ -54,18 +57,18 @@ namespace QuantLib {
 		Real  lambdaMin_, lambdaMax_, bMin_, bMax_, etaMin_, etaMax_;
 		// transformation (-inf, +inf) -> (a, b)
         static const Real direct(const Real x, const Real a, const Real b) {
-			// return (b-a)*(atan(x)/M_PI + 0.5) + a;
-			return TemplateAuxilliaries::direct(x, a, b);
+			return (b-a)*(atan(x)/M_PI + 0.5) + a;
+			//return TemplateAuxilliaries::direct(x, a, b);
 		}
 		// transformation (a, b) -> (-inf, +inf)
 		static const Real inverse(const Real y, const Real a, const Real b) {
-			// return tan( ((y-a)/(b-a)-0.5) * M_PI );
-			return TemplateAuxilliaries::inverse(y, a, b);
+			return tan( ((y-a)/(b-a)-0.5) * M_PI );
+			//return TemplateAuxilliaries::inverse(y, a, b);
 		}
 
 		// parameters for quasi-Gaussian swaption model
-		std::vector< Real > modelTimes_;
-		bool                useExpectedXY_;
+		Real   modelTimesStepSize_;  // in year fractions
+		bool   useExpectedXY_;
 
 		class Objective : public CostFunction {
 		private:
@@ -86,18 +89,21 @@ namespace QuantLib {
                 // cash flows are inherited from base class
 				// targets
 				Real lambda_, b_, eta_;
+				// auxilliaries
+				std::vector< Real > modelTimes_;
 			public:
-				CalibSwaption ( Real lambda,
-					            Real b,
-								Real eta,
+				CalibSwaption ( Real                               lambda,
+					            Real                               b,
+								Real                               eta,
 					            const boost::shared_ptr<Swaption>& swaption,
-			                    const Handle<YieldTermStructure>& discountCurve,
-						        bool                              contTenorSpread = true )
-								: SwaptionCashFlows(swaption,discountCurve,contTenorSpread), lambda_(lambda), b_(b), eta_(eta) {}
+			                    const Handle<YieldTermStructure>&  discountCurve,
+						        bool                               contTenorSpread = true,
+								Real                               modelTimesStepSize = 1.0/12.0);
 				// inspectors
-				inline Real lambda() { return lambda_; }
-				inline Real b()      { return b_;      }
-				inline Real eta()    { return eta_;    }
+				inline Real lambda() const { return lambda_; }
+				inline Real b()      const { return b_;      }
+				inline Real eta()    const { return eta_;    }
+				inline const std::vector<Real>& modelTimes() const { return modelTimes_; }
 			};
 			std::vector< std::vector< boost::shared_ptr<CalibSwaption> > > calibSwaptions_;
 			
@@ -158,21 +164,21 @@ namespace QuantLib {
 									  Real                               bMax,
 									  Real                               etaMin,
 									  Real                               etaMax,
-									  std::vector< Real >                modelTimes,
+									  Real                               modelTimesStepSize,
                                       bool                               useExpectedXY);
 
-		const boost::shared_ptr<RealQuasiGaussianModel> calibrate(
-						           const std::vector< std::vector< bool > >&  isInput,
-			                       const std::vector< std::vector< bool > >&  isOutput,
-								   	// optimization parameters
-		                           Real                                       epsfcn = 1.0e-10,
-								   Real                                       ftol   = 1.0e-8,
-								   Real                                       xtol   = 1.0e-8,
-								   Real                                       gtol   = 1.0e-8,
-		                           Size                                       maxfev = 10000    );
-
+		Integer calibrate( const std::vector< std::vector< bool > >&  isInput,
+			               const std::vector< std::vector< bool > >&  isOutput,
+						   // optimization parameters
+		                   Real                                       epsfcn = 1.0e-10,
+						   Real                                       ftol   = 1.0e-8,
+						   Real                                       xtol   = 1.0e-8,
+						   Real                                       gtol   = 1.0e-8,
+		                   Size                                       maxfev = 10000    );
 
 		// inspectors
+		inline const boost::shared_ptr<RealQuasiGaussianModel> calibratedModel() const { return calibratedModel_; }
+
 		// inline const boost::shared_ptr<RealQuasiGaussianModel> model()        { return model_;        }
 		// inline const boost::shared_ptr<RealMCSimulation>       mcSimulation() { return mcSimulation_; }
 		// inline const std::vector< std::vector< boost::shared_ptr<Swaption> > >& swaptions() { return swaptions_; }

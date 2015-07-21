@@ -300,8 +300,8 @@ namespace QuantLib {
 					D_[k][i] = 0.0;
 					for (size_t j=0; j<d_; ++j) D_[k][i] += grad[j] * exp(-chi_[j]*delta_[i]);
 					// overwrite alpha, b
-					alpha_[k][i] = (1.0 - b_[k][i])*S0_[k][i];
-					b_[k][i] *= D_[k][i];
+					// alpha_[k][i] = (1.0 - b_[k][i])*S0_[k][i];
+					// b_[k][i] *= D_[k][i];
 				}
 			}
 		}
@@ -380,8 +380,8 @@ namespace QuantLib {
 
 		// parameter functions (no dimension checks)
 		inline ActiveType lambda( const size_t i, const DateType t) { return lambda_[maxidx(i)][idx(t)]; }
-		inline ActiveType alpha ( const size_t i, const DateType t) { return alpha_[maxidx(i)][idx(t)];  }
-		inline ActiveType b     ( const size_t i, const DateType t) { return b_[maxidx(i)][idx(t)];      }
+		inline ActiveType alpha ( const size_t i, const DateType t) { return (useSwapRateScaling_) ? ((1.0-b_[maxidx(i)][idx(t)])*S0_[maxidx(i)][idx(t)]) : (alpha_[maxidx(i)][idx(t)]) ;  }
+		inline ActiveType b     ( const size_t i, const DateType t) { return (useSwapRateScaling_) ? (D_[maxidx(i)][idx(t)]*b_[maxidx(i)][idx(t)])        : (b_[maxidx(i)][idx(t)])     ;  }
 		inline ActiveType eta   ( const DateType t)                 { return eta_[idx(t)];       }
 
 		// analytic formulas

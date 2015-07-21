@@ -460,12 +460,12 @@ namespace QuantLib {
 			QL_REQUIRE(swap_.floatWeights.size()>0,"TemplateQGSwaptionModel: empty float weights.");
 			QL_REQUIRE(swap_.floatTimes.size()==swap_.floatWeights.size(),"TemplateQGSwaptionModel: float sizes mismatch.");
 			QL_REQUIRE(swap_.floatTimes[0]>0,"TemplateQGSwaptionModel: future float times required");
-			for (size_t k=1; k<swap_.floatTimes.size(); ++k) QL_REQUIRE(swap_.floatTimes[k]>swap_.floatTimes[k-1],"TemplateQGSwaptionModel: ascending float times required");
+			for (size_t k=1; k<swap_.floatTimes.size(); ++k) QL_REQUIRE(swap_.floatTimes[k]>=swap_.floatTimes[k-1],"TemplateQGSwaptionModel: ascending float times required");
 			// fixed leg
 			QL_REQUIRE(swap_.fixedWeights.size()>0,"TemplateQGSwaptionModel: empty fixed weights.");
 			QL_REQUIRE(swap_.fixedTimes.size()==swap_.fixedWeights.size(),"TemplateQGSwaptionModel: fixed sizes mismatch.");
 			QL_REQUIRE(swap_.fixedTimes[0]>0,"TemplateQGSwaptionModel: future fixed times required");
-			for (size_t k=1; k<swap_.fixedTimes.size(); ++k) QL_REQUIRE(swap_.fixedTimes[k]>swap_.fixedTimes[k-1],"TemplateQGSwaptionModel: ascending fixed times required");
+			for (size_t k=1; k<swap_.fixedTimes.size(); ++k) QL_REQUIRE(swap_.fixedTimes[k]>=swap_.fixedTimes[k-1],"TemplateQGSwaptionModel: ascending fixed times required");
 			// check consistency of times
 			QL_REQUIRE(times_.size()>1,"TemplateQGSwaptionModel: at least two model times required");
 			QL_REQUIRE(times_[0]==0,"TemplateQGSwaptionModel: model times T[0]=0 required");

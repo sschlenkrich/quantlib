@@ -14,6 +14,28 @@
 
 namespace QuantLib {
 
+
+	QuasiGaussianModelCalibrator::Objective::CalibSwaption::CalibSwaption (
+		            Real                                 lambda,
+					Real                                 b,
+					Real                                 eta,
+					const boost::shared_ptr<Swaption>&   swaption,
+			        const Handle<YieldTermStructure>&    discountCurve,
+				    bool                                 contTenorSpread,
+					Real                                 modelTimesStepSize )
+					: SwaptionCashFlows(swaption,discountCurve,contTenorSpread), lambda_(lambda), b_(b), eta_(eta) {
+		Real Tend = floatTimes()[0];
+		Size N = (Size) (Tend/modelTimesStepSize);
+		if (N*modelTimesStepSize<Tend) ++N;
+		modelTimes_.resize(N+1); // we need to store zero as well
+		modelTimes_[0] = 0.0;
+		for (Size i=1; i<=N; ++i) {
+			modelTimes_[i] = modelTimes_[i-1] + modelTimesStepSize;
+			if (modelTimes_[i]>Tend) modelTimes_[i] = Tend;
+		}		
+	}
+
+
 	QuasiGaussianModelCalibrator::Objective::Objective(
 		          QuasiGaussianModelCalibrator              *calibrator,
 			      const std::vector< std::vector< bool > >&  isInput,
@@ -49,7 +71,7 @@ namespace QuantLib {
 					isOutput_[i][j+calibrator_->swaptions_[i].size()] || 
 					isOutput_[i][j+2*calibrator_->swaptions_[i].size()] ) {
 					// assume equal dimension of lambda, b, eta and swaptions
-					calibSwaptions_[i][j] = boost::shared_ptr<CalibSwaption>(new CalibSwaption(calibrator_->lambda_[i][j],calibrator_->b_[i][j],calibrator_->eta_[i][j],calibrator_->swaptions_[i][j],model_->termStructure(), true) );
+					calibSwaptions_[i][j] = boost::shared_ptr<CalibSwaption>(new CalibSwaption(calibrator_->lambda_[i][j],calibrator_->b_[i][j],calibrator_->eta_[i][j],calibrator_->swaptions_[i][j],model_->termStructure(), true, calibrator_->modelTimesStepSize_) );
 				}
 			}
 		}
@@ -130,7 +152,7 @@ namespace QuantLib {
 			swaptionModels[i].resize(calibrator_->swaptions_[i].size());
 			for (size_t j=0; j<swaptionModels[i].size(); ++j) {
 				if (calibSwaptions_[i][j]) {										
-					swaptionModels[i][j] = boost::shared_ptr<RealQGSwaptionModel>( new RealQGSwaptionModel( model_, calibSwaptions_[i][j]->floatTimes(), calibSwaptions_[i][j]->floatWeights(), calibSwaptions_[i][j]->fixedTimes(), calibSwaptions_[i][j]->fixedWeights(),calibrator_->modelTimes_, calibrator_->useExpectedXY_ ) );
+					swaptionModels[i][j] = boost::shared_ptr<RealQGSwaptionModel>( new RealQGSwaptionModel( model_, calibSwaptions_[i][j]->floatTimes(), calibSwaptions_[i][j]->floatWeights(), calibSwaptions_[i][j]->fixedTimes(), calibSwaptions_[i][j]->fixedWeights(),calibSwaptions_[i][j]->modelTimes(), calibrator_->useExpectedXY_ ) );
 				}
 			}
 		}
@@ -184,11 +206,11 @@ namespace QuantLib {
 									  Real                               bMax,
 									  Real                               etaMin,
 									  Real                               etaMax,
-									  std::vector< Real >                modelTimes,
+									  Real                               modelTimesStepSize,
                                       bool                               useExpectedXY) 
 									  : model_(model), mcSimulation_(mcSimulation), swaptions_(swaptions), lambda_(lambda), b_(b), eta_(eta),
 									    lambdaMin_(lambdaMin), lambdaMax_(lambdaMax), bMin_(bMin), bMax_(bMax), etaMin_(etaMin), etaMax_(etaMax),
-										modelTimes_(modelTimes), useExpectedXY_(useExpectedXY) {
+										modelTimesStepSize_(modelTimesStepSize), useExpectedXY_(useExpectedXY) {
         // check dimensions
 		QL_REQUIRE(swaptions_.size()>0,"QuasiGaussianModelCalibrator: Wrong swaptions dimension." );
 		for (size_t i=0; i<swaptions_.size(); ++i) QL_REQUIRE(swaptions_[i].size()>0,"QuasiGaussianModelCalibrator: Wrong swaptions dimension." );
@@ -205,7 +227,7 @@ namespace QuantLib {
 		// better check and adjust model times...
 	}
 
-	const boost::shared_ptr<RealQuasiGaussianModel> QuasiGaussianModelCalibrator::calibrate(
+	Integer QuasiGaussianModelCalibrator::calibrate(
 						           const std::vector< std::vector< bool > >&  isInput,
 			                       const std::vector< std::vector< bool > >&  isOutput,
 								   	// optimization parameters
@@ -223,9 +245,8 @@ namespace QuantLib {
 		EndCriteria endCriteria(maxfev, 100 /* unused */, 0 /* unused */, ftol, 0 /* unused */);
 		// calibrate
 		optimizationMethod.minimize(problem,endCriteria);
-		return obj.model(problem.currentValue());
-	    return model_;
-
+		calibratedModel_ = obj.model(problem.currentValue());
+		return optimizationMethod.getInfo();
 	}
 
 
