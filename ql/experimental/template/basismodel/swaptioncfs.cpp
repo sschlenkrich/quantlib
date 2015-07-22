@@ -76,6 +76,12 @@ namespace QuantLib {
 		for (Size k=0; k<fixedLeg_.size(); ++k)	fixedWeights_.push_back( fixedLeg_[k]->amount() );
 		for (Size k=0; k<floatLeg_.size(); ++k) floatTimes_.push_back( dc.yearFraction(refDate_,floatLeg_[k]->date()) );
 		for (Size k=0; k<floatLeg_.size(); ++k) floatWeights_.push_back( floatLeg_[k]->amount() );
+
+		for (Size k=0; k<fixedLeg_.size(); ++k)	{
+			boost::shared_ptr<Coupon> coupon = boost::dynamic_pointer_cast<Coupon>(fixedLeg_[k]);
+			if (coupon) annuityWeights_.push_back( coupon->nominal() * coupon->accrualPeriod() );
+		}
+
 	}
 
 

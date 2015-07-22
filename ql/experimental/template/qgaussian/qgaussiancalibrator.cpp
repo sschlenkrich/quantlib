@@ -38,8 +38,8 @@ namespace QuantLib {
 
 	QuasiGaussianModelCalibrator::Objective::Objective(
 		          QuasiGaussianModelCalibrator              *calibrator,
-			      const std::vector< std::vector< bool > >&  isInput,
-				  const std::vector< std::vector< bool > >&  isOutput ) 
+			      const std::vector< std::vector< Real > >&  isInput,
+				  const std::vector< std::vector< Real > >&  isOutput ) 
 	    : calibrator_(calibrator), isInput_(isInput), isOutput_(isOutput) {
 		// copy model initial values
 		model_ = boost::shared_ptr<RealQuasiGaussianModel>(new RealQuasiGaussianModel(*calibrator->model_));
@@ -55,10 +55,10 @@ namespace QuantLib {
 		// count inputs and outputs
 		inputSize_=0;
 		for (size_t i=0; i<isInput_.size(); ++i)
-			for (size_t j=0; j<isInput_[i].size(); ++j) if (isInput_[i][j]) ++inputSize_;
+			for (size_t j=0; j<isInput_[i].size(); ++j) if (isInput_[i][j]>0.0) ++inputSize_;
 		outputSize_=0;
 		for (size_t i=0; i<isOutput_.size(); ++i)
-			for (size_t j=0; j<isOutput_[i].size(); ++j) if (isOutput_[i][j]) ++outputSize_;
+			for (size_t j=0; j<isOutput_[i].size(); ++j) if (isOutput_[i][j]>0.0) ++outputSize_;
 
 		// set up target swaptions
 		// we may have a calibration swaption for each input swaption
@@ -67,9 +67,9 @@ namespace QuantLib {
 			calibSwaptions_[i].resize(calibrator_->swaptions_[i].size());
 			for (size_t j=0; j<calibSwaptions_[i].size(); ++j) {
 				// allocate only if at least one of lambda, b or eta is calibrated
-				if (isOutput_[i][j]                                   ||
-					isOutput_[i][j+calibrator_->swaptions_[i].size()] || 
-					isOutput_[i][j+2*calibrator_->swaptions_[i].size()] ) {
+				if (isOutput_[i][j]>0.0                                   ||
+					isOutput_[i][j+calibrator_->swaptions_[i].size()]>0.0 || 
+					isOutput_[i][j+2*calibrator_->swaptions_[i].size()]>0.0 ) {
 					// assume equal dimension of lambda, b, eta and swaptions
 					calibSwaptions_[i][j] = boost::shared_ptr<CalibSwaption>(new CalibSwaption(calibrator_->lambda_[i][j],calibrator_->b_[i][j],calibrator_->eta_[i][j],calibrator_->swaptions_[i][j],model_->termStructure(), true, calibrator_->modelTimesStepSize_) );
 				}
@@ -84,24 +84,24 @@ namespace QuantLib {
 		size_t idx = 0;
 		for (size_t i=0; i<isInput_.size(); ++i) {
 			for (size_t j=0; j<d; ++j) {
-				if (isInput_[i][j]) {
+				if (isInput_[i][j]>0.0) {
 					Real lambda = model_->lambda()[j][i];
-					Real x = QuasiGaussianModelCalibrator::inverse(lambda,calibrator_->lambdaMin_,calibrator_->lambdaMax_);
+					Real x = QuasiGaussianModelCalibrator::inverse(lambda,calibrator_->lambdaMin_,calibrator_->lambdaMax_) / isInput_[i][j];
 					X[idx] = x;
 					++idx;
 				}
 			}
 			for (size_t j=0; j<d; ++j) {
-				if (isInput_[i][d+j]) {
+				if (isInput_[i][d+j]>0.0) {
 					Real b = model_->b()[j][i];
-					Real x = QuasiGaussianModelCalibrator::inverse(b,calibrator_->bMin_,calibrator_->bMax_);
+					Real x = QuasiGaussianModelCalibrator::inverse(b,calibrator_->bMin_,calibrator_->bMax_) / isInput_[i][d+j];
 					X[idx] = x;
 					++idx;
 				}
 			}
-			if (isInput_[i][d+d]) {
+			if (isInput_[i][d+d]>0.0) {
 				Real eta = model_->eta()[i];
-				Real x = QuasiGaussianModelCalibrator::inverse(eta,calibrator_->etaMin_,calibrator_->etaMax_);
+				Real x = QuasiGaussianModelCalibrator::inverse(eta,calibrator_->etaMin_,calibrator_->etaMax_) / isInput_[i][d+d];
 				X[idx] = x;
 				++idx;
 			}
@@ -117,24 +117,24 @@ namespace QuantLib {
 		size_t idx = 0;
 		for (size_t i=0; i<isInput_.size(); ++i) {
 			for (size_t j=0; j<d; ++j) {
-				if (isInput_[i][j]) {
+				if (isInput_[i][j]>0.0) {
 					Real x = X[idx];
-					Real lambda = QuasiGaussianModelCalibrator::direct(x,calibrator_->lambdaMin_,calibrator_->lambdaMax_);
+					Real lambda = QuasiGaussianModelCalibrator::direct(x*isInput_[i][j],calibrator_->lambdaMin_,calibrator_->lambdaMax_);
 					m_lambda[j][i] = lambda;
 					++idx;
 				}
 			}
 			for (size_t j=0; j<d; ++j) {
-				if (isInput_[i][d+j]) {
+				if (isInput_[i][d+j]>0.0) {
 					Real x = X[idx];
-					Real b = QuasiGaussianModelCalibrator::direct(x,calibrator_->bMin_,calibrator_->bMax_);
+					Real b = QuasiGaussianModelCalibrator::direct(x*isInput_[i][d+j],calibrator_->bMin_,calibrator_->bMax_);
 					m_b[j][i] = b;
 					++idx;
 				}
 			}
-			if (isInput_[i][d+d]) {
+			if (isInput_[i][d+d]>0.0) {
 				Real x = X[idx];
-				Real eta = QuasiGaussianModelCalibrator::direct(x,calibrator_->etaMin_,calibrator_->etaMax_);
+				Real eta = QuasiGaussianModelCalibrator::direct(x*isInput_[i][d+d],calibrator_->etaMin_,calibrator_->etaMax_);
 				m_eta[i] = eta;
 				++idx;
 			}
@@ -152,7 +152,7 @@ namespace QuantLib {
 			swaptionModels[i].resize(calibrator_->swaptions_[i].size());
 			for (size_t j=0; j<swaptionModels[i].size(); ++j) {
 				if (calibSwaptions_[i][j]) {										
-					swaptionModels[i][j] = boost::shared_ptr<RealQGSwaptionModel>( new RealQGSwaptionModel( model_, calibSwaptions_[i][j]->floatTimes(), calibSwaptions_[i][j]->floatWeights(), calibSwaptions_[i][j]->fixedTimes(), calibSwaptions_[i][j]->fixedWeights(),calibSwaptions_[i][j]->modelTimes(), calibrator_->useExpectedXY_ ) );
+					swaptionModels[i][j] = boost::shared_ptr<RealQGSwaptionModel>( new RealQGSwaptionModel( model_, calibSwaptions_[i][j]->floatTimes(), calibSwaptions_[i][j]->floatWeights(), calibSwaptions_[i][j]->fixedTimes(), calibSwaptions_[i][j]->annuityWeights(),calibSwaptions_[i][j]->modelTimes(), calibrator_->useExpectedXY_ ) );
 				}
 			}
 		}
@@ -161,19 +161,22 @@ namespace QuantLib {
 		size_t idx=0;
 		for (size_t i=0; i<swaptionModels.size(); ++i) {
 			for (size_t j=0; j<swaptionModels[i].size(); ++j) {
-				if (isOutput_[i][j]) {
+				if (isOutput_[i][j]>0.0) {
 					objective[idx] = swaptionModels[i][j]->averageLambda( calibSwaptions_[i][j]->exerciseTimes()[0] );
 					objective[idx] -= calibSwaptions_[i][j]->lambda();
+					objective[idx] *= isOutput_[i][j];
 					++idx;
 				}
-				if (isOutput_[i][j+calibSwaptions_[i].size()]) {
+				if (isOutput_[i][j+calibSwaptions_[i].size()]>0.0) {
 					objective[idx] = swaptionModels[i][j]->averageB( calibSwaptions_[i][j]->exerciseTimes()[0] );
 					objective[idx] -= calibSwaptions_[i][j]->b();
+					objective[idx] *= isOutput_[i][j+calibSwaptions_[i].size()];
 					++idx;
 				}
-				if (isOutput_[i][j+2*calibSwaptions_[i].size()]) {
+				if (isOutput_[i][j+2*calibSwaptions_[i].size()]>0.0) {
 					objective[idx] = swaptionModels[i][j]->averageEta( calibSwaptions_[i][j]->exerciseTimes()[0] );
 					objective[idx] -= calibSwaptions_[i][j]->eta();
+					objective[idx] *= isOutput_[i][j+2*calibSwaptions_[i].size()];
 					++idx;
 				}
 			}
@@ -184,7 +187,7 @@ namespace QuantLib {
 	Real QuasiGaussianModelCalibrator::Objective::value(const Array& x) const {
 		Real sum = 0.0;
 		for (size_t i=0; i<x.size(); ++i) sum += x[i]*x[i];
-		return sum;
+		return 0.5*sum;
 	}
 
 	const boost::shared_ptr<RealQuasiGaussianModel> QuasiGaussianModelCalibrator::Objective::model(const Array& x) {
@@ -228,8 +231,8 @@ namespace QuantLib {
 	}
 
 	Integer QuasiGaussianModelCalibrator::calibrate(
-						           const std::vector< std::vector< bool > >&  isInput,
-			                       const std::vector< std::vector< bool > >&  isOutput,
+						           const std::vector< std::vector< Real > >&  isInput,
+			                       const std::vector< std::vector< Real > >&  isOutput,
 								   	// optimization parameters
 		                           Real                                       epsfcn,
 								   Real                                       ftol,  

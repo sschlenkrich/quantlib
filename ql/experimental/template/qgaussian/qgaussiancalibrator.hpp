@@ -77,9 +77,9 @@ namespace QuantLib {
 			// we work on a copy of the initial model (better safe then sorry)
 			boost::shared_ptr<RealQuasiGaussianModel> model_;
 			// specify parameters used for optimisation; dimension [modeltimes] x [ d (lambda) + d (b) + 1 (eta) ]
-			std::vector< std::vector< bool > > isInput_;
+			std::vector< std::vector< Real > > isInput_;
 			// specify targets used for optimisation; dimension [exercises] x [ swapterm (lambda) + swapterm (b) + swapterm (eta) ]
-			std::vector< std::vector< bool > > isOutput_;
+			std::vector< std::vector< Real > > isOutput_;
 			// count inputs and outputs
 			Size inputSize_;
 			Size outputSize_;
@@ -112,8 +112,8 @@ namespace QuantLib {
 			const Size outputSize() const { return outputSize_; }
 
 			Objective( QuasiGaussianModelCalibrator              *calibrator,
-			           const std::vector< std::vector< bool > >&  isInput,
-			           const std::vector< std::vector< bool > >&  isOutput );
+			           const std::vector< std::vector< Real > >&  isInput,
+			           const std::vector< std::vector< Real > >&  isOutput );
 
 		    // initialize state X with model parameters and apply inverse transformation
 		    Array initialise();
@@ -167,8 +167,8 @@ namespace QuantLib {
 									  Real                               modelTimesStepSize,
                                       bool                               useExpectedXY);
 
-		Integer calibrate( const std::vector< std::vector< bool > >&  isInput,
-			               const std::vector< std::vector< bool > >&  isOutput,
+		Integer calibrate( const std::vector< std::vector< Real > >&  isInput,
+			               const std::vector< std::vector< Real > >&  isOutput,
 						   // optimization parameters
 		                   Real                                       epsfcn = 1.0e-10,
 						   Real                                       ftol   = 1.0e-8,
@@ -178,6 +178,8 @@ namespace QuantLib {
 
 		// inspectors
 		inline const boost::shared_ptr<RealQuasiGaussianModel> calibratedModel() const { return calibratedModel_; }
+
+		inline void acceptCalibration() { model_ = calibratedModel_; }
 
 		// inline const boost::shared_ptr<RealQuasiGaussianModel> model()        { return model_;        }
 		// inline const boost::shared_ptr<RealMCSimulation>       mcSimulation() { return mcSimulation_; }

@@ -31,6 +31,8 @@ namespace QuantLib {
 		std::vector<Real>                    floatTimes_;
 		std::vector<Real>                    fixedWeights_;
 		std::vector<Real>                    floatWeights_;
+		std::vector<Real>                    annuityWeights_;
+
 	public:
 		// constructor to map a swaption to bond option according to spread model
 		SwaptionCashFlows ( const boost::shared_ptr<Swaption>& swaption,
@@ -41,11 +43,12 @@ namespace QuantLib {
         inline const Leg&                        fixedLeg() const { return fixedLeg_; }
 		inline const Leg&                        floatLeg() const { return floatLeg_; }
 		// assemble cash flow values and pay times w.r.t. yield curve
-		inline const std::vector<Real>& exerciseTimes() const  { return  exerciseTimes_; }
-		inline const std::vector<Real>& fixedTimes()	const  { return  fixedTimes_;	 }
-		inline const std::vector<Real>& floatTimes()	const  { return  floatTimes_;	 }
-		inline const std::vector<Real>& fixedWeights()  const  { return  fixedWeights_;	 }
-		inline const std::vector<Real>& floatWeights()  const  { return  floatWeights_;	 }
+		inline const std::vector<Real>& exerciseTimes()    const  { return  exerciseTimes_;  }
+		inline const std::vector<Real>& fixedTimes()	   const  { return  fixedTimes_;	 }
+		inline const std::vector<Real>& floatTimes()	   const  { return  floatTimes_;	 }
+		inline const std::vector<Real>& fixedWeights()     const  { return  fixedWeights_;	 }
+		inline const std::vector<Real>& floatWeights()     const  { return  floatWeights_;	 }
+		inline const std::vector<Real>& annuityWeights()   const  { return  annuityWeights_; }
 		
     };
 
