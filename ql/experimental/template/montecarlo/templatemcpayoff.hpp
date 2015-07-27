@@ -195,15 +195,15 @@ namespace QuantLib {
 				  fixedTimes_(fixedTimes), fixedWeights_(fixedWeights), strikeRate_(strikeRate), payOrRec_(payOrRec) { 
 			    // check consistency of swap
 			    // float leg
-			    QL_REQUIRE(floatWeights.size()>0,"TemplateQGSwaptionModel: empty float weights.");
-			    QL_REQUIRE(floatTimes.size()==floatWeights.size(),"TemplateQGSwaptionModel: float sizes mismatch.");
-			    QL_REQUIRE(floatTimes[0]>0,"TemplateQGSwaptionModel: future float times required");
-			    for (size_t k=1; k<floatTimes.size(); ++k) QL_REQUIRE(floatTimes[k]>floatTimes[k-1],"TemplateQGSwaptionModel: ascending float times required");
+			    QL_REQUIRE(floatWeights.size()>0,"GeneralSwaption: empty float weights.");
+			    QL_REQUIRE(floatTimes.size()==floatWeights.size(),"GeneralSwaption: float sizes mismatch.");
+			    QL_REQUIRE(floatTimes[0]>0,"GeneralSwaption: future float times required");
+			    for (size_t k=1; k<floatTimes.size(); ++k) QL_REQUIRE(floatTimes[k]>=floatTimes[k-1],"GeneralSwaption: ascending float times required");
 			    // fixed leg
-			    QL_REQUIRE(fixedWeights.size()>0,"TemplateQGSwaptionModel: empty fixed weights.");
-			    QL_REQUIRE(fixedTimes.size()==fixedWeights.size(),"TemplateQGSwaptionModel: fixed sizes mismatch.");
-			    QL_REQUIRE(fixedTimes[0]>0,"TemplateQGSwaptionModel: future fixed times required");
-			    for (size_t k=1; k<fixedTimes.size(); ++k) QL_REQUIRE(fixedTimes[k]>fixedTimes[k-1],"TemplateQGSwaptionModel: ascending fixed times required");
+			    QL_REQUIRE(fixedWeights.size()>0,"GeneralSwaption: empty fixed weights.");
+			    QL_REQUIRE(fixedTimes.size()==fixedWeights.size(),"GeneralSwaption: fixed sizes mismatch.");
+			    QL_REQUIRE(fixedTimes[0]>0,"GeneralSwaption: future fixed times required");
+			    for (size_t k=1; k<fixedTimes.size(); ++k) QL_REQUIRE(fixedTimes[k]>=fixedTimes[k-1],"GeneralSwaption: ascending fixed times required");
 				// finished
 			}
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {

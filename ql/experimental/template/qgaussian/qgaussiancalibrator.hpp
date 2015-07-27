@@ -57,13 +57,13 @@ namespace QuantLib {
 		Real  lambdaMin_, lambdaMax_, bMin_, bMax_, etaMin_, etaMax_;
 		// transformation (-inf, +inf) -> (a, b)
         static const Real direct(const Real x, const Real a, const Real b) {
-			return (b-a)*(atan(x)/M_PI + 0.5) + a;
-			//return TemplateAuxilliaries::direct(x, a, b);
+			//return (b-a)*(atan(x)/M_PI + 0.5) + a;
+			return TemplateAuxilliaries::direct(x, a, b);
 		}
 		// transformation (a, b) -> (-inf, +inf)
 		static const Real inverse(const Real y, const Real a, const Real b) {
-			return tan( ((y-a)/(b-a)-0.5) * M_PI );
-			//return TemplateAuxilliaries::inverse(y, a, b);
+			//return tan( ((y-a)/(b-a)-0.5) * M_PI );
+			return TemplateAuxilliaries::inverse(y, a, b);
 		}
 
 		// parameters for quasi-Gaussian swaption model
