@@ -196,7 +196,11 @@ namespace QuantLib {
 	template <class DateType, class PassiveType, class ActiveType>
 	class TemplateStochVolModel {
 	protected:
+		enum { Heston, ShiftedLogNormal, Normal, StochVolNormal } type_;
 		boost::shared_ptr< TemplateHestonModel<DateType,PassiveType,ActiveType> > hestonModel_;
+		ActiveType                                                                lambda_;
+		ActiveType                                                                b_;
+		ActiveType                                                                L_;
 		ActiveType                                                                shift_;
 	public:
 		TemplateStochVolModel ( const ActiveType   lambda,
@@ -206,15 +210,32 @@ namespace QuantLib {
 								const ActiveType   m,
 								const ActiveType   eta,
 								const ActiveType   z0,
-								const ActiveType   rho )
-		: hestonModel_(new TemplateHestonModel<DateType,PassiveType,ActiveType>(
-		    // state transformations ~S(t) = S(t) + (1-b)/b L, v(t) = z(t) lambda^2 b^2
-			theta,                // kappa
-			m*lambda*lambda*b*b,  // theta
-			eta*lambda*b,         // sigma
-			rho,                  // rho
-			z0*lambda*lambda*b*b  // v0
-			) ), shift_( (1.0-b)/b*L ) {}
+								const ActiveType   rho,
+								const PassiveType  etaMin = 0.001,
+								const PassiveType  bMin   = 0.001
+								)
+		: lambda_(lambda), b_(b), L_(L), shift_( (1.0-b)/b*L) {
+			// define actual model
+			if (eta<etaMin) {
+				if (b<bMin) type_ = Normal;
+				else		type_ = ShiftedLogNormal;
+			} else {
+				if (b<bMin) type_ = StochVolNormal;
+				else		type_ = Heston;
+			}
+			// prerequisities
+			if (type_==Heston) {
+				hestonModel_ = boost::shared_ptr< TemplateHestonModel<DateType,PassiveType,ActiveType> >(
+					             new TemplateHestonModel<DateType,PassiveType,ActiveType>(
+		                              // state transformations ~S(t) = S(t) + (1-b)/b L, v(t) = z(t) lambda^2 b^2
+			                          theta,                // kappa
+			                          m*lambda*lambda*b*b,  // theta
+			                          eta*lambda*b,         // sigma
+			                          rho,                  // rho
+			                          z0*lambda*lambda*b*b  // v0
+			                          ) );
+			}
+		}
 
         // undiscounted expectation of vanilla payoff
         inline ActiveType vanillaOption(const PassiveType forwardPrice,
@@ -223,7 +244,14 @@ namespace QuantLib {
                                         const int         callOrPut,
                                         const PassiveType accuracy,
                                         const size_t      maxEvaluations) {
-			return hestonModel_->vanillaOption( forwardPrice+shift_, strikePrice+shift_, term, callOrPut, accuracy, maxEvaluations );
+			if (type_==Heston)
+				return hestonModel_->vanillaOption( forwardPrice+shift_, strikePrice+shift_, term, callOrPut, accuracy, maxEvaluations );
+			if (type_==ShiftedLogNormal)
+				return TemplateAuxilliaries::Black76(forwardPrice+shift_,strikePrice+shift_,lambda_*b_,term,callOrPut);
+			if (type_==Normal)
+				return TemplateAuxilliaries::Bachelier(forwardPrice,strikePrice,lambda_*(b_*forwardPrice+(1.0-b_)*L_),term,callOrPut);
+			QL_REQUIRE( false, "TemplateStochVolModel: unknown model type.");
+			return 0;
 		}
 	};
 
