@@ -45,6 +45,20 @@ namespace QuantLib {
 			boost::shared_ptr<SimulationType>                  simulation_;
 		public:
 
+			inline static std::vector<ActiveType> at( const boost::shared_ptr<TemplateMCPayoff>& payoff,
+				                                      const boost::shared_ptr<SimulationType>&   simulation) {
+			    std::vector<ActiveType> res(simulation->nPaths());
+				for (size_t k=0; k<simulation->nPaths(); ++k) res[k] = payoff->at(simulation->path(k));
+				return res;
+			}
+
+			inline static std::vector<ActiveType> discountedAt( const boost::shared_ptr<TemplateMCPayoff>& payoff,
+				                                                const boost::shared_ptr<SimulationType>&   simulation) {
+			    std::vector<ActiveType> res(simulation->nPaths());
+				for (size_t k=0; k<simulation->nPaths(); ++k) res[k] = payoff->discountedAt(simulation->path(k));
+				return res;
+			}
+
 			inline static ActiveType NPV(const std::vector< boost::shared_ptr<TemplateMCPayoff> >& payoffs, 
 				                         const boost::shared_ptr<SimulationType>&                  simulation) {
 				ActiveType npv = 0.0;
@@ -223,6 +237,29 @@ namespace QuantLib {
 			}
 		};
 
+		// future swap rate
+		class SwapRate : public GeneralSwaption {
+		public:
+			SwapRate( DateType                        obsTime, 
+				      const std::vector<DateType>&    floatTimes,
+				      const std::vector<PassiveType>& floatWeights,
+				      const std::vector<DateType>&    fixedTimes,
+				      const std::vector<PassiveType>& annuityWeights )
+					  : GeneralSwaption(obsTime,floatTimes,floatWeights,fixedTimes,annuityWeights,0.0,1) {}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				ActiveType floatleg = 0.0;
+				ActiveType annuity  = 0.0;
+				// float leg
+				for (size_t k=0; k<floatTimes_.size(); ++k) floatleg += floatWeights_[k] * p->zeroBond(observationTime(),floatTimes_[k]);
+				// annuity
+				for (size_t k=0; k<fixedTimes_.size(); ++k) annuity  += fixedWeights_[k] * p->zeroBond(observationTime(),fixedTimes_[k]);
+				return floatleg / annuity;
+			}
+		    // payoff should NOT be discounted
+		    inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p); }
+		};
+
+
 		// undiscounted correlation between prototypical physically settled European swaption
 		class ModelCorrelation : public TemplateMCPayoff {
 		protected:
@@ -266,6 +303,58 @@ namespace QuantLib {
 				return Cov / sqrt(Var1*Var2);
 			}
 		};
+
+		// undiscounted correlation between forward rates
+		class ForwardRateCorrelation : public TemplateMCPayoff {
+		protected:
+			std::vector<DateType> times_;
+			DateType T1_, Term1_; 
+			DateType T2_, Term2_;
+			ActiveType fwSwapRate(const boost::shared_ptr<PathType>& p, const DateType t, const DateType TSettle, const DateType Term ) {
+				ActiveType num = p->zeroBond(t,TSettle) - p->zeroBond(t,TSettle+Term);
+				ActiveType den = 0.0;
+				for (ActiveType Ti = TSettle; Ti<TSettle+Term; Ti+=1.0) {
+					ActiveType T = (Ti+1.0>TSettle+Term) ? (TSettle+Term) : (Ti+1.0);
+					den += (T-Ti) * p->zeroBond(t,T);
+				}
+				return num / den;
+			}
+			ActiveType fraRate(const boost::shared_ptr<PathType>& p, const DateType t, const DateType TSettle, const DateType Term ) {
+				ActiveType rate = (p->zeroBond(t,TSettle) / p->zeroBond(t,TSettle+Term) - 1.0)/Term;
+				return rate;
+			}
+		public:
+			ForwardRateCorrelation( const std::vector<DateType>&    times,   // observation times
+				                    const DateType                  T1,      // fixing date one
+				                    const DateType                  Term1,   // tenor one
+							        const DateType                  T2,      // fixing date two
+				                    const DateType                  Term2)   // tenor two
+							        : TemplateMCPayoff(0.0), times_(times), T1_(T1), Term1_(Term1), T2_(T2), Term2_(Term2) {
+				QL_REQUIRE(times_.size()>1,"ModelCorrelation: At least two observation times required.");
+			}
+		    // payoff should NOT be discounted
+		    inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p); }
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				std::vector<ActiveType> dS1(times_.size()-1), dS2(times_.size()-1);
+				ActiveType EdS1 = 0.0, EdS2 = 0.0; 
+				for (size_t i=1; i<times_.size(); ++i) {
+					dS1[i-1] =  fraRate(p,times_[i],T1_,Term1_) - fraRate(p,times_[i-1],T1_,Term1_);
+					dS2[i-1] =  fraRate(p,times_[i],T2_,Term2_) - fraRate(p,times_[i-1],T2_,Term2_);
+					EdS1 += dS1[i-1];
+					EdS2 += dS2[i-1];
+				}
+				EdS1 /= dS1.size();
+				EdS2 /= dS2.size();
+				ActiveType Var1=0.0, Var2=0.0, Cov=0.0;
+				for (size_t i=0; i<times_.size()-1; ++i) {
+					Var1 += (dS1[i] - EdS1)*(dS1[i] - EdS1);
+					Var2 += (dS2[i] - EdS2)*(dS2[i] - EdS2);
+					Cov  += (dS1[i] - EdS1)*(dS2[i] - EdS2);
+				}
+				return Cov / sqrt(Var1*Var2);
+			}
+		};
+
 
 	};
 

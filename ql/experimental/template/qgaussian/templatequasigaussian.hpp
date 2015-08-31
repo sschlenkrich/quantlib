@@ -166,10 +166,10 @@ namespace QuantLib {
 			// plausible correlation values
 			for (size_t i=0; i<d_; ++i) {
 				for (size_t j=i; j<d_; ++j) {
-					if (Gamma_[i][j]<0.0) {
-						ok = false;
-						if (throwException) QL_REQUIRE(false,"QuasiGaussianModel Gamma[i][j]>=0 required."); 
-					}
+					//if (Gamma_[i][j]<0.0) {
+					//	ok = false;
+					//	if (throwException) QL_REQUIRE(false,"QuasiGaussianModel Gamma[i][j]>=0 required."); 
+					//}
 					if (i==j) {
 						if (Gamma_[i][j]!=1.0) {
 							ok = false;
@@ -180,12 +180,12 @@ namespace QuantLib {
 						ok = false;
 						if (throwException) QL_REQUIRE(false,"QuasiGaussianModel Gamma[i][j]=Gamma[j][i] required."); 
 					}
-					if (i<j) {
-						if((Gamma_[i][j-1]<=Gamma_[i][j])|(Gamma_[i+1][j]<=Gamma_[i][j])) {
-							ok = false;
-							if (throwException) QL_REQUIRE(false,"QuasiGaussianModel Gamma descending sub-diagonals required."); 
-						}
-					}
+					//if (i<j) {
+					//	if((Gamma_[i][j-1]<=Gamma_[i][j])|(Gamma_[i+1][j]<=Gamma_[i][j])) {
+					//		ok = false;
+					//		if (throwException) QL_REQUIRE(false,"QuasiGaussianModel Gamma descending sub-diagonals required."); 
+					//	}
+					//}
 				}
 			}
 			// stochastic vol parameters
