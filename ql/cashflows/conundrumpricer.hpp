@@ -73,7 +73,8 @@ namespace QuantLib {
         enum YieldCurveModel { Standard,
                                ExactYield,
                                ParallelShifts,
-                               NonParallelShifts
+                               NonParallelShifts,
+							   Affine
         };
         static boost::shared_ptr<GFunction>
         newGFunctionStandard(Size q,
@@ -84,6 +85,8 @@ namespace QuantLib {
         static boost::shared_ptr<GFunction>
         newGFunctionWithShifts(const CmsCoupon& coupon,
                                const Handle<Quote>& meanReversion);
+        static boost::shared_ptr<GFunction>
+        newGFunctionAffine(const CmsCoupon& coupon);
       private:
         GFunctionFactory();
 
@@ -174,6 +177,17 @@ namespace QuantLib {
             Real secondDerivative(Real x);
         };
 
+		// affine function in swaprate and T_p complying w/ additivity and consistency condition and basis spreads
+        class GFunctionAffine : public GFunction {
+          public:
+            GFunctionAffine(const CmsCoupon& coupon);
+			Real operator()(Real x)       { return a_ * (x - swaprate_) + discount_ / annuity_; }
+			Real firstDerivative(Real x)  { return a_;  }
+			Real secondDerivative(Real x) { return 0.0; }
+          protected:
+            Real a_, swaprate_, discount_, annuity_;
+        };
+
     };
 
     inline std::ostream& operator<<(std::ostream& out,
@@ -187,6 +201,8 @@ namespace QuantLib {
             return out << "ParallelShifts";
           case GFunctionFactory::NonParallelShifts:
             return out << "NonParallelShifts";
+          case GFunctionFactory::Affine:
+            return out << "Affine";
           default:
             QL_FAIL("unknown option type");
         }
@@ -317,6 +333,19 @@ namespace QuantLib {
     class AnalyticHaganPricer : public HaganPricer {
       public:
         AnalyticHaganPricer(
+            const Handle<SwaptionVolatilityStructure>& swaptionVol,
+            GFunctionFactory::YieldCurveModel modelOfYieldCurve,
+            const Handle<Quote>& meanReversion);
+      protected:
+        Real optionletPrice(Option::Type optionType,
+                            Real strike) const;
+        Real swapletPrice() const;
+    };
+
+    //! CMS-coupon pricer based on normal volatilities
+    class AnalyticNormalHaganPricer : public HaganPricer {
+      public:
+        AnalyticNormalHaganPricer(
             const Handle<SwaptionVolatilityStructure>& swaptionVol,
             GFunctionFactory::YieldCurveModel modelOfYieldCurve,
             const Handle<Quote>& meanReversion);

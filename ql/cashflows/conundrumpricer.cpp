@@ -34,6 +34,10 @@
 #include <ql/indexes/interestrateindex.hpp>
 #include <ql/time/schedule.hpp>
 #include <ql/instruments/vanillaswap.hpp>
+#include <ql/exercise.hpp>
+#include <ql/instruments/swaption.hpp>
+#include <ql/experimental/template/basismodel/swaptioncfs.hpp>
+
 
 #if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
 #pragma GCC diagnostic push
@@ -141,6 +145,9 @@ namespace QuantLib {
                     break;
                 case GFunctionFactory::NonParallelShifts:
                     gFunction_ = GFunctionFactory::newGFunctionWithShifts(*coupon_, meanReversion_);
+                    break;
+                case GFunctionFactory::Affine:
+                    gFunction_ = GFunctionFactory::newGFunctionAffine(*coupon_);
                     break;
                 default:
                     QL_FAIL("unknown/illegal gFunction type");
@@ -518,6 +525,50 @@ namespace QuantLib {
             return gearing_ * price * coupon_->accrualPeriod() + spreadLegValue_;
         }
     }
+
+    AnalyticNormalHaganPricer::AnalyticNormalHaganPricer(
+                          const Handle<SwaptionVolatilityStructure>&  swaptionVol,  // this must be normal volatilities
+                          GFunctionFactory::YieldCurveModel           modelOfYieldCurve,
+                          const Handle<Quote>&                        meanReversion)
+    : HaganPricer(swaptionVol, modelOfYieldCurve, meanReversion) { }
+
+    //Hagan, 3.6
+    Real AnalyticNormalHaganPricer::optionletPrice( Option::Type  optionType,
+                                                    Real          strike) const {
+        Real variance = swaptionVolatility()->blackVariance(fixingDate_, swapTenor_, swapRateValue_);  // we assume normal vols here
+		Real stdev    = sqrt(variance);
+		// undiscounted optionlet price in annuity meassure
+        Real fwprice  = bachelierBlackFormula(optionType,strike,swapRateValue_,stdev);
+		// E[ (S(T)-S(t))h(S(T)) ]
+		CumulativeNormalDistribution cumulativeOfNormal;
+		Real d       = optionType * (swapRateValue_ - strike) / stdev;
+		Real Phi     = optionType * cumulativeOfNormal(d);
+		// convexity adjustment...
+        Real firstDerivativeOfGAtForwardValue = gFunction_->firstDerivative( swapRateValue_);
+		Real CA      = firstDerivativeOfGAtForwardValue * annuity_ / discount_ * Phi;
+		// discounted option let price w/ convexity adjustment
+		Real price   = discount_ * (fwprice + CA);
+        price *= coupon_->accrualPeriod();
+        return price;
+    }
+
+    //Hagan 3.6
+    Real AnalyticNormalHaganPricer::swapletPrice() const {
+
+        Date today = Settings::instance().evaluationDate();
+        if (fixingDate_ <= today) {
+            // the fixing is determined
+            const Rate Rs = coupon_->swapIndex()->fixing(fixingDate_);
+            Rate price = (gearing_*Rs + spread_)*(coupon_->accrualPeriod()*discount_);
+            return price;
+        } else {
+            Real variance(swaptionVolatility()->blackVariance(fixingDate_, swapTenor_, swapRateValue_));  // assuming normal vols here
+            Real firstDerivativeOfGAtForwardValue(gFunction_->firstDerivative( swapRateValue_));
+            Real price = discount_* (swapRateValue_ + firstDerivativeOfGAtForwardValue * annuity_ / discount_ * variance);
+            return gearing_ * price * coupon_->accrualPeriod() + spreadLegValue_;
+        }
+    }
+
 
 
 //===========================================================================//
@@ -924,5 +975,47 @@ namespace QuantLib {
                                                                           const Handle<Quote>& meanReversion) {
         return boost::shared_ptr<GFunction>(new GFunctionWithShifts(coupon, meanReversion));
     }
+
+
+//===========================================================================//
+//                              GFunctionAffine                              //
+//===========================================================================//
+
+    GFunctionFactory::GFunctionAffine::GFunctionAffine(const CmsCoupon& coupon){
+        const boost::shared_ptr<SwapIndex>&    swapIndex = coupon.swapIndex();
+        const boost::shared_ptr<VanillaSwap>&  swap      = swapIndex->underlyingSwap(coupon.fixingDate());
+        Handle<YieldTermStructure>             discCurve = swapIndex->discountingTermStructure();
+		// constant part of GFunction
+		const Real basisPoint = 1.0e-4;
+		swaprate_ = swap->fairRate();
+		annuity_  = swap->fixedLegBPS() / basisPoint;
+		discount_ = discCurve->discount(coupon.date());
+		// a(T_p) = u (T_p - T_N) + v
+		SwaptionCashFlows cfs(boost::shared_ptr<Swaption>(new Swaption(swap, boost::shared_ptr<Exercise>(new EuropeanExercise(coupon.fixingDate())))), discCurve);
+		// Sum tau_j   (fixed leg)
+		Real sumTauj = 0.0;
+		for (Size k=0; k<cfs.annuityWeights().size(); ++k) sumTauj += cfs.annuityWeights()[k];
+		// Sum tau_j (T_M - T_j)   (fixed leg)
+		Real sumTaujDeltaT = 0.0;
+		for (Size k=0; k<cfs.annuityWeights().size(); ++k) sumTaujDeltaT += cfs.annuityWeights()[k] * (cfs.fixedTimes().back() - cfs.fixedTimes()[k]);
+		// Sum w_i   (float leg)
+		Real sumWi = 0.0;
+		for (Size k=0; k<cfs.floatWeights().size(); ++k) sumWi += cfs.floatWeights()[k];
+		// Sum w_i (T_N - T_i)    (float leg)
+		Real sumWiDeltaT = 0.0;
+		for (Size k=0; k<cfs.floatWeights().size(); ++k) sumWiDeltaT += cfs.floatWeights()[k] * (cfs.floatTimes().back() - cfs.floatTimes()[k]);
+		// assemble u, v and a(T_p)
+		Real den = sumTaujDeltaT * sumWi - sumWiDeltaT * sumTauj;
+		Real u   = - sumTauj / den;
+		Real v   = sumTaujDeltaT / den;
+		Actual365Fixed dc;
+		Real T_p = dc.yearFraction(discCurve->referenceDate(),coupon.date());
+		a_       = u*(cfs.fixedTimes().back() - T_p) + v;
+    }
+
+    boost::shared_ptr<GFunction> GFunctionFactory::newGFunctionAffine(const CmsCoupon& coupon) {
+        return boost::shared_ptr<GFunction>(new GFunctionAffine(coupon));
+    }
+
 
 }

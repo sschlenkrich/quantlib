@@ -29,11 +29,13 @@
 
 namespace QuantLib {
 
-    enum VolatilityType { ShiftedLognormal, Normal };
+    enum VolatilityType { Lognormal, ShiftedLognormal, Normal };
 
     inline std::ostream& operator<<(std::ostream& out,
                                     const VolatilityType& t) {
         switch(t) {
+          case Lognormal:
+            return out << "Lognormal";
           case Normal:
             return out << "Normal";
           case ShiftedLognormal:
