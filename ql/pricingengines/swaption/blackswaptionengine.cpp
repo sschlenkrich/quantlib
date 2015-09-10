@@ -192,14 +192,11 @@ namespace QuantLib {
           }
           case Settlement::Cash: {
               const Leg& fixedLeg = swap.fixedLeg();
-              boost::shared_ptr<FixedRateCoupon> firstCoupon =
-                  boost::dynamic_pointer_cast<FixedRateCoupon>(fixedLeg[0]);
+              boost::shared_ptr<FixedRateCoupon> firstCoupon = boost::dynamic_pointer_cast<FixedRateCoupon>(fixedLeg[0]);
               DayCounter dayCount = firstCoupon->dayCounter();
-              Real fixedLegCashBPS =
-                  CashFlows::bps(fixedLeg,
-                                 InterestRate(atmForward, dayCount, Compounded, Annual),
-                                 false, termStructure()->referenceDate()) ;
-              annuity = std::fabs(fixedLegCashBPS/basisPoint);
+			  Date settlementDate = firstCoupon->accrualStartDate();
+              Real fixedLegCashBPS = CashFlows::bps(fixedLeg, InterestRate(atmForward, dayCount, Compounded, Annual), false, settlementDate, settlementDate);
+              annuity = termStructure()->discount(settlementDate) * std::fabs(fixedLegCashBPS/basisPoint);
               break;
           }
           default:
