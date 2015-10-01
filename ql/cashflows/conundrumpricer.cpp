@@ -990,7 +990,7 @@ namespace QuantLib {
 		swaprate_ = swap->fairRate();
 		annuity_  = swap->fixedLegBPS() / basisPoint;
 		discount_ = discCurve->discount(coupon.date());
-		// a(T_p) = u (T_p - T_N) + v
+		// a(T_p) = u (T_N - T_p) + v
 		SwaptionCashFlows cfs(boost::shared_ptr<Swaption>(new Swaption(swap, boost::shared_ptr<Exercise>(new EuropeanExercise(coupon.fixingDate())))), discCurve);
 		// Sum tau_j   (fixed leg)
 		Real sumTauj = 0.0;

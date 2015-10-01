@@ -61,8 +61,9 @@ namespace QuantLib {
                     const std::vector<std::vector<Handle<Quote> > >& vols,
                     const DayCounter& dayCounter,
                     const bool flatExtrapolation = false,
-                    const std::vector<std::vector<Real> >& shifts
-                    = std::vector<std::vector<Real> >());
+                    const std::vector<std::vector<Real> >& shifts = std::vector<std::vector<Real> >(),
+		            const VolatilityType& volatilityType = ShiftedLognormal);
+
         //! fixed reference date, floating market data
         SwaptionVolatilityMatrix(
                     const Date& referenceDate,
@@ -73,9 +74,10 @@ namespace QuantLib {
                     const std::vector<std::vector<Handle<Quote> > >& vols,
                     const DayCounter& dayCounter,
                     const bool flatExtrapolation = false,
-                    const std::vector<std::vector<Real> >& shifts
-                    = std::vector<std::vector<Real> >());
-        //! floating reference date, fixed market data
+                    const std::vector<std::vector<Real> >& shifts = std::vector<std::vector<Real> >(),
+		            const VolatilityType& volatilityType = ShiftedLognormal);
+
+		//! floating reference date, fixed market data
         SwaptionVolatilityMatrix(
                     const Calendar& calendar,
                     BusinessDayConvention bdc,
@@ -84,8 +86,10 @@ namespace QuantLib {
                     const Matrix& volatilities,
                     const DayCounter& dayCounter,
                     const bool flatExtrapolation = false,
-                    const Matrix& shifts = Matrix());
-        //! fixed reference date, fixed market data
+                    const Matrix& shifts = Matrix(),
+		            const VolatilityType& volatilityType = ShiftedLognormal);
+
+		//! fixed reference date, fixed market data
         SwaptionVolatilityMatrix(
                     const Date& referenceDate,
                     const Calendar& calendar,
@@ -95,15 +99,18 @@ namespace QuantLib {
                     const Matrix& volatilities,
                     const DayCounter& dayCounter,
                     const bool flatExtrapolation = false,
-                    const Matrix& shifts = Matrix());
-        // fixed reference date and fixed market data, option dates
+                    const Matrix& shifts = Matrix(),
+		            const VolatilityType& volatilityType = ShiftedLognormal);
+
+		// fixed reference date and fixed market data, option dates
         SwaptionVolatilityMatrix(const Date& referenceDate,
                                  const std::vector<Date>& optionDates,
                                  const std::vector<Period>& swapTenors,
                                  const Matrix& volatilities,
                                  const DayCounter& dayCounter,
                                  const bool flatExtrapolation = false,
-                                 const Matrix& shifts = Matrix());
+                                 const Matrix& shifts = Matrix(),
+		                         const VolatilityType& volatilityType = ShiftedLognormal);
         //! \name LazyObject interface
         //@{
         void performCalculations() const;

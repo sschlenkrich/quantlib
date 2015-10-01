@@ -48,17 +48,21 @@ namespace QuantLib {
                      by overriding the referenceDate() method.
         */
         SwaptionVolatilityStructure(BusinessDayConvention bdc,
-                                    const DayCounter& dc = DayCounter());
+                                    const DayCounter& dc = DayCounter(),
+								    const VolatilityType& volatilityType = Lognormal);
+
         //! initialize with a fixed reference date
         SwaptionVolatilityStructure(const Date& referenceDate,
                                     const Calendar& calendar,
                                     BusinessDayConvention bdc,
-                                    const DayCounter& dc = DayCounter());
+                                    const DayCounter& dc = DayCounter(),
+								    const VolatilityType& volatilityType = Lognormal);
         //! calculate the reference date based on the global evaluation date
         SwaptionVolatilityStructure(Natural settlementDays,
                                     const Calendar&,
                                     BusinessDayConvention bdc,
-                                    const DayCounter& dc = DayCounter());
+                                    const DayCounter& dc = DayCounter(),
+								    const VolatilityType& volatilityType = Lognormal);
         //@}
         virtual ~SwaptionVolatilityStructure() {}
         //! \name Volatility, variance and smile

@@ -4101,7 +4101,11 @@
     </ClInclude>
     <ClInclude Include="ql\experimental\template\basismodel\swaptioncfs.hpp">
       <Filter>experimental\template\basismodel</Filter>
-    </ClInclude>	
+    </ClInclude>
+    <ClInclude Include="ql\experimental\exercise\all.hpp" />
+    <ClInclude Include="ql\experimental\template\basismodel\tenorswaptionvts.hpp">
+      <Filter>experimental\template\basismodel</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6527,7 +6531,7 @@
     <ClCompile Include="ql\instruments\futures.cpp">
       <Filter>instruments</Filter>
     </ClCompile>
-	<ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp">
+    <ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp">
       <Filter>experimental\sabrswaptioncube</Filter>
     </ClCompile>
     <ClCompile Include="ql\experimental\basisswap\basisswap.cpp">
@@ -6562,6 +6566,9 @@
     </ClCompile>
     <ClCompile Include="ql\cashflows\cpicouponpricer.cpp">
       <Filter>cashflows</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\basismodel\tenorswaptionvts.cpp">
+      <Filter>experimental\template\basismodel</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

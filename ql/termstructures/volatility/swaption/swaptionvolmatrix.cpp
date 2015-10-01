@@ -42,8 +42,9 @@ namespace QuantLib {
                     const std::vector<std::vector<Handle<Quote> > >& vols,
                     const DayCounter& dc,
                     const bool flatExtrapolation,
-                    const std::vector<std::vector<Real> >& shifts)
-    : SwaptionVolatilityDiscrete(optionT, swapT, 0, cal, bdc, dc),
+                    const std::vector<std::vector<Real> >& shifts,
+		            const VolatilityType& volatilityType)
+    : SwaptionVolatilityDiscrete(optionT, swapT, 0, cal, bdc, dc, volatilityType),
       volHandles_(vols), shiftValues_(shifts),
       volatilities_(vols.size(), vols.front().size()),
       shifts_(vols.size(), vols.front().size(), 0.0) {
@@ -79,8 +80,9 @@ namespace QuantLib {
                     const std::vector<std::vector<Handle<Quote> > >& vols,
                     const DayCounter& dc,
                     const bool flatExtrapolation,
-                    const std::vector<std::vector<Real> >& shifts)
-    : SwaptionVolatilityDiscrete(optionT, swapT, refDate, cal, bdc, dc),
+                    const std::vector<std::vector<Real> >& shifts,
+		            const VolatilityType& volatilityType)
+	: SwaptionVolatilityDiscrete(optionT, swapT, refDate, cal, bdc, dc, volatilityType),
       volHandles_(vols), shiftValues_(shifts),
       volatilities_(vols.size(), vols.front().size()),
       shifts_(vols.size(), vols.front().size(), 0.0) {
@@ -115,8 +117,9 @@ namespace QuantLib {
                         const Matrix& vols,
                         const DayCounter& dc,
                         const bool flatExtrapolation,
-                        const Matrix& shifts)
-    : SwaptionVolatilityDiscrete(optionT, swapT, 0, cal, bdc, dc),
+                        const Matrix& shifts,
+		                const VolatilityType& volatilityType)
+    : SwaptionVolatilityDiscrete(optionT, swapT, 0, cal, bdc, dc, volatilityType),
       volHandles_(vols.rows()), shiftValues_(vols.rows()),
       volatilities_(vols.rows(), vols.columns()),
       shifts_(vols.rows(), vols.columns(), 0.0) {
@@ -163,8 +166,9 @@ namespace QuantLib {
                         const Matrix& vols,
                         const DayCounter& dc,
                         const bool flatExtrapolation,
-                        const Matrix& shifts)
-    : SwaptionVolatilityDiscrete(optionT, swapT, refDate, cal, bdc, dc),
+                        const Matrix& shifts,
+		                const VolatilityType& volatilityType)
+    : SwaptionVolatilityDiscrete(optionT, swapT, refDate, cal, bdc, dc, volatilityType),
       volHandles_(vols.rows()), shiftValues_(vols.rows()),
       volatilities_(vols.rows(), vols.columns()),
       shifts_(shifts.rows(), shifts.columns(), 0.0) {
@@ -209,8 +213,9 @@ namespace QuantLib {
                     const Matrix& vols,
                     const DayCounter& dc,
                     const bool flatExtrapolation,
-                    const Matrix& shifts)
-    : SwaptionVolatilityDiscrete(optionDates, swapT, today, Calendar(), Following, dc),
+                    const Matrix& shifts,
+		            const VolatilityType& volatilityType)					
+    : SwaptionVolatilityDiscrete(optionDates, swapT, today, Calendar(), Following, dc, volatilityType),
       volHandles_(vols.rows()), shiftValues_(vols.rows()),
       volatilities_(vols.rows(), vols.columns()),
       shifts_(shifts.rows(),shifts.columns(),0.0) {
@@ -316,7 +321,7 @@ namespace QuantLib {
         Volatility atmVol = volatilityImpl(optionTime, swapLength, 0.05);
         Real shift = interpolationShifts_(optionTime, swapLength,true);
         return boost::shared_ptr<SmileSection>(new FlatSmileSection(
-            optionTime, atmVol, dayCounter(), Null<Real>(), shift));
+            optionTime, atmVol, dayCounter(), Null<Real>(), shift, volatilityType()));
     }
 
 }

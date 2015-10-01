@@ -481,6 +481,7 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ql\experimental\template\basismodel\tenorswaptionvts.hpp" />
     <ClInclude Include="ql\rebatedexercise.hpp" />
     <ClInclude Include="ql\experimental\basisswap\basisswap.hpp" />
     <ClInclude Include="ql\experimental\basisswap\basisswapengine.hpp" />
@@ -1760,6 +1761,7 @@
   <ItemGroup>
     <ClCompile Include="ql\cashflows\cpicoupon.cpp" />
     <ClCompile Include="ql\cashflows\cpicouponpricer.cpp" />
+    <ClCompile Include="ql\experimental\template\basismodel\tenorswaptionvts.cpp" />
     <ClCompile Include="ql\rebatedexercise.cpp" />
     <ClInclude Include="ql\experimental\finitedifferences\all.hpp" />
     <ClCompile Include="ql\experimental\basisswap\basisswap.cpp" />
