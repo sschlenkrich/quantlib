@@ -35,8 +35,8 @@ namespace QuantLib {
 		// first we need the swap start and end date
 		Real oneDayAsYear  = volTS.dayCounter().yearFraction(volTS.referenceDate(),volTS.referenceDate()+1);
 		Date exerciseDate  = volTS.referenceDate() + ((BigInteger)ClosestRounding(0)(optionTime/oneDayAsYear));
-		Date effectiveDate = volTS.calendar().advance(exerciseDate,volTS.baseIndex_->fixingDays()*Days);
-		Date maturityDate  = volTS.calendar().advance(effectiveDate,((BigInteger)swapLength*12.0)*Months,Unadjusted,false);
+		Date effectiveDate = volTS.baseIndex_->fixingCalendar().advance(exerciseDate,volTS.baseIndex_->fixingDays()*Days);
+		Date maturityDate  = volTS.baseIndex_->fixingCalendar().advance(effectiveDate,((BigInteger)swapLength*12.0)*Months,Unadjusted,false);
 		// now we can set up the schedules
 		Schedule baseFixedSchedule(effectiveDate, maturityDate, volTS.baseFixedFreq_,     volTS.baseIndex_->fixingCalendar(),ModifiedFollowing,Unadjusted,DateGeneration::Backward,false);
 		Schedule finlFixedSchedule(effectiveDate, maturityDate, volTS.targFixedFreq_,     volTS.targIndex_->fixingCalendar(),ModifiedFollowing,Unadjusted,DateGeneration::Backward,false);

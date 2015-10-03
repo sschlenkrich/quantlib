@@ -4106,6 +4106,9 @@
     <ClInclude Include="ql\experimental\template\basismodel\tenorswaptionvts.hpp">
       <Filter>experimental\template\basismodel</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\template\basismodel\tenoroptionletvts.hpp">
+      <Filter>experimental\template\basismodel</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6568,6 +6571,9 @@
       <Filter>cashflows</Filter>
     </ClCompile>
     <ClCompile Include="ql\experimental\template\basismodel\tenorswaptionvts.cpp">
+      <Filter>experimental\template\basismodel</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\template\basismodel\tenoroptionletvts.cpp">
       <Filter>experimental\template\basismodel</Filter>
     </ClCompile>
   </ItemGroup>

@@ -45,7 +45,7 @@ namespace QuantLib {
 			virtual Real atmLevel() const  { return swapRateFinl_;  }
 		};
 
-		boost::shared_ptr<SwaptionVolatilityStructure> baseVTS_;
+		Handle<SwaptionVolatilityStructure>            baseVTS_;
 		Handle<YieldTermStructure>                     discountCurve_;
 
 		boost::shared_ptr<IborIndex>                   baseIndex_;
@@ -57,7 +57,7 @@ namespace QuantLib {
 
 	public:
 		// constructor
-		TenorSwaptionVTS( const boost::shared_ptr<SwaptionVolatilityStructure>& baseVTS,
+		TenorSwaptionVTS( const Handle<SwaptionVolatilityStructure>&            baseVTS,
 		                  const Handle<YieldTermStructure>&                     discountCurve,
 		                  const boost::shared_ptr<IborIndex>&                   baseIndex,
 		                  const boost::shared_ptr<IborIndex>&                   targIndex,
