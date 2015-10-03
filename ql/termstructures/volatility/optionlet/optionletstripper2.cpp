@@ -18,6 +18,7 @@
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
+#include <ql/termstructures/volatility/volatilitytype.hpp>
 #include <ql/termstructures/volatility/optionlet/optionletstripper2.hpp>
 #include <ql/termstructures/volatility/optionlet/optionletstripper1.hpp>
 #include <ql/termstructures/volatility/optionlet/strippedoptionletadapter.hpp>

@@ -62,7 +62,7 @@ namespace QuantLib {
         boost::shared_ptr<CapFloorTermVolSurface> termVolSurface() const;
         boost::shared_ptr<IborIndex> iborIndex() const;
         Real displacement() const;
-        VolatilityType volatilityType() const;
+        virtual VolatilityType volatilityType() const;
 
       protected:
         OptionletStripper(const boost::shared_ptr<CapFloorTermVolSurface>&,

@@ -43,7 +43,8 @@ namespace QuantLib {
                           const std::vector<Date>& optionletDates,
                           const std::vector<Rate>& strikes,
                           const std::vector<std::vector<Handle<Quote> > >&,
-                          const DayCounter& dc);
+                          const DayCounter& dc,
+						  const VolatilityType& = Lognormal);
         //! \name StrippedOptionletBase interface
         //@{
         const std::vector<Rate>& optionletStrikes(Size i) const;
@@ -59,6 +60,9 @@ namespace QuantLib {
         Calendar calendar() const;
         Natural settlementDays() const;
         BusinessDayConvention businessDayConvention() const;
+
+		virtual VolatilityType volatilityType() const;
+
         //@}
       private:
         void checkInputs() const;
@@ -80,6 +84,7 @@ namespace QuantLib {
 
         std::vector<std::vector<Handle<Quote> > > optionletVolQuotes_;
         mutable std::vector<std::vector<Volatility> > optionletVolatilities_;
+		VolatilityType volatilityType_;
     };
 
 }

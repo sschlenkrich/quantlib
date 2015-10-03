@@ -44,7 +44,8 @@ namespace QuantLib {
                            const Handle<Quote>& atmLevel,
                            const Interpolator& interpolator = Interpolator(),
                            const DayCounter& dc = Actual365Fixed(),
-                           const Real shift = 0.0);
+                           Real shift = 0.0,
+                           const VolatilityType& volatilityType = ShiftedLognormal);
         InterpolatedSmileSection(
                            Time expiryTime,
                            const std::vector<Rate>& strikes,
@@ -52,7 +53,8 @@ namespace QuantLib {
                            Real atmLevel,
                            const Interpolator& interpolator = Interpolator(),
                            const DayCounter& dc = Actual365Fixed(),
-                           const Real shift = 0.0);
+                           Real shift = 0.0,
+                           const VolatilityType& volatilityType = ShiftedLognormal);
         InterpolatedSmileSection(
                            const Date& d,
                            const std::vector<Rate>& strikes,
@@ -61,7 +63,8 @@ namespace QuantLib {
                            const DayCounter& dc = Actual365Fixed(),
                            const Interpolator& interpolator = Interpolator(),
                            const Date& referenceDate = Date(),
-                           const Real shift = 0.0);
+                           Real shift = 0.0,
+                           const VolatilityType& volatilityType = ShiftedLognormal);
         InterpolatedSmileSection(
                            const Date& d,
                            const std::vector<Rate>& strikes,
@@ -70,7 +73,8 @@ namespace QuantLib {
                            const DayCounter& dc = Actual365Fixed(),
                            const Interpolator& interpolator = Interpolator(),
                            const Date& referenceDate = Date(),
-                           const Real shift = 0.0);
+                           Real shift = 0.0,
+                           const VolatilityType& volatilityType = ShiftedLognormal);
         void performCalculations() const;
         Real varianceImpl(Rate strike) const;
         Volatility volatilityImpl(Rate strike) const;
@@ -96,8 +100,9 @@ namespace QuantLib {
                                const Handle<Quote>& atmLevel,
                                const Interpolator& interpolator,
                                const DayCounter& dc,
-                               const Real shift)
-    : SmileSection(timeToExpiry, dc, ShiftedLognormal, shift),
+                               Real shift,
+                               const VolatilityType& volatilityType)
+    : SmileSection(timeToExpiry, dc, volatilityType, shift),
       exerciseTimeSquareRoot_(std::sqrt(exerciseTime())), strikes_(strikes),
       stdDevHandles_(stdDevHandles), atmLevel_(atmLevel),
       vols_(stdDevHandles.size())
@@ -119,8 +124,9 @@ namespace QuantLib {
                                 Real atmLevel,
                                 const Interpolator& interpolator,
                                 const DayCounter& dc,
-                                const Real shift)
-    : SmileSection(timeToExpiry, dc, ShiftedLognormal, shift),
+                                Real shift,
+                                const VolatilityType& volatilityType)
+    : SmileSection(timeToExpiry, dc, volatilityType, shift),
       exerciseTimeSquareRoot_(std::sqrt(exerciseTime())), strikes_(strikes),
       stdDevHandles_(stdDevs.size()), vols_(stdDevs.size())
     {
@@ -146,8 +152,9 @@ namespace QuantLib {
                            const DayCounter& dc,
                            const Interpolator& interpolator,
                            const Date& referenceDate,
-                           const Real shift)
-    : SmileSection(d, dc, referenceDate, ShiftedLognormal, shift),
+                           Real shift,
+                           const VolatilityType& volatilityType)
+    : SmileSection(d, dc, referenceDate, volatilityType, shift),
       exerciseTimeSquareRoot_(std::sqrt(exerciseTime())), strikes_(strikes),
       stdDevHandles_(stdDevHandles), atmLevel_(atmLevel), vols_(stdDevHandles.size())
     {
@@ -169,8 +176,9 @@ namespace QuantLib {
                            const DayCounter& dc,
                            const Interpolator& interpolator,
                            const Date& referenceDate,
-                           const Real shift)
-    : SmileSection(d, dc, referenceDate, ShiftedLognormal, shift),
+                           Real shift,
+                           const VolatilityType& volatilityType)
+    : SmileSection(d, dc, referenceDate, volatilityType, shift),
       exerciseTimeSquareRoot_(std::sqrt(exerciseTime())), strikes_(strikes),
       stdDevHandles_(stdDevs.size()), vols_(stdDevs.size())
     {

@@ -20,6 +20,7 @@
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
+#include <ql/termstructures/volatility/volatilitytype.hpp>
 #include <ql/termstructures/volatility/optionlet/optionletstripper1.hpp>
 #include <ql/instruments/makecapfloor.hpp>
 #include <ql/pricingengines/capfloor/blackcapfloorengine.hpp>

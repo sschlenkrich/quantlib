@@ -108,6 +108,7 @@ namespace QuantLib {
                                              atmForward,
                                              Linear(),
                                              Actual365Fixed(),
-                                             shift));
+                                             shift,
+											 volatilityType()));
     }
 }

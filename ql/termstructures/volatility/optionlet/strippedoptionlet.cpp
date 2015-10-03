@@ -18,6 +18,8 @@
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
+#include <ql/termstructures/volatility/volatilitytype.hpp>
+
 #include <ql/termstructures/volatility/optionlet/strippedoptionlet.hpp>
 #include <ql/instruments/makecapfloor.hpp>
 #include <ql/pricingengines/capfloor/blackcapfloorengine.hpp>
@@ -35,7 +37,8 @@ namespace QuantLib {
                         const std::vector<Date>& optionletDates,
                         const vector<Rate>& strikes,
                         const vector<vector<Handle<Quote> > >& v,
-                        const DayCounter& dc)
+                        const DayCounter& dc,
+					    const VolatilityType& volatilityType)
     : calendar_(calendar),
       settlementDays_(settlementDays),
       businessDayConvention_(bdc),
@@ -48,8 +51,8 @@ namespace QuantLib {
       optionletStrikes_(nOptionletDates_, strikes),
       nStrikes_(strikes.size()),
       optionletVolQuotes_(v),
-      optionletVolatilities_(nOptionletDates_, vector<Volatility>(nStrikes_))
-      
+      optionletVolatilities_(nOptionletDates_, vector<Volatility>(nStrikes_)),
+	  volatilityType_(volatilityType)      
     {
         checkInputs();
         registerWith(Settings::instance().evaluationDate());
@@ -154,5 +157,9 @@ namespace QuantLib {
     BusinessDayConvention StrippedOptionlet::businessDayConvention() const {
         return businessDayConvention_;
     }
+
+	VolatilityType StrippedOptionlet::volatilityType() const {
+		return volatilityType_;
+	}
 
 }

@@ -18,6 +18,8 @@
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
+#include <ql/termstructures/volatility/volatilitytype.hpp>
+
 #include <ql/termstructures/volatility/optionlet/strippedoptionletadapter.hpp>
 #include <ql/termstructures/volatility/optionlet/optionletstripper.hpp>
 #include <ql/termstructures/volatility/capfloor/capfloortermvolsurface.hpp>
@@ -33,7 +35,8 @@ namespace QuantLib {
     : OptionletVolatilityStructure(s->settlementDays(),
                                    s->calendar(),
                                    s->businessDayConvention(),
-                                   s->dayCounter()),
+                                   s->dayCounter(),
+								   s->volatilityType()),
       optionletStripper_(s),
       nInterpolations_(s->optionletMaturities()),
       strikeInterpolations_(nInterpolations_) {
@@ -50,7 +53,7 @@ namespace QuantLib {
          // Extrapolation may be a problem with splines, but since minStrike() and maxStrike() are set, we assume that no one will use stddevs for strikes outside these strikes
          CubicInterpolation::BoundaryCondition bc = optionletStrikes.size()>=4 ? CubicInterpolation::Lagrange : CubicInterpolation::SecondDerivative;
          return boost::shared_ptr<SmileSection>(new InterpolatedSmileSection<Cubic>(t,optionletStrikes,stddevs,Null<Real>(),
-                                                            Cubic(CubicInterpolation::Spline,false,bc,0.0,bc,0.0)));
+                                                            Cubic(CubicInterpolation::Spline,false,bc,0.0,bc,0.0),Actual365Fixed(),0.0,volatilityType()));
     }
 
     Volatility StrippedOptionletAdapter::volatilityImpl(Time length,

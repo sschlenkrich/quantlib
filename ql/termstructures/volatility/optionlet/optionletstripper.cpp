@@ -18,6 +18,7 @@
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
+#include <ql/termstructures/volatility/volatilitytype.hpp>
 #include <ql/termstructures/volatility/optionlet/optionletstripper.hpp>
 #include <ql/indexes/iborindex.hpp>
 
