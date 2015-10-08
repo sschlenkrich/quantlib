@@ -22,6 +22,7 @@
 
 #include <ql/instruments/capfloor.hpp>
 #include <ql/pricingengines/capfloor/blackcapfloorengine.hpp>
+#include <ql/pricingengines/capfloor/bacheliercapfloorengine.hpp>
 #include <ql/math/solvers1d/newtonsafe.hpp>
 #include <ql/quotes/simplequote.hpp>
 #include <ql/cashflows/cashflows.hpp>
@@ -39,7 +40,8 @@ namespace QuantLib {
             ImpliedVolHelper(const CapFloor&,
                              const Handle<YieldTermStructure>& discountCurve,
                              Real targetValue,
-                             Real displacement);
+                             Real displacement,
+							 VolatilityType volatilityType);
             Real operator()(Volatility x) const;
             Real derivative(Volatility x) const;
           private:
@@ -54,20 +56,21 @@ namespace QuantLib {
                               const CapFloor& cap,
                               const Handle<YieldTermStructure>& discountCurve,
                               Real targetValue,
-                              Real displacement)
+                              Real displacement,
+							  VolatilityType volatilityType)
         : discountCurve_(discountCurve), targetValue_(targetValue) {
 
             // set an implausible value, so that calculation is forced
             // at first ImpliedVolHelper::operator()(Volatility x) call
             vol_ = boost::shared_ptr<SimpleQuote>(new SimpleQuote(-1));
             Handle<Quote> h(vol_);
-            engine_ = boost::shared_ptr<PricingEngine>(new
-                                    BlackCapFloorEngine(discountCurve_, h,
-                                    Actual365Fixed(), displacement));
+			if (volatilityType==Normal) {
+                engine_ = boost::shared_ptr<PricingEngine>(new BachelierCapFloorEngine(discountCurve_, h, Actual365Fixed()));
+			} else {
+                engine_ = boost::shared_ptr<PricingEngine>(new BlackCapFloorEngine(discountCurve_, h, Actual365Fixed(), displacement));
+			}
             cap.setupArguments(engine_->getArguments());
-
-            results_ =
-                dynamic_cast<const Instrument::results*>(engine_->getResults());
+            results_ = dynamic_cast<const Instrument::results*>(engine_->getResults());
         }
 
         Real ImpliedVolHelper::operator()(Volatility x) const {
@@ -307,11 +310,12 @@ namespace QuantLib {
                                            Natural maxEvaluations,
                                            Volatility minVol,
                                            Volatility maxVol,
-                                           Real displacement) const {
+                                           Real displacement,
+										   VolatilityType volatilityType) const {
         //calculate();
         QL_REQUIRE(!isExpired(), "instrument expired");
 
-        ImpliedVolHelper f(*this, d, targetValue, displacement);
+        ImpliedVolHelper f(*this, d, targetValue, displacement, volatilityType);
         //Brent solver;
         NewtonSafe solver;
         solver.setMaxEvaluations(maxEvaluations);

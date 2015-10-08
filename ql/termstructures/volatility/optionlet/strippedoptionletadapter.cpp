@@ -48,7 +48,7 @@ namespace QuantLib {
          std::vector<Rate> optionletStrikes = optionletStripper_->optionletStrikes(0); // strikes are the same for all times ?!
          std::vector<Real> stddevs;
          for(Size i=0;i<optionletStrikes.size();i++) {
-             stddevs.push_back(volatilityImpl(t,optionletStrikes[i])*std::sqrt(t));
+             stddevs.push_back(interpolatedVolatilityImpl(t,optionletStrikes[i])*std::sqrt(t));
          }
          // Extrapolation may be a problem with splines, but since minStrike() and maxStrike() are set, we assume that no one will use stddevs for strikes outside these strikes
          CubicInterpolation::BoundaryCondition bc = optionletStrikes.size()>=4 ? CubicInterpolation::Lagrange : CubicInterpolation::SecondDerivative;
@@ -60,6 +60,15 @@ namespace QuantLib {
                                                         Rate strike) const {
         calculate();
 
+		// use smile consistently interpolation 
+		return smileSection(length,true)->volatility(strike,volatilityType(),0.0);
+	}
+
+	// set up smile section based on interpolated vols in case exercises have individual (different) strikes
+    Volatility StrippedOptionletAdapter::interpolatedVolatilityImpl(Time length, Rate strike) const {
+        calculate();
+
+		// do not use original implementation
         std::vector<Volatility> vol(nInterpolations_);
         for (Size i=0; i<nInterpolations_; ++i)
             vol[i] = strikeInterpolations_[i]->operator()(strike, true);

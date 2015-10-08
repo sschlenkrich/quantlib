@@ -72,11 +72,17 @@ namespace QuantLib {
 			boost::shared_ptr<Interpolation> rhoInf_;
 			boost::shared_ptr<Interpolation> beta_;
 		public:
-			TwoParameterCorrelation ( const boost::shared_ptr<Interpolation> rhoInf,
-				                      const boost::shared_ptr<Interpolation> beta)
-				                    : rhoInf_(rhoInf_), beta_(beta_) {}
+			TwoParameterCorrelation ( const boost::shared_ptr<Interpolation>& rhoInf,
+				                      const boost::shared_ptr<Interpolation>& beta) {
+				rhoInf_ = rhoInf;
+				beta_   = beta;
+			}
 			virtual Real operator() (const Time& start1, const Time& start2) const {
-				return (*rhoInf_)(start1) * (1.0 - (*rhoInf_)(start1))*exp(-(*beta_)(start1)*fabs(start2-start1));
+				Real rhoInf = (*rhoInf_)(start1);
+				Real beta   = (*beta_)(start1);
+				Real rho = rhoInf + (1.0 - rhoInf)*exp(-beta*fabs(start2-start1));
+				return rho;
+				//return (*rhoInf_)(start1) * (1.0 - (*rhoInf_)(start1))*exp(-(*beta_)(start1)*fabs(start2-start1));
 			}
 		};
 

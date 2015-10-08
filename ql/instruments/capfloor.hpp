@@ -29,6 +29,7 @@
 
 #include <ql/instrument.hpp>
 #include <ql/cashflows/iborcoupon.hpp>
+#include <ql/termstructures/volatility/volatilitytype.hpp>
 #include <ql/handle.hpp>
 
 namespace QuantLib {
@@ -90,7 +91,8 @@ namespace QuantLib {
                                      Natural maxEvaluations = 100,
                                      Volatility minVol = 1.0e-7,
                                      Volatility maxVol = 4.0,
-                                     Real displacement = 0.0) const;
+                                     Real displacement = 0.0,
+									 VolatilityType VolatilityType = ShiftedLognormal) const;
       private:
         Type type_;
         Leg floatingLeg_;
