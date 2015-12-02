@@ -349,6 +349,9 @@
     <Filter Include="experimental\template\basismodel">
       <UniqueIdentifier>{1962ba2e-2566-41c0-88b4-1c76448cec8d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\template\commodity">
+      <UniqueIdentifier>{aebe4800-14a1-4aeb-9af0-947c2ec2a87c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -4108,6 +4111,12 @@
     </ClInclude>
     <ClInclude Include="ql\experimental\template\basismodel\tenoroptionletvts.hpp">
       <Filter>experimental\template\basismodel</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\commodity\template2fnormalmodel.hpp">
+      <Filter>experimental\template\commodity</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\commodity\indextermstructure.hpp">
+      <Filter>experimental\template\commodity</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
