@@ -4118,6 +4118,9 @@
     <ClInclude Include="ql\experimental\template\commodity\indextermstructure.hpp">
       <Filter>experimental\template\commodity</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\template\commodity\commoditymodels.hpp">
+      <Filter>experimental\template\commodity</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">

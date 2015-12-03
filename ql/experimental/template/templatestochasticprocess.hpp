@@ -70,7 +70,11 @@ namespace QuantLib {
 		inline virtual ActiveType zeroBond(const DateType t, const DateType T, const VecA& X) { return 1.0; }
 
 		// default implementation for single-asset models
-		inline virtual ActiveType asset(const VecA& X) { return X[0]; }
+		inline virtual ActiveType asset(const DateType t, const VecA& X) { return X[0]; }
+
+		// default implementation for future or forward
+		inline virtual ActiveType future(const DateType t, const DateType T, const VecA& X) { return zeroBond(t,T,X)*X[0]; }
+
 
 		// options for z-integration
 	    enum VolEvolv {

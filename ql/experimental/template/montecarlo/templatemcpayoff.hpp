@@ -125,6 +125,27 @@ namespace QuantLib {
 			}
 		};
 
+		// call or put on a strip of futures
+		class AverageFutureOption : public TemplateMCPayoff {
+			std::vector<DateType>    settlementTimes_;
+			std::vector<PassiveType> settlementWeights_;
+			PassiveType              strike_;        // option strike
+			PassiveType              callOrPut_;     // call (+1) or put (-1) option on swap rate
+		public:
+			AverageFutureOption( DateType                        obsTime, 
+				                 const std::vector<DateType>&    settlementTimes, 
+				                 const std::vector<PassiveType>& settlementWeights,
+					             const PassiveType               strike,
+					             const PassiveType               callOrPut )
+				: TemplateMCPayoff(obsTime), settlementTimes_(settlementTimes), settlementWeights_(settlementWeights), strike_(strike), callOrPut_(callOrPut) { }
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				ActiveType fut=0.0;
+				for (size_t k=0; k<settlementTimes_.size(); ++k)
+					if (settlementTimes_[k]>=observationTime()) fut += p->future(observationTime(),settlementTimes_[k]);
+				ActiveType V  = callOrPut_ * (fut - strike_);
+				return (V>0.0) ? (V) : ((ActiveType)0.0);
+			}
+		};
 
 		// annuity
 		class Annuity : public TemplateMCPayoff {

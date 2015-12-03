@@ -211,7 +211,12 @@ namespace QuantLib {
 
 			inline ActiveType asset(DateType obsTime) {
 				return sim_->assetAdjuster(obsTime) +
-					   process_->asset(sim_->state(idx_,obsTime) );
+					   process_->asset(obsTime, sim_->state(idx_,obsTime) );
+			}
+
+			inline ActiveType future(DateType obsTime, DateType settlementTime) {
+				return sim_->assetAdjuster(obsTime) +
+					   process_->future(obsTime, settlementTime, sim_->state(idx_,obsTime) );
 			}
 		};
 
@@ -392,13 +397,13 @@ namespace QuantLib {
 			for (size_t i=0; i<assetObservTimes_.size(); ++i) {
                 for (size_t k=0; k<nPaths(); ++k) {
 					VecA       s   = state(k,assetObservTimes_[i]);
-					avAsset[i] += process_->asset(s) / process_->numeraire(assetObservTimes_[i],s);
-					avZero[i]  += 1.0                / process_->numeraire(assetObservTimes_[i],s);
+					avAsset[i] += process_->asset(assetObservTimes_[i],s) / process_->numeraire(assetObservTimes_[i],s);
+					avZero[i]  += 1.0                                     / process_->numeraire(assetObservTimes_[i],s);
 				}
 				avAsset[i] /= nPaths();
 				avZero[i]  /= nPaths();
 				// expected asset S(0) / Num(0) = E[ S(t) / Num(t) ]
-				assetAdjuster_[i] = process_->asset( process_->initialValues() ) / process_->numeraire( 0, process_->initialValues() );
+				assetAdjuster_[i] = process_->asset(0, process_->initialValues() ) / process_->numeraire( 0, process_->initialValues() );
 				assetAdjuster_[i] = (assetAdjuster_[i] - avAsset[i]) / avZero[i];
 			}
 			applyAssetAdjuster_ = true;
