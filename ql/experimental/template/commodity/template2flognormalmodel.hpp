@@ -7,8 +7,8 @@
 
 
 
-#ifndef quantlib_template2flognormalmodel_hpp
-#define quantlib_template2flognormalmodel_hpp
+#ifndef quantlib_template2fnormalmodel_hpp
+#define quantlib_template2fnormalmodel_hpp
 
 #include <ql/experimental/template/commodity/template2fmeanreversionmodel.hpp>
 
@@ -21,18 +21,18 @@ namespace QuantLib {
 
     // 2-factor mean reverting normal model
 	//
-	//     X(t) = phi(t) + Y(t) + Z(t), X(0)=Y(0)=0
+	//  ln X(t) = phi(t) + Y(t) + Z(t), X(0)=Y(0)=0
 	//    dY(t) = -a Y(t) dt  +  sigma(t) dW_Y(t)
 	//    dZ(t) = -b Z(t) dt  +    eta(t) dW_Z(t)
 	//    dW_Y(t) dW_Z(t) = rho dt
 	//
 	template <class DateType, class PassiveType, class ActiveType>
-	class Template2FNormalModel : public Template2FMeanReversionModel<DateType,PassiveType,ActiveType> {
+	class Template2FLognormalModel : public Template2FMeanReversionModel<DateType,PassiveType,ActiveType> {
 	
 	public:
 		// constructor
 		
-		Template2FNormalModel( const Handle<IndexTermStructure>&    phi,
+		Template2FLognormalModel( const Handle<IndexTermStructure>&    phi,
 		                       const VecD&                          times,
 							   const VecA&                          sigma,
 							   const VecA&                          eta,
@@ -48,33 +48,41 @@ namespace QuantLib {
 
 		// basic instruments
 
-		// future expectation, E[ S(T) | F(t) ]
+		// future expectation
         inline virtual ActiveType futureAsset(const DateType t, const DateType T, const ActiveType Y, const ActiveType Z) {
-			return phi_->value(T) + exp(-a_*(T-t))*Y + exp(-b_*(T-t))*Z;
+			ActiveType mu  = phi_->value(T) + exp(-a_*(T-t))*Y + exp(-b_*(T-t))*Z;
+			ActiveType var = varianceY(t,T) + varianceZ(t,T) + 2.0*rho_*covarianceYZ(t,T);
+			return exp(mu + var/2);
 		}
 
         inline virtual ActiveType averageFuture ( const VecD& settlementTimes, const VecP& settlementWeights) {
 			ActiveType fut = 0.0;
 			size_t N = _MIN_(settlementTimes.size(),settlementWeights.size());
-			for (size_t k=0; k<N; ++k) fut += settlementWeights[k]*phi_->value(settlementTimes[k]);
+			for (size_t k=0; k<N; ++k) fut += settlementWeights[k] * futureAsset(0.0,settlementTimes[k],0.0,0.0);
 			return fut;
 		}
 
+		// calculate approximate log-variance as input to Black formula below
+		// NOTE: approximation quality needs to be verified
         inline virtual ActiveType varianceAverageFuture ( const DateType expiryTime, const VecD& settlementTimes, const VecP& settlementWeights) {
+			ActiveType  var=0.0;
 			PassiveType B = 0, C = 0;
+			PassiveType weight=0.0;
 			size_t N = _MIN_(settlementTimes.size(),settlementWeights.size());
 			for (size_t k=0; k<N; ++k) {
-				B += settlementWeights[k]*exp(-a_*(settlementTimes[k]-expiryTime));
-				C += settlementWeights[k]*exp(-b_*(settlementTimes[k]-expiryTime));
+				B = exp(-a_*(settlementTimes[k]-expiryTime));
+				C = exp(-b_*(settlementTimes[k]-expiryTime));
+				weight += settlementWeights[k];
+				var += settlementWeights[k]*(B*B*varianceY(0.0,expiryTime) + C*C*varianceZ(0.0,expiryTime) + 2.0*rho_*B*C*covarianceYZ(0.0,expiryTime));
 			}
-			ActiveType var = B*B*varianceY(0.0,expiryTime) + C*C*varianceZ(0.0,expiryTime) + 2.0*rho_*B*C*covarianceYZ(0.0,expiryTime);
+			var /= weight;
 			return var;
 		}
 
 		inline virtual ActiveType vanillaOption ( const DateType expiryTime, const VecD& settlementTimes, const VecP& settlementWeights, PassiveType strike, int callOrPut) {
 			ActiveType fut = averageFuture(settlementTimes,settlementWeights);
 			ActiveType var = varianceAverageFuture(expiryTime,settlementTimes,settlementWeights);
-			ActiveType pv  = TemplateAuxilliaries::Bachelier(fut,strike,sqrt(var),1.0,callOrPut);
+			ActiveType pv  = TemplateAuxilliaries::Black76(fut,strike,sqrt(var),1.0,callOrPut);
 			return pv;
 		}
 
@@ -85,4 +93,4 @@ namespace QuantLib {
 #undef _MIN_
 #undef _MAX_
 
-#endif  /* quantlib_template2flognormalmodel_hpp */
+#endif  /* quantlib_template2fnormalmodel_hpp */

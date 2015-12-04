@@ -599,6 +599,8 @@
     <ClInclude Include="ql\experimental\template\basismodel\tenorswaptionvts.hpp" />
     <ClInclude Include="ql\experimental\template\commodity\commoditymodels.hpp" />
     <ClInclude Include="ql\experimental\template\commodity\indextermstructure.hpp" />
+    <ClInclude Include="ql\experimental\template\commodity\template2flognormalmodel.hpp" />
+    <ClInclude Include="ql\experimental\template\commodity\template2fmeanreversionmodel.hpp" />
     <ClInclude Include="ql\experimental\template\commodity\template2fnormalmodel.hpp" />
     <ClInclude Include="ql\rebatedexercise.hpp" />
     <ClInclude Include="ql\experimental\basisswap\basisswap.hpp" />
