@@ -135,13 +135,15 @@ namespace QuantLib {
 
         inline ActiveType averageFuture ( const VecD& settlementTimes, const VecP& settlementWeights) {
 			ActiveType fut = 0.0;
-			for (size_t k=0; k<settlementTimes.size(); ++k) fut += settlementWeights[k]*phi_->value(settlementTimes[k]);
+			size_t N = _MIN_(settlementTimes.size(),settlementWeights.size());
+			for (size_t k=0; k<N; ++k) fut += settlementWeights[k]*phi_->value(settlementTimes[k]);
 			return fut;
 		}
 
         inline ActiveType varianceAverageFuture ( const DateType expiryTime, const VecD& settlementTimes, const VecP& settlementWeights) {
 			PassiveType B = 0, C = 0;
-			for (size_t k=0; k<settlementTimes.size(); ++k) {
+			size_t N = _MIN_(settlementTimes.size(),settlementWeights.size());
+			for (size_t k=0; k<N; ++k) {
 				B += settlementWeights[k]*exp(-a_*(settlementTimes[k]-expiryTime));
 				C += settlementWeights[k]*exp(-b_*(settlementTimes[k]-expiryTime));
 			}

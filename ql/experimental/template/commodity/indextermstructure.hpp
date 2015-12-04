@@ -82,11 +82,11 @@ namespace QuantLib {
 			const boost::shared_ptr<Interpolation>&   timeInterpol = boost::shared_ptr<Interpolation>()
 			) : TermStructure(referenceDate,cal,dc), timeInterpol_(timeInterpol) { }
 
- 	    inline Real value ( Time t, bool extrapolate = false) const {
+ 	    inline Real value ( Time t, bool extrapolate = true) const {
 			return timeInterpol_->operator()(t,extrapolate);
 		}
 
-		inline Real value (const Date& d, bool extrapolate = false) const {
+		inline Real value (const Date& d, bool extrapolate = true) const {
 			Time t = dayCounter().yearFraction(referenceDate(),d);
             return value(t,extrapolate);
 		}
