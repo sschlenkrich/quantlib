@@ -32,7 +32,7 @@ namespace QuantLib {
 	public:
 		// constructor
 		
-		Template2FLognormalModel( const Handle<IndexTermStructure>&    phi,
+		Template2FLognormalModel( const Handle<IndexTermStructure>& futureTS,
 		                       const VecD&                          times,
 							   const VecA&                          sigma,
 							   const VecA&                          eta,
@@ -40,17 +40,23 @@ namespace QuantLib {
 							   const PassiveType                     b,
 							   const PassiveType                     rho 
 							   )
-		: Template2FMeanReversionModel(phi,times,sigma,eta,a,b,rho) {
+		: Template2FMeanReversionModel(futureTS,times,sigma,eta,a,b,rho) {
 			// check for valid parameter inputs
 		}
 	
 		// analytic formulas in base class
 
+		inline virtual const ActiveType phi(const DateType t) const {
+			ActiveType var = varianceY(0,t) + varianceZ(0,t) + 2.0*rho_*covarianceYZ(0,t);
+			return log(futureTS_->value(t)) - var/2.0;
+		}
+
+
 		// basic instruments
 
 		// future expectation
         inline virtual ActiveType futureAsset(const DateType t, const DateType T, const ActiveType Y, const ActiveType Z) {
-			ActiveType mu  = phi_->value(T) + exp(-a_*(T-t))*Y + exp(-b_*(T-t))*Z;
+			ActiveType mu  = phi(T) + exp(-a_*(T-t))*Y + exp(-b_*(T-t))*Z;
 			ActiveType var = varianceY(t,T) + varianceZ(t,T) + 2.0*rho_*covarianceYZ(t,T);
 			return exp(mu + var/2);
 		}

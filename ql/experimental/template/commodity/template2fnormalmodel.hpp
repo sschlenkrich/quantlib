@@ -32,7 +32,7 @@ namespace QuantLib {
 	public:
 		// constructor
 		
-		Template2FNormalModel( const Handle<IndexTermStructure>&    phi,
+		Template2FNormalModel( const Handle<IndexTermStructure>&    futureTS,
 		                       const VecD&                          times,
 							   const VecA&                          sigma,
 							   const VecA&                          eta,
@@ -40,7 +40,7 @@ namespace QuantLib {
 							   const PassiveType                     b,
 							   const PassiveType                     rho 
 							   )
-		: Template2FMeanReversionModel(phi,times,sigma,eta,a,b,rho) {
+		: Template2FMeanReversionModel(futureTS,times,sigma,eta,a,b,rho) {
 			// check for valid parameter inputs
 		}
 	
@@ -50,13 +50,13 @@ namespace QuantLib {
 
 		// future expectation, E[ S(T) | F(t) ]
         inline virtual ActiveType futureAsset(const DateType t, const DateType T, const ActiveType Y, const ActiveType Z) {
-			return phi_->value(T) + exp(-a_*(T-t))*Y + exp(-b_*(T-t))*Z;
+			return phi(T) + exp(-a_*(T-t))*Y + exp(-b_*(T-t))*Z;
 		}
 
         inline virtual ActiveType averageFuture ( const VecD& settlementTimes, const VecP& settlementWeights) {
 			ActiveType fut = 0.0;
 			size_t N = _MIN_(settlementTimes.size(),settlementWeights.size());
-			for (size_t k=0; k<N; ++k) fut += settlementWeights[k]*phi_->value(settlementTimes[k]);
+			for (size_t k=0; k<N; ++k) fut += settlementWeights[k]*phi(settlementTimes[k]);
 			return fut;
 		}
 
