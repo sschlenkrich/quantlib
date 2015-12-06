@@ -72,15 +72,19 @@ namespace QuantLib {
 		// NOTE: approximation quality needs to be verified
         inline virtual ActiveType varianceAverageFuture ( const DateType expiryTime, const VecD& settlementTimes, const VecP& settlementWeights) {
 			ActiveType  var=0.0;
-			PassiveType B = 0, C = 0;
+			PassiveType B = 0, C = 0, B2 = 0, C2 = 0, BC = 0;
 			PassiveType weight=0.0;
 			size_t N = _MIN_(settlementTimes.size(),settlementWeights.size());
 			for (size_t k=0; k<N; ++k) {
 				B = exp(-a_*(settlementTimes[k]-expiryTime));
 				C = exp(-b_*(settlementTimes[k]-expiryTime));
+				B2 += settlementWeights[k]*B*B;
+				C2 += settlementWeights[k]*C*C;
+				BC += settlementWeights[k]*B*C;
 				weight += settlementWeights[k];
-				var += settlementWeights[k]*(B*B*varianceY(0.0,expiryTime) + C*C*varianceZ(0.0,expiryTime) + 2.0*rho_*B*C*covarianceYZ(0.0,expiryTime));
+				//var += settlementWeights[k]*(B*B*varianceY(0.0,expiryTime) + C*C*varianceZ(0.0,expiryTime) + 2.0*rho_*B*C*covarianceYZ(0.0,expiryTime));
 			}
+			var = B2*varianceY(0.0,expiryTime) + C2*varianceZ(0.0,expiryTime) + 2.0*rho_*BC*covarianceYZ(0.0,expiryTime);
 			var /= weight;
 			return var;
 		}
