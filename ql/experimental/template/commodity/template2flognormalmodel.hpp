@@ -69,30 +69,76 @@ namespace QuantLib {
 		}
 
 		// calculate approximate log-variance as input to Black formula below
+		// various approaches are distinguished by approxType
 		// NOTE: approximation quality needs to be verified
-        inline virtual ActiveType varianceAverageFuture ( const DateType expiryTime, const VecD& settlementTimes, const VecP& settlementWeights) {
-			ActiveType  var=0.0;
+        inline virtual ActiveType averageFutureStDev ( const DateType expiryTime, const VecD& settlementTimes, const VecP& settlementWeights, int approxType = 0) {
 			PassiveType B = 0, C = 0, B2 = 0, C2 = 0, BC = 0;
 			PassiveType weight=0.0;
 			size_t N = _MIN_(settlementTimes.size(),settlementWeights.size());
-			for (size_t k=0; k<N; ++k) {
-				B = exp(-a_*(settlementTimes[k]-expiryTime));
-				C = exp(-b_*(settlementTimes[k]-expiryTime));
-				B2 += settlementWeights[k]*B*B;
-				C2 += settlementWeights[k]*C*C;
-				BC += settlementWeights[k]*B*C;
-				weight += settlementWeights[k];
-				//var += settlementWeights[k]*(B*B*varianceY(0.0,expiryTime) + C*C*varianceZ(0.0,expiryTime) + 2.0*rho_*B*C*covarianceYZ(0.0,expiryTime));
+			if (approxType==0) { // average log-variance
+			    ActiveType  var=0.0;
+				for (size_t k=0; k<N; ++k) {
+					B = exp(-a_*(settlementTimes[k]-expiryTime));
+					C = exp(-b_*(settlementTimes[k]-expiryTime));
+					B2 += settlementWeights[k]*B*B;
+					C2 += settlementWeights[k]*C*C;
+					BC += settlementWeights[k]*B*C;
+					weight += settlementWeights[k];
+				}
+				var = B2*varianceY(0.0,expiryTime) + C2*varianceZ(0.0,expiryTime) + 2.0*rho_*BC*covarianceYZ(0.0,expiryTime);
+				var /= weight; // not sure this makes sense
+				return sqrt(var);
 			}
-			var = B2*varianceY(0.0,expiryTime) + C2*varianceZ(0.0,expiryTime) + 2.0*rho_*BC*covarianceYZ(0.0,expiryTime);
-			var /= weight;
-			return var;
+			if (approxType==1) { // average log-volatility
+				ActiveType varY  = varianceY(0.0,expiryTime);
+				ActiveType varZ  = varianceZ(0.0,expiryTime);
+				ActiveType covYZ = covarianceYZ(0.0,expiryTime);
+				ActiveType vol   = 0.0;
+				for (size_t k=0; k<N; ++k) {
+					B = exp(-a_*(settlementTimes[k]-expiryTime));
+					C = exp(-b_*(settlementTimes[k]-expiryTime));
+					vol += settlementWeights[k]*sqrt(B*B*varY + C*C*varZ + 2*rho_*B*C*covYZ);
+					weight += settlementWeights[k];
+				}
+				vol /= weight;
+				return vol;
+			}
+			if (approxType==2) { // moment matching via with approximate variances
+				// apply lognormal variance approximation exp{2mu + sigma^2}[exp{sigma^2}-1] \approx exp{2mu}sigma^2
+				// assume perfect correlation of individual futures then vol of sum equals the sum of vols
+				ActiveType varY  = varianceY(0.0,expiryTime);
+				ActiveType varZ  = varianceZ(0.0,expiryTime);
+				ActiveType covYZ = covarianceYZ(0.0,expiryTime);
+				ActiveType vol   = 0.0;
+				for (size_t k=0; k<N; ++k) {
+					// sum of futures
+					B = exp(-a_*(settlementTimes[k]-expiryTime));
+					C = exp(-b_*(settlementTimes[k]-expiryTime));
+					vol += settlementWeights[k]*exp(phi(settlementTimes[k]))*sqrt(B*B*varY + C*C*varZ + 2*rho_*B*C*covYZ);
+				}
+				// we have for the (average) future vol = exp{mu}sigma = E[F]exp{-sigma^2/2}sigma
+				// setting vols equal to above and solving for sigma via Newton iteration
+				ActiveType expectFuture = averageFuture(settlementTimes,settlementWeights);
+				ActiveType volFuture0 = 0;
+				ActiveType volFuture1 = vol/expectFuture;
+				long cnt=0;
+				while (fabs(volFuture1-volFuture0)>1.0e-8) {
+					volFuture0 = volFuture1;
+					ActiveType tmp = exp(-volFuture0*volFuture0/2.0);
+					ActiveType f   = tmp*volFuture0 - vol/expectFuture;
+					ActiveType fpr = tmp*(1.0-volFuture0*volFuture0);
+					volFuture1 = volFuture0 - f/fpr;
+					if ((++cnt)>10) break;  // we do not want to get stuck in the iteration if something goes wrong
+				} // now we should have the volatility
+				return volFuture1;
+			}
+			return 0.0; // default value
 		}
 
 		inline virtual ActiveType vanillaOption ( const DateType expiryTime, const VecD& settlementTimes, const VecP& settlementWeights, PassiveType strike, int callOrPut) {
 			ActiveType fut = averageFuture(settlementTimes,settlementWeights);
-			ActiveType var = varianceAverageFuture(expiryTime,settlementTimes,settlementWeights);
-			ActiveType pv  = TemplateAuxilliaries::Black76(fut,strike,sqrt(var),1.0,callOrPut);
+			ActiveType vol = averageFutureStDev(expiryTime,settlementTimes,settlementWeights);
+			ActiveType pv  = TemplateAuxilliaries::Black76(fut,strike,vol,1.0,callOrPut);
 			return pv;
 		}
 
