@@ -125,27 +125,6 @@ namespace QuantLib {
 			}
 		};
 
-		// call or put on a strip of futures
-		class AverageFutureOption : public TemplateMCPayoff {
-			std::vector<DateType>    settlementTimes_;
-			std::vector<PassiveType> settlementWeights_;
-			PassiveType              strike_;        // option strike
-			PassiveType              callOrPut_;     // call (+1) or put (-1) option on swap rate
-		public:
-			AverageFutureOption( DateType                        obsTime, 
-				                 const std::vector<DateType>&    settlementTimes, 
-				                 const std::vector<PassiveType>& settlementWeights,
-					             const PassiveType               strike,
-					             const PassiveType               callOrPut )
-				: TemplateMCPayoff(obsTime), settlementTimes_(settlementTimes), settlementWeights_(settlementWeights), strike_(strike), callOrPut_(callOrPut) { }
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
-				ActiveType fut=0.0;
-				for (size_t k=0; k<settlementTimes_.size(); ++k)
-					if (settlementTimes_[k]>=observationTime()) fut += settlementWeights_[k] * p->future(observationTime(),settlementTimes_[k]);
-				ActiveType V  = callOrPut_ * (fut - strike_);
-				return (V>0.0) ? (V) : ((ActiveType)0.0);
-			}
-		};
 
 		// annuity
 		class Annuity : public TemplateMCPayoff {
@@ -376,6 +355,102 @@ namespace QuantLib {
 			}
 		};
 
+
+		// Commodity model payoffs
+
+		// call or put on a strip of futures
+		class AverageFutureOption : public TemplateMCPayoff {
+			std::vector<DateType>    settlementTimes_;
+			std::vector<PassiveType> settlementWeights_;
+			PassiveType              strike_;        // option strike
+			PassiveType              callOrPut_;     // call (+1) or put (-1) option on swap rate
+		public:
+			AverageFutureOption( DateType                        obsTime, 
+				                 const std::vector<DateType>&    settlementTimes, 
+				                 const std::vector<PassiveType>& settlementWeights,
+					             const PassiveType               strike,
+					             const PassiveType               callOrPut )
+				: TemplateMCPayoff(obsTime), settlementTimes_(settlementTimes), settlementWeights_(settlementWeights), strike_(strike), callOrPut_(callOrPut) { }
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				ActiveType fut=0.0;
+				for (size_t k=0; k<settlementTimes_.size(); ++k)
+					if (settlementTimes_[k]>=observationTime()) fut += settlementWeights_[k] * p->future(observationTime(),settlementTimes_[k]);
+				ActiveType V  = callOrPut_ * (fut - strike_);
+				return (V>0.0) ? (V) : ((ActiveType)0.0);
+			}
+		};
+
+		// covariance between quoted futures with roll-over
+		class AverageFutureCovariance : public TemplateMCPayoff {
+		protected:
+			std::vector<DateType> obsTimes_;
+			// future A definition
+			std::vector<DateType>    settlementTimesA_;     // delivery period
+			std::vector<PassiveType> settlementWeightsA_;   // usually equal weights for averaging
+			PassiveType              obsLagA_;              // roll over delivery period if first date is less than observation lag
+			// future B definition
+			std::vector<DateType>    settlementTimesB_;     // delivery period
+			std::vector<PassiveType> settlementWeightsB_;   // usually equal weights for averaging
+			PassiveType              obsLagB_;              // roll over delivery period if first date is less than observation lag
+			// further flags
+			bool                     useLogReturns_;        // specify (normal vs lognormal) type of returns considered
+			bool                     calcCorrelation_;      // calculate correlation instead of covariance
+			// helper methods
+			void rollOver( std::vector<DateType>& settlementTimes ) {
+			    PassiveType rollPeriod = settlementTimes[settlementTimes.size()-1] - settlementTimes[0] + 1.0/365.0;
+			    for (size_t k=0; k<settlementTimes.size(); ++k) settlementTimes[k] += rollPeriod;
+			}
+			ActiveType averageFuture(const boost::shared_ptr<PathType>& p, const DateType t, const std::vector<DateType>& settlementTimes, const std::vector<PassiveType>& settlementWeights ) {
+				ActiveType fut=0.0;
+				for (size_t k=0; k<settlementTimes.size(); ++k) if (settlementTimes[k]>=t) fut += settlementWeights[k] * p->future(t,settlementTimes[k]);
+				return fut;
+			}
+
+		public:
+			AverageFutureCovariance( const std::vector<DateType>&    obsTimes,
+				                     const std::vector<DateType>&    settlementTimesA,     
+			                         const std::vector<PassiveType>& settlementWeightsA,
+			                         const PassiveType               obsLagA,
+			                         const std::vector<DateType>&    settlementTimesB,
+			                         const std::vector<PassiveType>& settlementWeightsB,
+			                         const PassiveType               obsLagB,
+			                         const bool                      useLogReturns,       
+			                         const bool                      calcCorrelation )
+			: TemplateMCPayoff(0.0), obsTimes_(obsTimes), settlementTimesA_(settlementTimesA), settlementWeightsA_(settlementWeightsA), obsLagA_(obsLagA),
+			settlementTimesB_(settlementTimesB), settlementWeightsB_(settlementWeightsB), obsLagB_(obsLagB), useLogReturns_(useLogReturns), calcCorrelation_(calcCorrelation) {}
+		    // payoff should NOT be discounted
+		    inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p); }
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				std::vector<ActiveType> dFutA(obsTimes_.size()-1), dFutB(obsTimes_.size()-1);
+				ActiveType EdFutA = 0.0, EdFutB = 0.0; 
+				for (size_t i=1; i<obsTimes_.size(); ++i) {
+					// check rollover A and B
+					if (settlementTimesA_[0]-obsTimes_[i]<obsLagA_) rollOver(settlementTimesA_);
+					if (settlementTimesB_[0]-obsTimes_[i]<obsLagB_) rollOver(settlementTimesB_);
+					// calculate returns
+					if (useLogReturns_) {
+					    dFutA[i-1] = log(averageFuture(p,obsTimes_[i],settlementTimesA_,settlementWeightsA_)) - log(averageFuture(p,obsTimes_[i-1],settlementTimesA_,settlementWeightsA_));
+					    dFutB[i-1] = log(averageFuture(p,obsTimes_[i],settlementTimesB_,settlementWeightsB_)) - log(averageFuture(p,obsTimes_[i-1],settlementTimesB_,settlementWeightsB_));
+					} else {
+					    dFutA[i-1] = averageFuture(p,obsTimes_[i],settlementTimesA_,settlementWeightsA_) - averageFuture(p,obsTimes_[i-1],settlementTimesA_,settlementWeightsA_);
+					    dFutB[i-1] = averageFuture(p,obsTimes_[i],settlementTimesB_,settlementWeightsB_) - averageFuture(p,obsTimes_[i-1],settlementTimesB_,settlementWeightsB_);
+					}
+					EdFutA += dFutA[i-1];
+					EdFutB += dFutB[i-1];
+				}
+				EdFutA /= dFutA.size();
+				EdFutB /= dFutB.size();
+				ActiveType VarA=0.0, VarB=0.0, Cov=0.0;
+				for (size_t i=0; i<obsTimes_.size()-1; ++i) {
+					VarA += (dFutA[i] - EdFutA)*(dFutA[i] - EdFutA);
+					VarB += (dFutB[i] - EdFutB)*(dFutB[i] - EdFutB);
+					Cov  += (dFutA[i] - EdFutA)*(dFutB[i] - EdFutB);
+				}
+				if (calcCorrelation_) return Cov / sqrt(VarA*VarB);
+				return Cov / (dFutA.size()-1);
+			}
+
+		};
 
 	};
 
