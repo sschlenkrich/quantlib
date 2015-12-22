@@ -460,7 +460,7 @@ namespace QuantLib {
 		inline virtual ActiveType varianceZ( DateType t, ActiveType zt, DateType dT ) {
 			ActiveType expmThDT = exp(-theta_*dT);
 			ActiveType onemETDT = 1 - expmThDT;
-			ActiveType eta2oThe = eta(idx(t+dT/2.0))*eta(idx(t+dT/2.0))/theta_;  // approx eta(t)=eta for s \in [t, t+dT]
+			ActiveType eta2oThe = eta(t+dT/2.0)*eta(t+dT/2.0)/theta_;  // approx eta(t)=eta for s \in [t, t+dT]
 			return zt*eta2oThe*expmThDT*onemETDT + z0_*eta2oThe/2.0*onemETDT*onemETDT; 
 		}
 
