@@ -394,7 +394,10 @@ namespace QuantLib {
 			PassiveType              obsLagB_;              // roll over delivery period if first date is less than observation lag
 			// further flags
 			bool                     useLogReturns_;        // specify (normal vs lognormal) type of returns considered
-			bool                     calcCorrelation_;      // calculate correlation instead of covariance
+			long                     calcType_;             // flag to distinguish what to do (quick and dirty)
+			                                                // 0 - calculate covariance
+			                                                // 1 - calculate correlation instead of covariance
+			                                                // 2 - calculate spread variance 
 			// helper methods
 			void rollOver( std::vector<DateType>& settlementTimes ) {
 			    PassiveType rollPeriod = settlementTimes[settlementTimes.size()-1] - settlementTimes[0] + 1.0/365.0;
@@ -405,7 +408,6 @@ namespace QuantLib {
 				for (size_t k=0; k<settlementTimes.size(); ++k) if (settlementTimes[k]>=t) fut += settlementWeights[k] * p->future(t,settlementTimes[k]);
 				return fut;
 			}
-
 		public:
 			AverageFutureCovariance( const std::vector<DateType>&    obsTimes,
 				                     const std::vector<DateType>&    settlementTimesA,     
@@ -415,14 +417,16 @@ namespace QuantLib {
 			                         const std::vector<PassiveType>& settlementWeightsB,
 			                         const PassiveType               obsLagB,
 			                         const bool                      useLogReturns,       
-			                         const bool                      calcCorrelation )
+			                         const long                      calcType )
 			: TemplateMCPayoff(0.0), obsTimes_(obsTimes), settlementTimesA_(settlementTimesA), settlementWeightsA_(settlementWeightsA), obsLagA_(obsLagA),
-			settlementTimesB_(settlementTimesB), settlementWeightsB_(settlementWeightsB), obsLagB_(obsLagB), useLogReturns_(useLogReturns), calcCorrelation_(calcCorrelation) {}
+			settlementTimesB_(settlementTimesB), settlementWeightsB_(settlementWeightsB), obsLagB_(obsLagB), useLogReturns_(useLogReturns), calcType_(calcType) {}
 		    // payoff should NOT be discounted
 		    inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p); }
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
-				std::vector<ActiveType> dFutA(obsTimes_.size()-1), dFutB(obsTimes_.size()-1);
-				ActiveType EdFutA = 0.0, EdFutB = 0.0; 
+				// if only one observation time then return [FutA * FutB] for autocorrelation estimation
+				if (obsTimes_.size()==1) return averageFuture(p,settlementTimesA_[0],settlementTimesA_,settlementWeightsA_) * averageFuture(p,settlementTimesB_[0],settlementTimesB_,settlementWeightsB_);
+				std::vector<ActiveType> dFutA(obsTimes_.size()-1), dFutB(obsTimes_.size()-1), dSprd(obsTimes_.size()-1);
+				ActiveType EdFutA = 0.0, EdFutB = 0.0, EdSprd = 0.0; 
 				for (size_t i=1; i<obsTimes_.size(); ++i) {
 					// check rollover A and B
 					if (settlementTimesA_[0]-obsTimes_[i]<obsLagA_) rollOver(settlementTimesA_);
@@ -434,20 +438,28 @@ namespace QuantLib {
 					} else {
 					    dFutA[i-1] = averageFuture(p,obsTimes_[i],settlementTimesA_,settlementWeightsA_) - averageFuture(p,obsTimes_[i-1],settlementTimesA_,settlementWeightsA_);
 					    dFutB[i-1] = averageFuture(p,obsTimes_[i],settlementTimesB_,settlementWeightsB_) - averageFuture(p,obsTimes_[i-1],settlementTimesB_,settlementWeightsB_);
+						if (calcType_==2) dSprd[i-1] = dFutB[i-1] - dFutA[i-1];
 					}
 					EdFutA += dFutA[i-1];
 					EdFutB += dFutB[i-1];
 				}
 				EdFutA /= dFutA.size();
 				EdFutB /= dFutB.size();
-				ActiveType VarA=0.0, VarB=0.0, Cov=0.0;
+				if (calcType_==2) EdSprd = EdFutB - EdFutA;
+				ActiveType VarA=0.0, VarB=0.0, Cov=0.0, SprdVar=0.0;
 				for (size_t i=0; i<obsTimes_.size()-1; ++i) {
-					VarA += (dFutA[i] - EdFutA)*(dFutA[i] - EdFutA);
-					VarB += (dFutB[i] - EdFutB)*(dFutB[i] - EdFutB);
-					Cov  += (dFutA[i] - EdFutA)*(dFutB[i] - EdFutB);
+					if (calcType_<2) {
+					    VarA += (dFutA[i] - EdFutA)*(dFutA[i] - EdFutA);
+					    VarB += (dFutB[i] - EdFutB)*(dFutB[i] - EdFutB);
+					    Cov  += (dFutA[i] - EdFutA)*(dFutB[i] - EdFutB);
+					} else {
+						SprdVar += (dSprd[i]-EdSprd)*(dSprd[i]-EdSprd);
+					}
 				}
-				if (calcCorrelation_) return Cov / sqrt(VarA*VarB);
-				return Cov / (dFutA.size()-1);
+				if (calcType_==0) return Cov     / (dFutA.size()-1);    // covariance
+				if (calcType_==1) return Cov     / sqrt(VarA*VarB);     // correlation
+				if (calcType_==2) return SprdVar / (dSprd.size()-1);  // correlation
+				return 0.0; // fall back
 			}
 
 		};
