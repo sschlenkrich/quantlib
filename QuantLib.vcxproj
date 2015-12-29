@@ -481,6 +481,8 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ql\math\polynomialmathfunction.hpp" />
+    <ClInclude Include="ql\math\pascaltriangle.hpp" />
     <ClInclude Include="ql\experimental\template\basismodel\tenoroptionletvts.hpp" />
     <ClInclude Include="ql\experimental\template\basismodel\tenorswaptionvts.hpp" />
     <ClInclude Include="ql\rebatedexercise.hpp" />
@@ -812,6 +814,7 @@
     <ClInclude Include="ql\instruments\bonds\floatingratebond.hpp" />
     <ClInclude Include="ql\instruments\bonds\zerocouponbond.hpp" />
     <ClInclude Include="ql\math\all.hpp" />
+    <ClInclude Include="ql\math\abcdmathfunction.hpp" />
     <ClInclude Include="ql\math\array.hpp" />
     <ClInclude Include="ql\math\autocovariance.hpp" />
     <ClInclude Include="ql\math\bernsteinpolynomial.hpp" />
@@ -934,6 +937,7 @@
     <ClInclude Include="ql\math\optimization\constraint.hpp" />
     <ClInclude Include="ql\math\optimization\costfunction.hpp" />
     <ClInclude Include="ql\math\optimization\endcriteria.hpp" />
+    <ClInclude Include="ql\math\optimization\goldstein.hpp" />
     <ClInclude Include="ql\math\optimization\leastsquare.hpp" />
     <ClInclude Include="ql\math\optimization\levenbergmarquardt.hpp" />
     <ClInclude Include="ql\math\optimization\linesearch.hpp" />
@@ -1423,6 +1427,7 @@
     <ClInclude Include="ql\time\calendars\iceland.hpp" />
     <ClInclude Include="ql\time\calendars\india.hpp" />
     <ClInclude Include="ql\time\calendars\indonesia.hpp" />
+    <ClInclude Include="ql\time\calendars\israel.hpp" />
     <ClInclude Include="ql\time\calendars\italy.hpp" />
     <ClInclude Include="ql\time\calendars\japan.hpp" />
     <ClInclude Include="ql\time\calendars\jointcalendar.hpp" />
@@ -1431,6 +1436,7 @@
     <ClInclude Include="ql\time\calendars\norway.hpp" />
     <ClInclude Include="ql\time\calendars\nullcalendar.hpp" />
     <ClInclude Include="ql\time\calendars\poland.hpp" />
+    <ClInclude Include="ql\time\calendars\romania.hpp" />
     <ClInclude Include="ql\time\calendars\russia.hpp" />
     <ClInclude Include="ql\time\calendars\saudiarabia.hpp" />
     <ClInclude Include="ql\time\calendars\singapore.hpp" />
@@ -1615,6 +1621,7 @@
     <ClInclude Include="ql\pricingengines\swaption\gaussian1dswaptionengine.hpp" />
     <ClInclude Include="ql\termstructures\volatility\swaption\gaussian1dswaptionvolatility.hpp" />
     <ClInclude Include="ql\processes\gsrprocess.hpp" />
+    <ClInclude Include="ql\processes\gsrprocesscore.hpp" />
     <ClInclude Include="ql\termstructures\volatility\kahalesmilesection.hpp" />
     <ClInclude Include="ql\processes\mfstateprocess.hpp" />
     <ClInclude Include="ql\instruments\nonstandardswap.hpp" />
@@ -1760,6 +1767,9 @@
     <ClInclude Include="ql\volatilitymodel.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ql\math\polynomialmathfunction.cpp" />
+    <ClCompile Include="ql\math\pascaltriangle.cpp" />
+    <ClCompile Include="ql\patterns\observable.cpp" />
     <ClCompile Include="ql\cashflows\cpicoupon.cpp" />
     <ClCompile Include="ql\cashflows\cpicouponpricer.cpp" />
     <ClCompile Include="ql\experimental\template\basismodel\tenoroptionletvts.cpp" />
@@ -1971,6 +1981,7 @@
     <ClCompile Include="ql\instruments\bonds\fixedratebond.cpp" />
     <ClCompile Include="ql\instruments\bonds\floatingratebond.cpp" />
     <ClCompile Include="ql\instruments\bonds\zerocouponbond.cpp" />
+    <ClCompile Include="ql\math\abcdmathfunction.cpp" />
     <ClCompile Include="ql\math\bernsteinpolynomial.cpp" />
     <ClCompile Include="ql\math\beta.cpp" />
     <ClCompile Include="ql\math\bspline.cpp" />
@@ -2026,6 +2037,7 @@
     <ClCompile Include="ql\math\optimization\conjugategradient.cpp" />
     <ClCompile Include="ql\math\optimization\constraint.cpp" />
     <ClCompile Include="ql\math\optimization\endcriteria.cpp" />
+    <ClCompile Include="ql\math\optimization\goldstein.cpp" />
     <ClCompile Include="ql\math\optimization\leastsquare.cpp" />
     <ClCompile Include="ql\math\optimization\levenbergmarquardt.cpp" />
     <ClCompile Include="ql\math\optimization\linesearch.cpp" />
@@ -2363,6 +2375,7 @@
     <ClCompile Include="ql\time\calendars\iceland.cpp" />
     <ClCompile Include="ql\time\calendars\india.cpp" />
     <ClCompile Include="ql\time\calendars\indonesia.cpp" />
+    <ClCompile Include="ql\time\calendars\israel.cpp" />
     <ClCompile Include="ql\time\calendars\italy.cpp" />
     <ClCompile Include="ql\time\calendars\japan.cpp" />
     <ClCompile Include="ql\time\calendars\jointcalendar.cpp" />
@@ -2370,6 +2383,7 @@
     <ClCompile Include="ql\time\calendars\newzealand.cpp" />
     <ClCompile Include="ql\time\calendars\norway.cpp" />
     <ClCompile Include="ql\time\calendars\poland.cpp" />
+    <ClCompile Include="ql\time\calendars\romania.cpp" />
     <ClCompile Include="ql\time\calendars\russia.cpp" />
     <ClCompile Include="ql\time\calendars\saudiarabia.cpp" />
     <ClCompile Include="ql\time\calendars\singapore.cpp" />
@@ -2511,6 +2525,7 @@
     <ClCompile Include="ql\pricingengines\swaption\gaussian1dswaptionengine.cpp" />
     <ClCompile Include="ql\termstructures\volatility\swaption\gaussian1dswaptionvolatility.cpp" />
     <ClCompile Include="ql\processes\gsrprocess.cpp" />
+    <ClCompile Include="ql\processes\gsrprocesscore.cpp" />
     <ClCompile Include="ql\termstructures\volatility\kahalesmilesection.cpp" />
     <ClCompile Include="ql\processes\mfstateprocess.cpp" />
     <ClCompile Include="ql\instruments\nonstandardswap.cpp" />
