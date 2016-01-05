@@ -200,6 +200,8 @@ namespace QuantLib {
 				 const size_t                                   idx )
 				 : process_(process), sim_(sim), idx_(idx) {}
 
+			// maybe better cache the last state to avoid repeated interpolation in state...
+
 			inline ActiveType numeraire(DateType obsTime) {
 				return process_->numeraire(obsTime,sim_->state(idx_,obsTime));
 			}

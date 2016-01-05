@@ -481,6 +481,8 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ql\experimental\template\montecarlo\templateamcpricer.hpp" />
+    <ClInclude Include="ql\experimental\template\montecarlo\templatemcswap.hpp" />
     <ClInclude Include="ql\math\polynomialmathfunction.hpp" />
     <ClInclude Include="ql\math\pascaltriangle.hpp" />
     <ClInclude Include="ql\experimental\template\basismodel\tenoroptionletvts.hpp" />
