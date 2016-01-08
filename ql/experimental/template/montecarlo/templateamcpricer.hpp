@@ -16,6 +16,8 @@
 
 
 #include <ql/experimental/template/montecarlo/templatemcswap.hpp>
+#include <ql/experimental/template/auxilliaries/templateregression.hpp>
+
 
 
 namespace QuantLib {
@@ -27,6 +29,7 @@ namespace QuantLib {
 		typedef TemplateMCSimulation<DateType, PassiveType, ActiveType>                 SimulationType;
 		typedef typename TemplateMCSimulation<DateType, PassiveType, ActiveType>::Path  PathType;
 		typedef typename TemplateMC<DateType, PassiveType, ActiveType>::CancellableNote NoteType;
+		typedef typename TemplateAuxilliaries::Regression<PassiveType>                  RegressionType;
 
 
 		// container class definitions
@@ -41,13 +44,15 @@ namespace QuantLib {
 		boost::shared_ptr<NoteType>         note_;
 		boost::shared_ptr<SimulationType>   simulation_;
 
-		// MC data [paths][exercises[+1]][size]
+		// MC data [paths][exercises[+1]]
 		MatA                X_;    // discounted (!) accumulated coupons  X_i(T_i)/B(T_i)
 		MatA                R_;    // discounted (!) early redemptions
 		MatA                B_;    // numeraire at each exercise date
+
+		// [exercises][paths][size]
 		std::vector<MatA>   xi_;   // regression variables at each exercise
 
-		// AMC (roll back) data [exercises+1][paths]
+		// AMC (roll back) data [exercises][paths]
 		MatA                G_;      // canellable note value if not called yet
 		MatA                T_;      // regressed hold trigger variable Regr(G - R)
 
@@ -55,6 +60,9 @@ namespace QuantLib {
 		size_t              N_;      // number of exercises
 
 		// we separate the regression operator from the AMC algorithm...
+		bool                calculateRegression_;  
+		size_t              maxPolynDegree_;
+		std::vector< boost::shared_ptr<RegressionType> >   regressions_;
 
 		inline void checkNote() { // check that note is set up correctly
 			QL_REQUIRE(note_->earlyRedemptions().size()   ==note_->callTimes().size(), "AMC error: wrong number of redemption legs.");
@@ -76,23 +84,21 @@ namespace QuantLib {
 			X_.resize(M_);
 			R_.resize(M_);
 			B_.resize(M_);
-			xi_.resize(M_);
 			for (size_t k=0; k<M_; ++k) {
 				X_[k].resize(N_+1,0.0); // we need data before and after all call dates
 				R_[k].resize(N_,0.0);
 				B_[k].resize(N_,0.0);
-				xi_[k].resize(N_);
-			}
-			for (size_t j=0; j<N_; ++j) {
-				size_t nRegr = note_->regressionVariables()[j]->size();
-				for (size_t k=0; k<M_; ++k) {
-					xi_[k][j].resize(nRegr,0.0);
-				}
 			}
 
+			xi_.resize(N_);
 			G_.resize(N_);
 			T_.resize(N_);
 			for (size_t k=0; k<N_; ++k) {
+				xi_[k].resize(M_);
+				size_t nRegr = note_->regressionVariables()[k]->size();
+				for (size_t j=0; j<M_; ++j) {
+					xi_[k][j].resize(nRegr,0.0);
+				}
 				G_[k].resize(M_,0.0);
 				T_[k].resize(M_,0.0);
 			}
@@ -137,8 +143,8 @@ namespace QuantLib {
 
 				// calculate regression variables...
 				for (size_t j=0; j<N_; ++j) {
-					for (size_t i=0; i<xi_[k][j].size(); ++i) {
-						xi_[k][j][i] = (*note_->regressionVariables()[j])[i]->at(p);
+					for (size_t i=0; i<xi_[j][k].size(); ++i) {  
+						xi_[j][k][i] = (*note_->regressionVariables()[j])[i]->at(p);
 					}
 				}
 
@@ -159,6 +165,13 @@ namespace QuantLib {
 				for (size_t k=0; k<M_; ++k) {  // calculate new trigger based on future data		
 					T_[j-1][k] = G_[j-1][k] - B_[k][j-1]*R_[k][j-1];
 				}
+				if (calculateRegression_) { // regression is not (re-)calculated in valuation run
+					regressions_[j-1] = boost::shared_ptr<RegressionType>( new RegressionType(xi_[j-1],T_[j-1],maxPolynDegree_) );
+				}
+				if (regressions_[j-1]) {  // if there is no regression we look into the future
+					for (size_t k=0; k<M_; ++k) T_[j-1][k] = regressions_[j-1]->value(xi_[j-1][k]);
+				}
+
 				// regress trigger based on j-1 information
 				// ...
 			}
@@ -167,10 +180,14 @@ namespace QuantLib {
 	public:
 
 		TemplateAMCPricer( const boost::shared_ptr<NoteType>        note,
-			               const boost::shared_ptr<SimulationType>  simulation
+			               const boost::shared_ptr<SimulationType>  simulation,
+						   const bool                               calculateRegression,
+						   const size_t                             maxPolynDegree
 						   // maybe some more arguments to control AMC
 						   )
-						   : note_(note), simulation_(simulation), M_(0), N_(0) {
+						   : note_(note), simulation_(simulation), M_(0), N_(0),
+						   calculateRegression_(calculateRegression), maxPolynDegree_(maxPolynDegree)  {
+		    regressions_.resize(N_);
 		}
 
 		inline void calculate() {

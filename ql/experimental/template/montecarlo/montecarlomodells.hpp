@@ -21,6 +21,7 @@
 #include <ql/experimental/template/montecarlo/templatemcpayoff.hpp>
 #include <ql/experimental/template/montecarlo/templatemcswap.hpp>
 #include <ql/experimental/template/montecarlo/templateamcpricer.hpp>
+#include <ql/experimental/template/auxilliaries/templateregression.hpp>
 
 
 namespace QuantLib {
@@ -39,6 +40,8 @@ namespace QuantLib {
 	typedef RealMC::Coupon           RealMCCoupon;
 	typedef RealMC::Leg              RealMCLeg;
 	typedef RealMC::CancellableNote  RealMCCancellableNote;
+
+	typedef TemplateAuxilliaries::Regression<QuantLib::Real> RealRegression;
 
 }
 
