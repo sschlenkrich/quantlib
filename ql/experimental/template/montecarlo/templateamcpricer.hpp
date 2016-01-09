@@ -187,7 +187,7 @@ namespace QuantLib {
 						   )
 						   : note_(note), simulation_(simulation), M_(0), N_(0),
 						   calculateRegression_(calculateRegression), maxPolynDegree_(maxPolynDegree)  {
-		    regressions_.resize(N_);
+		    regressions_.resize(note_->callTimes().size());
 		}
 
 		inline void calculate() {
