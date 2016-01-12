@@ -4130,6 +4130,9 @@
     <ClInclude Include="ql\experimental\template\basismodel\tenoroptionletvts.hpp">
       <Filter>experimental\template\basismodel</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\basisswap\fxfwdratehelper.hpp">
+      <Filter>experimental\basisswap</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6620,6 +6623,9 @@
     </ClCompile>
     <ClCompile Include="ql\experimental\template\basismodel\tenoroptionletvts.cpp">
       <Filter>experimental\template\basismodel</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\basisswap\fxfwdratehelper.cpp">
+      <Filter>experimental\basisswap</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
