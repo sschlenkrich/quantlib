@@ -101,6 +101,18 @@ namespace QuantLib {
 			}
 		};
 
+        class Mult : public TemplateMCPayoff<DateType, PassiveType, ActiveType> {
+		protected:
+			boost::shared_ptr<TemplateMCPayoff> x_, y_;
+		public:
+			Mult ( const boost::shared_ptr<TemplateMCPayoff>&   x,
+				   const boost::shared_ptr<TemplateMCPayoff>&   y )
+				  : TemplateMCPayoff(x->observationTime()), x_(x), y_(y) {}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) { 
+				return x_->at(p) * y_->at(p);
+			}
+		};
+
         class Max : public TemplateMCPayoff<DateType, PassiveType, ActiveType> {
 		protected:
 			boost::shared_ptr<TemplateMCPayoff> x_, y_;
@@ -138,38 +150,43 @@ namespace QuantLib {
 		};
 
 
-	    // coupon decorating a payoff with start and pay date for organisation in legs
-        class Coupon : public TemplateMCPayoff<DateType, PassiveType, ActiveType> {
+	    // CashFlow decorating a payoff with start and pay date for organisation in legs
+        class CashFlow : public TemplateMCPayoff<DateType, PassiveType, ActiveType> {
 		protected:
 			boost::shared_ptr<TemplateMCPayoff> x_;
-			DateType                            startTime_, payTime_;
+			DateType                            startTime_;  // on exercise only cash flows with startTime >= exerciseTime will be considered
+			DateType                           	payTime_;
+			bool                                applyZCBAdjuster_;
 		public:
-			Coupon ( const boost::shared_ptr<TemplateMCPayoff>&   x,
-				     const DateType                               startTime,
-				     const DateType                               payTime )
-		        : TemplateMCPayoff(payTime), x_(x), startTime_(startTime), payTime_(payTime) {}
-			Coupon ( const boost::shared_ptr<TemplateMCPayoff>&   x )
-				: TemplateMCPayoff(x->observationTime()), x_(x), startTime_(x->observationTime()), payTime_(x->observationTime()) {}
+			CashFlow ( const boost::shared_ptr<TemplateMCPayoff>&   x,
+				       const DateType                               startTime,
+				       const DateType                               payTime,
+					   const bool                                   applyZCBAdjuster = false)
+		        : TemplateMCPayoff(payTime), x_(x), startTime_(startTime), payTime_(payTime), applyZCBAdjuster_(applyZCBAdjuster) {}
+			CashFlow ( const boost::shared_ptr<TemplateMCPayoff>&   x,
+					   const bool                                   applyZCBAdjuster = false)
+				: TemplateMCPayoff(x->observationTime()), x_(x),
+				  startTime_(x->observationTime()), payTime_(x->observationTime()), applyZCBAdjuster_(applyZCBAdjuster) {}
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) { 
-				return x_->at(p);
+				return (applyZCBAdjuster_) ? (p->zeroBond(payTime_,payTime_)*x_->at(p)) : (x_->at(p))  ;
 			}
 			// inspectors
 			inline const DateType startTime() const { return startTime_; }
 			inline const DateType payTime()   const { return payTime_;   }
 		};
 
-	    // a coupon leg as a ordered list of coupons
-		class Leg : public std::vector< boost::shared_ptr<Coupon> > {
+	    // a CashFlow leg as a ordered list of CashFlows
+		class Leg : public std::vector< boost::shared_ptr<CashFlow> > {
 		public:
-			static bool firstIsLess( const boost::shared_ptr<Coupon>& first, const boost::shared_ptr<Coupon>& second ) { return first->startTime() < second->startTime(); } 
-			Leg ( const std::vector< boost::shared_ptr<Coupon> >&   coupons ) : std::vector< boost::shared_ptr<Coupon> >(coupons.begin(),coupons.end())  {
-				// check that all coupons are consistent
+			static bool firstIsLess( const boost::shared_ptr<CashFlow>& first, const boost::shared_ptr<CashFlow>& second ) { return first->startTime() < second->startTime(); } 
+			Leg ( const std::vector< boost::shared_ptr<CashFlow> >&   cashflows ) : std::vector< boost::shared_ptr<CashFlow> >(cashflows.begin(),cashflows.end())  {
+				// check that all CashFlows are consistent
 				// sort by start time
 				std::sort(this->begin(),this->end(),firstIsLess );
 			}
 		};
 
-	    // a swap as a set of coupon legs (e.g. structured, funding, notional exchanges)
+	    // a swap as a set of CashFlow legs (e.g. structured, funding, notional exchanges)
 		class Swap : public std::vector< boost::shared_ptr<Leg> > {
 		public:
 			Swap ( const std::vector< boost::shared_ptr<Leg> >&   legs ) : std::vector< boost::shared_ptr<Leg> >(legs.begin(),legs.end())  { }
@@ -180,7 +197,7 @@ namespace QuantLib {
 		class CancellableNote {
 		private:
 			// underlying
-			std::vector< boost::shared_ptr<Leg> >  underlyings_;       // the underlying coupon legs
+			std::vector< boost::shared_ptr<Leg> >  underlyings_;       // the underlying CashFlow legs
 			// call features
 			std::vector< DateType >                callTimes_;            // exercise times
 			std::vector< boost::shared_ptr<Leg> >  earlyRedemptions_;     // strikes payed at exercise

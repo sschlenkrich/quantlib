@@ -56,42 +56,6 @@ namespace TemplateAuxilliaries {
 			qrsolveles(M,b);
 			for (size_t i=0; i<beta_.size(); ++i) beta_[i] = b[i];
 
-			//size_t nRows = controls.size();
-			//size_t nCols = multIdx_.size();
-
-			//// set up matrices for SVD
-			//Type *A  = new Type[nRows*nCols];
-			//Type *U  = new Type[nRows*nRows];
-			//Type *S  = new Type[nCols];
-			//Type *VT = new Type[nCols*nCols];
-			//// dummy auxilliary variables
-			//Type work;
-			//int lwork, info;
-			//// assume column-wise representation A = U S V^T (Fortran-style!)
-			//for (size_t i=0; i<nRows; ++i) {
-			//	std::vector<Type> y = monomials(controls[i]);
-			//	for (size_t j=0; j<nCols; ++j) {
-			//		A[i+j*nRows] = y[j];
-			//	}
-			//}
-			//TemplateAuxilliaries::svd("S","S",(int*)&nRows,(int*)&nCols,A,(int*)&nRows,S,U,(int*)&nRows,VT,(int*)&nCols,&work,&lwork,&info);
-			//// check min(S)>0
-			//Type minS=S[0];
-			//for (size_t i=1; i<nCols; ++i) if (S[i]<minS) minS = S[i];
-			//QL_REQUIRE(minS>0,"Regression non-zero singular value required.");
-			//std::vector<Type> y(nCols,0.0);
-			//for (size_t i=0; i<nCols; ++i) // only the first nCols elements are required
-			//	for (size_t j=0; j<nRows; ++j) y[i] += U[j+i*nRows]*observations[j];
-			//for (size_t i=0; i<nCols; ++i) y[i] /= S[i];
-			//for (size_t i=0; i<nCols; ++i)
-			//	for (size_t j=0; j<nCols; ++j) beta_[i] += VT[j+i*nCols]*y[j];
-
-			//// finished
-			//delete A;
-			//delete U;
-			//delete S;
-			//delete VT;
-
 		}
 
 	public:

@@ -47,7 +47,7 @@ containers in particular for temporary variables.
 #define MinimAD_MinimADVariable_hpp
 
 
-#define _USE_MATH_DEFINES // for Visual Studio
+//#define _USE_MATH_DEFINES // for Visual Studio
 
 #include <iostream>
 #include <iomanip>
@@ -55,7 +55,8 @@ containers in particular for temporary variables.
 #include <map>
 #include <vector>
 #include <iterator>
-#include <cmath>
+
+//#include <cmath>
 
 
 //#define DEBUG              // low-level io debugging

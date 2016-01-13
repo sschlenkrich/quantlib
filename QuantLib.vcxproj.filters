@@ -4130,9 +4130,6 @@
     <ClInclude Include="ql\experimental\template\basismodel\tenoroptionletvts.hpp">
       <Filter>experimental\template\basismodel</Filter>
     </ClInclude>
-    <ClInclude Include="ql\experimental\template\montecarlo\templatemcswap.hpp">
-      <Filter>experimental\template\montecarlo</Filter>
-    </ClInclude>
     <ClInclude Include="ql\experimental\template\montecarlo\templateamcpricer.hpp">
       <Filter>experimental\template\montecarlo</Filter>
     </ClInclude>
@@ -4141,6 +4138,9 @@
     </ClInclude>
     <ClInclude Include="ql\experimental\template\auxilliaries\templateQRFactorisation.hpp">
       <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\montecarlo\templatemc.hpp">
+      <Filter>experimental\template\montecarlo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

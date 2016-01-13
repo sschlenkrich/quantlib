@@ -8,7 +8,7 @@
 #define Cpx_Complex_hpp
 
 
-#define _USE_MATH_DEFINES // for Visual Studio
+//#define _USE_MATH_DEFINES // for Visual Studio
 
 #include <iostream>
 #include <iomanip>
@@ -16,7 +16,7 @@
 #include <map>
 #include <vector>
 #include <iterator>
-#include <cmath>
+//#include <cmath>
 #include <complex>
 
 //#define DEBUG              // low-level io debugging
