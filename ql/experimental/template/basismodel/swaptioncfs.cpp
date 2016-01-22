@@ -20,18 +20,10 @@
 
 namespace QuantLib {
 
-	// constructor to map a swaption to deterministic fixed and floating leg cash flows
-	SwaptionCashFlows::SwaptionCashFlows (
-						const boost::shared_ptr<Swaption>& swaption,
-						const Handle<YieldTermStructure>& discountCurve,
-						bool                              contTenorSpread ) 
-	: refDate_(discountCurve->referenceDate()), swaption_(swaption) {
-        // copy fixed leg coupons
-		Leg fixedLeg = swaption->underlyingSwap()->fixedLeg();
-		for (Size k=0; k<fixedLeg.size(); ++k) {
-			if (boost::dynamic_pointer_cast<Coupon>(fixedLeg[k])->accrualStartDate()>=refDate_) fixedLeg_.push_back(fixedLeg[k]);
-		}
-		Leg iborLeg = swaption->underlyingSwap()->floatingLeg();
+	IborLegCashFlows::IborLegCashFlows( const Leg&                        iborLeg,
+			                            const Handle<YieldTermStructure>& discountCurve,
+						                bool                              contTenorSpread)
+	    : refDate_(discountCurve->referenceDate()) {
 		// we need to find the first coupon for initial payment
 		Size floatIdx=0;
 		while ( (refDate_>(boost::dynamic_pointer_cast<Coupon>(iborLeg[floatIdx]))->accrualStartDate()) && (floatIdx<iborLeg.size()-1)) ++floatIdx;
@@ -63,25 +55,47 @@ namespace QuantLib {
 			// finally, add the notional at the last date
 		    boost::shared_ptr<Coupon> lastFloatCoupon = boost::dynamic_pointer_cast<Coupon>(iborLeg.back());
 		    floatLeg_.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(-1.0*lastFloatCoupon->nominal(),lastFloatCoupon->accrualEndDate())));
-		}
+		} // if ...
+		// assemble raw cash flow data...
+		Actual365Fixed dc;
+		// ... float times/weights
+		for (Size k=0; k<floatLeg_.size(); ++k) floatTimes_.push_back( dc.yearFraction(refDate_,floatLeg_[k]->date()) );
+		for (Size k=0; k<floatLeg_.size(); ++k) floatWeights_.push_back( floatLeg_[k]->amount() );
+	}
 
+	SwapCashFlows::SwapCashFlows (
+						const boost::shared_ptr<VanillaSwap>& swap,
+						const Handle<YieldTermStructure>&     discountCurve,
+						bool                                  contTenorSpread )
+		:  IborLegCashFlows(swap->floatingLeg(), discountCurve, contTenorSpread) {
+        // copy fixed leg coupons
+		Leg fixedLeg = swap->fixedLeg();
+		for (Size k=0; k<fixedLeg.size(); ++k) {
+			if (boost::dynamic_pointer_cast<Coupon>(fixedLeg[k])->accrualStartDate()>=refDate_) fixedLeg_.push_back(fixedLeg[k]);
+		}
+		Actual365Fixed dc;
+		// ... fixed times/weights
+		for (Size k=0; k<fixedLeg_.size(); ++k) fixedTimes_.push_back( dc.yearFraction(refDate_,fixedLeg_[k]->date()) );
+		for (Size k=0; k<fixedLeg_.size(); ++k)	fixedWeights_.push_back( fixedLeg_[k]->amount() );
+		for (Size k=0; k<fixedLeg_.size(); ++k)	{
+			boost::shared_ptr<Coupon> coupon = boost::dynamic_pointer_cast<Coupon>(fixedLeg_[k]);
+			if (coupon) annuityWeights_.push_back( coupon->nominal() * coupon->accrualPeriod() );
+		}
+	}
+
+
+	// constructor to map a swaption to deterministic fixed and floating leg cash flows
+	SwaptionCashFlows::SwaptionCashFlows (
+						const boost::shared_ptr<Swaption>& swaption,
+						const Handle<YieldTermStructure>& discountCurve,
+						bool                              contTenorSpread ) 
+	: SwapCashFlows(swaption->underlyingSwap(),discountCurve,contTenorSpread), swaption_(swaption) {
 		// assemble raw cash flow data...
 		Actual365Fixed dc;
 		// ... exercise times
 		for (Size k=0; k<swaption_->exercise()->dates().size(); ++k)        
 			if (swaption_->exercise()->dates()[k]>refDate_)  // consider only future exercise dates
 				exerciseTimes_.push_back( dc.yearFraction(refDate_,swaption_->exercise()->dates()[k]) );
-		// ... fixed/float times/weights
-		for (Size k=0; k<fixedLeg_.size(); ++k) fixedTimes_.push_back( dc.yearFraction(refDate_,fixedLeg_[k]->date()) );
-		for (Size k=0; k<fixedLeg_.size(); ++k)	fixedWeights_.push_back( fixedLeg_[k]->amount() );
-		for (Size k=0; k<floatLeg_.size(); ++k) floatTimes_.push_back( dc.yearFraction(refDate_,floatLeg_[k]->date()) );
-		for (Size k=0; k<floatLeg_.size(); ++k) floatWeights_.push_back( floatLeg_[k]->amount() );
-
-		for (Size k=0; k<fixedLeg_.size(); ++k)	{
-			boost::shared_ptr<Coupon> coupon = boost::dynamic_pointer_cast<Coupon>(fixedLeg_[k]);
-			if (coupon) annuityWeights_.push_back( coupon->nominal() * coupon->accrualPeriod() );
-		}
-
 	}
 
 

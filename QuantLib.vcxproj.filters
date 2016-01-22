@@ -4133,6 +4133,18 @@
     <ClInclude Include="ql\experimental\basisswap\fxfwdratehelper.hpp">
       <Filter>experimental\basisswap</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\template\montecarlo\templateamcpricer.hpp">
+      <Filter>experimental\template\montecarlo</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\templateregression.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\auxilliaries\templateQRFactorisation.hpp">
+      <Filter>experimental\template\auxilliaries</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\template\montecarlo\templatemc.hpp">
+      <Filter>experimental\template\montecarlo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">

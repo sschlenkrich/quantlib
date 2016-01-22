@@ -10,6 +10,7 @@
 */
 
 
+#include <ql/mathconstants.hpp>
 #include <ql/experimental/template/hullwhite/hullwhitemodels.hpp>
 
 

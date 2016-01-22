@@ -408,6 +408,8 @@ namespace QuantLib {
 
 		inline
 		ActiveType ZeroBond( const DateType t, const DateType T, const VecA& x, const MatA&  y) {
+			QL_REQUIRE(t<=T,"QuasiGaussianModel ZeroBond t <= T required");
+			if (t==T) return (ActiveType)1.0;
 		    PassiveType DF1  = termStructure_->discount(t);
 		    PassiveType DF2  = termStructure_->discount(T);
 		    ActiveType  Gx   = 0;   // G^T * x

@@ -7,7 +7,7 @@
 #include <vector>
 #include <cassert>
 #include <cstring>
-#include <cmath>
+//#include <cmath>
 
 #ifndef quantlib_templatesvd_hpp
 #define quantlib_templatesvd_hpp

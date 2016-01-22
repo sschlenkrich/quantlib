@@ -19,6 +19,9 @@
 #include <ql/experimental/template/templatestochasticprocess.hpp>
 #include <ql/experimental/template/montecarlo/templatemcsimulation.hpp>
 #include <ql/experimental/template/montecarlo/templatemcpayoff.hpp>
+#include <ql/experimental/template/montecarlo/templatemc.hpp>
+#include <ql/experimental/template/montecarlo/templateamcpricer.hpp>
+#include <ql/experimental/template/auxilliaries/templateregression.hpp>
 
 
 namespace QuantLib {
@@ -29,7 +32,16 @@ namespace QuantLib {
 
 	typedef TemplateMCPayoff< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCPayoff;
 
-	typedef RealMCPayoff::Pricer RealMCPayoffPricer;
+	typedef TemplateMC< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMC;
+
+	typedef TemplateAMCPricer< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealAMCPricer;
+
+	typedef RealMCPayoff::Pricer     RealMCPayoffPricer;
+	typedef RealMC::CashFlow         RealMCCashFlow;
+	typedef RealMC::Leg              RealMCLeg;
+	typedef RealMC::CancellableNote  RealMCCancellableNote;
+
+	typedef TemplateAuxilliaries::Regression<QuantLib::Real> RealRegression;
 
 }
 
