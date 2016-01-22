@@ -10,7 +10,7 @@
 */
 
 
-#include <ql/experimental/basisswap/basisswap.hpp>
+#include <ql/experimental/basismodels/basisswap.hpp>
 
 
 

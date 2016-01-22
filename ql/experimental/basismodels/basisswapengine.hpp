@@ -15,7 +15,7 @@
 #include <ql/handle.hpp>
 #include <ql/pricingengine.hpp>
 #include <ql/termstructures/yieldtermstructure.hpp>
-#include <ql/experimental/basisswap/basisswap.hpp>
+#include <ql/experimental/basismodels/basisswap.hpp>
 
 
 namespace QuantLib {

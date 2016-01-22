@@ -17,7 +17,7 @@
 
 #include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
 
-#include <ql/experimental/template/basismodel/swaptioncfs.hpp>
+#include <ql/experimental/basismodels/swaptioncfs.hpp>
 
 #include <ql/experimental/template/qgaussian/quasigaussianmodels.hpp>
 #include <ql/experimental/template/montecarlo/montecarlomodells.hpp>

@@ -595,25 +595,26 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ql\experimental\basisswap\fxfwdratehelper.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\basisswap.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\basisswapengine.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\basisswapratehelpers.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\fxfwdratehelper.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\spreadyieldtermstructure.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\swaptioncfs.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\tenoroptionletvts.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\tenorswaptionvts.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\templateQRFactorisation.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\templateregression.hpp" />
     <ClInclude Include="ql\experimental\template\montecarlo\templateamcpricer.hpp" />
     <ClInclude Include="ql\experimental\template\montecarlo\templatemc.hpp" />
     <ClInclude Include="ql\math\polynomialmathfunction.hpp" />
     <ClInclude Include="ql\math\pascaltriangle.hpp" />
-    <ClInclude Include="ql\experimental\template\basismodel\tenoroptionletvts.hpp" />
-    <ClInclude Include="ql\experimental\template\basismodel\tenorswaptionvts.hpp" />
     <ClInclude Include="ql\experimental\template\commodity\commoditymodels.hpp" />
     <ClInclude Include="ql\experimental\template\commodity\indextermstructure.hpp" />
     <ClInclude Include="ql\experimental\template\commodity\template2flognormalmodel.hpp" />
     <ClInclude Include="ql\experimental\template\commodity\template2fmeanreversionmodel.hpp" />
     <ClInclude Include="ql\experimental\template\commodity\template2fnormalmodel.hpp" />
     <ClInclude Include="ql\rebatedexercise.hpp" />
-    <ClInclude Include="ql\experimental\basisswap\basisswap.hpp" />
-    <ClInclude Include="ql\experimental\basisswap\basisswapengine.hpp" />
-    <ClInclude Include="ql\experimental\basisswap\basisswapratehelpers.hpp" />
-    <ClInclude Include="ql\experimental\basisswap\spreadyieldtermstructure.hpp" />
     <ClInclude Include="ql\experimental\exercise\all.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\dynprogvppintrinsicvalueengine.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdextoujumpvanillaengine.hpp" />
@@ -655,7 +656,6 @@
     <ClInclude Include="ql\experimental\template\auxilliaries\MinimADVariable2.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\templateauxilliaries.hpp" />
     <ClInclude Include="ql\experimental\template\auxilliaries\templatesvd.hpp" />
-    <ClInclude Include="ql\experimental\template\basismodel\swaptioncfs.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\bondoptionengine.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\fixedratebondoption.hpp" />
     <ClInclude Include="ql\experimental\template\hullwhite\hullwhitemodels.hpp" />
@@ -1891,19 +1891,20 @@
     <ClInclude Include="ql\volatilitymodel.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ql\experimental\basisswap\fxfwdratehelper.cpp" />
+    <ClCompile Include="ql\experimental\basismodels\basisswap.cpp" />
+    <ClCompile Include="ql\experimental\basismodels\basisswapengine.cpp" />
+    <ClCompile Include="ql\experimental\basismodels\basisswapratehelpers.cpp" />
+    <ClCompile Include="ql\experimental\basismodels\fxfwdratehelper.cpp" />
+    <ClCompile Include="ql\experimental\basismodels\swaptioncfs.cpp" />
+    <ClCompile Include="ql\experimental\basismodels\tenoroptionletvts.cpp" />
+    <ClCompile Include="ql\experimental\basismodels\tenorswaptionvts.cpp" />
     <ClCompile Include="ql\math\polynomialmathfunction.cpp" />
     <ClCompile Include="ql\math\pascaltriangle.cpp" />
     <ClCompile Include="ql\patterns\observable.cpp" />
     <ClCompile Include="ql\cashflows\cpicoupon.cpp" />
     <ClCompile Include="ql\cashflows\cpicouponpricer.cpp" />
-    <ClCompile Include="ql\experimental\template\basismodel\tenoroptionletvts.cpp" />
-    <ClCompile Include="ql\experimental\template\basismodel\tenorswaptionvts.cpp" />
     <ClCompile Include="ql\rebatedexercise.cpp" />
     <ClInclude Include="ql\experimental\finitedifferences\all.hpp" />
-    <ClCompile Include="ql\experimental\basisswap\basisswap.cpp" />
-    <ClCompile Include="ql\experimental\basisswap\basisswapengine.cpp" />
-    <ClCompile Include="ql\experimental\basisswap\basisswapratehelpers.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\dynprogvppintrinsicvalueengine.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdextoujumpvanillaengine.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdklugeextouspreadengine.cpp" />
@@ -1930,7 +1931,6 @@
     <ClCompile Include="ql\experimental\processes\gemanroncoroniprocess.cpp" />
     <ClCompile Include="ql\experimental\processes\klugeextouprocess.cpp" />
     <ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp" />
-    <ClCompile Include="ql\experimental\template\basismodel\swaptioncfs.cpp" />
     <ClCompile Include="ql\experimental\template\hullwhite\bondoptionengine.cpp" />
     <ClCompile Include="ql\experimental\template\hullwhite\fixedratebondoption.cpp" />
     <ClCompile Include="ql\experimental\template\hullwhite\hullwhitemodels.cpp" />

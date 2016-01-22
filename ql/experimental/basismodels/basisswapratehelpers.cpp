@@ -10,7 +10,7 @@
 */
 
 
-#include <ql/experimental/basisswap/basisswapratehelpers.hpp>
+#include <ql/experimental/basismodels/basisswapratehelpers.hpp>
 
 namespace QuantLib {
 

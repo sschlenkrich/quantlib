@@ -22,8 +22,8 @@
 #include <ql/cashflows/iborcoupon.hpp>
 #include <ql/pricingengines/swap/discountingswapengine.hpp>
 
-#include <ql/experimental/basisswap/basisswap.hpp>
-#include <ql/experimental/basisswap/basisswapengine.hpp>
+#include <ql/experimental/basismodels/basisswap.hpp>
+#include <ql/experimental/basismodels/basisswapengine.hpp>
 
 namespace QuantLib {
 

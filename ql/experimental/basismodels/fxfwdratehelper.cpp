@@ -17,7 +17,7 @@
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
-#include <ql/experimental/basisswap/fxfwdratehelper.hpp>
+#include <ql/experimental/basismodels/fxfwdratehelper.hpp>
 #include <ql/quote.hpp>
 #include <ql/currency.hpp>
 #include <ql/cashflows/cashflows.hpp>

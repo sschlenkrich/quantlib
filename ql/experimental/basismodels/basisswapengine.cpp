@@ -9,7 +9,7 @@
     \brief Discounting swap engine for basis swaps
 */
 
-#include <ql/experimental/basisswap/basisswapengine.hpp>
+#include <ql/experimental/basismodels/basisswapengine.hpp>
 #include <ql/cashflows/cashflows.hpp>
 #include <ql/utilities/dataformatters.hpp>
 

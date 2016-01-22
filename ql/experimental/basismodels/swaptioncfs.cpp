@@ -15,7 +15,7 @@
 #include <ql/cashflows/simplecashflow.hpp>
 #include <ql/cashflows/fixedratecoupon.hpp>
 
-#include <ql/experimental/template/basismodel/swaptioncfs.hpp>
+#include <ql/experimental/basismodels/swaptioncfs.hpp>
 
 
 namespace QuantLib {

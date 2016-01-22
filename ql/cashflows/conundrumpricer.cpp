@@ -36,7 +36,7 @@
 #include <ql/instruments/vanillaswap.hpp>
 #include <ql/exercise.hpp>
 #include <ql/instruments/swaption.hpp>
-#include <ql/experimental/template/basismodel/swaptioncfs.hpp>
+#include <ql/experimental/basismodels/swaptioncfs.hpp>
 
 
 #if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))

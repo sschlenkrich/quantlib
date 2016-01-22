@@ -16,7 +16,7 @@
 
 
 #include <ql/experimental/template/montecarlo/templatemcpayoff.hpp>
-#include <ql/experimental/template/basismodel/swaptioncfs.hpp>
+#include <ql/experimental/basismodels/swaptioncfs.hpp>
 
 #include <ql/indexes/iborindex.hpp>
 #include <ql/indexes/swapindex.hpp>

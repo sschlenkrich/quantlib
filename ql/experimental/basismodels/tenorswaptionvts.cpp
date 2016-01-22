@@ -15,8 +15,8 @@
 //#include <ql/cashflows/simplecashflow.hpp>
 //#include <ql/cashflows/fixedratecoupon.hpp>
 
-#include <ql/experimental/template/basismodel/tenorswaptionvts.hpp>
-#include <ql/experimental/template/basismodel/swaptioncfs.hpp>
+#include <ql/experimental/basismodels/tenorswaptionvts.hpp>
+#include <ql/experimental/basismodels/swaptioncfs.hpp>
 #include <ql/indexes/iborindex.hpp>
 #include <ql/time/dategenerationrule.hpp>
 #include <ql/math/rounding.hpp>

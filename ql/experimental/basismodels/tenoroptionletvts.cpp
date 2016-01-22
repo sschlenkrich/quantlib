@@ -8,7 +8,7 @@
     \brief caplet volatility term structure based on volatility transformation
 */
 
-#include <ql/experimental/template/basismodel/tenoroptionletvts.hpp>
+#include <ql/experimental/basismodels/tenoroptionletvts.hpp>
 #include <ql/indexes/iborindex.hpp>
 #include <ql/time/schedule.hpp>
 #include <ql/time/dategenerationrule.hpp>
