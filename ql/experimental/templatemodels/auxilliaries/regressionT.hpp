@@ -1,7 +1,7 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2010, Sebastian Schlenkrich
+ Copyright (C) 2016, Sebastian Schlenkrich
 
 */
 
@@ -14,7 +14,7 @@
 //#include <boost/function.hpp>
 
 //#include <ql/experimental/template/auxilliaries/templatesvd.hpp>
-#include <ql/experimental/template/auxilliaries/templateQRFactorisation.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/qrfactorisationT.hpp>
 
 
 namespace TemplateAuxilliaries {

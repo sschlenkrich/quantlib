@@ -1,6 +1,6 @@
 
 
-/*! \file templatesvd.hpp
+/*! \file svdT.hpp
     \brief standalone singular value decomposition
 */
 

@@ -5,7 +5,7 @@
 
 */
 
-/*! \file templateintegrators.hpp
+/*! \file integratorsT.hpp
     \brief provide template functions for numerical integration
 */
 

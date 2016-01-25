@@ -5,7 +5,7 @@
 
 */
 
-/*! \file templateauxilliaries.hpp
+/*! \file auxilliariesT.hpp
     \brief provide template functions for required computations with active data types
 */
 
@@ -14,8 +14,8 @@
 #define quantlib_templateauxilliaries_hpp
 
 #include <boost/math/special_functions/erf.hpp>
-#include <ql/experimental/template/auxilliaries/MinimADVariable2.hpp>
-#include <ql/experimental/template/auxilliaries/templateintegrators.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/minimADVariable2T.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/integratorsT.hpp>
 
 
 
