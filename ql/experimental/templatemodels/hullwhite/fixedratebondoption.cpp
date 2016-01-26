@@ -14,7 +14,7 @@
 #include <ql/cashflows/coupon.hpp>
 #include <ql/cashflows/simplecashflow.hpp>
 #include <ql/cashflows/fixedratecoupon.hpp>
-#include <ql/experimental/template/hullwhite/fixedratebondoption.hpp>
+#include <ql/experimental/templatemodels/hullwhite/fixedratebondoption.hpp>
 
 
 namespace QuantLib {

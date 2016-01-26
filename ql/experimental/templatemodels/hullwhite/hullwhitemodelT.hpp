@@ -5,7 +5,7 @@
 
 */
 
-/*! \file templatehullwhitemodel.hpp
+/*! \file hullwhitemodelT.hpp
     \brief Analytic pricing formulas in the Hull White model
                dr(t) = [a(t) - b r(t)]dt + sigma(t) dW(t)
            The model assumes
@@ -24,8 +24,8 @@
 
 #include <ql/termstructures/yieldtermstructure.hpp>
 #include <ql/option.hpp>
-#include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
-#include <ql/experimental/template/auxilliaries/templateintegrators.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/integratorsT.hpp>
 
 
 namespace QuantLib {
@@ -34,7 +34,7 @@ namespace QuantLib {
 
 	// Declaration of the Hull White model class
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateHullWhiteModel : public TemplateModel {
+	class HullWhiteModelT : public TemplateModel {
 	protected:
 		// attributes defining the model
 		Handle<YieldTermStructure> termStructure_;  // the yield curve is assumed to be passive
@@ -66,10 +66,10 @@ namespace QuantLib {
 		};
 	public:
 		// Construct a Hull White model by passing the attributes
-		TemplateHullWhiteModel( const Handle<YieldTermStructure>& termStructure,
-			                    const PassiveType                mean,
-								const std::vector<DateType>&     volaTimes,
-								const std::vector<ActiveType>&   volaValues );
+		HullWhiteModelT( const Handle<YieldTermStructure>& termStructure,
+			             const PassiveType                mean,
+						 const std::vector<DateType>&     volaTimes,
+						 const std::vector<ActiveType>&   volaValues );
 
 		// Inspectors
 		const Handle<YieldTermStructure>& termStructure() const { return termStructure_; }
@@ -161,7 +161,7 @@ namespace QuantLib {
 
 
 	template <class DateType, class PassiveType, class ActiveType>
-    TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::TemplateHullWhiteModel(
+    HullWhiteModelT<DateType,PassiveType,ActiveType>::HullWhiteModelT(
 								const Handle<YieldTermStructure>& termStructure,
 			                    const PassiveType                mean,
 								const std::vector<DateType>&     volaTimes,
@@ -176,7 +176,7 @@ namespace QuantLib {
 	}
 
 	template <class DateType, class PassiveType, class ActiveType> ActiveType 
-	TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::ZeroBond(
+	HullWhiteModelT<DateType,PassiveType,ActiveType>::ZeroBond(
 							const DateType    settlement,
 							const DateType    maturity,
 							const ActiveType  shortRate,
@@ -193,7 +193,7 @@ namespace QuantLib {
 	}
 
     template <class DateType, class PassiveType, class ActiveType> 
-	ActiveType TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::CouponBond(
+	ActiveType HullWhiteModelT<DateType,PassiveType,ActiveType>::CouponBond(
 							const DateType                  settlement,   // bond settlement date in year fractions
                             const std::vector<DateType>&    payTimes,     // pay dates in year fraction of coupon period
 							const std::vector<PassiveType>& cashFlows,    // fixed coupon payments (absolut value)
@@ -211,7 +211,7 @@ namespace QuantLib {
 	}
 
 	template <class DateType, class PassiveType, class ActiveType> 
-    ActiveType TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::ZeroBondOption(
+    ActiveType HullWhiteModelT<DateType,PassiveType,ActiveType>::ZeroBondOption(
 						const DateType     excercise,     // option's excercise date (equal settlment)
                         const ActiveType   strike,        // strike payed at excercise date
                         const DateType     maturity,      // payment date of notional 1
@@ -224,7 +224,7 @@ namespace QuantLib {
 	}
 
 	template <class DateType, class PassiveType, class ActiveType> 
-    ActiveType TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::CouponBondOption(
+    ActiveType HullWhiteModelT<DateType,PassiveType,ActiveType>::CouponBondOption(
 						const DateType                  excercise,    // option's excercise date (equal settlment)
                         const PassiveType               strike,       // strike payed at excercise date
                         /* option's underlying, copy vectors */
@@ -276,7 +276,7 @@ namespace QuantLib {
 
 
 	template <class DateType, class PassiveType, class ActiveType> 
-	void TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::evaluateShortRateGrid( 
+	void HullWhiteModelT<DateType,PassiveType,ActiveType>::evaluateShortRateGrid( 
 						   PassiveType r0,      // center of short rate grid
 			               PassiveType s,       // distance to boundaries
 						   size_t dim ) {       // number of grid points
@@ -287,7 +287,7 @@ namespace QuantLib {
 	}
 
 	template <class DateType, class PassiveType, class ActiveType> 
-	ActiveType TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::BermudanBondOption(
+	ActiveType HullWhiteModelT<DateType,PassiveType,ActiveType>::BermudanBondOption(
 							const std::vector<DateType>&     exercTimes,    // option's exercise dates (equal settlment)
                             const std::vector<PassiveType>&  strikeValues,  // strike payed at excercise dates
                             // option's underlying
@@ -454,7 +454,7 @@ namespace QuantLib {
 	}
 
 	template <class DateType, class PassiveType, class ActiveType> 
-	const std::vector<ActiveType>& TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::CalibrateVolatility ( 
+	const std::vector<ActiveType>& HullWhiteModelT<DateType,PassiveType,ActiveType>::CalibrateVolatility ( 
 		                       const std::vector<DateType>&     exercTimes,   // option's exercise dates (equal settlment)
                                const std::vector<PassiveType>&  strikeValues, // strike payed at excercise dates
                                const std::vector<PassiveType>&  b76Prices,    // reference European prices
@@ -540,7 +540,7 @@ namespace QuantLib {
 	}
 
 	template <class DateType, class PassiveType, class ActiveType> 
-	const std::vector<ActiveType>& TemplateHullWhiteModel<DateType,PassiveType,ActiveType>::BermudanCalibration ( 
+	const std::vector<ActiveType>& HullWhiteModelT<DateType,PassiveType,ActiveType>::BermudanCalibration ( 
 		                       const std::vector<DateType>&     exercTimes,   // option's exercise dates (equal settlment)
                                const std::vector<PassiveType>&  strikeValues, // strike payed at excercise dates
                                const std::vector<PassiveType>&  b76Prices,    // reference European prices

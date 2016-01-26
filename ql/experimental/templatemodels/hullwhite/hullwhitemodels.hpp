@@ -14,8 +14,8 @@
 #define quantlib_templatehullwhitemodels_hpp
 
 //#include <ql/experimental/templatehullwhite/adtageo/adtageo.hpp>
-#include <ql/experimental/template/auxilliaries/MinimADVariable2.hpp>
-#include <ql/experimental/template/hullwhite/templatehullwhitemodel.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/minimADVariable2T.hpp>
+#include <ql/experimental/templatemodels/hullwhite/hullwhitemodelT.hpp>
 
 
 namespace QuantLib {
@@ -24,14 +24,14 @@ namespace QuantLib {
 	typedef MinimAD::Variable<QuantLib::Real> ActiveType;
 
 	// basic binding of template parameters
-	typedef TemplateHullWhiteModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealHullWhiteModel;
+	typedef HullWhiteModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealHullWhiteModel;
 
 	class MinimADHullWhiteModel : public RealHullWhiteModel {
 	private:
 		// independant variables
 		std::vector<ActiveType> avolaValues_;
         // a clone of the model with active data types
-		boost::shared_ptr< TemplateHullWhiteModel<QuantLib::Time,QuantLib::Real,ActiveType> > amodel_;
+		boost::shared_ptr< HullWhiteModelT<QuantLib::Time,QuantLib::Real,ActiveType> > amodel_;
 		// derivatives evaluated
 		std::vector< std::vector<QuantLib::Real> > calibrationJacobian_;
 		std::vector< std::vector<QuantLib::Real> > europeansAnalyticalVega_;

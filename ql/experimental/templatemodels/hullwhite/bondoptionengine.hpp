@@ -12,7 +12,7 @@
 #define quantlib_bond_option_engine_hpp
 
 
-#include <ql/experimental/template/hullwhite/hullwhitemodels.hpp>
+#include <ql/experimental/templatemodels/hullwhite/hullwhitemodels.hpp>
 
 #include <ql/indexes/iborindex.hpp>
 #include <ql/termstructures/yieldtermstructure.hpp>

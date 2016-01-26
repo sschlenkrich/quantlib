@@ -10,7 +10,7 @@
 #ifndef quantlib_template2flognormalmodel_hpp
 #define quantlib_template2flognormalmodel_hpp
 
-#include <ql/experimental/template/commodity/template2fmeanreversionmodel.hpp>
+#include <ql/experimental/templatemodels/commodity/twofactormeanreversionmodelT.hpp>
 
 
 
@@ -27,12 +27,12 @@ namespace QuantLib {
 	//    dW_Y(t) dW_Z(t) = rho dt
 	//
 	template <class DateType, class PassiveType, class ActiveType>
-	class Template2FNormalModel : public Template2FMeanReversionModel<DateType,PassiveType,ActiveType> {
+	class TwoFactorNormalModelT : public TwoFactorMeanReversionModelT<DateType,PassiveType,ActiveType> {
 	
 	public:
 		// constructor
 		
-		Template2FNormalModel( const Handle<IndexTermStructure>&    futureTS,
+		TwoFactorNormalModelT( const Handle<IndexTermStructure>&    futureTS,
 		                       const VecD&                          times,
 							   const VecA&                          sigma,
 							   const VecA&                          eta,
@@ -40,7 +40,7 @@ namespace QuantLib {
 							   const PassiveType                     b,
 							   const PassiveType                     rho 
 							   )
-		: Template2FMeanReversionModel(futureTS,times,sigma,eta,a,b,rho) {
+		: TwoFactorMeanReversionModelT(futureTS,times,sigma,eta,a,b,rho) {
 			// check for valid parameter inputs
 		}
 	

@@ -11,12 +11,12 @@
 #define quantlib_hestonmodels_hpp
 
 #include <ql/types.hpp>
-#include <ql/experimental/template/auxilliaries/MinimADVariable2.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/minimADVariable2T.hpp>
 
-#include <ql/experimental/template/templatestochasticprocess.hpp>
-#include <ql/experimental/template/stochvol/templatehestonmodel.hpp>
-#include <ql/experimental/template/stochvol/templatetdstochvolmodel.hpp>
-#include <ql/experimental/template/stochvol/templateshiftedsabrmodel.hpp>
+#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
+#include <ql/experimental/templatemodels/stochvol/hestonmodelT.hpp>
+#include <ql/experimental/templatemodels/stochvol/tdstochvolmodelT.hpp>
+#include <ql/experimental/templatemodels/stochvol/shiftedsabrmodelT.hpp>
 
 
 #define _MIN_( a, b ) ( (a) < (b) ? (a) : (b) )
@@ -24,15 +24,15 @@
 
 namespace QuantLib {
 	
-    typedef TemplateHestonModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealHestonModel;
-    typedef TemplateHestonModel<QuantLib::Time,QuantLib::Real, MinimAD::Variable<Real> > MinimADHestonModel;
+    typedef HestonModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealHestonModel;
+    typedef HestonModelT<QuantLib::Time,QuantLib::Real, MinimAD::Variable<Real> > MinimADHestonModel;
 
-	typedef TemplateStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealStochVolModel;
+	typedef StochVolModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealStochVolModel;
 
-	typedef TemplateTimeDependentStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealTDStochVolModel;
-	typedef TemplateTimeDependentStochVolModel<QuantLib::Time,QuantLib::Real,QuantLib::Real>::PWCAnalytical RealPWCStochVolModel;
+	typedef TimeDependentStochVolModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealTDStochVolModel;
+	typedef TimeDependentStochVolModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real>::PWCAnalytical RealPWCStochVolModel;
 
-	typedef TemplateShiftedSABRModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealShiftedSABRModel;
+	typedef ShiftedSABRModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealShiftedSABRModel;
 
 
     class ActiveHestonModel : public RealHestonModel {

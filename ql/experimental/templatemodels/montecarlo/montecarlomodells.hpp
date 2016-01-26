@@ -16,30 +16,33 @@
 //#include <ql/experimental/templatehullwhite/adtageo/adtageo.hpp>
 //#include <ql/experimental/template/auxilliaries/MinimADVariable2.hpp>
 
-#include <ql/experimental/template/templatestochasticprocess.hpp>
-#include <ql/experimental/template/montecarlo/templatemcsimulation.hpp>
-#include <ql/experimental/template/montecarlo/templatemcpayoff.hpp>
-#include <ql/experimental/template/montecarlo/templatemc.hpp>
-#include <ql/experimental/template/montecarlo/templateamcpricer.hpp>
-#include <ql/experimental/template/auxilliaries/templateregression.hpp>
+#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
+#include <ql/experimental/templatemodels/montecarlo/mcsimulationT.hpp>
+#include <ql/experimental/templatemodels/montecarlo/mcpayoffT.hpp>
+#include <ql/experimental/templatemodels/montecarlo/ratespayoffT.hpp>
+#include <ql/experimental/templatemodels/montecarlo/commoditypayoffT.hpp>
+#include <ql/experimental/templatemodels/montecarlo/amcpricerT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/regressionT.hpp>
 
 
 namespace QuantLib {
 
 	// basic binding of template parameters
 
-	typedef TemplateMCSimulation<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCSimulation;
+	typedef MCSimulationT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCSimulation;
 
-	typedef TemplateMCPayoff< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCPayoff;
+	typedef MCPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCPayoff;
 
-	typedef TemplateMC< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMC;
+	typedef RatesPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCRates;
 
-	typedef TemplateAMCPricer< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealAMCPricer;
+	typedef CommodityPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCCommodity;
 
-	typedef RealMCPayoff::Pricer     RealMCPayoffPricer;
-	typedef RealMC::CashFlow         RealMCCashFlow;
-	typedef RealMC::Leg              RealMCLeg;
-	typedef RealMC::CancellableNote  RealMCCancellableNote;
+	typedef AMCPricerT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealAMCPricer;
+
+	typedef RealMCPayoff::Pricer          RealMCPayoffPricer;
+	typedef RealMCRates::CashFlow         RealMCCashFlow;
+	typedef RealMCRates::Leg              RealMCLeg;
+	typedef RealMCRates::CancellableNote  RealMCCancellableNote;
 
 	typedef TemplateAuxilliaries::Regression<QuantLib::Real> RealRegression;
 

@@ -21,7 +21,7 @@ namespace QuantLib {
 
 	// Declaration of stochastic process class
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateStochasticProcess {
+	class StochasticProcessT {
 	public:
 		// container class definitions
 		typedef std::vector<DateType>                      VecD;
@@ -88,7 +88,7 @@ namespace QuantLib {
 
 	};
 
-	typedef TemplateStochasticProcess<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealStochasticProcess;
+	typedef StochasticProcessT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealStochasticProcess;
 
 
 }

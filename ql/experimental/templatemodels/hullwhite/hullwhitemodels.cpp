@@ -11,7 +11,7 @@
 
 
 #include <ql/mathconstants.hpp>
-#include <ql/experimental/template/hullwhite/hullwhitemodels.hpp>
+#include <ql/experimental/templatemodels/hullwhite/hullwhitemodels.hpp>
 
 
 
@@ -21,8 +21,8 @@ namespace QuantLib {
 		avolaValues_.resize(this->volaValues().size());
 		for (Size k=0; k<this->volaValues().size(); ++k) avolaValues_[k] = this->volaValues()[k];
 		// clone the passive model
-		amodel_ = boost::shared_ptr< TemplateHullWhiteModel<QuantLib::Time,QuantLib::Real,ActiveType> >(
-			new TemplateHullWhiteModel<QuantLib::Time,QuantLib::Real,ActiveType>(this->termStructure(), this->mean(), this->volaTimes(), avolaValues_));
+		amodel_ = boost::shared_ptr< HullWhiteModelT<QuantLib::Time,QuantLib::Real,ActiveType> >(
+			new HullWhiteModelT<QuantLib::Time,QuantLib::Real,ActiveType>(this->termStructure(), this->mean(), this->volaTimes(), avolaValues_));
 		amodel_->setEstimateAccuracy(this->estimateAccuracy());
 	}
 

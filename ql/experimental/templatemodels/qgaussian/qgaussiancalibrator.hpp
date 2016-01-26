@@ -15,12 +15,12 @@
 #include <ql/math/optimization/constraint.hpp>
 #include <ql/math/optimization/levenbergmarquardt.hpp>
 
-#include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
 
 #include <ql/experimental/basismodels/swaptioncfs.hpp>
 
-#include <ql/experimental/template/qgaussian/quasigaussianmodels.hpp>
-#include <ql/experimental/template/montecarlo/montecarlomodells.hpp>
+#include <ql/experimental/templatemodels/qgaussian/quasigaussianmodels.hpp>
+#include <ql/experimental/templatemodels/montecarlo/montecarlomodells.hpp>
 
 
 #define _MIN_( a, b ) ( (a) < (b) ? (a) : (b) )

@@ -14,12 +14,12 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <ql/errors.hpp>
-#include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
-#include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
-#include <ql/experimental/template/auxilliaries/Complex.hpp>
-#include <ql/experimental/template/auxilliaries/solver1d.hpp>
-#include <ql/experimental/template/templatestochasticprocess.hpp>
-#include <ql/experimental/template/stochvol/templatehestonmodel.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/gausslobattoT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/complexT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/solver1dT.hpp>
+#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
+#include <ql/experimental/templatemodels/stochvol/hestonmodelT.hpp>
 
 
 
@@ -35,7 +35,7 @@ namespace QuantLib {
 	//    dW(t) dZ(t) = rho dt
 	//
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateTimeDependentStochVolModel : public TemplateStochasticProcess<DateType,PassiveType,ActiveType> {
+	class TimeDependentStochVolModelT : public StochasticProcessT<DateType,PassiveType,ActiveType> {
 	public:
 		// abstract inspectors
         virtual ActiveType  lambda( const DateType t) = 0;
@@ -78,7 +78,7 @@ namespace QuantLib {
                                         const int         callOrPut,
                                         const PassiveType accuracy,
                                         const size_t      maxEvaluations) {
-				TemplateStochVolModel<DateType,PassiveType,ActiveType> model(averageLambda(term), averageB(term),L(),theta(),m(),averageEta(term),z0(),rho());
+				StochVolModelT<DateType,PassiveType,ActiveType> model(averageLambda(term), averageB(term),L(),theta(),m(),averageEta(term),z0(),rho());
 			    return model.vanillaOption( forwardPrice, strikePrice, term, callOrPut, accuracy, maxEvaluations );
 		}
 
@@ -216,7 +216,7 @@ namespace QuantLib {
 		class MidPointIntegration {
 		protected:
 			// reference to model
-			TemplateTimeDependentStochVolModel* model_;
+			TimeDependentStochVolModelT* model_;
 			// time grid for integration
 			std::vector<DateType>               times_;
 			inline std::vector<DateType> getTimes( const DateType T ) {
@@ -254,12 +254,12 @@ namespace QuantLib {
 
 			// Prop. 9.1.2
 			class RiccatiODE {
-				TemplateTimeDependentStochVolModel* model_;
+				TimeDependentStochVolModelT* model_;
 				ActiveType v_;
 				ActiveType u_;
 				ActiveType averageB_;
 			public:
-				RiccatiODE (TemplateTimeDependentStochVolModel* model, ActiveType v, ActiveType u, ActiveType averageB)
+				RiccatiODE (TimeDependentStochVolModelT* model, ActiveType v, ActiveType u, ActiveType averageB)
 					: model_(model), v_(v), u_(u), averageB_(averageB) {}
 				void operator() (const DateType t, const std::vector<ActiveType>& y, std::vector<ActiveType>& fy) {
 					fy[0] = - model_->theta() * model_->z0() * y[1];
@@ -270,8 +270,8 @@ namespace QuantLib {
 
 		public:
 			// constructor
-			MidPointIntegration ( TemplateTimeDependentStochVolModel* model,
-				                  std::vector<DateType>               times )
+			MidPointIntegration ( TimeDependentStochVolModelT* model,
+				                  std::vector<DateType>        times )
 								  : model_(model), times_(times) { }
 
 		    // averaging formula implementations
@@ -384,8 +384,8 @@ namespace QuantLib {
 			};
 		};
 
-			    // piecewise constant parameters and numerical integration
-        class PWCAnalytical : public TemplateTimeDependentStochVolModel {
+	    // piecewise constant parameters and numerical integration
+        class PWCAnalytical : public TimeDependentStochVolModelT {
 		private:
 			boost::shared_ptr<PieceWiseConstant>    pwc_;
 			boost::shared_ptr<MidPointIntegration>  mp_;

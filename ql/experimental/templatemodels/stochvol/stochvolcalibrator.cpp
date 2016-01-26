@@ -7,7 +7,7 @@
 
 #include <ql/pricingengines/blackformula.hpp>
 
-#include <ql/experimental/template/stochvol/stochvolcalibrator.hpp>
+#include <ql/experimental/templatemodels/stochvol/stochvolcalibrator.hpp>
 
 namespace QuantLib {
 

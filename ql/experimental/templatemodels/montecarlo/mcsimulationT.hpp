@@ -19,9 +19,9 @@
 #define quantlib_templatemcsimulation_hpp
 
 #include <ql/math/randomnumbers/rngtraits.hpp>
-#include <ql/experimental/template/templatestochasticprocess.hpp>
+#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
 
-#include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
 
 
 
@@ -31,10 +31,10 @@ namespace QuantLib {
 
 	// Declaration of MC simulation class
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateMCSimulation : public TemplateSimulation {
+	class MCSimulationT : public TemplateSimulation {
 	protected:
 
-		typedef TemplateStochasticProcess<DateType, PassiveType, ActiveType> ProcessType;
+		typedef StochasticProcessT<DateType, PassiveType, ActiveType> ProcessType;
 
 		// container class definitions
 		typedef std::vector<DateType>                      VecD;
@@ -191,12 +191,12 @@ namespace QuantLib {
 		// combine model/process and simulated paths
 		class Path {
 		protected:
-			boost::shared_ptr<ProcessType>           process_;
-			TemplateMCSimulation*                    sim_;
-			size_t                                   idx_;
+			boost::shared_ptr<ProcessType>    process_;
+			MCSimulationT*                    sim_;
+			size_t                            idx_;
 		public:
 			Path(const boost::shared_ptr<ProcessType>           process,
-				 TemplateMCSimulation*                          sim,
+				 MCSimulationT*                                 sim,
 				 const size_t                                   idx )
 				 : process_(process), sim_(sim), idx_(idx) {}
 
@@ -223,17 +223,16 @@ namespace QuantLib {
 		};
 
 
-		TemplateMCSimulation( const boost::shared_ptr<ProcessType> process,
-			                  const VecD&                          simTimes,
-							  const VecD&                          obsTimes,
-							  size_t                               nPaths,
-							  BigNatural                           seed = 1234,
-							  bool                                 richardsonExtrapolation = true,
-							  bool                                 timeInterpolation = false,
-							  bool                                 storeBrownians = false )
-							  : process_(process), seed_(seed),
-							  richardsonExtrapolation_(richardsonExtrapolation),
-							  timeInterpolation_(timeInterpolation), storeBrownians_(storeBrownians) {
+		MCSimulationT( const boost::shared_ptr<ProcessType> process,
+			           const VecD&                          simTimes,
+					   const VecD&                          obsTimes,
+					   size_t                               nPaths,
+					   BigNatural                           seed = 1234,
+					   bool                                 richardsonExtrapolation = true,
+					   bool                                 timeInterpolation = false,
+					   bool                                 storeBrownians = false )
+					: process_(process), seed_(seed), richardsonExtrapolation_(richardsonExtrapolation),
+						  timeInterpolation_(timeInterpolation), storeBrownians_(storeBrownians) {
 			// check inputs
 			QL_REQUIRE(simTimes.size()>0,"TemplateMCSimulation: non-empty simulation times required");
 			for (size_t k=1; k<simTimes.size(); ++k) QL_REQUIRE(simTimes[k-1]<simTimes[k],"TemplateMCSimulation: simulation times in ascending order required");

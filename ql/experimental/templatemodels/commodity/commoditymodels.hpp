@@ -13,19 +13,19 @@
 #ifndef quantlib_templatecommoditymodels_hpp
 #define quantlib_templatecommoditymodels_hpp
 
-#include <ql/experimental/template/commodity/template2fnormalmodel.hpp>
-#include <ql/experimental/template/commodity/template2flognormalmodel.hpp>
+#include <ql/experimental/templatemodels/commodity/twofactornormalmodelT.hpp>
+#include <ql/experimental/templatemodels/commodity/twofactorlognormalmodelT.hpp>
 
 namespace QuantLib {
 
 	// basic binding of template parameters
-	typedef Template2FMeanReversionModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FMeanReversionModel;
+	typedef TwoFactorMeanReversionModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FMeanReversionModel;
 
 	// basic binding of template parameters
-	typedef Template2FNormalModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FNormalModel;
+	typedef TwoFactorNormalModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FNormalModel;
 
 	// basic binding of template parameters
-	typedef Template2FLognormalModel<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FLognormalModel;
+	typedef TwoFactorLognormalModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FLognormalModel;
 
 }
 

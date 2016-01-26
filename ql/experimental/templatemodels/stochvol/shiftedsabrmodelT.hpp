@@ -10,16 +10,9 @@
 #ifndef quantlib_templateshiftedsabrmodel_hpp
 #define quantlib_templateshiftedsabrmodel_hpp
 
-//#include <complex>
 #include <boost/shared_ptr.hpp>
-//#include <boost/function.hpp>
 #include <ql/errors.hpp>
-//#include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
-//#include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
-//#include <ql/experimental/template/auxilliaries/Complex.hpp>
-//#include <ql/experimental/template/auxilliaries/solver1d.hpp>
-#include <ql/experimental/template/templatestochasticprocess.hpp>
-//#include <ql/experimental/template/stochvol/templatehestonmodel.hpp>
+#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
 
 
 
@@ -36,17 +29,17 @@ namespace QuantLib {
 	//    dW(t) dZ(t) = rho dt
 	//
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateShiftedSABRModel : public TemplateStochasticProcess<DateType,PassiveType,ActiveType> {
+	class ShiftedSABRModelT : public StochasticProcessT<DateType,PassiveType,ActiveType> {
 	private:
 	    ActiveType S0_, lambda_, alpha_, beta_, rho_, nu_;
 	public:
 		// constructor
-		TemplateShiftedSABRModel( ActiveType S0, 
-			                      ActiveType lambda, 
-								  ActiveType alpha, 
-								  ActiveType beta,
-								  ActiveType rho,
-								  ActiveType nu )
+		ShiftedSABRModelT( ActiveType S0, 
+			               ActiveType lambda, 
+					       ActiveType alpha, 
+					       ActiveType beta,
+					       ActiveType rho,
+					       ActiveType nu )
 		: S0_(S0), lambda_(lambda), alpha_(alpha), beta_(beta), rho_(rho), nu_(rho) {
 			// check for valid parameter inputs
 		}

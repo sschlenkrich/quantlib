@@ -5,7 +5,7 @@
 
 */
 
-/*! \file templateamcpricer.hpp
+/*! \file amcpricerT.hpp
     \brief American MC pricer for cancellable note
 	
 */
@@ -15,21 +15,21 @@
 #define quantlib_templateamcpricer_hpp
 
 
-#include <ql/experimental/template/montecarlo/templatemc.hpp>
-#include <ql/experimental/template/auxilliaries/templateregression.hpp>
+#include <ql/experimental/templatemodels/montecarlo/ratespayoffT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/regressionT.hpp>
 
 
 
 namespace QuantLib {
 
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateAMCPricer {
+	class AMCPricerT {
 	protected:
 		// easy use of templated types
-		typedef TemplateMCSimulation<DateType, PassiveType, ActiveType>                 SimulationType;
-		typedef typename TemplateMCSimulation<DateType, PassiveType, ActiveType>::Path  PathType;
-		typedef typename TemplateMC<DateType, PassiveType, ActiveType>::CancellableNote NoteType;
-		typedef typename TemplateAuxilliaries::Regression<PassiveType>                  RegressionType;
+		typedef MCSimulationT<DateType, PassiveType, ActiveType>                          SimulationType;
+		typedef typename MCSimulationT<DateType, PassiveType, ActiveType>::Path           PathType;
+		typedef typename RatesPayoffT<DateType, PassiveType, ActiveType>::CancellableNote NoteType;
+		typedef typename TemplateAuxilliaries::Regression<PassiveType>                    RegressionType;
 
 
 		// container class definitions
@@ -182,13 +182,13 @@ namespace QuantLib {
 
 	public:
 
-		TemplateAMCPricer( const boost::shared_ptr<NoteType>        note,
-			               const boost::shared_ptr<SimulationType>  simulation,
-						   const PassiveType                        regressionFraction,
-						   const size_t                             maxPolynDegree
-						   // maybe some more arguments to control AMC
-						   )
-						   : note_(note), simulation_(simulation), maxPolynDegree_(maxPolynDegree)  {
+		AMCPricerT( const boost::shared_ptr<NoteType>        note,
+			        const boost::shared_ptr<SimulationType>  simulation,
+					const PassiveType                        regressionFraction,
+					const size_t                             maxPolynDegree
+					// maybe some more arguments to control AMC
+					)
+					: note_(note), simulation_(simulation), maxPolynDegree_(maxPolynDegree)  {
 		    regressions_.resize(note_->callTimes().size());
 			regressionFraction_ = regressionFraction;
 			if (regressionFraction_<0.0) regressionFraction_ = 0.0;

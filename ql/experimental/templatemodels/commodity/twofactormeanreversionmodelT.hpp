@@ -12,11 +12,10 @@
 
 #include <boost/shared_ptr.hpp>
 #include <ql/errors.hpp>
-#include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
-#include <ql/experimental/template/auxilliaries/templateintegrators.hpp>
-//#include <ql/experimental/template/auxilliaries/solver1d.hpp>
-#include <ql/experimental/template/templatestochasticprocess.hpp>
-#include <ql/experimental/template/commodity/indextermstructure.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/integratorsT.hpp>
+#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
+#include <ql/experimental/templatemodels/commodity/indextermstructure.hpp>
 
 
 
@@ -32,7 +31,7 @@ namespace QuantLib {
 	//    dW_Y(t) dW_Z(t) = rho dt
 	//
 	template <class DateType, class PassiveType, class ActiveType>
-	class Template2FMeanReversionModel : public TemplateStochasticProcess<DateType,PassiveType,ActiveType> {
+	class TwoFactorMeanReversionModelT : public StochasticProcessT<DateType,PassiveType,ActiveType> {
 	protected:
 	
 		// container class definitions
@@ -66,7 +65,7 @@ namespace QuantLib {
 	public:
 		// constructor
 		
-		Template2FMeanReversionModel( const Handle<IndexTermStructure>&    futureTS,
+		TwoFactorMeanReversionModelT( const Handle<IndexTermStructure>&    futureTS,
 		                              const VecD&                          times,
 							          const VecA&                          sigma,
 							          const VecA&                          eta,

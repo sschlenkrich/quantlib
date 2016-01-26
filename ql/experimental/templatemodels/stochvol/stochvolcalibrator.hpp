@@ -13,7 +13,7 @@
 #include <ql/math/optimization/constraint.hpp>
 #include <ql/math/optimization/levenbergmarquardt.hpp>
 
-#include <ql/experimental/template/stochvol/hestonmodels.hpp>
+#include <ql/experimental/templatemodels/stochvol/stochvolmodels.hpp>
 
 
 #define _MIN_( a, b ) ( (a) < (b) ? (a) : (b) )

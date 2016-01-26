@@ -14,11 +14,11 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <ql/errors.hpp>
-#include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
-#include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
-#include <ql/experimental/template/auxilliaries/Complex.hpp>
-#include <ql/experimental/template/auxilliaries/solver1d.hpp>
-#include <ql/experimental/template/templatestochasticprocess.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/gausslobattoT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/complexT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/solver1dT.hpp>
+#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
 
 
 
@@ -35,7 +35,7 @@ namespace QuantLib {
     //    dW(t) dZ(t) = rho dt
 
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateHestonModel {
+	class HestonModelT {
     //typedef std::complex<Real> complex;
     typedef Cpx::Complex<ActiveType> complex;
 	protected:
@@ -46,11 +46,11 @@ namespace QuantLib {
         ActiveType v0_;       // initial volatility
     public:
         // constructor
-        TemplateHestonModel( ActiveType kappa,
-                             ActiveType theta,
-                             ActiveType sigma,
-                             ActiveType rho,
-                             ActiveType v0 ) :
+        HestonModelT( ActiveType kappa,
+                      ActiveType theta,
+                      ActiveType sigma,
+                      ActiveType rho,
+                      ActiveType v0 ) :
         kappa_(kappa), theta_(theta), sigma_(sigma), rho_(rho), v0_(v0) {}
                               
         // inspectors
@@ -118,7 +118,7 @@ namespace QuantLib {
         public:
             // constructor
             IntegrandGatheral( 
-                const TemplateHestonModel<DateType,PassiveType,ActiveType> &model,
+                const HestonModelT<DateType,PassiveType,ActiveType> &model,
                 const ActiveType forward,     // underlying initial state
                 const ActiveType strike,      // vanilla option strike
                 const DateType   term,        // time to maturity
@@ -194,26 +194,26 @@ namespace QuantLib {
 	//    dW(t) dZ(t) = rho dt
 	//
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateStochVolModel {
+	class StochVolModelT {
 	protected:
 		enum { Heston, ShiftedLogNormal, Normal, StochVolNormal } type_;
-		boost::shared_ptr< TemplateHestonModel<DateType,PassiveType,ActiveType> > hestonModel_;
-		ActiveType                                                                lambda_;
-		ActiveType                                                                b_;
-		ActiveType                                                                L_;
-		ActiveType                                                                shift_;
+		boost::shared_ptr< HestonModelT<DateType,PassiveType,ActiveType> > hestonModel_;
+		ActiveType                                                         lambda_;
+		ActiveType                                                         b_;
+		ActiveType                                                         L_;
+		ActiveType                                                         shift_;
 	public:
-		TemplateStochVolModel ( const ActiveType   lambda,
-			                    const ActiveType   b,
-								const ActiveType   L,
-								const ActiveType   theta,
-								const ActiveType   m,
-								const ActiveType   eta,
-								const ActiveType   z0,
-								const ActiveType   rho,
-								const PassiveType  etaMin = 0.001,
-								const PassiveType  bMin   = 0.001
-								)
+		StochVolModelT ( const ActiveType   lambda,
+			             const ActiveType   b,
+						 const ActiveType   L,
+						 const ActiveType   theta,
+						 const ActiveType   m,
+						 const ActiveType   eta,
+						 const ActiveType   z0,
+						 const ActiveType   rho,
+						 const PassiveType  etaMin = 0.001,
+						 const PassiveType  bMin   = 0.001
+						 )
 		: lambda_(lambda), b_(b), L_(L), shift_( (1.0-b)/b*L) {
 			// define actual model
 			if (eta<etaMin) {
@@ -225,8 +225,8 @@ namespace QuantLib {
 			}
 			// prerequisities
 			if (type_==Heston) {
-				hestonModel_ = boost::shared_ptr< TemplateHestonModel<DateType,PassiveType,ActiveType> >(
-					             new TemplateHestonModel<DateType,PassiveType,ActiveType>(
+				hestonModel_ = boost::shared_ptr< HestonModelT<DateType,PassiveType,ActiveType> >(
+					             new HestonModelT<DateType,PassiveType,ActiveType>(
 		                              // state transformations ~S(t) = S(t) + (1-b)/b L, v(t) = z(t) lambda^2 b^2
 			                          theta,                // kappa
 			                          m*lambda*lambda*b*b,  // theta

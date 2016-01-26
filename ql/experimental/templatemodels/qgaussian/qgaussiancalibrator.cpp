@@ -6,7 +6,7 @@
 */
 
 
-#include <ql/experimental/template/qgaussian/qgaussiancalibrator.hpp>
+#include <ql/experimental/templatemodels/qgaussian/qgaussiancalibrator.hpp>
 
 #include <ql/math/optimization/constraint.hpp>
 #include <ql/math/optimization/levenbergmarquardt.hpp>

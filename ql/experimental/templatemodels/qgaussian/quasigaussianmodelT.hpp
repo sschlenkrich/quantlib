@@ -5,7 +5,7 @@
 
 */
 
-/*! \file templatequasigaussian.hpp
+/*! \file quasigaussianmodelT.hpp
     \brief (MC) pricing for multi-factor quasi-Gaussian model with stochastic vol
 	           
 			   r(t) = f(0,t) + 1^T*x(t)
@@ -25,10 +25,10 @@
 
 #include <ql/termstructures/yieldtermstructure.hpp>
 #include <ql/option.hpp>
-#include <ql/experimental/template/templatestochasticprocess.hpp>
-#include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
-#include <ql/experimental/template/auxilliaries/templateintegrators.hpp>
-#include <ql/experimental/template/auxilliaries/templatesvd.hpp>
+#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/integratorsT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/svdT.hpp>
 
 
 
@@ -38,7 +38,7 @@ namespace QuantLib {
 
 	// Declaration of the quasi-Gaussian model class
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateQuasiGaussianModel : public TemplateStochasticProcess<DateType, PassiveType, ActiveType> {
+	class QuasiGaussianModelT : public StochasticProcessT<DateType, PassiveType, ActiveType> {
 	protected:
 
 		// container class definitions
@@ -311,9 +311,9 @@ namespace QuantLib {
 
 
 		// Constructor
-		TemplateQuasiGaussianModel() { checkModelParameters(); factorMatrices(); }
+		QuasiGaussianModelT() { checkModelParameters(); factorMatrices(); }
 
-		TemplateQuasiGaussianModel(
+		QuasiGaussianModelT(
 			const Handle<YieldTermStructure>& termStructure,
 		    // number of yield curve factors (excluding stoch. vol)
 		    const size_t                d,       // (d+1)-dimensional Brownian motion for [x(t), z(t)]^T

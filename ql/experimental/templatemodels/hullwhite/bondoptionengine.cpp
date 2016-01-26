@@ -13,8 +13,8 @@
 #include <boost/lexical_cast.hpp>
 
 #include <ql/settings.hpp>
-#include <ql/experimental/template/hullwhite/fixedratebondoption.hpp>
-#include <ql/experimental/template/hullwhite/bondoptionengine.hpp>
+#include <ql/experimental/templatemodels/hullwhite/fixedratebondoption.hpp>
+#include <ql/experimental/templatemodels/hullwhite/bondoptionengine.hpp>
 #include <ql/cashflows/coupon.hpp>
 #include <ql/cashflows/fixedratecoupon.hpp>
 #include <ql/cashflows/simplecashflow.hpp>

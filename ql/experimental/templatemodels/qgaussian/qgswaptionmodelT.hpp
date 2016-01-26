@@ -5,7 +5,7 @@
 
 */
 
-/*! \file templateqgswaptionmodel.hpp
+/*! \file qgswaptionmodelT.hpp
     \brief (Approximate) swaption pricing for multi-factor quasi-Gaussian model with stochastic vol
 	           
 			   dS(t) = lambda [(1-b)L +bS(0)] sqrt(z) dW
@@ -34,10 +34,10 @@
 #include <boost/shared_ptr.hpp>
 #include <ql/types.hpp>
 
-#include <ql/experimental/template/auxilliaries/templateauxilliaries.hpp>
-#include <ql/experimental/template/qgaussian/templatequasigaussian.hpp>
-#include <ql/experimental/template/stochvol/templatehestonmodel.hpp>
-#include <ql/experimental/template/stochvol/templatetdstochvolmodel.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
+#include <ql/experimental/templatemodels/qgaussian/quasigaussianmodelT.hpp>
+#include <ql/experimental/templatemodels/stochvol/hestonmodelT.hpp>
+#include <ql/experimental/templatemodels/stochvol/tdstochvolmodelT.hpp>
 
 
 //#include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
@@ -48,7 +48,7 @@ namespace QuantLib {
 
 	// Declaration of the quasi-Gaussian model class
 	template <class DateType, class PassiveType, class ActiveType>
-	class TemplateQGSwaptionModel : public TemplateTimeDependentStochVolModel<DateType,PassiveType,ActiveType> {
+	class QGSwaptionModelT : public TimeDependentStochVolModelT<DateType,PassiveType,ActiveType> {
 	protected:
 
 		// container class definitions
@@ -72,10 +72,10 @@ namespace QuantLib {
 		};
 
 		// reference to QG modelspecs
-		boost::shared_ptr< TemplateQuasiGaussianModel<DateType,PassiveType,ActiveType> >   model_;
+		boost::shared_ptr< QuasiGaussianModelT<DateType,PassiveType,ActiveType> >   model_;
 
 		// reference to averaging algorithm
-		boost::shared_ptr< TemplateTimeDependentStochVolModel<DateType,PassiveType,ActiveType>::MidPointIntegration>  mp_;
+		boost::shared_ptr< TimeDependentStochVolModelT<DateType,PassiveType,ActiveType>::MidPointIntegration>  mp_;
 
 		// vanilla swap specs for this model
 		Swap               swap_;
@@ -446,8 +446,8 @@ namespace QuantLib {
 	public:
 
 		// constructor
-		TemplateQGSwaptionModel (
-			const boost::shared_ptr< TemplateQuasiGaussianModel<DateType,PassiveType,ActiveType> >&   model,
+		QGSwaptionModelT (
+			const boost::shared_ptr< QuasiGaussianModelT<DateType,PassiveType,ActiveType> >&          model,
 			const VecD&                                                                               floatTimes,    // T[1], ..., T[M]
 			const VecD&                                                                               floatWeights,  // u[1], ..., u[M]
 			const VecD&                                                                               fixedTimes,    // T[1], ..., T[N]
