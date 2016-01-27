@@ -44,6 +44,20 @@ namespace QuantLib {
 			std::vector<PassiveType> fixedWeights_;   // w_1, .., w_N
 			PassiveType              strikeRate_;     // option strike
 			PassiveType              payOrRec_;       // call (+1) or put (-1) option on swap rate
+			inline void checkForConsistency() {
+			    // check consistency of swap
+			    // float leg
+			    QL_REQUIRE(floatWeights_.size()>0,"GeneralSwaption: empty float weights.");
+			    QL_REQUIRE(floatTimes_.size()==floatWeights_.size(),"GeneralSwaption: float sizes mismatch.");
+			    QL_REQUIRE(floatTimes_[0]>0,"GeneralSwaption: future float times required");
+			    for (size_t k=1; k<floatTimes_.size(); ++k) QL_REQUIRE(floatTimes_[k]>=floatTimes_[k-1],"GeneralSwaption: ascending float times required");
+			    // fixed leg
+			    QL_REQUIRE(fixedWeights_.size()>0,"GeneralSwaption: empty fixed weights.");
+			    QL_REQUIRE(fixedTimes_.size()==fixedWeights_.size(),"GeneralSwaption: fixed sizes mismatch.");
+			    QL_REQUIRE(fixedTimes_[0]>0,"GeneralSwaption: future fixed times required");
+			    for (size_t k=1; k<fixedTimes_.size(); ++k) QL_REQUIRE(fixedTimes_[k]>=fixedTimes_[k-1],"GeneralSwaption: ascending fixed times required");
+				// finished
+			}
 		public:
 			GeneralSwaption( DateType                        obsTime,    // observation equals fixing time
 				             const std::vector<DateType>&    floatTimes,
@@ -54,19 +68,25 @@ namespace QuantLib {
 					         PassiveType                     payOrRec      )
 				: MCPayoffT(obsTime),  floatTimes_(floatTimes), floatWeights_(floatWeights),
 				  fixedTimes_(fixedTimes), fixedWeights_(fixedWeights), strikeRate_(strikeRate), payOrRec_(payOrRec) { 
-			    // check consistency of swap
-			    // float leg
-			    QL_REQUIRE(floatWeights.size()>0,"GeneralSwaption: empty float weights.");
-			    QL_REQUIRE(floatTimes.size()==floatWeights.size(),"GeneralSwaption: float sizes mismatch.");
-			    QL_REQUIRE(floatTimes[0]>0,"GeneralSwaption: future float times required");
-			    for (size_t k=1; k<floatTimes.size(); ++k) QL_REQUIRE(floatTimes[k]>=floatTimes[k-1],"GeneralSwaption: ascending float times required");
-			    // fixed leg
-			    QL_REQUIRE(fixedWeights.size()>0,"GeneralSwaption: empty fixed weights.");
-			    QL_REQUIRE(fixedTimes.size()==fixedWeights.size(),"GeneralSwaption: fixed sizes mismatch.");
-			    QL_REQUIRE(fixedTimes[0]>0,"GeneralSwaption: future fixed times required");
-			    for (size_t k=1; k<fixedTimes.size(); ++k) QL_REQUIRE(fixedTimes[k]>=fixedTimes[k-1],"GeneralSwaption: ascending fixed times required");
-				// finished
+			    checkForConsistency();
 			}
+			GeneralSwaption( DateType                              obsTime,    // observation equals fixing time
+					         const boost::shared_ptr<SwapIndex>&   swapIndex,
+					         const Handle<YieldTermStructure>&     discYTS,
+					         PassiveType                           strikeRate,
+					         PassiveType                           payOrRec      )
+				: MCPayoffT(obsTime), strikeRate_(strikeRate), payOrRec_(payOrRec) {
+				Date today      = discYTS->referenceDate(); // check if this is the correct date...
+				Date fixingDate = today + ((BigInteger)ClosestRounding(0)(obsTime*365.0)); // assuming act/365 day counting
+				SwapCashFlows scf(swapIndex->underlyingSwap(fixingDate),discYTS,true);        // assume continuous tenor spreads
+				// set attributes
+				floatTimes_   = scf.floatTimes();
+				floatWeights_ = scf.floatWeights();
+				fixedTimes_   = scf.fixedTimes();
+				fixedWeights_ = scf.annuityWeights();
+			    checkForConsistency();
+			}
+
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				ActiveType floatleg = 0.0;
 				ActiveType annuity  = 0.0;
@@ -97,21 +117,7 @@ namespace QuantLib {
 			SwapRate( const DateType                        fixingTime,
 					  const boost::shared_ptr<SwapIndex>&   swapIndex,
 					  const Handle<YieldTermStructure>&     discYTS    )
-					  : TemplateMCPayoff(fixingTime) {
-				Date today      = discYTS->referenceDate(); // check if this is the correct date...
-				Date fixingDate = today + ((BigInteger)ClosestRounding(0)(fixingTime*365.0)); // assuming act/365 day counting
-				SwapCashFlows scf(swapIndex->underlyingSwap(fixingDate),discYTS,true);        // assume continuous tenor spreads
-				// set attributes
-				floatTimes_   = scf.floatTimes();
-				floatWeights_ = scf.floatWeights();
-				fixedTimes_   = scf.fixedTimes();
-				fixedWeights_ = scf.annuityWeights();
-				strikeRate_   = 0.0;  // default value, not used
-				payOrRec_     = 0.0;  // default value, not used
-
-				//swaprate_ = boost::shared_ptr<TemplateMCPayoff::SwapRate>(new TemplateMCPayoff::SwapRate(
-				//	fixingTime, scf.floatTimes(), scf.floatWeights(), scf.fixedTimes(), scf.annuityWeights() ) );
-			}
+					  : GeneralSwaption(fixingTime,swapIndex,discYTS,0.0,0.0) { }
 
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				ActiveType floatleg = 0.0;
