@@ -4163,6 +4163,9 @@
     <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodelT.hpp">
       <Filter>experimental\templatemodels\qgaussian</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodelabcdT.hpp">
+      <Filter>experimental\templatemodels\qgaussian</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">

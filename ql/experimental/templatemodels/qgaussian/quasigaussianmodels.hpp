@@ -19,6 +19,7 @@
 #include <ql/types.hpp>
 
 #include <ql/experimental/templatemodels/qgaussian/quasigaussianmodelT.hpp>
+#include <ql/experimental/templatemodels/qgaussian/quasigaussianmodelabcdT.hpp>
 #include <ql/experimental/templatemodels/stochasticprocessT.hpp>
 #include <ql/experimental/templatemodels/qgaussian/qgswaptionmodelT.hpp>
 
@@ -27,6 +28,7 @@ namespace QuantLib {
 
 	// basic binding of template parameters
 	typedef QuasiGaussianModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQuasiGaussianModel;
+	typedef QuasiGaussianModelAbcdT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQuasiGaussianModelAbcd;
 
 	typedef QGSwaptionModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQGSwaptionModel;
 

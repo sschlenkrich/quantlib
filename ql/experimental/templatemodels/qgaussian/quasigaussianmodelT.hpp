@@ -117,7 +117,7 @@ namespace QuantLib {
 			}
 		};
 
-		inline bool checkModelParameters(const bool throwException=true){
+		inline virtual bool checkModelParameters(const bool throwException=true){
 			bool ok = true;
 			// check yield curve...
 			// non-zero dimension
@@ -311,7 +311,7 @@ namespace QuantLib {
 
 
 		// Constructor
-		QuasiGaussianModelT() { checkModelParameters(); factorMatrices(); }
+		QuasiGaussianModelT() { } // do nothing; (unsafe)
 
 		QuasiGaussianModelT(
 			const Handle<YieldTermStructure>& termStructure,
@@ -379,10 +379,10 @@ namespace QuantLib {
 		inline VolEvolv volEvolv()  { return volEvolv_; }  
 
 		// parameter functions (no dimension checks)
-		inline ActiveType lambda( const size_t i, const DateType t) { return lambda_[maxidx(i)][idx(t)]; }
-		inline ActiveType alpha ( const size_t i, const DateType t) { return (useSwapRateScaling_) ? ((1.0-b_[maxidx(i)][idx(t)])*S0_[maxidx(i)][idx(t)]) : (alpha_[maxidx(i)][idx(t)]) ;  }
-		inline ActiveType b     ( const size_t i, const DateType t) { return (useSwapRateScaling_) ? (D_[maxidx(i)][idx(t)]*b_[maxidx(i)][idx(t)])        : (b_[maxidx(i)][idx(t)])     ;  }
-		inline ActiveType eta   ( const DateType t)                 { return eta_[idx(t)];       }
+		inline virtual ActiveType lambda( const size_t i, const DateType t) { return lambda_[maxidx(i)][idx(t)]; }
+		inline virtual ActiveType alpha ( const size_t i, const DateType t) { return (useSwapRateScaling_) ? ((1.0-b_[maxidx(i)][idx(t)])*S0_[maxidx(i)][idx(t)]) : (alpha_[maxidx(i)][idx(t)]) ;  }
+		inline virtual ActiveType b     ( const size_t i, const DateType t) { return (useSwapRateScaling_) ? (D_[maxidx(i)][idx(t)]*b_[maxidx(i)][idx(t)])        : (b_[maxidx(i)][idx(t)])     ;  }
+		inline virtual ActiveType eta   ( const DateType t)                 { return eta_[idx(t)];       }
 
 		// analytic formulas
 

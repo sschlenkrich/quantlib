@@ -629,6 +629,7 @@
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\ratespayoffT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian\qgswaptionmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodelabcdT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodels.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\stochasticprocessT.hpp" />
