@@ -638,6 +638,7 @@
     <ClInclude Include="ql\experimental\templatemodels\stochvol\stochvolcalibrator.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\stochvol\stochvolmodels.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\stochvol\tdstochvolmodelT.hpp" />
+    <ClInclude Include="ql\experimental\volatility\smiledsurface.hpp" />
     <ClInclude Include="ql\math\polynomialmathfunction.hpp" />
     <ClInclude Include="ql\math\pascaltriangle.hpp" />
     <ClInclude Include="ql\rebatedexercise.hpp" />
@@ -1905,6 +1906,7 @@
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\stochvol\stochvolcalibrator.cpp" />
+    <ClCompile Include="ql\experimental\volatility\smiledsurface.cpp" />
     <ClCompile Include="ql\math\polynomialmathfunction.cpp" />
     <ClCompile Include="ql\math\pascaltriangle.cpp" />
     <ClCompile Include="ql\patterns\observable.cpp" />

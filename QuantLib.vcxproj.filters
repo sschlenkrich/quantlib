@@ -4166,6 +4166,9 @@
     <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodelabcdT.hpp">
       <Filter>experimental\templatemodels\qgaussian</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\volatility\smiledsurface.hpp">
+      <Filter>experimental\volatility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6659,6 +6662,9 @@
     </ClCompile>
     <ClCompile Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.cpp">
       <Filter>experimental\templatemodels\qgaussian</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\volatility\smiledsurface.cpp">
+      <Filter>experimental\volatility</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
