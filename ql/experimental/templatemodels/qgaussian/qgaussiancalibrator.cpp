@@ -42,7 +42,8 @@ namespace QuantLib {
 				  const std::vector< std::vector< Real > >&  isOutput ) 
 	    : calibrator_(calibrator), isInput_(isInput), isOutput_(isOutput) {
 		// copy model initial values
-		model_ = boost::shared_ptr<RealQuasiGaussianModel>(new RealQuasiGaussianModel(*calibrator->model_));
+		// model_ = boost::shared_ptr<RealQuasiGaussianModel>(new RealQuasiGaussianModel(*calibrator->model_));
+		model_ = calibrator->model_->clone();
 		// checking dimensions
 	    QL_REQUIRE(isInput_.size()==model_->times().size(),"QuasiGaussianModelCalibrator::Objective: wrong input dimension.");
 		for (size_t i=0; i<isInput_.size(); ++i) {

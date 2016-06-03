@@ -158,6 +158,9 @@ namespace QuantLib {
 				factorMatrices();
 			}
 
+		// clone the model
+		virtual boost::shared_ptr<QuasiGaussianModelT> clone() { return boost::shared_ptr<QuasiGaussianModelT>(new QuasiGaussianModelAbcdT(*this)); }
+
 		// parameter functions based on abcd parametrisation
 		// f(t) = [ a + b*t ] e^{-c*t} + d
 		inline virtual ActiveType lambda( const size_t i, const DateType t) { return (lambda_[maxidx(i)][0] + lambda_[maxidx(i)][1]*t)*exp(-lambda_[maxidx(i)][2]*t) + lambda_[maxidx(i)][3]; }
