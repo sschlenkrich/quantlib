@@ -350,9 +350,11 @@ namespace QuantLib {
             GFunctionFactory::YieldCurveModel modelOfYieldCurve,
             const Handle<Quote>& meanReversion);
       protected:
-        Real optionletPrice(Option::Type optionType,
-                            Real strike) const;
+        Real optionletPrice(Option::Type optionType, Real strike) const;
         Real swapletPrice() const;
+        virtual Real capletPrice(Rate effectiveCap) const;
+        virtual Real floorletPrice(Rate effectiveFloor) const;
+
     };
 
 }

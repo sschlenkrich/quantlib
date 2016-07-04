@@ -535,7 +535,7 @@ namespace QuantLib {
     //Hagan, 3.6
     Real AnalyticNormalHaganPricer::optionletPrice( Option::Type  optionType,
                                                     Real          strike) const {
-        Real variance = swaptionVolatility()->blackVariance(fixingDate_, swapTenor_, swapRateValue_);  // we assume normal vols here
+        Real variance = swaptionVolatility()->blackVariance(fixingDate_, swapTenor_, strike);  // we assume normal vols here
 		Real stdev    = sqrt(variance);
 		// undiscounted optionlet price in annuity meassure
         Real fwprice  = bachelierBlackFormula(optionType,strike,swapRateValue_,stdev);
@@ -545,7 +545,7 @@ namespace QuantLib {
 		Real Phi     = optionType * cumulativeOfNormal(d);
 		// convexity adjustment...
         Real firstDerivativeOfGAtForwardValue = gFunction_->firstDerivative( swapRateValue_);
-		Real CA      = firstDerivativeOfGAtForwardValue * annuity_ / discount_ * Phi;
+		Real CA      = firstDerivativeOfGAtForwardValue * annuity_ / discount_ * variance * Phi;
 		// discounted option let price w/ convexity adjustment
 		Real price   = discount_ * (fwprice + CA);
         price *= coupon_->accrualPeriod();
@@ -569,6 +569,35 @@ namespace QuantLib {
         }
     }
 
+    Real AnalyticNormalHaganPricer::capletPrice(Rate effectiveCap) const {
+        // caplet is equivalent to call option on fixing
+        Date today = Settings::instance().evaluationDate();
+        if (fixingDate_ <= today) {
+            // the fixing is determined
+            const Rate Rs =
+                std::max(coupon_->swapIndex()->fixing(fixingDate_)-effectiveCap, 0.);
+            Rate price = (gearing_*Rs)*(coupon_->accrualPeriod()*discount_);
+            return price;
+        } else {
+			Real capletPrice = optionletPrice(Option::Call, effectiveCap);
+			return gearing_ * capletPrice;
+        }
+    }
+
+    Real AnalyticNormalHaganPricer::floorletPrice(Rate effectiveFloor) const {
+        // floorlet is equivalent to put option on fixing
+        Date today = Settings::instance().evaluationDate();
+        if (fixingDate_ <= today) {
+            // the fixing is determined
+            const Rate Rs =
+                std::max(effectiveFloor-coupon_->swapIndex()->fixing(fixingDate_),0.);
+            Rate price = (gearing_*Rs)*(coupon_->accrualPeriod()*discount_);
+            return price;
+        } else {
+			Real floorletPrice = optionletPrice(Option::Put, effectiveFloor);
+            return gearing_ * floorletPrice;
+        }
+    }
 
 
 //===========================================================================//
