@@ -5,6 +5,7 @@
  Copyright (C) 2006 François du Vignaud
  Copyright (C) 2001, 2002, 2003 Sadruddin Rejeb
  Copyright (C) 2006, 2007 StatPro Italia srl
+ Copyright (C) 2016 Paolo Mazzocchi
 
  This file is part of QuantLib, a free-software/open-source library
  for financial quantitative analysts and developers - http://quantlib.org/
@@ -41,7 +42,7 @@ namespace QuantLib {
                              const Handle<YieldTermStructure>& discountCurve,
                              Real targetValue,
                              Real displacement,
-							 VolatilityType volatilityType);
+                             VolatilityType type);
             Real operator()(Volatility x) const;
             Real derivative(Volatility x) const;
           private:
@@ -57,18 +58,30 @@ namespace QuantLib {
                               const Handle<YieldTermStructure>& discountCurve,
                               Real targetValue,
                               Real displacement,
-							  VolatilityType volatilityType)
+                              VolatilityType type)
         : discountCurve_(discountCurve), targetValue_(targetValue) {
 
             // set an implausible value, so that calculation is forced
             // at first ImpliedVolHelper::operator()(Volatility x) call
             vol_ = boost::shared_ptr<SimpleQuote>(new SimpleQuote(-1));
             Handle<Quote> h(vol_);
-			if (volatilityType==Normal) {
-                engine_ = boost::shared_ptr<PricingEngine>(new BachelierCapFloorEngine(discountCurve_, h, Actual365Fixed()));
-			} else {
-                engine_ = boost::shared_ptr<PricingEngine>(new BlackCapFloorEngine(discountCurve_, h, Actual365Fixed(), displacement));
-			}
+
+            switch (type) {
+            case ShiftedLognormal:
+                engine_ = boost::shared_ptr<PricingEngine>(new
+                    BlackCapFloorEngine(discountCurve_, h, Actual365Fixed(),
+                                                                displacement));
+                break;
+            case Normal:
+                engine_ = boost::shared_ptr<PricingEngine>(new
+                    BachelierCapFloorEngine(discountCurve_, h, 
+                                                            Actual365Fixed()));
+                break;
+            default:
+                QL_FAIL("unknown VolatilityType (" << type << ")");
+                break;
+            }
+
             cap.setupArguments(engine_->getArguments());
             results_ = dynamic_cast<const Instrument::results*>(engine_->getResults());
         }
@@ -310,16 +323,29 @@ namespace QuantLib {
                                            Natural maxEvaluations,
                                            Volatility minVol,
                                            Volatility maxVol,
-                                           Real displacement,
-										   VolatilityType volatilityType) const {
+                                           VolatilityType type,
+                                           Real displacement) const {
         //calculate();
         QL_REQUIRE(!isExpired(), "instrument expired");
 
-        ImpliedVolHelper f(*this, d, targetValue, displacement, volatilityType);
+        ImpliedVolHelper f(*this, d, targetValue, displacement, type);
         //Brent solver;
         NewtonSafe solver;
         solver.setMaxEvaluations(maxEvaluations);
         return solver.solve(f, accuracy, guess, minVol, maxVol);
+    }
+
+    Volatility CapFloor::impliedVolatility(Real targetValue,
+                                           const Handle<YieldTermStructure>& d,
+                                           Volatility guess,
+                                           Real accuracy,
+                                           Natural maxEvaluations,
+                                           Volatility minVol,
+                                           Volatility maxVol,
+                                           Real displacement) const {
+        return impliedVolatility(targetValue, d, guess, accuracy,
+                                 maxEvaluations, minVol, maxVol,
+                                 ShiftedLognormal, displacement);
     }
 
 }

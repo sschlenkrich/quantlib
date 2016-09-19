@@ -3,6 +3,7 @@
 /*
  Copyright (C) 2007 Giorgio Facchinetti
  Copyright (C) 2007 Katiuscia Manzoni
+ Copyright (C) 2015 Peter Caspers
 
  This file is part of QuantLib, a free-software/open-source library
  for financial quantitative analysts and developers - http://quantlib.org/
@@ -17,8 +18,6 @@
  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
-
-#include <ql/termstructures/volatility/volatilitytype.hpp>
 
 #include <ql/termstructures/volatility/optionlet/strippedoptionletadapter.hpp>
 #include <ql/termstructures/volatility/optionlet/optionletstripper.hpp>
@@ -35,8 +34,7 @@ namespace QuantLib {
     : OptionletVolatilityStructure(s->settlementDays(),
                                    s->calendar(),
                                    s->businessDayConvention(),
-                                   s->dayCounter(),
-								   s->volatilityType()),
+                                   s->dayCounter()),
       optionletStripper_(s),
       nInterpolations_(s->optionletMaturities()),
       strikeInterpolations_(nInterpolations_) {
@@ -45,30 +43,30 @@ namespace QuantLib {
 
     boost::shared_ptr<SmileSection>
     StrippedOptionletAdapter::smileSectionImpl(Time t) const {
-         std::vector<Rate> optionletStrikes = optionletStripper_->optionletStrikes(0); // strikes are the same for all times ?!
-         std::vector<Real> stddevs;
-         for(Size i=0;i<optionletStrikes.size();i++) {
-             stddevs.push_back(interpolatedVolatilityImpl(t,optionletStrikes[i])*std::sqrt(t));
-         }
-         // Extrapolation may be a problem with splines, but since minStrike() and maxStrike() are set, we assume that no one will use stddevs for strikes outside these strikes
-         CubicInterpolation::BoundaryCondition bc = optionletStrikes.size()>=4 ? CubicInterpolation::Lagrange : CubicInterpolation::SecondDerivative;
-         return boost::shared_ptr<SmileSection>(new InterpolatedSmileSection<Cubic>(t,optionletStrikes,stddevs,Null<Real>(),
-                                                            Cubic(CubicInterpolation::Spline,false,bc,0.0,bc,0.0),Actual365Fixed(),0.0,volatilityType()));
+        std::vector< Rate > optionletStrikes =
+            optionletStripper_->optionletStrikes(
+                0); // strikes are the same for all times ?!
+        std::vector< Real > stddevs;
+        for (Size i = 0; i < optionletStrikes.size(); i++) {
+            stddevs.push_back(volatilityImpl(t, optionletStrikes[i]) *
+                              std::sqrt(t));
+        }
+        // Extrapolation may be a problem with splines, but since minStrike()
+        // and maxStrike() are set, we assume that no one will use stddevs for
+        // strikes outside these strikes
+        CubicInterpolation::BoundaryCondition bc =
+            optionletStrikes.size() >= 4 ? CubicInterpolation::Lagrange
+                                         : CubicInterpolation::SecondDerivative;
+        return boost::make_shared< InterpolatedSmileSection< Cubic > >(
+            t, optionletStrikes, stddevs, Null< Real >(),
+            Cubic(CubicInterpolation::Spline, false, bc, 0.0, bc, 0.0),
+            Actual365Fixed(), volatilityType(), displacement());
     }
 
     Volatility StrippedOptionletAdapter::volatilityImpl(Time length,
                                                         Rate strike) const {
         calculate();
 
-		// use smile consistently interpolation 
-		return smileSection(length,true)->volatility(strike,volatilityType(),0.0);
-	}
-
-	// set up smile section based on interpolated vols in case exercises have individual (different) strikes
-    Volatility StrippedOptionletAdapter::interpolatedVolatilityImpl(Time length, Rate strike) const {
-        calculate();
-
-		// do not use original implementation
         std::vector<Volatility> vol(nInterpolations_);
         for (Size i=0; i<nInterpolations_; ++i)
             vol[i] = strikeInterpolations_[i]->operator()(strike, true);
@@ -139,4 +137,11 @@ namespace QuantLib {
         return optionletStripper_->optionletFixingDates().back();
     }
 
+    VolatilityType StrippedOptionletAdapter::volatilityType() const {
+        return optionletStripper_->volatilityType();
+    }
+
+    Real StrippedOptionletAdapter::displacement() const {
+        return optionletStripper_->displacement();
+    }
 }

@@ -43,7 +43,7 @@ namespace QuantLib {
           default:
             return out << "Unknown volatility type (" << t << ")";
         }
-    };
+    }
 
 }
 
