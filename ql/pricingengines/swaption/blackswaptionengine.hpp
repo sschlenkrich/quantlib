@@ -317,7 +317,6 @@ namespace QuantLib {
                                      const Handle<SwaptionVolatilityStructure>& vol,
                                      Real displacement = 0.0)
 									 : BachelierSwaptionEngine(discountCurve, vol) {}
-        virtual void calculate() const;
     };
 
 
