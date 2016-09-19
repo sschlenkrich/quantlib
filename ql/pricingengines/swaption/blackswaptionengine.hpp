@@ -141,6 +141,7 @@ namespace QuantLib {
         QL_DEPRECATED
         BlackSwaptionEngine(const Handle<YieldTermStructure>& discountCurve,
                             const Handle<SwaptionVolatilityStructure>& vol,
+                            Real displacement);
 
         /*! \deprecated
           might return Null<Real>(), if given by a volatility structure,
@@ -299,23 +300,23 @@ namespace QuantLib {
 
     }  // namespace detail
 
-
-	class BachelierBlackSwaptionEngine : public BlackSwaptionEngine {
+    // deprecated 
+	class BachelierBlackSwaptionEngine : public BachelierSwaptionEngine {
       public:
         BachelierBlackSwaptionEngine(const Handle<YieldTermStructure>& discountCurve,
                                      Volatility vol,
                                      const DayCounter& dc = Actual365Fixed(),
                                      Real displacement = 0.0)
-									 : BlackSwaptionEngine(discountCurve, vol, dc, displacement) {}
+									 : BachelierSwaptionEngine(discountCurve, vol, dc) {}
         BachelierBlackSwaptionEngine(const Handle<YieldTermStructure>& discountCurve,
                                      const Handle<Quote>& vol,
                                      const DayCounter& dc = Actual365Fixed(),
                                      Real displacement = 0.0)
-									 : BlackSwaptionEngine(discountCurve, vol, dc, displacement) {}
+									 : BachelierSwaptionEngine(discountCurve, vol, dc) {}
         BachelierBlackSwaptionEngine(const Handle<YieldTermStructure>& discountCurve,
                                      const Handle<SwaptionVolatilityStructure>& vol,
                                      Real displacement = 0.0)
-									 : BlackSwaptionEngine(discountCurve, vol, displacement) {}
+									 : BachelierSwaptionEngine(discountCurve, vol) {}
         virtual void calculate() const;
     };
 
