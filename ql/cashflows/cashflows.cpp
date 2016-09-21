@@ -852,7 +852,7 @@ namespace QuantLib {
             npvDate = settlementDate;
 
 #if defined(QL_EXTRA_SAFETY_CHECKS)
-        QL_REQUIRE(std::is_sorted(leg.begin(), leg.end(), cashFlowLess),
+        QL_REQUIRE(std::is_sorted(leg.begin(), leg.end(), CashFlowLess()),
                    "cashflows must be sorted in ascending order w.r.t. their payment dates");
 #endif
 
