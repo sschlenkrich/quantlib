@@ -191,6 +191,71 @@ namespace QuantLib {
 			}
 		};
 
+		// cache result in case it is requested repeatedly
+		class Cache : public MCPayoffT {
+		protected:
+			boost::shared_ptr<MCPayoffT> x_;
+			boost::shared_ptr<PathType> lastPath_;
+			ActiveType                  lastPayoff_;
+		public:
+			Cache(const boost::shared_ptr<MCPayoffT>&   x) : MCPayoffT(x->observationTime()), x_(x) {}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				if (lastPath_!=p) {
+					lastPath_ = p;
+					lastPayoff_ = x_->at(p);
+				}
+				return lastPayoff_;
+			}
+		};
+
+		// logical operators
+		class Logical : public MCPayoffT {
+		protected:
+			// seems we need to wrap oparators to construct a pointer to it
+			static bool equal       (const ActiveType& x, const ActiveType& y) { return (x == y); }
+			static bool notEqual    (const ActiveType& x, const ActiveType& y) { return (x != y); }
+			static bool less        (const ActiveType& x, const ActiveType& y) { return (x < y);  }
+			static bool lessEqual   (const ActiveType& x, const ActiveType& y) { return (x <= y); }
+			static bool greater     (const ActiveType& x, const ActiveType& y) { return (x > y);  }
+			static bool greaterEqual(const ActiveType& x, const ActiveType& y) { return (x >= y); }
+			static bool and         (const ActiveType& x, const ActiveType& y) { return ((x!=(ActiveType)0.0)&&(y!=(ActiveType)0.0)); }
+			static bool or          (const ActiveType& x, const ActiveType& y) { return ((x!=(ActiveType)0.0)||(y!=(ActiveType)0.0)); }
+			// this is the actual pointer to the operator
+			bool(*op_)(const ActiveType&, const ActiveType&);
+			// these are the operands
+			boost::shared_ptr<MCPayoffT> x_, y_;
+		public:
+			Logical(const boost::shared_ptr<MCPayoffT>&   x,
+				    const boost::shared_ptr<MCPayoffT>&   y,
+				    const std::string&                    op) : MCPayoffT(0.0), x_(x), y_(y) {
+				op_ = &equal; // this is a very bad default
+				if (op == "==") op_ = &equal;
+				if (op == "!=") op_ = &notEqual;
+				if (op == "<")  op_ = &less;
+				if (op == "<=") op_ = &lessEqual;
+				if (op == ">")  op_ = &greater;
+				if (op == ">=") op_ = &greaterEqual;
+				if (op == "and") op_ = &and;
+				if (op == "or") op_ = &or;
+			}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				if ((*op_)(x_->at(p), y_->at(p))) return (ActiveType)(1.0);
+				else return (ActiveType)(0.0);
+			}
+		};
+
+		class IfThenElse : public MCPayoffT {
+		protected:
+			boost::shared_ptr<MCPayoffT> x_, y_, z_;
+		public:
+			IfThenElse(const boost::shared_ptr<MCPayoffT>&   x,
+				const boost::shared_ptr<MCPayoffT>&   y,
+				const boost::shared_ptr<MCPayoffT>&   z) : MCPayoffT(0.0), x_(x), y_(y), z_(z) {}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				if (x_->at(p) != ((ActiveType)0.0)) return y_->at(p);
+				return z_->at(p);
+			}
+		};
 
 	};
 
