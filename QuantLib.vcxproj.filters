@@ -4265,6 +4265,9 @@
     <ClInclude Include="ql\experimental\volatility\smiledsurface.hpp">
       <Filter>experimental\volatility</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcscriptT.hpp">
+      <Filter>experimental\templatemodels\montecarlo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">

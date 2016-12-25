@@ -140,22 +140,38 @@ namespace QuantLib {
 			PassiveType oneOverDaycount_;
 			PassiveType D_; // tenor basis
 		public:
-			LiborRate( const DateType                        fixingTime,
-				       const DateType                        startTime,  // we don't get start and end date from the index
-					   const DateType                        endTime,    // therefore we need to supply it explicitely
-					   const boost::shared_ptr<IborIndex>&   iborIndex,
-					   const Handle<YieldTermStructure>&     discYTS )
-					   : MCPayoffT(fixingTime), fixingTime_(fixingTime), startTime_(startTime), endTime_(endTime) {
-				Date today      = discYTS->referenceDate(); // check if this is the correct date...
+			LiborRate(const DateType                        fixingTime,
+				      const boost::shared_ptr<IborIndex>&   iborIndex,
+				      const Handle<YieldTermStructure>&     discYTS)
+				      : MCPayoffT(fixingTime), fixingTime_(fixingTime) {
+				Date today = discYTS->referenceDate(); // check if this is the correct date...
 				Date fixingDate = today + ((BigInteger)ClosestRounding(0)(fixingTime_*365.0)); // assuming act/365 day counting
-				Date startDate  = today + ((BigInteger)ClosestRounding(0)(startTime_ *365.0)); // assuming act/365 day counting
-				Date endDate    = today + ((BigInteger)ClosestRounding(0)(endTime_   *365.0)); // assuming act/365 day counting
-				PassiveType liborForward = iborIndex->fixing(fixingDate,true);
-				PassiveType daycount     = iborIndex->dayCounter().yearFraction(startDate,endDate);
-				oneOverDaycount_ = 1.0/daycount;
+				Date startDate = iborIndex->valueDate(fixingDate);
+				Date endDate = iborIndex->maturityDate(startDate);
+				startTime_ = (startDate - today) / 365.0;
+				endTime_ = (endDate - today) / 365.0;
+				PassiveType liborForward = iborIndex->fixing(fixingDate, true);
+				PassiveType daycount = iborIndex->dayCounter().yearFraction(startDate, endDate);
+				oneOverDaycount_ = 1.0 / daycount;
 				// tenor basis calculation
 				D_ = (1.0 + daycount*liborForward) * discYTS->discount(endDate) / discYTS->discount(startDate);
-			}			        
+			}
+		    LiborRate( const DateType                        fixingTime,
+		    	       const DateType                        startTime,  // we don't get start and end date from the index
+		    		   const DateType                        endTime,    // therefore we need to supply it explicitely
+		    		   const boost::shared_ptr<IborIndex>&   iborIndex,
+		    		   const Handle<YieldTermStructure>&     discYTS )
+		    		   : MCPayoffT(fixingTime), fixingTime_(fixingTime), startTime_(startTime), endTime_(endTime) {
+		    	Date today      = discYTS->referenceDate(); // check if this is the correct date...
+		    	Date fixingDate = today + ((BigInteger)ClosestRounding(0)(fixingTime_*365.0)); // assuming act/365 day counting
+		    	Date startDate  = today + ((BigInteger)ClosestRounding(0)(startTime_ *365.0)); // assuming act/365 day counting
+		    	Date endDate    = today + ((BigInteger)ClosestRounding(0)(endTime_   *365.0)); // assuming act/365 day counting
+		    	PassiveType liborForward = iborIndex->fixing(fixingDate,true);
+		    	PassiveType daycount     = iborIndex->dayCounter().yearFraction(startDate,endDate);
+		    	oneOverDaycount_ = 1.0/daycount;
+		    	// tenor basis calculation
+		    	D_ = (1.0 + daycount*liborForward) * discYTS->discount(endDate) / discYTS->discount(startDate);
+		    }			        
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				return ( p->zeroBond(fixingTime_,startTime_) / p->zeroBond(fixingTime_,endTime_) * D_ - 1.0 ) * oneOverDaycount_;
 			}

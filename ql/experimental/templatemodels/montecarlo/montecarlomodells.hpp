@@ -22,6 +22,7 @@
 #include <ql/experimental/templatemodels/montecarlo/ratespayoffT.hpp>
 #include <ql/experimental/templatemodels/montecarlo/commoditypayoffT.hpp>
 #include <ql/experimental/templatemodels/montecarlo/amcpricerT.hpp>
+#include <ql/experimental/templatemodels/montecarlo/mcscriptT.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/regressionT.hpp>
 
 
@@ -43,6 +44,8 @@ namespace QuantLib {
 	typedef RealMCRates::CashFlow         RealMCCashFlow;
 	typedef RealMCRates::Leg              RealMCLeg;
 	typedef RealMCRates::CancellableNote  RealMCCancellableNote;
+
+	typedef MCScriptT<QuantLib::Time, QuantLib::Real, QuantLib::Real> RealMCScript;
 
 	typedef TemplateAuxilliaries::Regression<QuantLib::Real> RealRegression;
 

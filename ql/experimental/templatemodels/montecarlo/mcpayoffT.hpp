@@ -235,8 +235,8 @@ namespace QuantLib {
 				if (op == "<=") op_ = &lessEqual;
 				if (op == ">")  op_ = &greater;
 				if (op == ">=") op_ = &greaterEqual;
-				if (op == "and") op_ = &and;
-				if (op == "or") op_ = &or;
+				if (op == "&&") op_ = &and;
+				if (op == "||") op_ = &or;
 			}
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				if ((*op_)(x_->at(p), y_->at(p))) return (ActiveType)(1.0);
