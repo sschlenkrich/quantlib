@@ -125,7 +125,7 @@ namespace QuantLib {
 				if (boost::regex_match(expr, what, boost::regex("(\\+|-)(.+)"))) {
 					p = operator1(std::string(what[1]), std::string(what[2]), k);
 				}
-				else if (boost::regex_match(expr, what, boost::regex("(.+)(\\+|-|\\*|==|!=|<|<=|>|>=|&&|\\|\\|)(.+)"))) {
+				else if (boost::regex_match(expr, what, boost::regex("(.+)(\\+|-|\\*|==|!=|<=|<|>=|>|&&|\\|\\|)(.+)"))) {
 					p = operator2(std::string(what[2]), std::string(what[1]), std::string(what[3]), k);
 				}
 				else if (boost::regex_match(expr, what, boost::regex("([a-zA-Z]+)\\((.+),(.+),(.+)\\)"))) {
@@ -158,6 +158,29 @@ namespace QuantLib {
 				}
 				// if we end up here we have a valid payoff but are not allowed to overwrite existing map entry
 				scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": '" + var + "' can not be replaced"));
+			}
+			if (script.size() == 0) { // in this case the previous loop was not executed and we just print some help details
+				scriptLog_.push_back(std::string("we implement the following non-recursive grammar                                     "));
+				scriptLog_.push_back(std::string("                                                                                     "));
+				scriptLog_.push_back(std::string("line  =  var '=' expr                                                                "));
+				scriptLog_.push_back(std::string("var   =  [a-zA-Z][a-zA-Z0-9]*           { RegEx }                                    "));
+				scriptLog_.push_back(std::string("expr  =  operator | function | payoff   { apply from left to right }                 "));
+				scriptLog_.push_back(std::string("                                                                                     "));
+				scriptLog_.push_back(std::string("operator   =  operator1 | operator2                                                  "));
+				scriptLog_.push_back(std::string("operator1  =  ['+' | '-'] payoff                                                     "));
+				scriptLog_.push_back(std::string("operator2  =  payoff ['+' | '-' | '*' |                                              "));
+				scriptLog_.push_back(std::string("                      '==' | '!=' | '<=' |'<' | '>=' | '>' | '&&' | '||' ] payoff    "));
+				scriptLog_.push_back(std::string("                                                                                     "));
+				scriptLog_.push_back(std::string("function   =  function3 | function2 | function1                                      "));
+				scriptLog_.push_back(std::string("function3  =  fname3 '(' payoff ',' payoff ',' payoff ')'                            "));
+				scriptLog_.push_back(std::string("function2  =  fname2 '(' payoff ',' payoff ')'                                       "));
+				scriptLog_.push_back(std::string("function1  =  fname1 '(' payoff ')'                                                  "));
+				scriptLog_.push_back(std::string("                                                                                     "));
+				scriptLog_.push_back(std::string("fname3     =  'IfThenElse'                                                           "));
+				scriptLog_.push_back(std::string("fname2     =  'Min' | 'Max' | 'Pay'                                                  "));
+				scriptLog_.push_back(std::string("fname1     =  'Cache'                                                                "));
+				scriptLog_.push_back(std::string("                                                                                     "));
+				scriptLog_.push_back(std::string("payoff  =  number | string              { try double conversion and lookup in map }  "));
 			}
 		}
 
