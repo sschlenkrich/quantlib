@@ -252,40 +252,39 @@ namespace QuantLib {
 			return X_; // default
 		}
 
-		// call option as maximum of payoffs via regression
-		class Max : public PayoffType {
+		// call option as minimum or maximum of payoffs via regression
+		// we combine minimum and maximum calculation to bundle essential source code
+		class MinMax : public PayoffType {
 		private:
-			std::vector<boost::shared_ptr<PayoffType>> x_;  // first argument max
-			std::vector<boost::shared_ptr<PayoffType>> y_;  // second argument max
+			std::vector<boost::shared_ptr<PayoffType>> x_;  // first argument min/max
+			std::vector<boost::shared_ptr<PayoffType>> y_;  // second argument min/max
 			std::vector<boost::shared_ptr<PayoffType>> z_;  // regression variables
-			boost::shared_ptr<SimulationType>          simulation_;  // we need a simulation for regression calculation
-			size_t                                     maxPolynDegree_;
-			boost::shared_ptr<RegressionType>          regression_;
+			PassiveType                                minMax_;          // minimum (-1) or maximum (+1) payoff
+			boost::shared_ptr<SimulationType>          simulation_;      // we need a simulation for regression calculation
+			size_t                                     maxPolynDegree_;  // maximum polynomial degree for regression variables
+			boost::shared_ptr<RegressionType>          regression_;      // we regress z vs. trigger = (x - y)
 		public:
-			Max(const std::vector<boost::shared_ptr<PayoffType>>& x,
-				const std::vector<boost::shared_ptr<PayoffType>>& y,
-				const std::vector<boost::shared_ptr<PayoffType>>& z,
-				const DateType                                    observationTime,
-				const boost::shared_ptr<SimulationType>           simulation,
-				size_t                                            maxPolynDegree)
-				: x_(x), y_(y), z_(z), simulation_(simulation), maxPolynDegree_(maxPolynDegree), PayoffType(observationTime) { 
+			MinMax(const std::vector<boost::shared_ptr<PayoffType>>& x,
+				   const std::vector<boost::shared_ptr<PayoffType>>& y,
+				   const std::vector<boost::shared_ptr<PayoffType>>& z,
+				   const DateType                                    observationTime,
+				   const PassiveType                                 minMax, // minimum (-1) or maximum (+1) payoff
+			       const boost::shared_ptr<SimulationType>           simulation,
+				   size_t                                            maxPolynDegree)
+				   : x_(x), y_(y), z_(z), minMax_(minMax), simulation_(simulation), maxPolynDegree_(maxPolynDegree), PayoffType(observationTime) { 
 				// we do nothing here, all the work is postponed to the (first) call of at
 			}
 
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				if ((!regression_) && (z_.size() > 0) && (simulation_)) {  // only in this case we calculate the regression
-					VecA X(simulation_->nPaths(), (ActiveType)0.0);  // we don't really need X and Y, but we leave it in for debugging purposes
-					VecA Y(simulation_->nPaths(), (ActiveType)0.0);
 					VecA T(simulation_->nPaths(), (ActiveType)0.0);  // the actual trigger used for regression
 					MatA Z(simulation_->nPaths(), VecA(z_.size(), (ActiveType)0.0));
 					for (size_t k = 0; k < simulation_->nPaths(); ++k) {
 						boost::shared_ptr<PathType> p = simulation_->path(k); // this p shadows input p
 						ActiveType numeraire = p->numeraire(observationTime());
-						for (size_t i = 0; i < x_.size(); ++i) X[k] += x_[i]->discountedAt(p);
-						X[k] *= numeraire;
-						for (size_t i = 0; i < y_.size(); ++i) Y[k] += y_[i]->discountedAt(p);
-						Y[k] *= numeraire;
-						T[k] = X[k] - Y[k];
+						for (size_t i = 0; i < x_.size(); ++i) T[k] += x_[i]->discountedAt(p);
+						for (size_t i = 0; i < y_.size(); ++i) T[k] -= y_[i]->discountedAt(p);
+						T[k] *= numeraire;
 						for (size_t i = 0; i < z_.size(); ++i) Z[k][i] = z_[i]->at(p);
 					}
 					regression_ = boost::shared_ptr<RegressionType>(new RegressionType(Z, T, maxPolynDegree_));
@@ -303,7 +302,7 @@ namespace QuantLib {
 				// if there is no regression we look into the future
 				ActiveType trigger = (x - y);
 				if (regression_) trigger = regression_->value(z);
-				return (trigger > 0.0) ? (x) : (y);
+				return ((minMax_*trigger) > 0.0) ? (x) : (y);
 			}
 
 		};

@@ -215,7 +215,10 @@ namespace TemplateAuxilliaries {
 		int *INFO){
 			assert(*JOBU=='S');
 			assert(*JOBVT=='S');
-			const size_t dim[2]={std::max(*N,*M), std::min(*N,*M)};
+			// const size_t dim[2]={std::max(*N,*M), std::min(*N,*M)};
+			const size_t maxNM = ((*N) > (*M)) ? (*N) : (*M);
+			const size_t minNM = ((*N) > (*M)) ? (*M) : (*N);
+			const size_t dim[2] = { maxNM, minNM };
 			T* U_=new T[dim[0]*dim[0]]; memset(U_, 0, dim[0]*dim[0]*sizeof(T));
 			T* V_=new T[dim[1]*dim[1]]; memset(V_, 0, dim[1]*dim[1]*sizeof(T));
 			T* S_=new T[dim[0]*dim[1]];
