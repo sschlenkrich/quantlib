@@ -37,10 +37,14 @@ namespace QuantLib {
 							    // discretisation properties
 							    const size_t                        dim,
 								const QuantLib::Real                gridRadius,
-								const QuantLib::Real                tol ) {
+								const QuantLib::Real                tol, 
+                                // optional non-rational exercise parameters
+                                const std::vector<QuantLib::Real>&  opportunCosts,      // opportunity costs which need to be exceeded
+                                const std::vector<QuantLib::Real>&  exercIntensity ) {  // (annualized) exercise intensity
+
         this->cloneModel();
 		// evaluate the function
-		ActiveType aresult = amodel_->BermudanBondOption( exercDates, strikeValues, startDates, payDates, cashFlows, cop, dim, gridRadius, tol);
+		ActiveType aresult = amodel_->BermudanBondOption( exercDates, strikeValues, startDates, payDates, cashFlows, cop, dim, gridRadius, tol, opportunCosts, exercIntensity);
 		// fetch reference European prices
 		this->europeansAnalytical_.resize(amodel_->europeansAnalytical().size());
 		for (Size k=0; k<this->europeansAnalytical_.size(); ++k) this->europeansAnalytical_[k] = amodel_->europeansAnalytical()[k].val();

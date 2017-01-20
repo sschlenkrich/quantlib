@@ -126,7 +126,10 @@ namespace QuantLib {
 							           // discretisation properties
 							           const size_t                     dim,          // number of short rate grid points
 							           const PassiveType                gridRadius,   // radius s of short rate grid [r0-s, r0+s]
-							           const PassiveType                tol );        // absolute tolerance for numerical integration
+							           const PassiveType                tol,          // absolute tolerance for numerical integration
+									   // optional non-rational exercise parameters
+		                               const std::vector<PassiveType>&  opportunCosts = std::vector<PassiveType>(),     // opportunity costs which need to be exceeded
+			                           const std::vector<PassiveType>&  exercIntensity = std::vector<PassiveType>() );  // (annualized) exercise intensity
 
 		virtual
 		const std::vector<ActiveType>& CalibrateVolatility (
@@ -298,9 +301,12 @@ namespace QuantLib {
 							// discretisation properties
 							const size_t                     dim,          // number of short rate grid points
 							const PassiveType                gridRadius,   // radius s of short rate grid [r0-s, r0+s]
-							const PassiveType                tol  ) {      // absolute tolerance for numerical integration
+							const PassiveType                tol,          // absolute tolerance for numerical integration
+							// optional non-rational exercise parameters
+		                    const std::vector<PassiveType>&  opportunCosts = std::vector<PassiveType>(),     // opportunity costs which need to be exceeded
+			                const std::vector<PassiveType>&  exercIntensity = std::vector<PassiveType>() ) { // (annualized) exercise intensity
         DateType    startTime;		
-        PassiveType r0, f0, f1;
+        PassiveType r0, f0, f1, C = 0.0, Q1 = 1.0, Q2 = 1.0;
         ActiveType  discretePV; //, variance, integral1, integral2, forwardDF, expectation;
         size_t i, j, k, idx_start, Nexc, Ncfs;
 		
@@ -316,6 +322,9 @@ namespace QuantLib {
 		evaluateShortRateGrid( r0, gridRadius, dim );
 
 		Nexc = std::min(exercTimes.size(),strikeValues.size());
+		if (opportunCosts.size()>0)  Nexc = std::min(Nexc, opportunCosts.size());
+		if (exercIntensity.size()>0) Nexc = std::min(Nexc, exercIntensity.size());
+
 		V.resize(Nexc+1);      // V[0] Bermudan, V[1..Nexc] European numeric
 		G.resize(Nexc+1);      // slope dV/dr for C2 interpolation
         Z.resize(Nexc+1);      // intermediates in linear solver
@@ -347,19 +356,34 @@ namespace QuantLib {
             expectation[k].resize(dim);
         }
 
+		if (exercIntensity.size() > 0) { // pre-accumulate to last exercise
+			PassiveType sum = 0;
+			for (k = 0; k<Nexc; ++k) sum += exercIntensity[k] * (exercTimes[k] - ((k>0) ? (exercTimes[k - 1]) : (0)));
+			Q1 = exp(-sum);
+		}
+
 		for (i=0; i<dim; ++i) V[0][Nexc][i] = 0.0;  // ensure European equals Bermudan at last exercise
 
 		for (long k=Nexc-1; k>=0; --k) {
 			// consider only coupons with start date after excercise date
 			idx_start = 0;
 			while ((startTimes[idx_start]<exercTimes[k])&(idx_start<Ncfs-1)) ++idx_start;
+			// evaluate opportunity cost and independent non-exercise probability
+			if (opportunCosts.size() > 0) {
+				C = opportunCosts[k];
+			}
+			if (exercIntensity.size() > 0) {
+				Q2 = Q1;
+				Q1 = Q2 / exp(-exercIntensity[k] * (exercTimes[k] - ((k > 0) ? (exercTimes[k - 1]) : (0))));
+			}
 			// evaluate pay-off at excercise
 			for (i=0; i<dim; ++i) {
-				V[k+1][k+1][i] = CouponBond( exercTimes[k], payTimes, cashFlows, shortRateGrid_[i],
-								             (ActiveType *) 0, idx_start );
-				V[k+1][k+1][i] = (cop*(V[k+1][k+1][i]-strikeValues[k])>0) ? cop*(V[k+1][k+1][i]-strikeValues[k]) : (ActiveType)0.0;         
-				/* evaluate Bermudan option */
-				V[0][k+1][i] = (V[k+1][k+1][i]>V[0][k+1][i]) ? V[k+1][k+1][i] : V[0][k+1][i];
+				V[k+1][k+1][i] = CouponBond( exercTimes[k], payTimes, cashFlows, shortRateGrid_[i], (ActiveType *) 0, idx_start );
+				V[k+1][k+1][i] = cop*(V[k+1][k+1][i]-strikeValues[k]);        // U
+				ActiveType marginal = V[k+1][k+1][i] - V[0][k+1][i];          // U - H
+				ActiveType delta = (1-Q2/Q1) + ((marginal>C)?(Q2/Q1):(0));    // exercise function
+				V[0][k+1][i]   += delta * marginal;                           // Bermudan
+				V[k+1][k+1][i] *= ((1-Q2) + ((V[k+1][k+1][i]>C)?(Q2):(0)));   // European
 			}
 			// evaluate ZCB() E^T [ V(r) ]
 			// cubic spline interpolation of solution V only if required for integration (for non trivial tolerance)

@@ -56,7 +56,11 @@ namespace QuantLib {
 							    // discretisation properties
 							    const size_t                        dim,
 								const QuantLib::Real                gridRadius,
-							    const QuantLib::Real                tol );
+							    const QuantLib::Real                tol,
+                                // optional non-rational exercise parameters
+                                const std::vector<QuantLib::Real>&  opportunCosts = std::vector<QuantLib::Real>(),     // opportunity costs which need to be exceeded
+                                const std::vector<QuantLib::Real>&  exercIntensity = std::vector<QuantLib::Real>() );  // (annualized) exercise intensity
+
 		const std::vector<QuantLib::Real>& BermudanCalibration (
 			                           const std::vector<QuantLib::Time>&  exercDates,   // option's exercise dates (equal settlment)
                                        const std::vector<QuantLib::Real>&  strikeValues, // strike payed at excercise dates
