@@ -129,7 +129,8 @@ namespace QuantLib {
 							           const PassiveType                tol,          // absolute tolerance for numerical integration
 									   // optional non-rational exercise parameters
 		                               const std::vector<PassiveType>&  opportunCosts = std::vector<PassiveType>(),     // opportunity costs which need to be exceeded
-			                           const std::vector<PassiveType>&  exercIntensity = std::vector<PassiveType>() );  // (annualized) exercise intensity
+			                           const std::vector<PassiveType>&  exercIntensity = std::vector<PassiveType>(),    // (annualized) exercise intensity
+			                           const PassiveType                barrierSmoothing = 0);  // short rate smoothing range
 
 		virtual
 		const std::vector<ActiveType>& CalibrateVolatility (
@@ -160,6 +161,22 @@ namespace QuantLib {
 							           // calibration parameters
 									   const PassiveType                tol_vola      // absolut tolerance in short rate volatility
 								);
+
+		// indicator function with payoff smoothing
+		class SmoothIndicator {
+		public:
+			enum Type { AllwaysOne, AllwaysZero, Ascending, Descending };
+			SmoothIndicator(const std::vector<PassiveType>&  x,  // grid
+				            const std::vector<ActiveType>&   M,  // marginal
+				            const PassiveType                C,  // strike
+				            const PassiveType                smoothingRadius = 0,
+				            const PassiveType                smoothingOffset = 0);
+			PassiveType operator() (size_t idx);
+		private:
+			Type type_;
+			PassiveType barrier_, smoothingRadius_, smoothingOffset_;
+			std::vector<PassiveType>  y_; // brute force result
+		};
 	};
 
 
@@ -303,8 +320,10 @@ namespace QuantLib {
 							const PassiveType                gridRadius,   // radius s of short rate grid [r0-s, r0+s]
 							const PassiveType                tol,          // absolute tolerance for numerical integration
 							// optional non-rational exercise parameters
-		                    const std::vector<PassiveType>&  opportunCosts = std::vector<PassiveType>(),     // opportunity costs which need to be exceeded
-			                const std::vector<PassiveType>&  exercIntensity = std::vector<PassiveType>() ) { // (annualized) exercise intensity
+		                    const std::vector<PassiveType>&  opportunCosts,     // opportunity costs which need to be exceeded
+			                const std::vector<PassiveType>&  exercIntensity,    // (annualized) exercise intensity
+		                    const PassiveType                barrierSmoothing   // short rate smoothing range
+		                    ) { 
         DateType    startTime;		
         PassiveType r0, f0, f1, C = 0.0, Q1 = 1.0, Q2 = 1.0;
         ActiveType  discretePV; //, variance, integral1, integral2, forwardDF, expectation;
@@ -376,13 +395,19 @@ namespace QuantLib {
 				Q2 = Q1;
 				Q1 = Q2 / exp(-exercIntensity[k] * (exercTimes[k] - ((k > 0) ? (exercTimes[k - 1]) : (0))));
 			}
+			std::vector< ActiveType > M(dim); // marginal U - H
 			// evaluate pay-off at excercise
 			for (i=0; i<dim; ++i) {
 				V[k+1][k+1][i] = CouponBond( exercTimes[k], payTimes, cashFlows, shortRateGrid_[i], (ActiveType *) 0, idx_start );
 				V[k+1][k+1][i] = cop*(V[k+1][k+1][i]-strikeValues[k]);        // U
-				ActiveType marginal = V[k+1][k+1][i] - V[0][k+1][i];          // U - H
-				ActiveType delta = (1-Q2/Q1) + ((marginal>C)?(Q2/Q1):(0));    // exercise function
-				V[0][k+1][i]   += delta * marginal;                           // Bermudan
+				M[i] = V[k+1][k+1][i] - V[0][k+1][i];                         // U - H
+		    }
+//			// determine barrier
+			SmoothIndicator indicator(shortRateGrid_, M, C, barrierSmoothing);
+			for (i = 0; i<dim; ++i) {
+				ActiveType delta = (1 - Q2 / Q1) + indicator(i)*(Q2 / Q1); // exercise function
+				//ActiveType delta = (1 - Q2 / Q1) + ((M[i]>C)?(Q2 / Q1):(0.0)); // exercise function
+				V[0][k+1][i]   += delta * M[i];                               // Bermudan
 				V[k+1][k+1][i] *= ((1-Q2) + ((V[k+1][k+1][i]>C)?(Q2):(0)));   // European
 			}
 			// evaluate ZCB() E^T [ V(r) ]
@@ -635,6 +660,53 @@ namespace QuantLib {
 			mean1  = mean2;
 		}
 		return volaValues_;
+	}
+
+
+	template <class DateType, class PassiveType, class ActiveType>
+	HullWhiteModelT<DateType, PassiveType, ActiveType>::SmoothIndicator::SmoothIndicator(
+		const std::vector<PassiveType>&  x,  // grid
+		const std::vector<ActiveType>&   M,  // marginal
+		const PassiveType                C,  // strike
+		const PassiveType                smoothingRadius,
+		const PassiveType                smoothingOffset)
+		: smoothingRadius_(smoothingRadius), smoothingOffset_(smoothingOffset), y_(x.size()) {
+		// determine indicator without smoothing
+		for (size_t k = 0; k < x.size(); ++k) {
+			if (M[k] > C) y_[k] = 1;
+			else y_[k] = 0;
+		}
+		if (smoothingRadius > 0) { // derive continuous indicator
+			std::vector<PassiveType> y(y_.size(),y_[0]);
+			for (size_t k = 1; k < x.size(); ++k) {
+				if (y_[k] != y_[k - 1]) {  // we know that there is a barrier between k-1 and k
+					// solve x = (x0 y1 - x1 y0) / (y1 - y0)
+					ActiveType tmp = (x[k - 1] * (M[k] - C) - x[k] * (M[k - 1] - C)) / (M[k] - M[k - 1]);
+					PassiveType x0 = TemplateAuxilliaries::DBL(tmp);
+					size_t idx = k;
+					while ((idx > 0) && (x[idx - 1] > x0 - smoothingRadius / 2)) --idx; // this finds the smallest idx within smoothingRadius
+					PassiveType xStart = x0 - smoothingRadius / 2;
+					PassiveType dy = 0;
+					while ((idx < x.size()) && (x[idx] < x0 + smoothingRadius / 2)) {
+						dy += (y_[k] - y_[k - 1]) * (x[idx] - xStart) / smoothingRadius;
+						y[idx] += dy;
+						xStart = x[idx];
+						++idx;
+					}
+					if (idx < x.size()) {  // we still need to adjust the last point
+						dy += (y_[k] - y_[k - 1]) * (x0 + smoothingRadius / 2 - xStart) / smoothingRadius;
+						y[idx] += dy;
+					}
+					for (size_t i = idx + 1; i < y.size(); ++i) y[i] = y[idx];
+				}
+			}
+			y_ = y;
+		}
+	}
+
+	template <class DateType, class PassiveType, class ActiveType>
+	PassiveType HullWhiteModelT<DateType, PassiveType, ActiveType>::SmoothIndicator::operator() (size_t idx) {
+		return y_[(idx < y_.size()) ? (idx) : (y_.size() - 1)];
 	}
 
 }
