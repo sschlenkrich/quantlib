@@ -67,7 +67,7 @@ namespace QuantLib {
 		                  const DayCounter&                                     targFixedDC)
 						  : SwaptionVolatilityStructure(baseVTS->referenceDate(),baseVTS->calendar(),baseVTS->businessDayConvention(),baseVTS->dayCounter()),
 		                  baseVTS_(baseVTS), discountCurve_(discountCurve), baseIndex_(baseIndex), targIndex_(targIndex),
-						  baseFixedDC_(baseFixedDC), targFixedDC_(targFixedDC) { }
+			              baseFixedFreq_(baseFixedFreq), targFixedFreq_(targFixedFreq), baseFixedDC_(baseFixedDC), targFixedDC_(targFixedDC) { }
 
 		// Termstructure interface
 
