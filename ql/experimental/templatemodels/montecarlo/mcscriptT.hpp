@@ -16,6 +16,9 @@
 
 
 #include <ql/experimental/templatemodels/montecarlo/mcpayoffT.hpp>
+#include <ql/experimental/templatemodels/montecarlo/scripting/flexbisondriver.hpp>
+
+
 #include <boost/regex.hpp>
 
 
@@ -43,7 +46,11 @@ namespace QuantLib {
 					it->second = payoffs[k];
 				}
 			}
-			parseScript(script, overwrite); // for briefty we delegate parsing to separate method
+			if ((script.size() > 0) && (script[0].compare("FlexBison") == 0)) {
+				parseFlexBisonScript(script, overwrite);  // this design is only for development and debug purpose!!!
+			} else {
+			    parseScript(script, overwrite); // for briefty we delegate parsing to separate method
+			}
 			// we need to find a 'result' payoff
 			std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find("result");
 			QL_REQUIRE(it != payoffs_.end(), "MCScript error: 'result' payoff element not found.");
@@ -322,6 +329,20 @@ namespace QuantLib {
 			// if we end up here the function name is not valid
 			scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + opname + "' is no valid binary operator name"));
 			return 0;
+		}
+
+		// parse the script and set up payoffs
+		inline void parseFlexBisonScript(const std::vector<std::string>&  script,
+		 	                             const bool                       overwrite = true) {
+			for (Size k = 0; k < script.size(); ++k) {  // parse lines
+				Scripting::FlexBisonDriver driver(script[k], false, false);
+				if (driver.returnValue() == 0) {
+					// parse AST
+				}
+				else {
+					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": " + driver.errorMsg()));
+				}
+			}
 		}
 
 	};

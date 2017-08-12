@@ -101,6 +101,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="ql\experimental\templatemodels\montecarlo\scripting\win_flex_bison_custom_build.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -622,6 +623,12 @@
     <ClInclude Include="ql\experimental\models\hestonslvfdmmodel.hpp" />
     <ClInclude Include="ql\experimental\models\hestonslvmcmodel.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcscriptT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\expression.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\location.hh" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\position.hh" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\stack.hh" />
     <ClInclude Include="ql\indexes\ibor\aonia.hpp" />
     <ClInclude Include="ql\indexes\ibor\bbsw.hpp" />
     <ClInclude Include="ql\indexes\ibor\bkbm.hpp" />
@@ -1957,6 +1964,10 @@
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\bondoptionengine.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\fixedratebondoption.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\expression.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Lexer.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\stochvol\stochvolcalibrator.cpp" />
     <ClCompile Include="ql\experimental\volatility\smiledsurface.cpp" />
@@ -2801,7 +2812,14 @@
     <ClCompile Include="ql\termstructure.cpp" />
     <ClCompile Include="ql\timegrid.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l" />
+  </ItemGroup>
+  <ItemGroup>
+    <Bison Include="ql\experimental\templatemodels\montecarlo\scripting\parser.y" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="ql\experimental\templatemodels\montecarlo\scripting\win_flex_bison_custom_build.targets" />
   </ImportGroup>
 </Project>

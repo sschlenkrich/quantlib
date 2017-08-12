@@ -352,6 +352,9 @@
     <Filter Include="experimental\basismodels">
       <UniqueIdentifier>{1962ba2e-2566-41c0-88b4-1c76448cec8d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\templatemodels\montecarlo\scripting">
+      <UniqueIdentifier>{9bd815cd-26da-4760-a907-2aa4bae7caa2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -4268,6 +4271,24 @@
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcscriptT.hpp">
       <Filter>experimental\templatemodels\montecarlo</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\expression.hpp">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.hpp">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\location.hh">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.hpp">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\position.hh">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\stack.hh">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6819,5 +6840,27 @@
     <ClCompile Include="ql\experimental\volatility\smiledsurface.cpp">
       <Filter>experimental\volatility</Filter>
     </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\expression.cpp">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.cpp">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Lexer.cpp">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.cpp">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </Flex>
+  </ItemGroup>
+  <ItemGroup>
+    <Bison Include="ql\experimental\templatemodels\montecarlo\scripting\parser.y">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </Bison>
   </ItemGroup>
 </Project>
