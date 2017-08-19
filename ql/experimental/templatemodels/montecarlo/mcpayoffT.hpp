@@ -123,6 +123,21 @@ namespace QuantLib {
 			}
 		};
 
+		// x / y  (undiscounted)		
+		class Division : public MCPayoffT {
+
+		protected:
+			boost::shared_ptr<MCPayoffT> x_, y_;
+
+		public:
+			Division(const boost::shared_ptr<MCPayoffT>&   x,
+				     const boost::shared_ptr<MCPayoffT>&   y)
+				    : MCPayoffT(0.0), x_(x), y_(y) {}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				return x_->at(p) / y_->at(p);
+			}
+		};
+
 		// max{x,y}  (undiscounted)
         class Max : public MCPayoffT {
 		protected:
