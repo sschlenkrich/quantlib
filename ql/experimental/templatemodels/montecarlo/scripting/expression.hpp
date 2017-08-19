@@ -29,12 +29,19 @@ namespace QuantLib {
 			enum Type {
 				NEXT,
 				ASSIGNMENT,
+				UNARYPLUS,
+				UNARYMINUS,
 				PLUS,
 				MINUS,
 				MULT,
 				DIVISION,
 				IDENTIFIER,
 				NUMBER,
+				IFTHENELSE,
+				MIN,
+				MAX,
+				PAY,
+				CACHE,
 				UNKNOWNTYPE
 			};
 			Expression(const Type                          type,
@@ -44,6 +51,11 @@ namespace QuantLib {
 				const boost::shared_ptr<Expression> third = 0);
 
 			std::string toString();
+
+			// inspectors
+			inline Type type()         { return type_;  }
+			inline std::string leaf()  { return leaf_;  }
+			inline const std::vector<boost::shared_ptr<Expression>>& childs() { return childs_; };
 		private:
 			Type type_;
 			std::string leaf_;

@@ -49,16 +49,23 @@ QuantLib::Scripting::Parser::symbol_type yylex (QuantLib::Scripting::FlexBisonDr
 %define api.token.prefix {TOK_}
 %token
   END  0  "end of file"
-  ASSIGN  "="
-  MINUS   "-"
-  PLUS    "+"
-  STAR    "*"
-  SLASH   "/"
-  LPAREN  "("
-  RPAREN  ")"
+  ASSIGN      "="
+  MINUS       "-"
+  PLUS        "+"
+  STAR        "*"
+  SLASH       "/"
+  LPAREN      "("
+  RPAREN      ")"
+  COMMA       ","
 ;
-%token <std::string> IDENTIFIER "identifier"
-%token <std::string> NUMBER     "number"
+%token <std::string> IDENTIFIER  "identifier"
+%token <std::string> NUMBER      "number"
+%token <std::string> IFTHENELSE  "IfThenElse"
+%token <std::string> MIN         "Min"
+%token <std::string> MAX         "Max"
+%token <std::string> PAY         "Pay"
+%token <std::string> CACHE       "Cache"
+
 %type  <boost::shared_ptr<Expression>> exp
 %type  <boost::shared_ptr<Expression>> assignment
 %type  <boost::shared_ptr<Expression>> assignments
@@ -66,11 +73,7 @@ QuantLib::Scripting::Parser::symbol_type yylex (QuantLib::Scripting::FlexBisonDr
 %printer { yyoutput << $$; } <*>;
 %%
 %start unit;
-unit: assignments  { driver.setExpressionTree($1); };
-
-assignments:
-  %empty                 {}
-| assignments assignment {$$ = boost::shared_ptr<Expression>(new Expression(Expression::NEXT,"",$1,$2));};
+unit: assignment  { driver.setExpressionTree($1); };
 
 assignment:
   "identifier" "=" exp { $$ = boost::shared_ptr<Expression>(new Expression(Expression::ASSIGNMENT,$1,$3)); };
@@ -78,13 +81,26 @@ assignment:
 %left "+" "-";
 %left "*" "/";
 exp:
-  exp "+" exp   { $$ = boost::shared_ptr<Expression>(new Expression(Expression::PLUS,"",$1,$3)); }
+  "+" exp       { $$ = boost::shared_ptr<Expression>(new Expression(Expression::UNARYPLUS,"",$2)); }
+| "-" exp       { $$ = boost::shared_ptr<Expression>(new Expression(Expression::UNARYMINUS,"",$2)); }
+| exp "+" exp   { $$ = boost::shared_ptr<Expression>(new Expression(Expression::PLUS,"",$1,$3)); }
 | exp "-" exp   { $$ = boost::shared_ptr<Expression>(new Expression(Expression::MINUS,"",$1,$3)); }
 | exp "*" exp   { $$ = boost::shared_ptr<Expression>(new Expression(Expression::MULT,"",$1,$3)); }
 | exp "/" exp   { $$ = boost::shared_ptr<Expression>(new Expression(Expression::DIVISION,"",$1,$3)); }
 | "(" exp ")"   { $$ = $2; }
-| "identifier"  { $$ = boost::shared_ptr<Expression>(new Expression(Expression::IDENTIFIER,$1)); }
-| "number"      { $$ = boost::shared_ptr<Expression>(new Expression(Expression::NUMBER,$1)); };
+| IDENTIFIER    { $$ = boost::shared_ptr<Expression>(new Expression(Expression::IDENTIFIER,$1)); }
+| NUMBER        { $$ = boost::shared_ptr<Expression>(new Expression(Expression::NUMBER,$1)); };
+| IFTHENELSE "(" exp "," exp "," exp ")"
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::IFTHENELSE,"",$3,$5,$7));  }
+| MIN "(" exp "," exp ")"
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::MIN,"",$3,$5));  }
+| MAX "(" exp "," exp ")"
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::MAX,"",$3,$5));  }
+| PAY "(" exp "," NUMBER ")"
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::PAY,$5,$3));  }
+| CACHE "(" exp ")"
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::CACHE,"",$3));  }
+
 %%
 
 void QuantLib::Scripting::Parser::error (const location_type& l, const std::string& m) {

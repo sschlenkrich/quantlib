@@ -21,9 +21,10 @@
 
 %option outfile="Lexer.cpp"
 %option noyywrap nounput batch debug noinput reentrant
-id    [a-zA-Z][a-zA-Z_0-9]*
-int   [0-9]+
-blank [ \t]
+id      [a-zA-Z][a-zA-Z_0-9]*
+int     [0-9]+
+double  [0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?
+blank   [ \t]
 
 %{
   // Code run each time a pattern is matched.
@@ -37,18 +38,26 @@ blank [ \t]
   driver.loc().step();
 %}
 
-{blank}+   driver.loc().step ();
-[\n]+      driver.loc().lines (yyleng); driver.loc().step ();
-"-"      return QuantLib::Scripting::Parser::make_MINUS(driver.loc());
-"+"      return QuantLib::Scripting::Parser::make_PLUS(driver.loc());
-"*"      return QuantLib::Scripting::Parser::make_STAR(driver.loc());
-"/"      return QuantLib::Scripting::Parser::make_SLASH(driver.loc());
-"("      return QuantLib::Scripting::Parser::make_LPAREN(driver.loc());
-")"      return QuantLib::Scripting::Parser::make_RPAREN(driver.loc());
-"="      return QuantLib::Scripting::Parser::make_ASSIGN(driver.loc());
+{blank}+         driver.loc().step ();
+[\n]+            driver.loc().lines (yyleng); driver.loc().step ();
+"-"              return QuantLib::Scripting::Parser::make_MINUS(driver.loc());
+"+"              return QuantLib::Scripting::Parser::make_PLUS(driver.loc());
+"*"              return QuantLib::Scripting::Parser::make_STAR(driver.loc());
+"/"              return QuantLib::Scripting::Parser::make_SLASH(driver.loc());
+"("              return QuantLib::Scripting::Parser::make_LPAREN(driver.loc());
+")"              return QuantLib::Scripting::Parser::make_RPAREN(driver.loc());
+","              return QuantLib::Scripting::Parser::make_COMMA(driver.loc());
+"="              return QuantLib::Scripting::Parser::make_ASSIGN(driver.loc());
 
-{int}    return QuantLib::Scripting::Parser::make_NUMBER(yytext, driver.loc());
-{id}     return QuantLib::Scripting::Parser::make_IDENTIFIER(yytext, driver.loc());
+"IfThenElse"	 return QuantLib::Scripting::Parser::make_IFTHENELSE(yytext,driver.loc());
+"Min"            return QuantLib::Scripting::Parser::make_MIN(yytext,driver.loc());       
+"Max"            return QuantLib::Scripting::Parser::make_MAX(yytext,driver.loc());       
+"Pay"            return QuantLib::Scripting::Parser::make_PAY(yytext,driver.loc());       
+"Cache"          return QuantLib::Scripting::Parser::make_CACHE(yytext,driver.loc());     
+
+{double}         return QuantLib::Scripting::Parser::make_NUMBER(     yytext, driver.loc());
+{id}             return QuantLib::Scripting::Parser::make_IDENTIFIER( yytext, driver.loc());
+
 .        driver.error (driver.loc(), "invalid character");
 
 <<EOF>>  return QuantLib::Scripting::Parser::make_END(driver.loc());
