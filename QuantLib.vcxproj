@@ -2813,10 +2813,22 @@
     <ClCompile Include="ql\timegrid.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l" />
+    <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'">true</ExcludedFromBuild>
+    </Flex>
   </ItemGroup>
   <ItemGroup>
-    <Bison Include="ql\experimental\templatemodels\montecarlo\scripting\parser.y" />
+    <Bison Include="ql\experimental\templatemodels\montecarlo\scripting\parser.y">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'">true</ExcludedFromBuild>
+    </Bison>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
