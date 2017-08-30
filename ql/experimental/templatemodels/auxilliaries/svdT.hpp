@@ -282,6 +282,51 @@ namespace TemplateAuxilliaries {
 			*INFO=0;
 	}
 
+
+	// implement a more easy to use interface to calculate D^T s.t.
+	// D^T D = Gamma via singular value decomposition
+	template<class T>
+	std::vector< std::vector< T > > svdSqrt(const std::vector<std::vector<T>>& Gamma) {
+		// make sure there is something to do
+		if (Gamma.size() == 0) return std::vector<std::vector<T>>();
+		size_t dim = Gamma.size();
+		// make sure Gamma is sqrare matrix
+		for (size_t i = 0; i < Gamma.size(); ++i)
+			if (Gamma[i].size()!=dim) std::vector<std::vector<T>>();
+		// make sure Gamma is symmetric
+		for (size_t i = 0; i < Gamma.size(); ++i)
+			for (size_t j=i+1; j<Gamma[i].size(); ++j)
+				if (Gamma[i][j]!= Gamma[j][i]) std::vector<std::vector<T>>();
+		// now we may start calculate SVD factorisation
+		T *A = new T[dim*dim];
+		T *U = new T[dim*dim];
+		T *S = new T[dim];
+		T *VT = new T[dim*dim];
+		// dummy auxilliary variables
+		T work;
+		int lwork, info;
+		// Gamma = V^T S U
+		for (size_t i = 0; i<dim; ++i) {
+			for (size_t j = 0; j<dim; ++j) {
+				A[i*dim + j] = Gamma[i][j];
+			}
+		}
+		TemplateAuxilliaries::svd("S", "S", (int*)&dim, (int*)&dim, A, (int*)&dim, S, U, (int*)&dim, VT, (int*)&dim, &work, &lwork, &info);
+		// check min(S)>0
+		T minS = S[0];
+		for (size_t i = 1; i<dim; ++i) if (S[i]<minS) minS = S[i];
+		if (minS <= 0) return std::vector<std::vector<T>>();
+		// evaluate D^T = V^T S^{1/2}
+		std::vector<std::vector<T>> DT(dim, std::vector<T>(dim,(T)0));
+		for (size_t i = 0; i<dim; ++i) {
+			for (size_t j = 0; j<dim; ++j) {
+				DT[i][j] = VT[i*dim + j] * sqrt(S[j]);
+			}
+		}
+		return DT;
+	}
+	
+
 } // namespace TemplateAuxilliaries
 
 #endif // quantlib_templatesvd_hpp

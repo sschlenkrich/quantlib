@@ -629,6 +629,7 @@
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\position.hh" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\stack.hh" />
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.hpp" />
     <ClInclude Include="ql\indexes\ibor\aonia.hpp" />
     <ClInclude Include="ql\indexes\ibor\bbsw.hpp" />
     <ClInclude Include="ql\indexes\ibor\bkbm.hpp" />
@@ -1968,6 +1969,7 @@
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Lexer.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\stochvol\stochvolcalibrator.cpp" />
     <ClCompile Include="ql\experimental\volatility\smiledsurface.cpp" />
