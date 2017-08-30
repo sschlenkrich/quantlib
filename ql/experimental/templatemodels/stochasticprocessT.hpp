@@ -15,6 +15,7 @@
 #define quantlib_templatestochasticprocess_hpp
 
 #include <ql/types.hpp>
+#include <ql/errors.hpp>
 
 namespace QuantLib {
 
@@ -71,6 +72,9 @@ namespace QuantLib {
 
 		// default implementation for single-asset models
 		inline virtual ActiveType asset(const DateType t, const VecA& X) { return X[0]; }
+
+		// default implementation for single-asset models
+		inline virtual ActiveType asset(const DateType t, const VecA& X, const std::string& alias) { QL_FAIL("Not implemented"); return 0; }
 
 		// default implementation for future or forward
 		inline virtual ActiveType future(const DateType t, const DateType T, const VecA& X) { return zeroBond(t,T,X)*X[0]; }

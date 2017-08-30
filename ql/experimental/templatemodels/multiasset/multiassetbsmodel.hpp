@@ -22,13 +22,15 @@ namespace QuantLib {
 
 	class MultiAssetBSModel : public RealStochasticProcess {
 	private:
+		Handle<YieldTermStructure>                                               termStructure_;  // domestic discounting term structure
 		std::map<std::string, size_t>                                            index_;
 		std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>> processes_;
 		RealStochasticProcess::MatA                                              DT_;  // D^T D = Correlations
 	public:
-		MultiAssetBSModel(const std::vector<std::string>                                                 aliases,
-			              const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>> processes,
-			              const RealStochasticProcess::MatA&                                             correlations);
+		MultiAssetBSModel(const Handle<YieldTermStructure>&                                               termStructure,
+			              const std::vector<std::string>&                                                 aliases,
+			              const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
+			              const RealStochasticProcess::MatA&                                              correlations);
 
 		// dimension of X
 		inline virtual size_t size() { return processes_.size(); }
@@ -53,7 +55,7 @@ namespace QuantLib {
 		inline virtual QuantLib::Real asset(const QuantLib::Time t, const VecA& X) { return processes_[0]->x0() * std::exp(X[0]); }
 
 		// default implementation for single-asset models
-		inline virtual QuantLib::Real asset(const std::string alias, const QuantLib::Time t, const VecA& X) { return processes_[index_.at(alias)]->x0() * std::exp(X[index_.at(alias)]); }
+		inline virtual QuantLib::Real asset(const QuantLib::Time t, const VecA& X, const std::string& alias) { return processes_[index_.at(alias)]->x0() * std::exp(X[index_.at(alias)]); }
 
 	};
 

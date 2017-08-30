@@ -13,10 +13,12 @@
 
 namespace QuantLib {
 
-	MultiAssetBSModel::MultiAssetBSModel(const std::vector<std::string>                aliases,
-		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>> processes,
-		const RealStochasticProcess::MatA&                                             correlations)
-		: processes_(processes) {
+	MultiAssetBSModel::MultiAssetBSModel(
+		const Handle<YieldTermStructure>&                                               termStructure,
+		const std::vector<std::string>&                                                 aliases,
+		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
+		const RealStochasticProcess::MatA&                                              correlations)
+	: termStructure_(termStructure), processes_(processes) {
 		QL_REQUIRE(processes_.size() > 0, "No BS processes supplied");
 		QL_REQUIRE(processes_.size() == aliases.size(), "Number of processes doesn't match aliases");
 		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k;

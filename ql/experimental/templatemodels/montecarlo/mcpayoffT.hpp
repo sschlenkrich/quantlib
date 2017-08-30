@@ -189,6 +189,15 @@ namespace QuantLib {
 			}
 		};
 
+		// 1 unit of modelled asset
+		class Asset : public MCPayoffT {
+		protected:
+			std::string alias_;
+		public:
+			Asset(DateType obsTime, const std::string alias) : MCPayoffT(obsTime), alias_(alias) { }
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) { return p->asset(observationTime(), alias_); }
+		};
+
 		// 1 unit call or put exercised at observation time and settled at pay time
 		class VanillaOption : public MCPayoffT {
 		protected:

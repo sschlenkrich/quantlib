@@ -216,6 +216,10 @@ namespace QuantLib {
 					   process_->asset(obsTime, sim_->state(idx_,obsTime) );
 			}
 
+			inline ActiveType asset(DateType obsTime, const std::string& alias) {
+					return process_->asset(obsTime, sim_->state(idx_, obsTime), alias);
+			}
+
 			inline ActiveType future(DateType obsTime, DateType settlementTime) {
 				return sim_->assetAdjuster(obsTime) +
 					   process_->future(obsTime, settlementTime, sim_->state(idx_,obsTime) );
