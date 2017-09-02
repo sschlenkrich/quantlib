@@ -37,7 +37,7 @@ namespace QuantLib {
 
 		// dimension of X
 		inline virtual size_t size() = 0;
-		// stochastic factors of x and z (maybe distinguish if trivially eta=0)
+		// stochastic factors (underlying, volatilities and spreads)
 		inline virtual size_t factors() = 0;
 		// initial values for simulation
 		inline virtual VecP initialValues() = 0;
@@ -64,21 +64,26 @@ namespace QuantLib {
 			return;
 		}
 
-		// default implementation, zero interest rates
-		inline virtual ActiveType numeraire(const DateType t, const VecA& X) { return 1.0; }
+		// we set up a common interface such that models can easily be interchanged
+		// the concrete model needs to make sure that it is fit for purpose in a
+		// particular application, i.e. implement required methods.
 
-		// default implementation, zero interest rates
-		inline virtual ActiveType zeroBond(const DateType t, const DateType T, const VecA& X) { return 1.0; }
+		// the numeraire in the domestic currency used for discounting future payoffs
+		inline virtual ActiveType numeraire(const DateType t, const VecA& X)                       { QL_FAIL("StochasticProcessT: numeraire not implemented"); return 0; }
 
-		// default implementation for single-asset models
-		inline virtual ActiveType asset(const DateType t, const VecA& X) { return X[0]; }
+		// a domestic currency zero coupon bond
+		inline virtual ActiveType zeroBond(const DateType t, const DateType T, const VecA& X)      { QL_FAIL("StochasticProcessT: zeroBond not implemented"); return 0; }
 
-		// default implementation for single-asset models
-		inline virtual ActiveType asset(const DateType t, const VecA& X, const std::string& alias) { QL_FAIL("Not implemented"); return 0; }
+		// an asset with (individual) drift and volatility
+		inline virtual ActiveType asset(const DateType t, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: (multi) asset not implemented"); return 0; }
 
-		// default implementation for future or forward
-		inline virtual ActiveType future(const DateType t, const DateType T, const VecA& X) { return zeroBond(t,T,X)*X[0]; }
+		// the expectation E^T in the domestic currency terminal meassure
+		// this is required to calculate asset adjusters without knowing the implementation of the model
+		inline virtual ActiveType forwardAsset(const DateType t, const DateType T, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: (multi) asset not implemented"); return 0; }
 
+		// the expectation E^Q in the domestic currency risk-neutral meassure
+		// this is currently used for commodity payoffs
+		inline virtual ActiveType futureAsset(const DateType t, const DateType T, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: (multi) asset not implemented"); return 0; }
 
 		// options for z-integration
 	    enum VolEvolv {

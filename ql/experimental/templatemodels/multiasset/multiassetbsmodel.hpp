@@ -46,17 +46,19 @@ namespace QuantLib {
 		inline virtual void evolve(const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const VecD& dW, VecA& X1);
 
 		// default implementation, zero interest rates
-		inline virtual QuantLib::Real numeraire(const QuantLib::Time t, const VecA& X) { return 1.0/processes_[0]->riskFreeRate()->discount(t); }
+		inline virtual QuantLib::Real numeraire(const QuantLib::Time t, const VecA& X) { return 1.0/termStructure_->discount(t); }
 
 		// default implementation, zero interest rates
-		inline virtual QuantLib::Real zeroBond(const QuantLib::Time t, const QuantLib::Time T, const VecA& X) { return processes_[0]->riskFreeRate()->discount(T) / processes_[0]->riskFreeRate()->discount(t); }
-
-		// default implementation for single-asset models
-		inline virtual QuantLib::Real asset(const QuantLib::Time t, const VecA& X) { return processes_[0]->x0() * std::exp(X[0]); }
+		inline virtual QuantLib::Real zeroBond(const QuantLib::Time t, const QuantLib::Time T, const VecA& X) { return termStructure_->discount(T) / termStructure_->discount(t); }
 
 		// default implementation for single-asset models
 		inline virtual QuantLib::Real asset(const QuantLib::Time t, const VecA& X, const std::string& alias) { return processes_[index_.at(alias)]->x0() * std::exp(X[index_.at(alias)]); }
 
+		inline virtual QuantLib::Real forwardAsset(const QuantLib::Time t, const QuantLib::Time T, const VecA& X, const std::string& alias) {
+			return asset(t, X, alias) *
+				(processes_[index_.at(alias)]->dividendYield()->discount(T) / processes_[index_.at(alias)]->dividendYield()->discount(t)) /
+				(processes_[index_.at(alias)]->riskFreeRate()->discount(T) / processes_[index_.at(alias)]->riskFreeRate()->discount(t));
+		}
 	};
 
 }

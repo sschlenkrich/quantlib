@@ -44,7 +44,7 @@ namespace QuantLib {
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				ActiveType fut=0.0;
 				for (size_t k=0; k<settlementTimes_.size(); ++k)
-					if (settlementTimes_[k]>=observationTime()) fut += settlementWeights_[k] * p->future(observationTime(),settlementTimes_[k]);
+					if (settlementTimes_[k]>=observationTime()) fut += settlementWeights_[k] * p->futureAsset(observationTime(),settlementTimes_[k],"");
 				ActiveType V  = callOrPut_ * (fut - strike_);
 				return (V>0.0) ? (V) : ((ActiveType)0.0);
 			}
@@ -75,7 +75,7 @@ namespace QuantLib {
 			}
 			ActiveType averageFuture(const boost::shared_ptr<PathType>& p, const DateType t, const std::vector<DateType>& settlementTimes, const std::vector<PassiveType>& settlementWeights ) {
 				ActiveType fut=0.0;
-				for (size_t k=0; k<settlementTimes.size(); ++k) if (settlementTimes[k]>=t) fut += settlementWeights[k] * p->future(t,settlementTimes[k]);
+				for (size_t k=0; k<settlementTimes.size(); ++k) if (settlementTimes[k]>=t) fut += settlementWeights[k] * p->futureAsset(t,settlementTimes[k],"");
 				return fut;
 			}
 		public:

@@ -199,8 +199,8 @@ namespace QuantLib {
 
 		// stochastic process variables and payoffs
 
-		inline virtual ActiveType asset(const DateType t, const VecA& X)                    { return futureAsset(t,t,X[0],X[1]);  }
-		inline virtual ActiveType future(const DateType t, const DateType T, const VecA& X) { return futureAsset(t,T,X[0],X[1]);  }
+		inline virtual ActiveType asset(const DateType t, const VecA& X, const std::string& alias)                         { return futureAsset(t,t,X[0],X[1]);  }
+		inline virtual ActiveType futureAsset(const DateType t, const DateType T, const VecA& X, const std::string& alias) { return futureAsset(t,T,X[0],X[1]);  }
 
 	};
 

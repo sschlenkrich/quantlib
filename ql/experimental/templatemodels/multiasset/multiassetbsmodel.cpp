@@ -22,6 +22,9 @@ namespace QuantLib {
 		QL_REQUIRE(processes_.size() > 0, "No BS processes supplied");
 		QL_REQUIRE(processes_.size() == aliases.size(), "Number of processes doesn't match aliases");
 		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k;
+		QL_REQUIRE(processes_.size() == correlations.size(), "Number of processes doesn't match correlation");
+		for (size_t k=0; k< correlations.size(); ++k)
+		    QL_REQUIRE(processes_.size() == correlations[k].size(), "Number of processes doesn't match correlation");
 		DT_ = TemplateAuxilliaries::svdSqrt(correlations);
 	}
 

@@ -209,7 +209,7 @@ namespace QuantLib {
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				if (payTime_<observationTime()) return (ActiveType)0.0;
 				ActiveType DF = p->zeroBond(observationTime(),payTime_);
-				ActiveType S  = p->asset(observationTime());
+				ActiveType S  = p->asset(observationTime(),"");
 				ActiveType V  = callOrPut_ * DF * (S - strike_);
 				return (V>0.0) ? (V) : ((ActiveType)0.0);
 			}

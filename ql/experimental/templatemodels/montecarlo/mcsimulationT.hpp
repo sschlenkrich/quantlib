@@ -77,8 +77,9 @@ namespace QuantLib {
 
 		// adjust simulated asset to S(t) + adj(t) to meet E[S(t)]
 		bool applyAssetAdjuster_;
-		VecD assetObservTimes_;
-		VecA assetAdjuster_;
+		std::map<std::string, size_t>  assetIndex_;  // a list of aliases for which adjusters are calculated
+		VecD assetObservTimes_;                      // we use a common set of time grid points
+		MatA assetAdjuster_;                         // a vector of adjusters for each alias
 
 		// dummy
 		PassiveType tmp_;
@@ -184,11 +185,9 @@ namespace QuantLib {
 
 	public:
 
-		// model type definition
-		//typedef ProcessType process_type;
-
-		// input for payoffs
-		// combine model/process and simulated paths
+        // a path hides the actual state implementation from the payoff
+		// thus payoffs only need to know the path interface and does
+		// not need to care about the actual simulation
 		class Path {
 		protected:
 			boost::shared_ptr<ProcessType>    process_;
@@ -202,6 +201,8 @@ namespace QuantLib {
 
 			// maybe better cache the last state to avoid repeated interpolation in state...
 
+			// we delegate (and decorate) the implementation to the stochastic process
+
 			inline ActiveType numeraire(DateType obsTime) {
 				return process_->numeraire(obsTime,sim_->state(idx_,obsTime));
 			}
@@ -211,18 +212,14 @@ namespace QuantLib {
 					   process_->zeroBond(obsTime, payTime, sim_->state(idx_,obsTime) );
 			}
 
-			inline ActiveType asset(DateType obsTime) {
-				return sim_->assetAdjuster(obsTime) +
-					   process_->asset(obsTime, sim_->state(idx_,obsTime) );
-			}
-
 			inline ActiveType asset(DateType obsTime, const std::string& alias) {
-					return process_->asset(obsTime, sim_->state(idx_, obsTime), alias);
+					return sim_->assetAdjuster(obsTime,alias) + 
+						process_->asset(obsTime, sim_->state(idx_, obsTime), alias);
 			}
 
-			inline ActiveType future(DateType obsTime, DateType settlementTime) {
-				return sim_->assetAdjuster(obsTime) +
-					   process_->future(obsTime, settlementTime, sim_->state(idx_,obsTime) );
+			// for commodity payoffs
+			inline ActiveType futureAsset(DateType obsTime, DateType settlementTime, const std::string& alias) {
+				return	process_->futureAsset(obsTime, settlementTime, sim_->state(idx_, obsTime), alias);
 			}
 		};
 
@@ -304,6 +301,9 @@ namespace QuantLib {
 			return X_[idx]; 
 		}
 
+		// find an actual state of the model for a given observation time
+		// this method is used by a path object and the result is passed on to
+		// the stochastic process for payoff evaluation
 		inline const VecA state(const size_t idx, const DateType t) {
 			QL_REQUIRE(idx<X_.size(),"TemplateMCSimulation: path out of bounds.");
 			size_t t_idx = TemplateAuxilliaries::idx(obsTimes_,t);
@@ -389,43 +389,51 @@ namespace QuantLib {
 
 		// asset adjuster
 
-		inline void calculateAssetAdjuster( const VecD&  assetObservTimes ) {
+		inline void calculateAssetAdjuster( const VecD&  assetObservTimes, const std::vector<std::string>& aliases ) {
 			assetObservTimes_ = assetObservTimes;
 			// check time grids
 			QL_REQUIRE(assetObservTimes_.size()>1,"TemplateMCSimulation: at least two assetObservTimes_ required");
 			QL_REQUIRE(assetObservTimes_[0]>=0,"TemplateMCSimulation: assetObservTimes_>=0 required");
 			for (size_t k=1; k<assetObservTimes_.size(); ++k) QL_REQUIRE(assetObservTimes_[k-1]<assetObservTimes_[k],"TemplateMCSimulation: assetObservTimes_ in ascending order required");
+			QL_REQUIRE(aliases.size() > 0, "TemplateMCSimulation: aliases required");
+			for (size_t k = 0; k < aliases.size(); ++k) assetIndex_[aliases[k]] = k;
+			QL_REQUIRE(assetIndex_.size() == aliases.size(), "TemplateMCSimulation: duplicate aliases found");
+
 			// initialise asset adjuster vector
-			assetAdjuster_ = VecA(assetObservTimes_.size(), 0.0);
-			VecA avAsset(assetObservTimes_.size(), 0.0);
-			VecA avZero(assetObservTimes_.size(), 0.0);
-			for (size_t i=0; i<assetObservTimes_.size(); ++i) {
-                for (size_t k=0; k<nPaths(); ++k) {
-					VecA       s   = state(k,assetObservTimes_[i]);
-					avAsset[i] += process_->asset(assetObservTimes_[i],s) / process_->numeraire(assetObservTimes_[i],s);
-					avZero[i]  += 1.0                                     / process_->numeraire(assetObservTimes_[i],s);
+			assetAdjuster_ = MatA(aliases.size(),VecA(assetObservTimes_.size(), 0.0));
+			for (size_t k = 0; k < assetAdjuster_.size(); ++k) {
+				VecA avAsset(assetObservTimes_.size(), 0.0);
+				VecA avZero(assetObservTimes_.size(), 0.0);  // numeraire
+				for (size_t i = 0; i<assetObservTimes_.size(); ++i) {
+					for (size_t j = 0; j<nPaths(); ++j) {
+						VecA       s = state(j, assetObservTimes_[i]);
+						avAsset[i] += process_->asset(assetObservTimes_[i], s, aliases[k]) / process_->numeraire(assetObservTimes_[i], s);
+						avZero[i] += 1.0 / process_->numeraire(assetObservTimes_[i], s);
+					}
+					avAsset[i] /= nPaths();
+					avZero[i] /= nPaths();
+					// discounted expected asset (in terminal meassure)
+					assetAdjuster_[k][i] = process_->zeroBond(0, assetObservTimes_[i], process_->initialValues()) *
+						process_->forwardAsset(0, assetObservTimes_[i], process_->initialValues(), aliases[k]);
+					assetAdjuster_[k][i] = (assetAdjuster_[k][i] - avAsset[i]) / avZero[i];
 				}
-				avAsset[i] /= nPaths();
-				avZero[i]  /= nPaths();
-				// expected asset S(0) / Num(0) = E[ S(t) / Num(t) ]
-				assetAdjuster_[i] = process_->asset(0, process_->initialValues() ) / process_->numeraire( 0, process_->initialValues() );
-				assetAdjuster_[i] = (assetAdjuster_[i] - avAsset[i]) / avZero[i];
+
 			}
 			applyAssetAdjuster_ = true;
 		}
 
-		inline const VecA& assetAdjuster() { return assetAdjuster_; }
+		inline const VecA& assetAdjuster(const std::string& alias) { return assetAdjuster_[assetIndex_.at(alias)]; }
 
-		inline ActiveType assetAdjuster(const DateType t) {
+		inline ActiveType assetAdjuster(const DateType t, const std::string& alias) {
 			if (!applyAssetAdjuster_) return 0.0; 
-			// bilinear interpolation
+			// linear interpolation
 			size_t obsIdx = TemplateAuxilliaries::idx(assetObservTimes_,t);
 			if (obsIdx<1) obsIdx=1;
 			DateType rhoObs = ( t-assetObservTimes_[obsIdx-1])/(assetObservTimes_[obsIdx]-assetObservTimes_[obsIdx-1]);
 			// flat extrapolation
 			if (rhoObs<0) rhoObs = 0;
 			if (rhoObs>1) rhoObs = 1;
-			ActiveType adj = (1.0-rhoObs) * assetAdjuster_[obsIdx-1] + rhoObs * assetAdjuster_[obsIdx];
+			ActiveType adj = (1.0-rhoObs) * assetAdjuster_[assetIndex_.at(alias)][obsIdx-1] + rhoObs * assetAdjuster_[assetIndex_.at(alias)][obsIdx];
 			return adj;
 		}
 
