@@ -6861,6 +6861,9 @@
     <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.cpp">
       <Filter>experimental\templatemodels\multiasset</Filter>
     </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\ExpressionParser.cpp">
+      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">

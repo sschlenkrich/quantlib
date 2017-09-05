@@ -1,7 +1,7 @@
 %skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0.4"
 %defines
-%define namespace {QuantLib::Scripting}
+%define api.namespace {QuantLib::Scripting}
 %define parser_class_name {Parser}
 %define api.token.constructor
 %define api.value.type variant
@@ -57,6 +57,14 @@ QuantLib::Scripting::Parser::symbol_type yylex (QuantLib::Scripting::FlexBisonDr
   LPAREN      "("
   RPAREN      ")"
   COMMA       ","
+  EQUAL       "=="
+  NEQUUAL     "!="
+  LESSEQ      "<="
+  GREATEREQ   ">="
+  LESS        "<"
+  GREATER     ">"
+  LBRACK      "["
+  RBRACK      "]"
 ;
 %token <std::string> IDENTIFIER  "identifier"
 %token <std::string> NUMBER      "number"
@@ -68,28 +76,46 @@ QuantLib::Scripting::Parser::symbol_type yylex (QuantLib::Scripting::FlexBisonDr
 
 %type  <boost::shared_ptr<Expression>> exp
 %type  <boost::shared_ptr<Expression>> assignment
-%type  <boost::shared_ptr<Expression>> assignments
+%type  <boost::shared_ptr<Expression>> function
+%type  <boost::shared_ptr<Expression>> funcname
 
 %printer { yyoutput << $$; } <*>;
 %%
+
+%left "+" "-";
+%left "*" "/";
+%left UNARY;
+
 %start unit;
 unit: assignment  { driver.setExpressionTree($1); };
 
 assignment:
   "identifier" "=" exp { $$ = boost::shared_ptr<Expression>(new Expression(Expression::ASSIGNMENT,$1,$3)); };
 
-%left "+" "-";
-%left "*" "/";
 exp:
-  "+" exp       { $$ = boost::shared_ptr<Expression>(new Expression(Expression::UNARYPLUS,"",$2)); }
-| "-" exp       { $$ = boost::shared_ptr<Expression>(new Expression(Expression::UNARYMINUS,"",$2)); }
+  "+" exp %prec UNARY
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::UNARYPLUS,"",$2)); }
+| "-" exp %prec UNARY
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::UNARYMINUS,"",$2)); }
 | exp "+" exp   { $$ = boost::shared_ptr<Expression>(new Expression(Expression::PLUS,"",$1,$3)); }
 | exp "-" exp   { $$ = boost::shared_ptr<Expression>(new Expression(Expression::MINUS,"",$1,$3)); }
 | exp "*" exp   { $$ = boost::shared_ptr<Expression>(new Expression(Expression::MULT,"",$1,$3)); }
 | exp "/" exp   { $$ = boost::shared_ptr<Expression>(new Expression(Expression::DIVISION,"",$1,$3)); }
+| exp "==" exp
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::LOGICAL,"==",$1,$3)); }
+| exp "!=" exp
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::LOGICAL,"!=",$1,$3)); }
+| exp "<=" exp
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::LOGICAL,"<=",$1,$3)); }
+| exp ">=" exp
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::LOGICAL,">=",$1,$3)); }
+| exp "<" exp
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::LOGICAL,"<",$1,$3)); }
+| exp ">" exp
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::LOGICAL,">",$1,$3)); }
 | "(" exp ")"   { $$ = $2; }
 | IDENTIFIER    { $$ = boost::shared_ptr<Expression>(new Expression(Expression::IDENTIFIER,$1)); }
-| NUMBER        { $$ = boost::shared_ptr<Expression>(new Expression(Expression::NUMBER,$1)); };
+| NUMBER        { $$ = boost::shared_ptr<Expression>(new Expression(Expression::NUMBER,$1)); }
 | IFTHENELSE "(" exp "," exp "," exp ")"
                 { $$ = boost::shared_ptr<Expression>(new Expression(Expression::IFTHENELSE,"",$3,$5,$7));  }
 | MIN "(" exp "," exp ")"
@@ -100,6 +126,19 @@ exp:
                 { $$ = boost::shared_ptr<Expression>(new Expression(Expression::PAY,$5,$3));  }
 | CACHE "(" exp ")"
                 { $$ = boost::shared_ptr<Expression>(new Expression(Expression::CACHE,"",$3));  }
+| function      { $$ = $1; }
+;
+
+
+function:
+  funcname "(" NUMBER ")"
+                { $$ = boost::shared_ptr<Expression>(new Expression(Expression::PAYOFFAT,$3,$1)); } ;
+
+funcname:
+  IDENTIFIER { $$ = boost::shared_ptr<Expression>(new Expression(Expression::IDENTIFIER,$1)); } ;
+
+
+
 
 %%
 

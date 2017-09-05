@@ -10,7 +10,7 @@ Copyright (C) 2017, Sebastian Schlenkrich
 
 */
 
-#include <ql/experimental/templatemodels/montecarlo/scripting/flexbisondriver.hpp>
+#include "flexbisondriver.hpp"
 #include <sstream>
 
 namespace QuantLib {
@@ -20,7 +20,7 @@ namespace QuantLib {
 		FlexBisonDriver::FlexBisonDriver(const std::string text,
 			const bool trace_scanning,
 			const bool trace_parsing)
-			: text_(text), trace_scanning_(trace_scanning), trace_parsing_(trace_parsing), expressionTree_(0) {
+			: text_(text), trace_scanning_(trace_scanning), trace_parsing_(trace_parsing), expressionTree_() {
 			scan_begin();
 			Parser parser(*this, yyscanner_);
 			parser.set_debug_level(trace_parsing_);

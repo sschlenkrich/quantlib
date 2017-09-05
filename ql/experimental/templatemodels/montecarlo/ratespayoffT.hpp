@@ -106,6 +106,9 @@ namespace QuantLib {
 
 		// future swap rate
 		class SwapRate : public GeneralSwaption {
+			// we save this to be able to clone the swap rate
+			boost::shared_ptr<SwapIndex>   swapIndex_;
+			Handle<YieldTermStructure>     discYTS_;
 		public:
 			SwapRate( DateType                        obsTime,    // observation equals fixing time
 				      const std::vector<DateType>&    floatTimes,
@@ -117,7 +120,7 @@ namespace QuantLib {
 			SwapRate( const DateType                        fixingTime,
 					  const boost::shared_ptr<SwapIndex>&   swapIndex,
 					  const Handle<YieldTermStructure>&     discYTS    )
-					  : GeneralSwaption(fixingTime,swapIndex,discYTS,0.0,0.0) { }
+					  : GeneralSwaption(fixingTime,swapIndex,discYTS,0.0,0.0), swapIndex_(swapIndex), discYTS_(discYTS) { }
 
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				ActiveType floatleg = 0.0;
@@ -128,6 +131,10 @@ namespace QuantLib {
 				for (size_t k=0; k<fixedTimes_.size(); ++k) annuity  += fixedWeights_[k] * p->zeroBond(observationTime(),fixedTimes_[k]);
 				return floatleg / annuity;
 			}
+			inline virtual boost::shared_ptr<MCPayoffT> at(const DateType t) {
+				if ((swapIndex_!=0)&&(discYTS_.empty())) return boost::shared_ptr<MCPayoffT>(new SwapRate(t, swapIndex_, discYTS_));
+				QL_FAIL("Can not clone swap rate");
+			}
 		    // payoff should NOT be discounted
 		    inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p); }
 		};
@@ -135,6 +142,9 @@ namespace QuantLib {
 
 		// Libor rate based on index
         class LiborRate : public MCPayoffT<DateType, PassiveType, ActiveType> {
+			// we save this to be able to clone the Libor rate
+			boost::shared_ptr<IborIndex>   iborIndex_;
+			Handle<YieldTermStructure>     discYTS_;
 		protected:
 			DateType    fixingTime_, startTime_, endTime_;
 			PassiveType oneOverDaycount_;
@@ -143,7 +153,7 @@ namespace QuantLib {
 			LiborRate(const DateType                        fixingTime,
 				      const boost::shared_ptr<IborIndex>&   iborIndex,
 				      const Handle<YieldTermStructure>&     discYTS)
-				      : MCPayoffT(fixingTime), fixingTime_(fixingTime) {
+				      : MCPayoffT(fixingTime), fixingTime_(fixingTime), iborIndex_(iborIndex), discYTS_(discYTS) {
 				Date today = discYTS->referenceDate(); // check if this is the correct date...
 				Date fixingDate = today + ((BigInteger)ClosestRounding(0)(fixingTime_*365.0)); // assuming act/365 day counting
 				Date startDate = iborIndex->valueDate(fixingDate);
@@ -174,6 +184,10 @@ namespace QuantLib {
 		    }			        
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				return ( p->zeroBond(fixingTime_,startTime_) / p->zeroBond(fixingTime_,endTime_) * D_ - 1.0 ) * oneOverDaycount_;
+			}
+			inline virtual boost::shared_ptr<MCPayoffT> at(const DateType t) {
+				if ((iborIndex_!=0)&&(discYTS_.empty())) return boost::shared_ptr<MCPayoffT>(new LiborRate(t, iborIndex_, discYTS_));
+				QL_FAIL("Can not clone Libor rate");
 			}
 	    };
 

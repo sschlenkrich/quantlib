@@ -12,8 +12,8 @@
 // 2.5.31 through 2.5.33): it generates code that does
 // not conform to C89.  See Debian bug 333231
 // <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=333231>.
-# undef yywrap
-# define yywrap() 1
+// # undef yywrap
+// # define yywrap() 1
 
 // The location of the current token.
 // static yy::location loc;
@@ -40,6 +40,14 @@ blank   [ \t]
 
 {blank}+         driver.loc().step ();
 [\n]+            driver.loc().lines (yyleng); driver.loc().step ();
+
+"=="             return QuantLib::Scripting::Parser::make_EQUAL(driver.loc());
+"!="             return QuantLib::Scripting::Parser::make_NEQUUAL(driver.loc());
+"<="             return QuantLib::Scripting::Parser::make_LESSEQ(driver.loc());
+">="             return QuantLib::Scripting::Parser::make_GREATEREQ(driver.loc());
+"<"              return QuantLib::Scripting::Parser::make_LESS(driver.loc());
+">"              return QuantLib::Scripting::Parser::make_GREATER(driver.loc());
+
 "-"              return QuantLib::Scripting::Parser::make_MINUS(driver.loc());
 "+"              return QuantLib::Scripting::Parser::make_PLUS(driver.loc());
 "*"              return QuantLib::Scripting::Parser::make_STAR(driver.loc());
@@ -48,6 +56,9 @@ blank   [ \t]
 ")"              return QuantLib::Scripting::Parser::make_RPAREN(driver.loc());
 ","              return QuantLib::Scripting::Parser::make_COMMA(driver.loc());
 "="              return QuantLib::Scripting::Parser::make_ASSIGN(driver.loc());
+
+"["              return QuantLib::Scripting::Parser::make_LBRACK(driver.loc());
+"]"              return QuantLib::Scripting::Parser::make_RBRACK(driver.loc());
 
 "IfThenElse"	 return QuantLib::Scripting::Parser::make_IFTHENELSE(yytext,driver.loc());
 "Min"            return QuantLib::Scripting::Parser::make_MIN(yytext,driver.loc());       

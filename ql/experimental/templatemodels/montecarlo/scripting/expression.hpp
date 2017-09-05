@@ -35,6 +35,7 @@ namespace QuantLib {
 				MINUS,
 				MULT,
 				DIVISION,
+				LOGICAL,
 				IDENTIFIER,
 				NUMBER,
 				IFTHENELSE,
@@ -42,24 +43,25 @@ namespace QuantLib {
 				MAX,
 				PAY,
 				CACHE,
+				PAYOFFAT,
 				UNKNOWNTYPE
 			};
-			Expression(const Type                          type,
+			Expression(const Type                   type,
 				const std::string                   leaf,
-				const boost::shared_ptr<Expression> first = 0,
-				const boost::shared_ptr<Expression> second = 0,
-				const boost::shared_ptr<Expression> third = 0);
+				const boost::shared_ptr<Expression> first =  boost::shared_ptr<Expression>(),
+				const boost::shared_ptr<Expression> second = boost::shared_ptr<Expression>(),
+				const boost::shared_ptr<Expression> third =  boost::shared_ptr<Expression>());
 
-			std::string toString();
+			std::string toString(const size_t level = 0);
 
 			// inspectors
 			inline Type type()         { return type_;  }
 			inline std::string leaf()  { return leaf_;  }
-			inline const std::vector<boost::shared_ptr<Expression>>& childs() { return childs_; };
+			inline const std::vector< boost::shared_ptr<Expression> >& childs() { return childs_; };
 		private:
 			Type type_;
 			std::string leaf_;
-			std::vector<boost::shared_ptr<Expression>> childs_;
+			std::vector< boost::shared_ptr<Expression> > childs_;
 
 		};
 	}

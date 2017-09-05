@@ -1966,6 +1966,7 @@
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\fixedratebondoption.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\expression.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\ExpressionParser.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Lexer.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.cpp" />

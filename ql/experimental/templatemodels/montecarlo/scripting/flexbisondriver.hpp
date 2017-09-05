@@ -19,7 +19,7 @@ Copyright (C) 2017, Sebastian Schlenkrich
 #include <map>
 #include <boost/shared_ptr.hpp>
 
-#include <ql/experimental/templatemodels/montecarlo/scripting/Parser.hpp>
+#include "Parser.hpp"
 
 
 namespace QuantLib {
