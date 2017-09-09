@@ -81,6 +81,10 @@ namespace QuantLib {
 		// this is required to calculate asset adjusters without knowing the implementation of the model
 		inline virtual ActiveType forwardAsset(const DateType t, const DateType T, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: (multi) asset not implemented"); return 0; }
 
+		// calculate the local volatility of the log-process of the asset
+		// this is required continuous barrier estimation via Brownian Bridge
+        inline virtual ActiveType assetVolatility(const DateType t, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: (multi) assetVolatility not implemented"); return 0; }
+
 		// the expectation E^Q in the domestic currency risk-neutral meassure
 		// this is currently used for commodity payoffs
 		inline virtual ActiveType futureAsset(const DateType t, const DateType T, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: (multi) asset not implemented"); return 0; }

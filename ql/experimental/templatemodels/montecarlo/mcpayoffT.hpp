@@ -142,6 +142,23 @@ namespace QuantLib {
 			inline virtual boost::shared_ptr<MCPayoffT> at(const DateType t) { return boost::shared_ptr<MCPayoffT>(new Asset(t, alias_)); }
 		};
 
+		// return the continuous barrier no-hit probability
+		class AssetBarrierNoHit : public MCPayoffT {
+			std::string alias_;
+			DateType tStart_, tEnd_;
+			PassiveType downBarrier_, upBarrier_;
+			PassiveType downOrUpOrBoth_; // down (-1), up (+1), both (0)
+		public:
+			AssetBarrierNoHit(DateType tStart, DateType tEnd, PassiveType downBarrier, PassiveType upBarrier, PassiveType downOrUpOrBoth, const std::string alias)
+			    : MCPayoffT(tEnd), tStart_(tStart), tEnd_(tEnd), alias_(alias),
+				  downBarrier_(downBarrier), upBarrier_(upBarrier), downOrUpOrBoth_(downOrUpOrBoth) {
+				QL_REQUIRE(tStart_ < tEnd_, "AssetBarrierNoHit: tStart < tEnd required.");
+				QL_REQUIRE(downBarrier_ < upBarrier_, "AssetBarrierNoHit: downBarrier < upBarrier required.");
+			}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) { return p->assetBarrierNoHit(tStart_, tEnd_, downBarrier_, upBarrier_, downOrUpOrBoth_, alias_); }
+		};
+
+
 		// 1 unit call or put exercised at observation time and settled at pay time
 		// deprecated; does not use alias!
 		class VanillaOption : public MCPayoffT {

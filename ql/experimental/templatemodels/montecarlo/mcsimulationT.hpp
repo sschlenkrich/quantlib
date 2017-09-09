@@ -217,6 +217,44 @@ namespace QuantLib {
 						process_->asset(obsTime, sim_->state(idx_, obsTime), alias);
 			}
 
+            // calculate barrier no-hit probability via Brownian Bridge applied to log-asset
+			inline ActiveType assetBarrierNoHit(DateType tStart,
+				                                DateType tEnd,
+				                                PassiveType downBarrier,
+				                                PassiveType upBarrier,
+				                                PassiveType downOrUpOrBoth,  // -1 (down) or +1 (up) or 0 (both)
+				                                const std::string& alias) {
+				// we need to find the grid on which we may calculate the
+				std::vector<DateType> times;
+				times.push_back(tStart);
+				for (size_t k = 0; k < sim_->obsTimes().size(); ++k) {
+					if ((sim_->obsTimes()[k] > tStart) && (sim_->obsTimes()[k] < tEnd)) times.push_back(sim_->obsTimes()[k]);
+					if (sim_->obsTimes()[k] >= tEnd) break;
+				}
+				times.push_back(tEnd);
+				// we initialise with the asset at start date
+				ActiveType noHitProb = 1, S2(0.0), sigma2(0.0);
+				VecA X2;
+				for (size_t k = 0; k < times.size(); ++k) {
+					ActiveType S1(S2), sigma1(sigma2);
+					VecA X1(X2);
+					X2 = sim_->state(idx_, times[k]);
+					S2 = sim_->assetAdjuster(times[k], alias) + process_->asset(times[k], X2, alias); // use low-level calculation to avoid repeated state computation
+					// if we have a discrete hit then we don't need probabilties
+					if ((downOrUpOrBoth <= 0) && (S2 <= downBarrier)) return 0.0;
+					if ((downOrUpOrBoth >= 0) && (S2 >= upBarrier)) return 0.0;
+					sigma2 = process_->assetVolatility(times[k], X2, alias);  // this is the local log-volatility 
+					if (k == 0) continue; // we can't calculate prob's in the first iteration
+					ActiveType variance = (sigma1*sigma1 + sigma2*sigma2) * (times[k] - times[k - 1]) / 2.0;
+					ActiveType downHit = std::exp(-2 * std::log(downBarrier / S1) * std::log(downBarrier / S2) / variance);
+					ActiveType upHit = std::exp(-2 * std::log(upBarrier / S1) * std::log(upBarrier / S2) / variance);
+					// we assme independent events rather than disjoint events for up and down hits
+					// this needs a bit more analysis...
+					noHitProb *= (1.0 - downHit)*(1.0 - upHit);
+				}
+				return noHitProb;
+			}
+
 			// for commodity payoffs
 			inline ActiveType futureAsset(DateType obsTime, DateType settlementTime, const std::string& alias) {
 				return	process_->futureAsset(obsTime, settlementTime, sim_->state(idx_, obsTime), alias);

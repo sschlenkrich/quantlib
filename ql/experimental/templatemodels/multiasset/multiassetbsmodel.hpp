@@ -59,6 +59,11 @@ namespace QuantLib {
 				(processes_[index_.at(alias)]->dividendYield()->discount(T) / processes_[index_.at(alias)]->dividendYield()->discount(t)) /
 				(processes_[index_.at(alias)]->riskFreeRate()->discount(T) / processes_[index_.at(alias)]->riskFreeRate()->discount(t));
 		}
+
+		// calculate the local volatility of the log-process of the asset
+		// this is required continuous barrier estimation via Brownian Bridge
+		inline virtual QuantLib::Real assetVolatility(const QuantLib::Time t, const VecA& X, const std::string& alias) { return processes_[index_.at(alias)]->diffusion(t, asset(t, X, alias)); }
+
 	};
 
 }
