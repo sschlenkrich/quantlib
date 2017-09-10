@@ -68,6 +68,13 @@ namespace TemplateAuxilliaries {
 		return b;
 	}
 
+	// union of two vectors
+	template <typename Type> inline
+	std::vector<Type> unionVector(const std::vector<Type>& v1, const std::vector<Type>& v2) {
+		std::vector<Type> res;
+		std::set_union(v1.begin(), v1.end(), v2.begin(), v2.end(), std::back_inserter(res));
+		return res;
+	}
 
 	//  normal distribution and Black76 functions
 
