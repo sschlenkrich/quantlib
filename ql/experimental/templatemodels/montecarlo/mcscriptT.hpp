@@ -15,11 +15,12 @@
 #define quantlib_templatemcscript_hpp
 
 
+
 #include <ql/experimental/templatemodels/montecarlo/mcpayoffT.hpp>
 #include <ql/experimental/templatemodels/montecarlo/scripting/flexbisondriver.hpp>
 #include <ql/experimental/templatemodels/montecarlo/scripting/expression.hpp>
 
-
+#include <ql/time/date.hpp>
 
 #include <boost/regex.hpp>
 
@@ -111,6 +112,40 @@ namespace QuantLib {
 			return true;
 		}
 
+		// convert date string with format ddmmmyyyy to number
+		inline static bool date_to_Number(const std::string str, ActiveType& number) {
+			if (str.length() != 9) return false;
+			std::string::size_type sz;
+			try {
+				Day  day  = std::stol(str.substr(0,2), &sz);
+				Year year = std::stol(str.substr(5,4), &sz);
+				Month month;
+				std::string s = str.substr(2, 3);
+				if (s.compare("Jan") == 0) month = Month::Jan;
+				else if (s.compare("Feb") == 0) month = Month::Feb;
+				else if (s.compare("Mar") == 0) month = Month::Mar;
+				else if (s.compare("Apr") == 0) month = Month::Apr;
+				else if (s.compare("May") == 0) month = Month::May;
+				else if (s.compare("Jun") == 0) month = Month::Jun;
+				else if (s.compare("Jul") == 0) month = Month::Jul;
+				else if (s.compare("Aug") == 0) month = Month::Aug;
+				else if (s.compare("Sep") == 0) month = Month::Sep;
+				else if (s.compare("Oct") == 0) month = Month::Oct;
+				else if (s.compare("Nov") == 0) month = Month::Nov;
+				else if (s.compare("Dec") == 0) month = Month::Dec;
+				else return false;
+				Date d(day, month, year);
+				Date today = Settings::instance().evaluationDate();
+				number = (ActiveType)(((d.serialNumber() - today.serialNumber()) / 365.0));
+			}
+			catch (std::exception e) {
+				return false;
+			}
+			return true;
+		}
+
+
+
 		// we define that helper function to simplify code in forthcoming expression parsing
 		inline bool hasChilds(const boost::shared_ptr<Scripting::Expression> tree, Size nArgs, Size lineNr) {
 			// make sure we can actually do something with the tree
@@ -159,24 +194,24 @@ namespace QuantLib {
 			// make sure we can actually do something with the tree
 			if (!tree) {
 				scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": Empty expression tree."));
-				return 0; 
+				QL_FAIL("Cannot interprete payoff");
 			}
 			// check any possible expression
 			switch (tree->type()) {
 		    // expressions based on tokens
 			case Scripting::Expression::NUMBER: {
-				if (!hasChilds(tree, 0, k)) return 0;
-				if (!hasLeafs(tree, 1, k)) return 0;
+				if (!hasChilds(tree, 0, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 1, k)) 	QL_FAIL("Cannot interprete payoff");
 				ActiveType number;
 				if (to_Number(tree->leafs()[0], number)) {
 					return boost::shared_ptr<MCPayoffT>(new MCPayoffT::FixedAmount(number));
 				}
 				scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
-				return 0;
+				QL_FAIL("Cannot interprete payoff");
 			}
 			case Scripting::Expression::IDENTIFIER: {
-				if (!hasChilds(tree, 0, k)) return 0;
-				if (!hasLeafs(tree, 1, k)) return 0;
+				if (!hasChilds(tree, 0, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 1, k))  QL_FAIL("Cannot interprete payoff");
 				// check for existing payoff in map
 				std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(tree->leafs()[0]);
 				if (it != payoffs_.end()) {
@@ -185,92 +220,114 @@ namespace QuantLib {
 				}
 				// if we end up here no conversion was successfull
 				scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": '" + tree->leafs()[0] + "' is no payoff"));
-				return 0;
+				QL_FAIL("Cannot interprete payoff");
 			}
 			// expressions basen on unary operators
 			case Scripting::Expression::UNARYPLUS: {
-				if (!hasChilds(tree, 1, k)) return 0;
-				if (!hasLeafs(tree, 0, k)) return 0;
+				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
 				return this->payoff(tree->childs()[0], k);
 			}
 			case Scripting::Expression::UNARYMINUS: {
-				if (!hasChilds(tree, 1, k)) return 0;
-				if (!hasLeafs(tree, 0, k)) return 0;
+				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(-1.0, payoff(tree->childs()[0], k), 0));
 			}
 			case Scripting::Expression::PLUS: {
-				if (!hasChilds(tree, 2, k)) return 0;
-				if (!hasLeafs(tree, 0, k)) return 0;
+				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(1.0, payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::MINUS: {
-				if (!hasChilds(tree, 2, k)) return 0;
-				if (!hasLeafs(tree, 0, k)) return 0;
+				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(-1.0, payoff(tree->childs()[1], k), payoff(tree->childs()[0], k)));
 			}
 			case Scripting::Expression::MULT: {
-				if (!hasChilds(tree, 2, k)) return 0;
-				if (!hasLeafs(tree, 0, k)) return 0;
+				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Mult(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::DIVISION: {
-				if (!hasChilds(tree, 2, k)) return 0;
-				if (!hasLeafs(tree, 0, k)) return 0;
+				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Division(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::IFTHENELSE: {
-				if (!hasChilds(tree, 3, k)) return 0;
-				if (!hasLeafs(tree, 0, k)) return 0;
+				if (!hasChilds(tree, 3, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::IfThenElse(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k), payoff(tree->childs()[2], k)));
 			}
 			case Scripting::Expression::MIN: {
-				if (!hasChilds(tree, 2, k)) return 0;
-				if (!hasLeafs(tree, 0, k)) return 0;
+				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Min(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::MAX: {
-				if (!hasChilds(tree, 2, k)) return 0;
-				if (!hasLeafs(tree, 0, k)) return 0;
+				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Max(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::LOGICAL: {
-				if (!hasChilds(tree, 2, k)) return 0;
-				if (!hasLeafs(tree, 1, k)) return 0;
+				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 1, k))  QL_FAIL("Cannot interprete payoff");
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Logical(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k), tree->leafs()[0]));
 			}
 			case Scripting::Expression::PAY: {
-				if (!hasChilds(tree, 1, k)) return 0;
-				if (!hasLeafs(tree, 1, k)) return 0;
+				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 1, k))  QL_FAIL("Cannot interprete payoff");
 				ActiveType number;
 				if (!to_Number(tree->leafs()[0], number)) {
 					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
-					return 0;
+					QL_FAIL("Cannot interprete payoff");
+				}
+				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Pay(payoff(tree->childs()[0], k), number));
+			}
+			case Scripting::Expression::PAY_WITHDATE: {
+				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 1, k))  QL_FAIL("Cannot interprete payoff");
+				ActiveType number;
+				if (!date_to_Number(tree->leafs()[0], number)) {
+					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
+					QL_FAIL("Cannot interprete payoff");
 				}
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Pay(payoff(tree->childs()[0], k), number));
 			}
 			case Scripting::Expression::CACHE: {
-				if (!hasChilds(tree, 1, k)) return 0;
-				if (!hasLeafs(tree, 0, k)) return 0;
+				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Cache(payoff(tree->childs()[0], k)));
 			}
 			case Scripting::Expression::PAYOFFAT: {
-				if (!hasChilds(tree, 1, k)) return 0;
-				if (!hasLeafs(tree, 1, k)) return 0;
+				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 1, k))  QL_FAIL("Cannot interprete payoff");
 				ActiveType number;
 				if (!to_Number(tree->leafs()[0], number)) {
 					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
-					return 0;
+					QL_FAIL("Cannot interprete payoff");
 				}
 				boost::shared_ptr<MCPayoffT> p = payoff(tree->childs()[0], k);
 				if (p) return p->at(number);
-				return 0; // maybe better throw an exception in this case
+				QL_FAIL("Cannot interprete payoff");
 			}
-		    // we don't need a default because we returned in each of the previous cases
+			case Scripting::Expression::PAYOFFAT_WITHDATE: {
+				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 1, k))  QL_FAIL("Cannot interprete payoff");
+				ActiveType number;
+				if (!date_to_Number(tree->leafs()[0], number)) {
+					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
+					QL_FAIL("Cannot interprete payoff");
+				}
+				boost::shared_ptr<MCPayoffT> p = payoff(tree->childs()[0], k);
+				if (p) return p->at(number);
+				QL_FAIL("Cannot interprete payoff");
+			}
+												  // we don't need a default because we returned in each of the previous cases
 			} // finished all switch types
 			// if we end up here there is an expression which we didn't interprete 
 			scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": unknown expression type."));
-			return 0;  // returning 0 may cause problems when using the result elsewhere
-			           // maybe better throw an exception
+			QL_FAIL("Cannot interprete payoff");
+			return 0; // this should never be reached
 		}
 
 		// parse the script and set up payoffs
@@ -292,7 +349,14 @@ namespace QuantLib {
 					if (!hasChilds(driver.expressionTree(), 1, k)) continue;
 					if (!hasLeafs(driver.expressionTree(), 1, k)) continue;
 					// interprete right side of assignment
-					boost::shared_ptr<MCPayoffT> p = payoff(driver.expressionTree()->childs()[0],k);
+					boost::shared_ptr<MCPayoffT> p;
+					try {
+						p = payoff(driver.expressionTree()->childs()[0], k);
+					}
+					catch (std::exception e) {  // something went wrong, for details check scriptLog_
+						scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": Exception caught: " + e.what()));
+						continue;
+					}
 					if (!p) {
 						scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": No payoff found."));
 						continue;

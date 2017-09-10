@@ -226,7 +226,9 @@ namespace QuantLib {
 				return res;
 			}
 			inline virtual boost::shared_ptr<MCPayoffT> at(const DateType t) { return boost::shared_ptr<MCPayoffT>(new Axpy(a_, x_->at(t), y_->at(t))); }
-			inline virtual std::set<DateType> observationTimes() { return unionTimes(x_->observationTimes(), y_->observationTimes()); }
+			inline virtual std::set<DateType> observationTimes() { 
+				return (y_)?(unionTimes(x_->observationTimes(), y_->observationTimes())):(x_->observationTimes());
+			}
 		};
 
 		// x * y  (undiscounted)		
