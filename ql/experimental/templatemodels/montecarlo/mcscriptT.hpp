@@ -30,9 +30,10 @@ namespace QuantLib {
 	template <class DateType, class PassiveType, class ActiveType>
 	class MCScriptT : public MCPayoffT<DateType, PassiveType, ActiveType> {
 	private:
-		std::map<std::string, boost::shared_ptr<MCPayoffT>>  payoffs_;    // the actual payoffs which may be accessed
-		std::vector<std::string>                             scriptLog_;  // log messages when parsing the script
-		boost::shared_ptr<MCPayoffT>                         result_;     // result payoff for MCPayoff interface implementation
+		std::map<std::string, boost::shared_ptr<MCPayoffT>>  payoffs_;      // the actual payoffs which may be accessed
+		std::vector<std::string>                             expressions_;  // resulting expressions after parsing the script but before syntactic analysis
+		std::vector<std::string>                             scriptLog_;    // log messages when parsing the script
+		boost::shared_ptr<MCPayoffT>                         result_;       // result payoff for MCPayoff interface implementation
 	public:
 		MCScriptT(const std::vector<std::string>&                    keys,
 			      const std::vector <boost::shared_ptr<MCPayoffT>>&  payoffs,
@@ -68,18 +69,21 @@ namespace QuantLib {
 		}
 
 		// inspector
-		inline const std::map<std::string, boost::shared_ptr<MCPayoffT>>& payoffs()   { return payoffs_;   }
-		inline const std::vector<std::string>&                            scriptLog() { return scriptLog_; } 
+		inline const std::map<std::string, boost::shared_ptr<MCPayoffT>>& payoffs()     { return payoffs_;   }
+		inline const std::vector<std::string>&                            expressions() { return expressions_; }
+		inline const std::vector<std::string>&                            scriptLog()   { return scriptLog_; }
+
+		std::vector<DateType> observationTimes(const std::vector<std::string>& keys) {
+			std::vector<boost::shared_ptr<MCPayoffT>> payoffs = findPayoffs(keys);
+			std::set<DateType> s;
+			for (size_t k = 0; k < payoffs.size(); ++k) s = MCPayoffT::unionTimes(s, payoffs[k]->observationTimes());
+			return std::vector<DateType>(s.begin(), s.end());
+		}
 
 		// MC valuation
 		inline std::vector<ActiveType> NPV(const boost::shared_ptr<SimulationType>&  simulation,
 			                               const std::vector<std::string>&           keys) {
-			std::vector<boost::shared_ptr<MCPayoffT>> payoffs(keys.size());
-			for (Size k = 0; k < keys.size(); ++k) {
-				std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(keys[k]);
-				QL_REQUIRE(it != payoffs_.end(), "MCScript error: payoff '" + keys[k] + "' not found");
-				payoffs[k] = it->second;
-			}
+			std::vector<boost::shared_ptr<MCPayoffT>> payoffs = findPayoffs(keys);
 			std::vector<ActiveType> npv(payoffs.size(), (ActiveType)0.0);
 			for (Size n = 0; n < simulation->nPaths(); ++n) {
 				const boost::shared_ptr<MCPayoffT::PathType> p(simulation->path(n));
@@ -94,7 +98,7 @@ namespace QuantLib {
 	private:
 
 		// convert string to number
-		inline bool to_Number(const std::string str, ActiveType& number) {
+		inline static bool to_Number(const std::string str, ActiveType& number) {
 			double res;
 			std::string::size_type sz;
 			try {
@@ -121,6 +125,34 @@ namespace QuantLib {
 			return true;
 		}
 
+		// we define that helper function to simplify code in forthcoming expression parsing
+		inline bool hasLeafs(const boost::shared_ptr<Scripting::Expression> tree, Size nArgs, Size lineNr) {
+			// make sure we can actually do something with the tree
+			if (!tree) {
+				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": Empty expression tree."));
+				return false;
+			}
+			if (tree->leafs().size() != nArgs) {
+				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": " + std::to_string(nArgs) + " leafs expected, but " + std::to_string(tree->childs().size()) + " found."));
+				return false;
+			}
+			return true;
+		}
+
+		// check if a list of payoffs exists before doing some computationally expensive stuff with them
+		std::vector< boost::shared_ptr<MCPayoffT> > findPayoffs(const std::vector<std::string>& keys, bool throwException = true) {
+			std::vector<boost::shared_ptr<MCPayoffT>> payoffs;
+			for (Size k = 0; k < keys.size(); ++k) {
+				std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(keys[k]);
+				if (it != payoffs_.end()) {
+					payoffs.push_back(it->second);
+					continue; // all done for this key
+				}
+				if (throwException) QL_FAIL("MCScript error: payoff '" + keys[k] + "' not found");
+			}
+			return payoffs;
+		}
+
 		// convert an abstract expression tree into a payoff
 		// this function does the actual work...
 		boost::shared_ptr<MCPayoffT> payoff(const boost::shared_ptr<Scripting::Expression> tree, Size k) {
@@ -133,83 +165,100 @@ namespace QuantLib {
 			switch (tree->type()) {
 		    // expressions based on tokens
 			case Scripting::Expression::NUMBER: {
+				if (!hasChilds(tree, 0, k)) return 0;
+				if (!hasLeafs(tree, 1, k)) return 0;
 				ActiveType number;
-				if (to_Number(tree->leaf(), number)) {
+				if (to_Number(tree->leafs()[0], number)) {
 					return boost::shared_ptr<MCPayoffT>(new MCPayoffT::FixedAmount(number));
 				}
-				scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leaf() + " to number."));
+				scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
 				return 0;
 			}
 			case Scripting::Expression::IDENTIFIER: {
+				if (!hasChilds(tree, 0, k)) return 0;
+				if (!hasLeafs(tree, 1, k)) return 0;
 				// check for existing payoff in map
-				std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(tree->leaf());
+				std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(tree->leafs()[0]);
 				if (it != payoffs_.end()) {
-					scriptLog_.push_back(std::string("Payoff line " + std::to_string(k) + ": '" + tree->leaf() + "' is in map"));
+					scriptLog_.push_back(std::string("Payoff line " + std::to_string(k) + ": '" + tree->leafs()[0] + "' is in map"));
 					return it->second;
 				}
 				// if we end up here no conversion was successfull
-				scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": '" + tree->leaf() + "' is no payoff"));
+				scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": '" + tree->leafs()[0] + "' is no payoff"));
 				return 0;
 			}
 			// expressions basen on unary operators
 			case Scripting::Expression::UNARYPLUS: {
 				if (!hasChilds(tree, 1, k)) return 0;
+				if (!hasLeafs(tree, 0, k)) return 0;
 				return this->payoff(tree->childs()[0], k);
 			}
 			case Scripting::Expression::UNARYMINUS: {
 				if (!hasChilds(tree, 1, k)) return 0;
+				if (!hasLeafs(tree, 0, k)) return 0;
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(-1.0, payoff(tree->childs()[0], k), 0));
 			}
 			case Scripting::Expression::PLUS: {
 				if (!hasChilds(tree, 2, k)) return 0;
+				if (!hasLeafs(tree, 0, k)) return 0;
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(1.0, payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::MINUS: {
 				if (!hasChilds(tree, 2, k)) return 0;
+				if (!hasLeafs(tree, 0, k)) return 0;
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(-1.0, payoff(tree->childs()[1], k), payoff(tree->childs()[0], k)));
 			}
 			case Scripting::Expression::MULT: {
 				if (!hasChilds(tree, 2, k)) return 0;
+				if (!hasLeafs(tree, 0, k)) return 0;
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Mult(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::DIVISION: {
 				if (!hasChilds(tree, 2, k)) return 0;
+				if (!hasLeafs(tree, 0, k)) return 0;
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Division(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::IFTHENELSE: {
 				if (!hasChilds(tree, 3, k)) return 0;
+				if (!hasLeafs(tree, 0, k)) return 0;
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::IfThenElse(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k), payoff(tree->childs()[2], k)));
 			}
 			case Scripting::Expression::MIN: {
 				if (!hasChilds(tree, 2, k)) return 0;
+				if (!hasLeafs(tree, 0, k)) return 0;
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Min(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::MAX: {
 				if (!hasChilds(tree, 2, k)) return 0;
+				if (!hasLeafs(tree, 0, k)) return 0;
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Max(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::LOGICAL: {
 				if (!hasChilds(tree, 2, k)) return 0;
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Logical(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k), tree->leaf()));
+				if (!hasLeafs(tree, 1, k)) return 0;
+				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Logical(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k), tree->leafs()[0]));
 			}
 			case Scripting::Expression::PAY: {
 				if (!hasChilds(tree, 1, k)) return 0;
+				if (!hasLeafs(tree, 1, k)) return 0;
 				ActiveType number;
-				if (!to_Number(tree->leaf(), number)) {
-					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leaf() + " to number."));
+				if (!to_Number(tree->leafs()[0], number)) {
+					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
 					return 0;
 				}
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Pay(payoff(tree->childs()[0], k), number));
 			}
 			case Scripting::Expression::CACHE: {
 				if (!hasChilds(tree, 1, k)) return 0;
+				if (!hasLeafs(tree, 0, k)) return 0;
 				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Cache(payoff(tree->childs()[0], k)));
 			}
 			case Scripting::Expression::PAYOFFAT: {
 				if (!hasChilds(tree, 1, k)) return 0;
+				if (!hasLeafs(tree, 1, k)) return 0;
 				ActiveType number;
-				if (!to_Number(tree->leaf(), number)) {
-					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leaf() + " to number."));
+				if (!to_Number(tree->leafs()[0], number)) {
+					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
 					return 0;
 				}
 				boost::shared_ptr<MCPayoffT> p = payoff(tree->childs()[0], k);
@@ -229,6 +278,8 @@ namespace QuantLib {
 		 	                             const bool                       overwrite = true) {
 			for (Size k = 0; k < script.size(); ++k) {  // first line should equal 'FlexBison' and is skipped anyway
 				Scripting::FlexBisonDriver driver(script[k], false, false);
+				// in any case we want to know the parsing result
+				if (driver.expressionTree()) expressions_.push_back("L" + std::to_string(k) + ":" + driver.expressionTree()->toString());
 				if (driver.returnValue() == 0) {
 					if (!driver.expressionTree()) {
 						scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": Empty expression tree."));
@@ -238,14 +289,8 @@ namespace QuantLib {
 						scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": Assignment expected."));
 						continue;
 					}
-					if (driver.expressionTree()->leaf().compare("") == 0) {
-						scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": Non-empty identifier expected."));
-						continue;
-					}
-					if (driver.expressionTree()->childs().size() != 1) {
-						scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": expect one child in ASSIGNMENT."));
-						continue;
-					}
+					if (!hasChilds(driver.expressionTree(), 1, k)) continue;
+					if (!hasLeafs(driver.expressionTree(), 1, k)) continue;
 					// interprete right side of assignment
 					boost::shared_ptr<MCPayoffT> p = payoff(driver.expressionTree()->childs()[0],k);
 					if (!p) {
@@ -253,7 +298,11 @@ namespace QuantLib {
 						continue;
 					}
 					// just define an abbreviation
-					std::string var = driver.expressionTree()->leaf();
+					std::string var = driver.expressionTree()->leafs()[0];
+					if (var.compare("") == 0) {
+						scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": Non-empty identifier expected."));
+						continue;
+					}
 					// now we have a payoff which we may store in the map
 					std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(var);
 					if (it == payoffs_.end()) { // insert a new element

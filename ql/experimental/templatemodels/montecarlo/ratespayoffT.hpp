@@ -132,7 +132,7 @@ namespace QuantLib {
 				return floatleg / annuity;
 			}
 			inline virtual boost::shared_ptr<MCPayoffT> at(const DateType t) {
-				if ((swapIndex_!=0)&&(discYTS_.empty())) return boost::shared_ptr<MCPayoffT>(new SwapRate(t, swapIndex_, discYTS_));
+				if ((swapIndex_!=0)&&(!discYTS_.empty())) return boost::shared_ptr<MCPayoffT>(new SwapRate(t, swapIndex_, discYTS_));
 				QL_FAIL("Can not clone swap rate");
 			}
 		    // payoff should NOT be discounted
@@ -186,7 +186,7 @@ namespace QuantLib {
 				return ( p->zeroBond(fixingTime_,startTime_) / p->zeroBond(fixingTime_,endTime_) * D_ - 1.0 ) * oneOverDaycount_;
 			}
 			inline virtual boost::shared_ptr<MCPayoffT> at(const DateType t) {
-				if ((iborIndex_!=0)&&(discYTS_.empty())) return boost::shared_ptr<MCPayoffT>(new LiborRate(t, iborIndex_, discYTS_));
+				if ((iborIndex_!=0)&&(!discYTS_.empty())) return boost::shared_ptr<MCPayoffT>(new LiborRate(t, iborIndex_, discYTS_));
 				QL_FAIL("Can not clone Libor rate");
 			}
 	    };
@@ -231,6 +231,7 @@ namespace QuantLib {
 			// inspectors
 			inline const DateType startTime() const { return startTime_; }
 			inline const DateType payTime()   const { return payTime_;   }
+			inline virtual std::set<DateType> observationTimes() { return unionTimes(MCPayoffT::observationTimes(), x_->observationTimes()); }
 		};
 
 	    // a CashFlow leg as a ordered list of CashFlows
@@ -384,6 +385,11 @@ namespace QuantLib {
 				}
 				return Cov / sqrt(Var1*Var2);
 			}
+			inline virtual std::set<DateType> observationTimes() {
+				std::set<DateType> s;
+				for (size_t k = 0; k < times_.size(); ++k) s.insert(times_[k]);
+				return s;
+			}
 		};
 
 		// undiscounted correlation between forward rates
@@ -435,9 +441,12 @@ namespace QuantLib {
 				}
 				return Cov / sqrt(Var1*Var2);
 			}
+			inline virtual std::set<DateType> observationTimes() {
+				std::set<DateType> s;
+				for (size_t k = 0; k < times_.size(); ++k) s.insert(times_[k]);
+				return s;
+			}
 		};
-
-
 
 	}; // class RatesPayoffT
 
