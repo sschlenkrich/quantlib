@@ -248,9 +248,12 @@ namespace QuantLib {
 					ActiveType variance = (sigma1*sigma1 + sigma2*sigma2) * (times[k] - times[k - 1]) / 2.0;
 					ActiveType downHit = std::exp(-2 * std::log(downBarrier / S1) * std::log(downBarrier / S2) / variance);
 					ActiveType upHit = std::exp(-2 * std::log(upBarrier / S1) * std::log(upBarrier / S2) / variance);
-					// we assme independent events rather than disjoint events for up and down hits
-					// this needs a bit more analysis...
-					noHitProb *= (1.0 - downHit)*(1.0 - upHit);
+					// we assme disjoint events for up and down hits
+					ActiveType hit = 0.0;
+					if (downOrUpOrBoth <= 0) hit += downHit;
+					if (downOrUpOrBoth >= 0) hit += upHit;
+					hit = (hit > 1.0) ? (1.0) : (hit);
+					noHitProb *= (1.0 - hit);
 				}
 				return noHitProb;
 			}

@@ -378,7 +378,8 @@ namespace QuantLib {
 						it->second = p;
 						scriptLog_.push_back(std::string("Replace line " + std::to_string(k) + ": '" + script[k] + "'"));
 						continue;
-					}
+					} 
+					else scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": Cannot replace line '" + script[k] + "'"));
 				}
 				else {
 					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": " + driver.errorMsg()));
