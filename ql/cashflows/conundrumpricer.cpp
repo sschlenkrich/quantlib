@@ -104,8 +104,11 @@ namespace QuantLib {
 
         Date today = Settings::instance().evaluationDate();
 
-        if(paymentDate_ > today)
-            discount_ = rateCurve_->discount(paymentDate_);
+        if(paymentDate_ > today) {
+            discount_ = rateCurve_->discount(paymentDate_);  // this is only the default choice
+			if ((modelOfYieldCurve_ == GFunctionFactory::Affine)&&(!swapIndex->discountingTermStructure().empty()))
+				discount_ = swapIndex->discountingTermStructure()->discount(paymentDate_);  // we need to use the discounting curve to capture basis spreads
+		}
         else discount_= 1.;
 
         spreadLegValue_ = spread_ * accrualPeriod * discount_;
