@@ -133,7 +133,7 @@ namespace QuantLib {
 			PassiveType Ny = TemplateAuxilliaries::Phi(y1);
 			PassiveType term1, term2;
 			if (m0 == 0.0) {
-				term1 = (S0 + nu_ / alpha - sigma0 * sqrt(T_) * y0) * Ny;
+				term1 = (S0 + nu_ / alpha_ - sigma0 * sqrt(T_) * y0) * Ny;
 				term2 = sigma0 * sqrt(T_) * TemplateAuxilliaries::phi(y1);  // use dN/dx = dN/dy / sqrt(T)
 			}
 			else {				
@@ -267,6 +267,48 @@ namespace QuantLib {
 			if (isRightWing) while ((idx < Xp_.size() - 1) && (Xp_[idx] < x)) ++idx;
 			else             while ((idx < Xm_.size() - 1) && (Xm_[idx] > x)) ++idx;
 			return underlyingS(isRightWing, idx, x);
+		}
+
+		// calculating expectations
+
+		const PassiveType expectation(bool isRightWing, PassiveType strike) {
+			// calculate the forward price of an OTM option
+			size_t idx = 0;
+			if (isRightWing) {
+				QL_REQUIRE(strike >= S0_, "strike >= S0_ required");
+				while ((idx < Sp_.size()) && (Sp_[idx] <= strike)) ++idx;  // make sure strike < Sp_[idx]
+				if (idx == Sp_.size()) return 0.0;  // we are beyond exrapolation
+				PassiveType strikeX = underlyingX(isRightWing, idx, strike);
+				PassiveType x0 = (idx > 0) ? Xp_[idx - 1] : 0.0;
+				QL_REQUIRE((x0 <= strikeX) && (strikeX < Xp_[idx]), "(x0 <= strikeX) && (strikeX < Xp_[idx]) required");
+				PassiveType intS = 0.0;
+				for (size_t k = idx; k < Sp_.size(); ++k) {
+					PassiveType xStart = (k == idx) ? strikeX : Xp_[k - 1];
+					intS += (primitiveF(isRightWing, k, Xp_[k]) - primitiveF(isRightWing, k, xStart));
+				}
+				// we need to adjust for the strike integral
+				PassiveType xEnd = Xp_.back();
+				PassiveType intK = TemplateAuxilliaries::Phi((xEnd - mu_) / sqrt(T_)) - TemplateAuxilliaries::Phi((strikeX - mu_) / sqrt(T_));
+				return intS - strike * intK;
+			}
+			else {
+				QL_REQUIRE(strike <= S0_, "strike <= S0_ required");
+				while ((idx < Sm_.size()) && (Sm_[idx] >= strike)) ++idx;  // make sure Sm_[idx] < strke
+				if (idx == Sm_.size()) return 0.0;  // we are beyond exrapolation
+				PassiveType strikeX = underlyingX(isRightWing, idx, strike);
+				PassiveType x0 = (idx > 0) ? Xm_[idx - 1] : 0.0;
+				QL_REQUIRE((x0 >= strikeX) && (strikeX > Xm_[idx]), "(x0 >= strikeX) && (strikeX > Xm_[idx]) required");
+				PassiveType intS = 0.0;
+				for (size_t k = idx; k < Sm_.size(); ++k) {
+					PassiveType xStart = (k == idx) ? strikeX : Xm_[k - 1];
+					intS += (primitiveF(isRightWing, k, Xm_[k]) - primitiveF(isRightWing, k, xStart));
+				}
+				// we need to adjust for the strike integral
+				PassiveType xEnd = Xm_.back();
+				PassiveType intK = TemplateAuxilliaries::Phi((xEnd - mu_) / sqrt(T_)) - TemplateAuxilliaries::Phi((strikeX - mu_) / sqrt(T_));
+				return intS - strike * intK;
+			}
+
 		}
 
 	};
