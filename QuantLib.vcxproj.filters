@@ -4295,6 +4295,9 @@
     <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.hpp">
       <Filter>experimental\templatemodels\multiasset</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\stochvol\vanillalocalvolmodelT.hpp">
+      <Filter>experimental\templatemodels\stochvol</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
