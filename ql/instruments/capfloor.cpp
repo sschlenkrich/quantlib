@@ -36,13 +36,13 @@ namespace QuantLib {
 
     namespace {
 
-        class ImpliedVolHelper {
+        class ImpliedCapVolHelper {
           public:
-            ImpliedVolHelper(const CapFloor&,
-                             const Handle<YieldTermStructure>& discountCurve,
-                             Real targetValue,
-                             Real displacement,
-                             VolatilityType type);
+            ImpliedCapVolHelper(const CapFloor&,
+                                const Handle<YieldTermStructure>& discountCurve,
+                                Real targetValue,
+                                Real displacement,
+                                VolatilityType type);
             Real operator()(Volatility x) const;
             Real derivative(Volatility x) const;
           private:
@@ -53,7 +53,7 @@ namespace QuantLib {
             const Instrument::results* results_;
         };
 
-        ImpliedVolHelper::ImpliedVolHelper(
+        ImpliedCapVolHelper::ImpliedCapVolHelper(
                               const CapFloor& cap,
                               const Handle<YieldTermStructure>& discountCurve,
                               Real targetValue,
@@ -62,7 +62,7 @@ namespace QuantLib {
         : discountCurve_(discountCurve), targetValue_(targetValue) {
 
             // set an implausible value, so that calculation is forced
-            // at first ImpliedVolHelper::operator()(Volatility x) call
+            // at first ImpliedCapVolHelper::operator()(Volatility x) call
             vol_ = boost::shared_ptr<SimpleQuote>(new SimpleQuote(-1));
             Handle<Quote> h(vol_);
 
@@ -86,7 +86,7 @@ namespace QuantLib {
             results_ = dynamic_cast<const Instrument::results*>(engine_->getResults());
         }
 
-        Real ImpliedVolHelper::operator()(Volatility x) const {
+        Real ImpliedCapVolHelper::operator()(Volatility x) const {
             if (x!=vol_->value()) {
                 vol_->setValue(x);
                 engine_->calculate();
@@ -94,7 +94,7 @@ namespace QuantLib {
             return results_->value-targetValue_;
         }
 
-        Real ImpliedVolHelper::derivative(Volatility x) const {
+        Real ImpliedCapVolHelper::derivative(Volatility x) const {
             if (x!=vol_->value()) {
                 vol_->setValue(x);
                 engine_->calculate();
@@ -328,24 +328,11 @@ namespace QuantLib {
         //calculate();
         QL_REQUIRE(!isExpired(), "instrument expired");
 
-        ImpliedVolHelper f(*this, d, targetValue, displacement, type);
+        ImpliedCapVolHelper f(*this, d, targetValue, displacement, type);
         //Brent solver;
         NewtonSafe solver;
         solver.setMaxEvaluations(maxEvaluations);
         return solver.solve(f, accuracy, guess, minVol, maxVol);
-    }
-
-    Volatility CapFloor::impliedVolatility(Real targetValue,
-                                           const Handle<YieldTermStructure>& d,
-                                           Volatility guess,
-                                           Real accuracy,
-                                           Natural maxEvaluations,
-                                           Volatility minVol,
-                                           Volatility maxVol,
-                                           Real displacement) const {
-        return impliedVolatility(targetValue, d, guess, accuracy,
-                                 maxEvaluations, minVol, maxVol,
-                                 ShiftedLognormal, displacement);
     }
 
 }
