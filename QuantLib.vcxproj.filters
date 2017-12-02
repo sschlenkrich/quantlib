@@ -6994,7 +6994,6 @@
       <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
     </ClCompile>
   </ItemGroup>
-</Project>
   <ItemGroup>
     <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">
       <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
