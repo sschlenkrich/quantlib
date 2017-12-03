@@ -161,7 +161,7 @@ namespace QuantLib {
 				PassiveType x0 = (k > 0) ? Xp_[k - 1] : 0.0;
 				PassiveType S0 = (k > 0) ? Sp_[k - 1] : S0_;
 				PassiveType sigma0 = (k > 0) ? sigmaP_[k - 1] : sigma0_;
-				QL_REQUIRE(sigma0 > 0.0, "sigma0 > 0.0 required.");
+				QL_REQUIRE(sigma0 >= 0.0, "sigma0 >= 0.0 required.");
 				if ((k == Sp_.size() - 1)||(localVol(true, k, Sp_[k])<=0.0)||(underlyingX(true, k, Sp_[k])>upperBoundX()))  { // right wing extrapolation, maybe better use some epsilon here
 					PassiveType XRight = upperBoundX();  // mu might not yet be calibrated
 					QL_REQUIRE(XRight >= x0, "XRight >= x0 required.");
@@ -179,7 +179,7 @@ namespace QuantLib {
 				PassiveType x0 = (k > 0) ? Xm_[k - 1] : 0.0;
 				PassiveType S0 = (k > 0) ? Sm_[k - 1] : S0_;
 				PassiveType sigma0 = (k > 0) ? sigmaM_[k - 1] : sigma0_;
-				QL_REQUIRE(sigma0 > 0.0, "sigma0 > 0.0 required.");
+				QL_REQUIRE(sigma0 >= 0.0, "sigma0 >= 0.0 required.");
 				if ((k == Sm_.size() - 1)||(localVol(false, k, Sm_[k]) <= 0.0)||(underlyingX(false, k, Sm_[k])<lowerBoundX())) { // left wing extrapolation, maybe better use some epsilon here
 					PassiveType XLeft = lowerBoundX();  // mu might not yet be calibrated
 					QL_REQUIRE(XLeft <= x0, "XLeft <= x0 required.");
@@ -216,6 +216,8 @@ namespace QuantLib {
 				dmu = -forwardMinusStrike1 / dfwd_dmu;
 				dsigma0 = -straddleMinusATM1 / dstr_dsi;
 				if ((sigma0_ + dsigma0) < 0.0) dsigma0 = -0.5 * sigma0_;  // make sure sigma0_ remains positive
+				if (dmu <= -0.9*upperBoundX()) dmu = -0.5*upperBoundX();  // make sure 0 < eps < upperBoundX() in next update
+				if (dmu >= -0.9*lowerBoundX()) dmu = -0.5*lowerBoundX();  // make sure 0 > eps > lowerBoundX() in next update
 				// maybe some line search could improve convergence...
 				mu_ += dmu;
 				sigma0_ += dsigma0;
@@ -362,7 +364,7 @@ namespace QuantLib {
 				if (idx == Sp_.size()) return 0.0;  // we are beyond exrapolation
 				PassiveType strikeX = underlyingX(isRightWing, idx, strike);
 				PassiveType x0 = (idx > 0) ? Xp_[idx - 1] : 0.0;
-				QL_REQUIRE((x0 <= strikeX) && (strikeX < Xp_[idx]), "(x0 <= strikeX) && (strikeX < Xp_[idx]) required");
+				QL_REQUIRE((x0 <= strikeX) && (strikeX <= Xp_[idx]), "(x0 <= strikeX) && (strikeX <= Xp_[idx]) required");
 				PassiveType intS = 0.0;
 				for (size_t k = idx; k < Sp_.size(); ++k) {
 					PassiveType xStart = (k == idx) ? strikeX : Xp_[k - 1];
@@ -379,7 +381,7 @@ namespace QuantLib {
 				if (idx == Sm_.size()) return 0.0;  // we are beyond exrapolation
 				PassiveType strikeX = underlyingX(isRightWing, idx, strike);
 				PassiveType x0 = (idx > 0) ? Xm_[idx - 1] : 0.0;
-				QL_REQUIRE((x0 >= strikeX) && (strikeX > Xm_[idx]), "(x0 >= strikeX) && (strikeX > Xm_[idx]) required");
+				QL_REQUIRE((x0 >= strikeX) && (strikeX >= Xm_[idx]), "(x0 >= strikeX) && (strikeX >= Xm_[idx]) required");
 				PassiveType intS = 0.0;
 				for (size_t k = idx; k < Sm_.size(); ++k) {
 					PassiveType xStart = (k == idx) ? strikeX : Xm_[k - 1];
