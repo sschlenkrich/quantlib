@@ -48,6 +48,7 @@ namespace QuantLib {
 		// numerical accuracy parameters (maybe expose to user...)
 		PassiveType              extrapolationStdevs_;  // number of stdevs used as lower and upper cutoff, default 10
 		size_t                   maxCalibrationIters_;  // number of iterations for forward/sigma0 calibration
+		size_t                   onlyForwardCalibrationIters_;  // we may have some initial iterations only calibrating forward, this is intended to stabilise calibration
 		PassiveType              sigma0Tol_;            // tolerance for sigma convergence
 		PassiveType              S0Tol_;                // tolerance for forward convergence
 		bool                     adjustATM_;            // apply post-calibration ATM adjuster
@@ -204,6 +205,36 @@ namespace QuantLib {
 				PassiveType put = expectation(false, S0_);
 				forwardMinusStrike1 = call - put;
 				straddleMinusATM1 = call + put - straddleATM_;
+				if (k > 0) {  // perform line search
+					PassiveType num = forwardMinusStrike0*(forwardMinusStrike1 - forwardMinusStrike0) +
+						              straddleMinusATM0*(straddleMinusATM1 - straddleMinusATM0);
+					PassiveType den = (forwardMinusStrike1 - forwardMinusStrike0)*(forwardMinusStrike1 - forwardMinusStrike0) +
+						              (straddleMinusATM1 - straddleMinusATM0)*(straddleMinusATM1 - straddleMinusATM0);
+					PassiveType lambda = -num / den;
+					PassiveType eps = 1.0e-6;  // see Griewank '86
+					if (lambda < -0.5 - eps) lambda = -0.5;
+					else if (lambda < -eps) lambda = lambda;
+					else if (lambda < 0.0) lambda = -eps;
+					else if (lambda <= eps) lambda = eps;
+					else if (lambda <= 0.5 + eps) lambda = lambda;
+					else lambda = 1.0;
+					if (lambda < 1.0) { // reject the step and calculate a new try
+						// x = x - dx + lambda dx = x + (lambda - 1.0) dx
+						mu_ += (lambda - 1.0) * dmu;
+						sigma0_ += (lambda - 1.0) * dsigma0;
+						dmu *= lambda;
+						dsigma0 *= lambda;
+						updateLocalVol();
+						if (enableLogging_) logging_.push_back("k: " + std::to_string(k) +
+							"; C: " + std::to_string(call) +
+							"; P: " + std::to_string(put) +
+							"; S: " + std::to_string(straddleATM_) +
+							"; lambda: " + std::to_string(lambda) +
+							"; dmu: " + std::to_string(dmu) +
+							"; dsigma0: " + std::to_string(dsigma0));
+						continue;  // don't update derivatives and step direction for rejected steps
+					}
+				}
 				if (k == 0) {
 					dfwd_dmu = sigma0_;        // this is an estimate based on dS/dX at ATM
 					dstr_dsi = straddleVega;   // this is an estimate based on dsigmaATM / dsigma0 =~ 1
@@ -214,7 +245,8 @@ namespace QuantLib {
 					if (fabs(dsigma0)>1.0e-16) dstr_dsi = (straddleMinusATM1 - straddleMinusATM0) / dsigma0;
 				}
 				dmu = -forwardMinusStrike1 / dfwd_dmu;
-				dsigma0 = -straddleMinusATM1 / dstr_dsi;
+				if (k < onlyForwardCalibrationIters_) dsigma0 = 0.0;  // keep sigma0 fixed and only calibrate forward
+				else dsigma0 = -straddleMinusATM1 / dstr_dsi;
 				if ((sigma0_ + dsigma0) < 0.0) dsigma0 = -0.5 * sigma0_;  // make sure sigma0_ remains positive
 				if (dmu <= -0.9*upperBoundX()) dmu = -0.5*upperBoundX();  // make sure 0 < eps < upperBoundX() in next update
 				if (dmu >= -0.9*lowerBoundX()) dmu = -0.5*lowerBoundX();  // make sure 0 > eps > lowerBoundX() in next update
@@ -263,10 +295,12 @@ namespace QuantLib {
 			const std::vector<PassiveType>&  Mm,
 			// controls for calibration
 			const size_t                     maxCalibrationIters = 5,
+			const size_t                     onlyForwardCalibrationIters = 0,
 			bool                             adjustATMFlag = true,
 			bool                             enableLogging = false	)
 			: T_(T), S0_(S0), sigmaATM_(sigmaATM), Sp_(Sp), Sm_(Sm), Mp_(Mp), Mm_(Mm),
-			maxCalibrationIters_(maxCalibrationIters), adjustATM_(adjustATMFlag), enableLogging_(enableLogging) {
+			maxCalibrationIters_(maxCalibrationIters), onlyForwardCalibrationIters_(onlyForwardCalibrationIters),
+			adjustATM_(adjustATMFlag), enableLogging_(enableLogging) {
 			// some basic sanity checks come here to avoid the need for taking care of it later on
 			QL_REQUIRE(T_ > 0, "T_ > 0 required.");
 			QL_REQUIRE(sigmaATM_ > 0, "sigmaATM_ > 0 required.");
