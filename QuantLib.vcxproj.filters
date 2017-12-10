@@ -358,6 +358,9 @@
     <Filter Include="experimental\templatemodels\multiasset">
       <UniqueIdentifier>{12e09fea-9068-49c8-a051-587e8243e02a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\templatemodels\vanillalocalvol">
+      <UniqueIdentifier>{21152dea-80ef-4d10-ab21-80d17ec444b8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -4295,8 +4298,11 @@
     <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.hpp">
       <Filter>experimental\templatemodels\multiasset</Filter>
     </ClInclude>
-    <ClInclude Include="ql\experimental\templatemodels\stochvol\vanillalocalvolmodelT.hpp">
-      <Filter>experimental\templatemodels\stochvol</Filter>
+    <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolmodels.hpp">
+      <Filter>experimental\templatemodels\vanillalocalvol</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolmodelT.hpp">
+      <Filter>experimental\templatemodels\vanillalocalvol</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

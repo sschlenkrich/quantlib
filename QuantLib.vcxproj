@@ -630,7 +630,8 @@
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\position.hh" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\stack.hh" />
     <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\stochvol\vanillalocalvolmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolmodels.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolmodelT.hpp" />
     <ClInclude Include="ql\indexes\ibor\aonia.hpp" />
     <ClInclude Include="ql\indexes\ibor\bbsw.hpp" />
     <ClInclude Include="ql\indexes\ibor\bkbm.hpp" />
