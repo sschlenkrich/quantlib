@@ -4304,6 +4304,9 @@
     <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolmodelT.hpp">
       <Filter>experimental\templatemodels\vanillalocalvol</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolsmilesection.hpp">
+      <Filter>experimental\templatemodels\vanillalocalvol</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6872,6 +6875,9 @@
     </ClCompile>
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\ExpressionParser.cpp">
       <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolsmilesection.cpp">
+      <Filter>experimental\templatemodels\vanillalocalvol</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

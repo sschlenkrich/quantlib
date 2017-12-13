@@ -52,6 +52,8 @@ namespace QuantLib {
 		PassiveType              sigma0Tol_;            // tolerance for sigma convergence
 		PassiveType              S0Tol_;                // tolerance for forward convergence
 		bool                     adjustATM_;            // apply post-calibration ATM adjuster
+		bool                     useInitialMu_;
+		PassiveType              initialMu_;														
 		// we may want some debug information for the calibration process
 		bool                     enableLogging_;
 		std::vector<std::string> logging_;
@@ -296,11 +298,13 @@ namespace QuantLib {
 			// controls for calibration
 			const size_t                     maxCalibrationIters = 5,
 			const size_t                     onlyForwardCalibrationIters = 0,
-			bool                             adjustATMFlag = true,
-			bool                             enableLogging = false	)
+			const bool                       adjustATMFlag = true,
+			const bool                       enableLogging = false,
+			const bool                       useInitialMu  = false,
+			const PassiveType                initialMu     = 0.0 )
 			: T_(T), S0_(S0), sigmaATM_(sigmaATM), Sp_(Sp), Sm_(Sm), Mp_(Mp), Mm_(Mm),
 			maxCalibrationIters_(maxCalibrationIters), onlyForwardCalibrationIters_(onlyForwardCalibrationIters),
-			adjustATM_(adjustATMFlag), enableLogging_(enableLogging) {
+			adjustATM_(adjustATMFlag), enableLogging_(enableLogging), useInitialMu_(useInitialMu), initialMu_(initialMu) {
 			// some basic sanity checks come here to avoid the need for taking care of it later on
 			QL_REQUIRE(T_ > 0, "T_ > 0 required.");
 			QL_REQUIRE(sigmaATM_ > 0, "sigmaATM_ > 0 required.");
@@ -321,7 +325,8 @@ namespace QuantLib {
 			// initialize deep-in-the-model parameters
 			straddleATM_ = sigmaATM_ * sqrt(T_) * M_1_SQRTPI * M_SQRT_2 * 2.0;
 			sigma0_ = sigmaATM_;
-			mu_     = -(Mm_[0] + Mp_[0]) / 4.0 * T_; // this should be exact for shifted log-normal models
+			if (useInitialMu_) mu_ = initialMu_;
+			else mu_     = -(Mm_[0] + Mp_[0]) / 4.0 * T_; // this should be exact for shifted log-normal models
 			alpha_  = 1.0;
 			nu_ =     0.0;
 			extrapolationStdevs_ = 10.0;
@@ -335,7 +340,22 @@ namespace QuantLib {
 
 		// inspectors
 
-		const std::vector<std::string> logging() { return logging_; }
+		inline const std::vector<std::string> logging() { return logging_; }
+		inline const PassiveType timeToExpiry()         { return T_;       }
+		inline const PassiveType forward()              { return S0_;      }
+		inline const PassiveType sigmaATM()             { return sigmaATM_; }
+		inline const PassiveType alpha()                { return alpha_;   }
+		inline const PassiveType mu()                   { return mu_;      }
+		inline const PassiveType nu()                   { return nu_;      }
+		inline const size_t      maxCalibrationIters()  { return maxCalibrationIters_; }
+		inline const size_t      onlyForwardCalibrationIters() { return onlyForwardCalibrationIters_; }
+		inline const bool        adjustATMFlag()        { return adjustATM_; }
+		inline const bool        enableLogging()        { return enableLogging_; }
+		inline const bool        useInitialMu()         { return useInitialMu_;  }
+		inline const PassiveType initialMu()            { return initialMu_;     }
+
+
+		// attributes in more convenient single-vector format
 
 		const std::vector<PassiveType> underlyingX() {
 			std::vector<PassiveType> X(Xm_.size() + Xp_.size() + 1);
@@ -387,7 +407,7 @@ namespace QuantLib {
 			return underlyingS(isRightWing, idx, x);
 		}
 
-		// calculating expectations
+		// calculating expectations - that is the actual purpose of that model
 
 		const PassiveType expectation(bool isRightWing, PassiveType strike) {
 			// calculate the forward price of an OTM option
