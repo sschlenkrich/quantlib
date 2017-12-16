@@ -200,8 +200,8 @@ namespace QuantLib {
 
 		inline void calibrateATM() {
 			PassiveType straddleVega = straddleATM_ / sigmaATM_;
-			PassiveType forwardMinusStrike0, forwardMinusStrike1, straddleMinusATM0, straddleMinusATM1, dmu, dsigma0;
-			PassiveType	dfwd_dmu, dstr_dsi;
+			PassiveType forwardMinusStrike0, forwardMinusStrike1, straddleMinusATM0, straddleMinusATM1, dmu, dlogSigma0;
+			PassiveType	dfwd_dmu, dstr_dlogSigma0, logSigma0=log(sigma0_);
 			for (size_t k = 0; k < maxCalibrationIters_; ++k) {
 				PassiveType call = expectation(true, S0_);
 				PassiveType put = expectation(false, S0_);
@@ -223,9 +223,10 @@ namespace QuantLib {
 					if (lambda < 1.0) { // reject the step and calculate a new try
 						// x = x - dx + lambda dx = x + (lambda - 1.0) dx
 						mu_ += (lambda - 1.0) * dmu;
-						sigma0_ += (lambda - 1.0) * dsigma0;
+						logSigma0 += (lambda - 1.0) * dlogSigma0;
 						dmu *= lambda;
-						dsigma0 *= lambda;
+						dlogSigma0 *= lambda;
+						sigma0_ = exp(logSigma0);
 						updateLocalVol();
 						if (enableLogging_) logging_.push_back("k: " + std::to_string(k) +
 							"; C: " + std::to_string(call) +
@@ -233,28 +234,28 @@ namespace QuantLib {
 							"; S: " + std::to_string(straddleATM_) +
 							"; lambda: " + std::to_string(lambda) +
 							"; dmu: " + std::to_string(dmu) +
-							"; dsigma0: " + std::to_string(dsigma0));
+							"; dlogSigma0: " + std::to_string(dlogSigma0));
 						continue;  // don't update derivatives and step direction for rejected steps
 					}
 				}
 				if (k == 0) {
 					dfwd_dmu = sigma0_;        // this is an estimate based on dS/dX at ATM
-					dstr_dsi = straddleVega;   // this is an estimate based on dsigmaATM / dsigma0 =~ 1
+					dstr_dlogSigma0 = straddleVega * sigma0_;   // this is an estimate based on dsigmaATM / dsigma0 =~ 1
 				}
 				if (k>0) { // we use secant if available
 					// only update derivative if we had a step, otherwise use from previous iteration
 					if (fabs(dmu)>1.0e-16) dfwd_dmu = (forwardMinusStrike1 - forwardMinusStrike0) / dmu;
-					if (fabs(dsigma0)>1.0e-16) dstr_dsi = (straddleMinusATM1 - straddleMinusATM0) / dsigma0;
+					if (fabs(dlogSigma0)>1.0e-16) dstr_dlogSigma0 = (straddleMinusATM1 - straddleMinusATM0) / dlogSigma0;
 				}
 				dmu = -forwardMinusStrike1 / dfwd_dmu;
-				if (k < onlyForwardCalibrationIters_) dsigma0 = 0.0;  // keep sigma0 fixed and only calibrate forward
-				else dsigma0 = -straddleMinusATM1 / dstr_dsi;
-				if ((sigma0_ + dsigma0) < 0.0) dsigma0 = -0.5 * sigma0_;  // make sure sigma0_ remains positive
+				if (k < onlyForwardCalibrationIters_) dlogSigma0 = 0.0;  // keep sigma0 fixed and only calibrate forward
+				else dlogSigma0 = -straddleMinusATM1 / dstr_dlogSigma0;
 				if (dmu <= -0.9*upperBoundX()) dmu = -0.5*upperBoundX();  // make sure 0 < eps < upperBoundX() in next update
 				if (dmu >= -0.9*lowerBoundX()) dmu = -0.5*lowerBoundX();  // make sure 0 > eps > lowerBoundX() in next update
 				// maybe some line search could improve convergence...
 				mu_ += dmu;
-				sigma0_ += dsigma0;
+				logSigma0 += dlogSigma0;
+				sigma0_ = exp(logSigma0);  // ensure sigma0 > 0
 				updateLocalVol();
 				// prepare for next iteration
 				forwardMinusStrike0 = forwardMinusStrike1;
@@ -264,10 +265,10 @@ namespace QuantLib {
 					"; P: " + std::to_string(put) +
 					"; S: " + std::to_string(straddleATM_) +
 					"; dfwd_dmu: " + std::to_string(dfwd_dmu) +
-					"; dstr_dsi: " + std::to_string(dstr_dsi) +
+					"; dstr_dlogSigma0: " + std::to_string(dstr_dlogSigma0) +
 					"; dmu: " + std::to_string(dmu) +
-					"; dsigma0: " + std::to_string(dsigma0));
-				if ((fabs(forwardMinusStrike0) < S0Tol_) && (fabs(dsigma0) < sigma0Tol_)) break;
+					"; dlogSigma0: " + std::to_string(dlogSigma0));
+				if ((fabs(forwardMinusStrike0) < S0Tol_) && (fabs(sigma0_*dlogSigma0) < sigma0Tol_)) break;
 			}
 		}
 

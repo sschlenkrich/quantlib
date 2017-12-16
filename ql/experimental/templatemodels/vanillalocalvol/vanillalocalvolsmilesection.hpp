@@ -59,6 +59,8 @@ namespace QuantLib {
 		// overload optionPrice() as a basis for implied volatility calculation
 		virtual Real optionPrice(Rate strike, Option::Type type = Option::Call, Real discount = 1.0) const;
 
+		// inspector
+		inline const boost::shared_ptr<VanillaLocalVolModel>&  model() const { return model_; }
 	};
 }
 

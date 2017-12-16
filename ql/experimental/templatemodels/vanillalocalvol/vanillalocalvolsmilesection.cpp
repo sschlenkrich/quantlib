@@ -82,21 +82,25 @@ namespace QuantLib {
 				Array objectiveF(sizeF);
 				for (size_t k = 0; k < zeroIdx_; ++k) {
 					objectiveF[k] = newModel->expectation(false, newModel->forward() + relativeStrikes_[k]);
-					objectiveF[k] = (objectiveF[k] - smilePrices_[k]) / vanillaVega_[k];
+					objectiveF[k] = objectiveF[k] / vanillaVega_[k] - smilePrices_[k] / vanillaVega_[k];
 				}
 				for (size_t k = zeroIdx_ + 1; k < relativeStrikes_.size(); ++k) {
 					objectiveF[k-1] = newModel->expectation(true, newModel->forward() + relativeStrikes_[k]);
-					objectiveF[k-1] = (objectiveF[k-1] - smilePrices_[k]) / vanillaVega_[k];
+					objectiveF[k-1] = objectiveF[k-1] / vanillaVega_[k] - smilePrices_[k] / vanillaVega_[k];
 				}
 				if (alpha_ > 0.0) {
-					for (size_t k = 0; k < zeroIdx_ - 1; ++k) objectiveF[relativeStrikes_.size() - 1 + k] = alpha_ * TemplateAuxilliaries::direct<Real>(x[k], minSlope_, maxSlope_);
-					for (size_t k = zeroIdx_ + 2; k < relativeStrikes_.size(); ++k) objectiveF[(relativeStrikes_.size() - 1) + (zeroIdx_ - 1) + k] = alpha_ * TemplateAuxilliaries::direct<Real>(x[k-1], minSlope_, maxSlope_);
+					size_t startIdx = relativeStrikes_.size() - 1;
+					for (size_t k = 0; k < zeroIdx_ - 1; ++k)
+						objectiveF[startIdx + k] = alpha_ * TemplateAuxilliaries::direct<Real>(x[k + 1], minSlope_, maxSlope_);  // we skip the first slope
+					startIdx += (zeroIdx_ - 1);
+					for (size_t k = 0; k < relativeStrikes_.size() - zeroIdx_ - 2; ++k)
+						objectiveF[startIdx + k] = alpha_ * TemplateAuxilliaries::direct<Real>(x[zeroIdx_ + k + 1], minSlope_, maxSlope_);  // we skip the first slope
 				}
 				return objectiveF;
 			}
 
 			Disposable<Array> initialValues() const { // we use zero slope as initial guess
-				return Array(relativeStrikes_.size(), TemplateAuxilliaries::inverse<Real>(0.0, minSlope_, maxSlope_));
+				return Array(relativeStrikes_.size()-1, TemplateAuxilliaries::inverse<Real>(0.0, minSlope_, maxSlope_));
 			}
 
 		};
@@ -142,23 +146,26 @@ namespace QuantLib {
 				smilePrices[k] = bachelierBlackFormula((relativeStrikes[k] < 0.0) ? (Option::Put) : (Option::Call), forward + relativeStrikes[k], forward, smileVolatilities[k] * sqrt(timeToExpiry));
 				if (vegaWeighted) vanillaVega[k] = 1.0;  // since we already calibrate to prices we don't want additional Vega weighting
 				else vanillaVega[k] = bachelierBlackFormulaStdDevDerivative(forward + relativeStrikes[k], forward, smileVolatilities[k] * sqrt(timeToExpiry)) * sqrt(timeToExpiry);
+				if (vanillaVega[k] < 1.0e-12) vanillaVega[k] = 1.0e-12;
 			}
 			else {  // ShiftedLognormal
 				smilePrices[k] = blackFormula((relativeStrikes[k] < 0.0) ? (Option::Put) : (Option::Call), forward + relativeStrikes[k], forward, smileVolatilities[k] * sqrt(timeToExpiry), 1.0, shift);
 				if (vegaWeighted) vanillaVega[k] = 1.0;  // since we already calibrate to prices we don't want additional Vega weighting
 				else vanillaVega[k] = blackFormulaStdDevDerivative(forward + relativeStrikes[k], forward, smileVolatilities[k] * sqrt(timeToExpiry),1.0,shift) * sqrt(timeToExpiry);
+				if (vanillaVega[k] < 1.0e-12) vanillaVega[k] = 1.0e-12;
 			}
 		}
 		// we also need a consistent model for calibration, thus we set up a normal model matching ATM prices
 		Real sigmaATM = bachelierBlackFormulaImpliedVol(Option::Call, forward, forward, timeToExpiry, smilePrices[zeroIdx]);
-		std::vector<Real> Sm(1, forward + relativeStrikes[zeroIdx - 1]), Sp(1, forward + relativeStrikes[zeroIdx - 1]), Mm(1, 0.0), Mp(1, 0.0);
+		std::vector<Real> Sm(1, forward + relativeStrikes[zeroIdx - 1]), Sp(1, forward + relativeStrikes[zeroIdx + 1]), Mm(1, 0.0), Mp(1, 0.0);
 		if (model) model_ = boost::shared_ptr<VanillaLocalVolModel>(
 			new VanillaLocalVolModel(timeToExpiry, forward, sigmaATM, Sp, Sm, Mp, Mm, model->maxCalibrationIters(), model->onlyForwardCalibrationIters(), model->adjustATMFlag(), model->enableLogging(), model->useInitialMu(), model->initialMu()));
 		else model_ = boost::shared_ptr<VanillaLocalVolModel>(
 			new VanillaLocalVolModel(timeToExpiry, forward, sigmaATM, Sp, Sm, Mp, Mm, 100, 0, true, true, false, 0.0));
 		// now we may set up the optimization problem...
 		VanillaLocalVolHelper costFunction(model_, relativeStrikes, smilePrices, vanillaVega, extrapolationRelativeStrike, extrapolationSlope, minSlope, maxSlope, alpha);
-		Problem problem(costFunction, NoConstraint(), costFunction.initialValues());
+		NoConstraint constraint;                        // constraint needs to be explicitely set up; otherwise we observe access violation in LM function call
+		Problem problem(costFunction, constraint, costFunction.initialValues());
 		method->minimize(problem, *endCriteria);
 		model_ = costFunction.model(problem.currentValue());
 	}
