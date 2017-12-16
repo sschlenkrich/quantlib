@@ -51,6 +51,18 @@ namespace QuantLib {
 			const Real                                        maxSlope = 1.0,    //  upper boundary for m in calibration
 			const Real                                        alpha = 0.0);      //  Tikhonov alpha
 
+		VanillaLocalVolModelSmileSection(
+			const Date&                                       expiryDate,
+			const Rate&                                       forward,
+			const Volatility&                                 atmVolatility,
+			const boost::shared_ptr<VanillaLocalVolModelSmileSection>& smile1,
+			const boost::shared_ptr<VanillaLocalVolModelSmileSection>& smile2,
+			const Real&                                       rho,
+			const DayCounter&                                 dc = Actual365Fixed(),
+			const Date&                                       referenceDate = Date(),
+			const VolatilityType                              type = Normal,
+			const Rate                                        shift = 0.0);
+
 		// SmileSection interface 
 		virtual Real minStrike() const { return model_->underlyingS().front(); }
 		virtual Real maxStrike() const { return model_->underlyingS().back();  }

@@ -170,8 +170,6 @@ namespace QuantLib {
 		model_ = costFunction.model(problem.currentValue());
 	}
 
-
-
 	Real VanillaLocalVolModelSmileSection::volatilityImpl(Rate strike) const {
 		Option::Type type = (strike >= model_->forward()) ? (Option::Call) : (Option::Put);
 		Real price = model_->expectation((type == Option::Call) ? (true) : (false), strike);
@@ -184,6 +182,99 @@ namespace QuantLib {
 		if ((type == Option::Call) && (strike < model_->forward())) return (otmPrice + (model_->forward() - strike))*discount;
 		if ((type == Option::Put) && (strike > model_->forward())) return (otmPrice - (model_->forward() - strike))*discount;
 		return otmPrice*discount;
+	}
+
+	// constructor interpolating existing smile sections
+	VanillaLocalVolModelSmileSection::VanillaLocalVolModelSmileSection(
+		const Date&                                       expiryDate,
+		const Rate&                                       forward,
+		const Volatility&                                 atmVolatility,
+		const boost::shared_ptr<VanillaLocalVolModelSmileSection>& smile1,
+		const boost::shared_ptr<VanillaLocalVolModelSmileSection>& smile2,
+		const Real&                                       rho,
+		const DayCounter&                                 dc,
+		const Date&                                       referenceDate,
+		const VolatilityType                              type,
+		const Rate                                        shift)
+		: SmileSection(expiryDate, dc, referenceDate, type, shift) {
+		QL_REQUIRE(atmVolatility > 0.0, "atmVolatility > 0.0 required");
+		QL_REQUIRE((rho >= 0.0) && (rho <= 1.0), "(rho >= 0.0) && (rho <= 1.0) required");
+		Real timeToExpiry = dc.yearFraction(this->referenceDate(), expiryDate);
+		QL_REQUIRE(timeToExpiry > 0.0, "timeToExpiry > 0.0 required");
+		Volatility atmNormalVolatility = atmVolatility;  // assume default is normal
+		if (type == ShiftedLognormal) {
+			Real atmCall = blackFormula(Option::Call, forward, forward, atmVolatility*sqrt(timeToExpiry), 1.0, shift);
+			atmNormalVolatility = bachelierBlackFormulaImpliedVol(Option::Call, forward, forward, timeToExpiry, atmCall);
+		}
+		// normalize S1 to x1
+		std::vector<Real> m1(smile1->model()->localVolSlope());
+		std::vector<Real> x1(smile1->model()->underlyingS());
+		for (size_t k = 0; k < x1.size(); ++k) x1[k] = (x1[k] - smile1->model()->forward()) / smile1->model()->sigmaATM() / sqrt(smile1->model()->timeToExpiry());
+		size_t zeroIdx1 = 0;
+		while ((zeroIdx1 < x1.size() - 1) && (x1[zeroIdx1] < 0.0)) ++zeroIdx1;
+		QL_REQUIRE(x1[zeroIdx1] == 0.0, "x1[zeroIdx1] == 0.0 required");
+		// normalize S2 to x2
+		std::vector<Real> m2(smile2->model()->localVolSlope());
+		std::vector<Real> x2(smile2->model()->underlyingS());
+		for (size_t k = 0; k < x2.size(); ++k) x2[k] = (x2[k] - smile2->model()->forward()) / smile2->model()->sigmaATM() / sqrt(smile2->model()->timeToExpiry());
+		size_t zeroIdx2 = 0;
+		while ((zeroIdx2 < x2.size() - 1) && (x2[zeroIdx2] < 0.0)) ++zeroIdx2;
+		QL_REQUIRE(x2[zeroIdx2] == 0.0, "x2[zeroIdx2] == 0.0 required");
+		// merge Sp
+		std::vector<Real> Sp, Mp;
+		{
+			size_t i1 = zeroIdx1 + 1, i2 = zeroIdx2 + 1;
+			Real xLast = 0.0;
+			while (true) {
+				QL_REQUIRE(i1 < x1.size(), "i1 < x1.size() required");
+				QL_REQUIRE(i2 < x2.size(), "i2 < x2.size() required");
+				Mp.push_back((1.0-rho)*m1[i1] + rho*m2[i2]);
+				if ((xLast >= x1[i1]) || ((xLast < x2[i2]) && (x1[i1] > x2[i2]))) {
+					xLast = x2[i2];
+					if (i2 < x2.size() - 1) ++i2;
+				}
+				else if ((xLast >= x2[i2]) || ((xLast < x1[i1]) && (x1[i1] < x2[i2]))) {
+					xLast = x1[i1];
+					if (i1 < x1.size() - 1) ++i1;
+				}
+				else if (x1[i1] == x2[i2]) {
+					xLast = x1[i1];
+					if (i1 < x1.size() - 1) ++i1;
+					if (i2 < x2.size() - 1) ++i2;
+				}
+				Sp.push_back(forward + xLast * atmNormalVolatility * sqrt(timeToExpiry));
+				if ((xLast >= x1[i1]) && (xLast >= x2[i2])) break;
+			}
+		}
+		// merge Sm
+		std::vector<Real> Sm, Mm;
+		{
+			size_t i1 = zeroIdx1, i2 = zeroIdx2;
+			Real xLast = 0.0;
+			while (true) {
+				QL_REQUIRE(i1 > 0, "i1 > 0 required");
+				QL_REQUIRE(i2 > 0, "i2 > 0 required");
+				Mm.push_back((1.0-rho)*m1[i1-1] + rho*m2[i2-1]);
+				if ((xLast <= x1[i1-1]) || ((xLast > x2[i2-1]) && (x1[i1-1] < x2[i2-1]))) {
+					xLast = x2[i2-1];
+					if (i2 > 1) --i2;
+				}
+				else if ((xLast <= x2[i2-1]) || ((xLast > x1[i1-1]) && (x1[i1-1] > x2[i2-1]))) {
+					xLast = x1[i1-1];
+					if (i1 > 1) --i1;
+				}
+				else if (x1[i1-1] == x2[i2-1]) {
+					xLast = x1[i1-1];
+					if (i1 > 1) --i1;
+					if (i2 > 1) --i2;
+				}
+				Sm.push_back(forward + xLast * atmNormalVolatility * sqrt(timeToExpiry));
+				if ((xLast <= x1[i1-1]) && (xLast <= x2[i2-1])) break;
+			}
+		}
+		boost::shared_ptr<VanillaLocalVolModel> refModel = (rho < 0.5) ? (smile1->model()) : (smile2->model());
+		model_ = boost::shared_ptr<VanillaLocalVolModel>(
+			new VanillaLocalVolModel(timeToExpiry, forward, atmNormalVolatility, Sp, Sm, Mp, Mm, refModel->maxCalibrationIters(), refModel->onlyForwardCalibrationIters(), refModel->adjustATMFlag(), refModel->enableLogging()));
 	}
 
 
