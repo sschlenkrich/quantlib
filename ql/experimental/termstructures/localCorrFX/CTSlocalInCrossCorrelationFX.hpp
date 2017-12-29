@@ -33,9 +33,9 @@ namespace QuantLib {
         
         \bug this class is untested, probably unreliable.
     */
-    class localInCrossCorrelationFX : public LocalCorrSurfaceABFFX {
+    class CTSlocalInCrossCorrelationFX : public LocalCorrSurfaceABFFX {
       public:
-		  localInCrossCorrelationFX(const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
+		  CTSlocalInCrossCorrelationFX(const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
 								  const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			  processToCal);
 		  //@}
 		  //! \name Visitability

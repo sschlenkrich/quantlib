@@ -17,29 +17,29 @@
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
-#include <ql\experimental\termstructures\localCorrFX\localInCrossCorrelationFX.hpp>
+#include <ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.hpp>
 
 namespace QuantLib {
 
-	localInCrossCorrelationFX::localInCrossCorrelationFX(
+	CTSlocalInCrossCorrelationFX::CTSlocalInCrossCorrelationFX(
 		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
 		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    processToCal)
     : LocalCorrSurfaceABFFX(processes,processToCal){
 		
     }
 
-	QuantLib::Real localInCrossCorrelationFX::localA(Time t, const RealStochasticProcess::VecA& X0,
+	QuantLib::Real CTSlocalInCrossCorrelationFX::localA(Time t, const RealStochasticProcess::VecA& X0,
 		bool extrapolate) const {
 		return 0;
 	}
 
-	QuantLib::Real localInCrossCorrelationFX::localB(Time t, const RealStochasticProcess::VecA& X0,
+	QuantLib::Real CTSlocalInCrossCorrelationFX::localB(Time t, const RealStochasticProcess::VecA& X0,
 		bool extrapolate) const {
 		return 1;
 	}
-	void localInCrossCorrelationFX::accept(AcyclicVisitor& v) {
-		Visitor<localInCrossCorrelationFX>* v1 =
-			dynamic_cast<Visitor<localInCrossCorrelationFX>*>(&v);
+	void CTSlocalInCrossCorrelationFX::accept(AcyclicVisitor& v) {
+		Visitor<CTSlocalInCrossCorrelationFX>* v1 =
+			dynamic_cast<Visitor<CTSlocalInCrossCorrelationFX>*>(&v);
 		if (v1 != 0)
 			v1->visit(*this);
 		else

@@ -622,6 +622,7 @@
     <ClInclude Include="ql\experimental\models\all.hpp" />
     <ClInclude Include="ql\experimental\models\hestonslvfdmmodel.hpp" />
     <ClInclude Include="ql\experimental\models\hestonslvmcmodel.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.hpp" />
     <ClInclude Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcscriptT.hpp" />
@@ -634,7 +635,6 @@
     <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.hpp" />
     <ClInclude Include="ql\experimental\termstructures\corrtermstructureStrike.hpp" />
     <ClInclude Include="ql\experimental\termstructures\localcorrsurfaceabf.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\localCorrFX\localInCrossCorrelationFX.hpp" />
     <ClInclude Include="ql\experimental\termstructures\localcorrtermstructure.hpp" />
     <ClInclude Include="ql\indexes\ibor\aonia.hpp" />
     <ClInclude Include="ql\indexes\ibor\bbsw.hpp" />
@@ -1971,6 +1971,7 @@
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\bondoptionengine.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\fixedratebondoption.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.cpp" />
     <ClCompile Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\expression.cpp" />
@@ -1983,7 +1984,6 @@
     <ClCompile Include="ql\experimental\templatemodels\stochvol\stochvolcalibrator.cpp" />
     <ClCompile Include="ql\experimental\termstructures\corrtermstructureStrike.cpp" />
     <ClCompile Include="ql\experimental\termstructures\localcorrsurfaceabf.cpp" />
-    <ClCompile Include="ql\experimental\termstructures\localCorrFX\localInCrossCorrelationFX.cpp" />
     <ClCompile Include="ql\experimental\termstructures\localcorrtermstructure.cpp" />
     <ClCompile Include="ql\experimental\volatility\smiledsurface.cpp" />
     <ClCompile Include="ql\math\polynomialmathfunction.cpp" />

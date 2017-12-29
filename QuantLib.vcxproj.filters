@@ -4316,7 +4316,9 @@
     <ClInclude Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.hpp">
       <Filter>experimental\termStructures\localCorrFX</Filter>
     </ClInclude>
-    <ClInclude Include="ql\experimental\termstructures\localCorrFX\localInCrossCorrelationFX.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.hpp">
+      <Filter>experimental\termStructures\localCorrFX</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6901,7 +6903,9 @@
     <ClCompile Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.cpp">
       <Filter>experimental\termStructures\localCorrFX</Filter>
     </ClCompile>
-    <ClCompile Include="ql\experimental\termstructures\localCorrFX\localInCrossCorrelationFX.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.cpp">
+      <Filter>experimental\termStructures\localCorrFX</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">
