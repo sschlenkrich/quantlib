@@ -21,7 +21,7 @@ namespace QuantLib {
 	// We model a multi-asset local volatility model by means of the normalized log-processes X_i = log[S_i/S_(0)]
 
 	class MultiAssetBSModel : public RealStochasticProcess {
-	private:
+	protected:
 		Handle<YieldTermStructure>                                               termStructure_;  // domestic discounting term structure
 		std::map<std::string, size_t>                                            index_;
 		std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>> processes_;
@@ -31,6 +31,9 @@ namespace QuantLib {
 			              const std::vector<std::string>&                                                 aliases,
 			              const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
 			              const RealStochasticProcess::MatA&                                              correlations);
+		MultiAssetBSModel(const Handle<YieldTermStructure>&                                               termStructure,
+			const std::vector<std::string>&                                                 aliases,
+			const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes);
 
 		// dimension of X
 		inline virtual size_t size() { return processes_.size(); }

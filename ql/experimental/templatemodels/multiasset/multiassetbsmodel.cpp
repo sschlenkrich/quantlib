@@ -25,9 +25,54 @@ namespace QuantLib {
 		QL_REQUIRE(processes_.size() == correlations.size(), "Number of processes doesn't match correlation");
 		for (size_t k=0; k< correlations.size(); ++k)
 		    QL_REQUIRE(processes_.size() == correlations[k].size(), "Number of processes doesn't match correlation");
-		DT_ = TemplateAuxilliaries::svdSqrt(correlations);
-	}
+		//check whether it is a diagonal matrix
+		bool isDiagonal = true;
+		for (size_t k = 0; k < correlations.size(); ++k) {
+			for (size_t l = k + 1; l < correlations.size(); ++l) {
+				if (correlations[k][l] != 0) isDiagonal = false;
+			}
+		}
+		if (isDiagonal) {
+			//due to ones on diagonal simply copy the matrix.
+			DT_ = RealStochasticProcess::MatA(processes.size());
+			for (size_t k = 0; k<2; ++k) DT_[k].resize(processes.size());
 
+			for (size_t i = 0; i < processes.size(); i++)
+			{
+				for (size_t j = i; j < processes.size(); j++)
+				{
+					DT_[i][j] = correlations[i][j];
+					DT_[j][i] = correlations[i][j];
+				}
+			}
+		}
+		else {
+			DT_ = TemplateAuxilliaries::svdSqrt(correlations);
+		}
+	}
+	MultiAssetBSModel::MultiAssetBSModel(
+		const Handle<YieldTermStructure>&                                               termStructure,
+		const std::vector<std::string>&                                                 aliases,
+		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes)
+		: termStructure_(termStructure), processes_(processes) {
+		QL_REQUIRE(processes_.size() > 0, "No BS processes supplied");
+		//no correlation matrix means, we simply assume independence
+		RealStochasticProcess::MatA corrM = RealStochasticProcess::MatA(processes.size());
+		for (size_t k = 0; k<2; ++k) corrM[k].resize(processes.size());
+
+		for (size_t i = 0; i < processes.size(); i++)
+		{
+			for (size_t j = 0; j < processes.size(); j++)
+			{
+				if (i == j) {
+					corrM[i][j] = 1;
+				}
+				else corrM[i][j] = 0;
+			}
+		}
+		MultiAssetBSModel(termStructure, aliases, processes, corrM);
+		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k; // not transferable from other constructor.
+	}
 	// initial values for simulation
 	inline RealStochasticProcess::VecP MultiAssetBSModel::initialValues() {
 		return RealStochasticProcess::VecP(size(), 0.0);

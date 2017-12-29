@@ -358,6 +358,12 @@
     <Filter Include="experimental\templatemodels\multiasset">
       <UniqueIdentifier>{12e09fea-9068-49c8-a051-587e8243e02a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\termStructures">
+      <UniqueIdentifier>{024d2027-10aa-4856-b2b4-8be9b22e9d17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experimental\termStructures\localCorrFX">
+      <UniqueIdentifier>{bddb3d6a-8874-44e6-b751-e0e0f699a706}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -4295,6 +4301,22 @@
     <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.hpp">
       <Filter>experimental\templatemodels\multiasset</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.hpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localcorrtermstructure.hpp">
+      <Filter>experimental\termStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\corrtermstructureStrike.hpp">
+      <Filter>experimental\termStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localcorrsurfaceabf.hpp">
+      <Filter>experimental\termStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.hpp">
+      <Filter>experimental\termStructures\localCorrFX</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\localInCrossCorrelationFX.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6864,6 +6886,22 @@
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\ExpressionParser.cpp">
       <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
     </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.cpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\localcorrtermstructure.cpp">
+      <Filter>experimental\termStructures</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\corrtermstructureStrike.cpp">
+      <Filter>experimental\termStructures</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\localcorrsurfaceabf.cpp">
+      <Filter>experimental\termStructures</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.cpp">
+      <Filter>experimental\termStructures\localCorrFX</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\localInCrossCorrelationFX.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">
