@@ -25,7 +25,6 @@ namespace QuantLib {
 		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
 		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    processToCal)
     : LocalCorrTermStructure(processes, processToCal){
-      
     }
 
     void LocalCorrSurfaceABF::accept(AcyclicVisitor& v) {

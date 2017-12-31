@@ -18,6 +18,7 @@
 */
 
 #include <ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.hpp>
+#include <ql/math/interpolations/bilinearinterpolation.hpp>
 
 namespace QuantLib {
 
@@ -25,7 +26,8 @@ namespace QuantLib {
 		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
 		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    processToCal)
     : LocalCorrSurfaceABFFX(processes,processToCal){
-		
+		initializeF();
+		setInterpolation<Bilinear>();
     }
 
 	QuantLib::Real CTSlocalInCrossCorrelationFX::localA(Time t, const RealStochasticProcess::VecA& X0,

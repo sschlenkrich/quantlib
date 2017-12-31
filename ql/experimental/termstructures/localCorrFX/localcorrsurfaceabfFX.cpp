@@ -46,7 +46,9 @@ namespace QuantLib {
 
 	QuantLib::Real LocalCorrSurfaceABFFX::localF(Time t, const RealStochasticProcess::VecA& X0,
 		bool extrapolate) const {
-		return 0.9;
+		QL_REQUIRE(X0.size()==2,"Local Correlation for FX only works for two dimensional FX model.")
+		if (X0[1] !=0 ) return interpolatorF_(t, X0[0]/X0[1],extrapolate);
+		return interpolatorF_(t, 0, extrapolate);
 	}
 	
 	void LocalCorrSurfaceABFFX::accept(AcyclicVisitor& v) {
@@ -56,6 +58,27 @@ namespace QuantLib {
 			v1->visit(*this);
 		else
 			LocalCorrSurfaceABF::accept(v);
+	}
+
+
+	void LocalCorrSurfaceABFFX::initializeF(){
+	
+		strikes_.resize(2);
+		times_.resize(2);
+		surfaceF_ = Matrix(2,2);
+
+		for (size_t i = 0; i < surfaceF_.size1(); i++)
+		{	
+			for (size_t j = 0; j < surfaceF_.size2(); j++)
+			{
+				surfaceF_[i][j] = 0.9;
+			}
+		}
+
+		times_[0] = 0;
+		times_[1] = 1;
+		strikes_[0] = 0.7;
+		strikes_[1] = 1;
 	}
 }
 

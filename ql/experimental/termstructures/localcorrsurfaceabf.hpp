@@ -25,6 +25,7 @@
 #define quantlib_localcorrsurfaceabf_hpp
 
 #include <ql/experimental/termstructures/localcorrtermstructure.hpp>
+#include <ql/math/interpolations/interpolation2d.hpp>
 
 namespace QuantLib {
 
@@ -43,7 +44,31 @@ namespace QuantLib {
         //! \name Visitability
         //@{
         virtual void accept(AcyclicVisitor&);
-        //@}
+        
+		//@}
+		//@}
+		//! \name Modifiers
+		//@{
+		template <class Interpolator>
+		void setInterpolation(const Interpolator& i = Interpolator()) {
+			interpolatorF_ =
+				i.interpolate(times_.begin(), times_.end(),
+					strikes_.begin(), strikes_.end(),
+					surfaceF_);
+			notifyObservers();
+		}
+		//@}
+		//! \name VolatilityTermStructure interface
+		//@{
+		Real minStrike() const {
+			return strikes_.front();
+		}
+		Real maxStrike() const {
+			return strikes_.back();
+		}
+		Date maxDate() const {
+			return maxDate_;
+		}
       protected:
 		  void localCorrImpl(RealStochasticProcess::MatA& corrMatrix, Time t, const RealStochasticProcess::VecA& X0,
 			  bool extrapolate = false) const;
@@ -54,8 +79,17 @@ namespace QuantLib {
 		  virtual QuantLib::Real localF(Time t, const RealStochasticProcess::VecA& X0,
 			  bool extrapolate = false) const = 0;
 
+		  virtual void initializeF() =0;
+
 		  RealStochasticProcess::MatA corr0_;
 		  RealStochasticProcess::MatA corr1_;
+
+		  Interpolation2D interpolatorF_;
+
+		  Date maxDate_;
+		  std::vector<Real> strikes_;
+		  std::vector<Time> times_;
+		  Matrix surfaceF_;
 
 	  private:
         
