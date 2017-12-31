@@ -59,6 +59,18 @@ namespace QuantLib {
 		bool                     enableLogging_;
 		std::vector<std::string> logging_;
  
+		// we have two constructors and want to make sure the setup is consistent
+		inline void initializeDeepInTheModelParameters() {
+			straddleATM_ = sigmaATM_ * sqrt(T_) * M_1_SQRTPI * M_SQRT_2 * 2.0;
+			if (useInitialMu_) mu_ = initialMu_;
+			else mu_ = -(Mm_[0] + Mp_[0]) / 4.0 * T_; // this should be exact for shifted log-normal models
+			alpha_ = 1.0;
+			nu_ = 0.0;
+			extrapolationStdevs_ = 10.0;
+			sigma0Tol_ = 1.0e-12;
+			S0Tol_ = 1.0e-12;
+		}
+
 		// determine the lower and upper bounds for integration
 		inline PassiveType lowerBoundX() { return  -extrapolationStdevs_ * sqrt(T_) + mu_; }
 		inline PassiveType upperBoundX() { return   extrapolationStdevs_ * sqrt(T_) + mu_; }		
@@ -201,6 +213,21 @@ namespace QuantLib {
 			return alpha_ * alpha_ * sum;
 		}
 
+		inline void calculateSGrid() {
+			// this is an unsafe method to calculate the S-grid for a given x-grid
+         	// it is intended as a preprocessing step in conjunction with smile interplation
+			// validity of the model is ensured by proceeding it with updateLocalVol()
+			for (size_t k = 0; k < Xp_.size(); ++k) { // right wing calculations
+				Sp_[k] = underlyingS(true, k, Xp_[k]);
+				sigmaP_[k] = localVol(true, k, Sp_[k]);
+			}
+			for (size_t k = 0; k < Sm_.size(); ++k) { // left wing calculations
+				PassiveType x0 = (k > 0) ? Xm_[k - 1] : 0.0;
+				Sm_[k] = underlyingS(false, k, Xm_[k]);
+				sigmaM_[k] = localVol(false, k, Sm_[k]);
+			}
+		}
+
 		inline void updateLocalVol() {
 			// use ODE solution to determine x-grid and sigma-grid taking into account constraints of
 			// positive local volatility and local vol extrapolation
@@ -332,6 +359,7 @@ namespace QuantLib {
 		}
 
 	public:
+		// construct model based on S-grid
 		VanillaLocalVolModelT(
 			const DateType                   T,
 			const PassiveType                S0,
@@ -347,7 +375,7 @@ namespace QuantLib {
 			const bool                       enableLogging = false,
 			const bool                       useInitialMu  = false,
 			const PassiveType                initialMu     = 0.0 )
-			: T_(T), S0_(S0), sigmaATM_(sigmaATM), Sp_(Sp), Sm_(Sm), Mp_(Mp), Mm_(Mm),
+			: T_(T), S0_(S0), sigmaATM_(sigmaATM), sigma0_(sigmaATM), Sp_(Sp), Sm_(Sm), Mp_(Mp), Mm_(Mm),
 			maxCalibrationIters_(maxCalibrationIters), onlyForwardCalibrationIters_(onlyForwardCalibrationIters),
 			adjustATM_(adjustATMFlag), enableLogging_(enableLogging), useInitialMu_(useInitialMu), initialMu_(initialMu) {
 			// some basic sanity checks come here to avoid the need for taking care of it later on
@@ -368,20 +396,61 @@ namespace QuantLib {
 			Xp_.resize(Sp_.size());
 			Xm_.resize(Sm_.size());
 			// initialize deep-in-the-model parameters
-			straddleATM_ = sigmaATM_ * sqrt(T_) * M_1_SQRTPI * M_SQRT_2 * 2.0;
-			sigma0_ = sigmaATM_;
-			if (useInitialMu_) mu_ = initialMu_;
-			else mu_     = -(Mm_[0] + Mp_[0]) / 4.0 * T_; // this should be exact for shifted log-normal models
-			alpha_  = 1.0;
-			nu_ =     0.0;
-			extrapolationStdevs_ = 10.0;
-			sigma0Tol_           = 1.0e-12;
-			S0Tol_               = 1.0e-12;
+			initializeDeepInTheModelParameters();
 		    // now we may calculate local volatility
 			updateLocalVol();
 			calibrateATM();
 			if (adjustATM_) adjustATM();
 		}
+
+		// construct model based on x-grid
+		VanillaLocalVolModelT(
+			const DateType                   T,
+			const PassiveType                S0,
+			const PassiveType                sigmaATM,
+			const PassiveType                sigma0,
+			const std::vector<PassiveType>&  Xp,
+			const std::vector<PassiveType>&  Xm,
+			const std::vector<PassiveType>&  Mp,
+			const std::vector<PassiveType>&  Mm,
+			// controls for calibration
+			const size_t                     maxCalibrationIters = 5,
+			const size_t                     onlyForwardCalibrationIters = 0,
+			const bool                       adjustATMFlag = true,
+			const bool                       enableLogging = false,
+			const bool                       useInitialMu = false,
+			const PassiveType                initialMu = 0.0)
+			: T_(T), S0_(S0), sigmaATM_(sigmaATM), sigma0_(sigma0), Xp_(Xp), Xm_(Xm), Mp_(Mp), Mm_(Mm),
+			maxCalibrationIters_(maxCalibrationIters), onlyForwardCalibrationIters_(onlyForwardCalibrationIters),
+			adjustATM_(adjustATMFlag), enableLogging_(enableLogging), useInitialMu_(useInitialMu), initialMu_(initialMu) {
+			// some basic sanity checks come here to avoid the need for taking care of it later on
+			QL_REQUIRE(T_ > 0, "T_ > 0 required.");
+			QL_REQUIRE(sigmaATM_ > 0, "sigmaATM_ > 0 required.");
+			QL_REQUIRE(sigma0_ > 0, "sigma0_ > 0 required.");
+			QL_REQUIRE(Xp_.size() > 0, "Xp_.size() > 0 required.");
+			QL_REQUIRE(Xm_.size() > 0, "Xm_.size() > 0 required.");
+			QL_REQUIRE(Mp_.size() == Xp_.size(), "Mp_.size() == Xp_.size() required.");
+			QL_REQUIRE(Mm_.size() == Xm_.size(), "Mm_.size() == Xm_.size() required.");
+			// check for monotonicity
+			QL_REQUIRE(Xp_[0] > 0.0, "Xp_[0] > 0.0 required.");
+			for (size_t k = 1; k<Xp_.size(); ++k) QL_REQUIRE(Xp_[k] > Xp_[k - 1], "Xp_[k] > Xp_[k-1] required.");
+			QL_REQUIRE(Xm_[0] < 0.0, "Xm_[0] < 0.0 required.");
+			for (size_t k = 1; k<Xm_.size(); ++k) QL_REQUIRE(Xm_[k] < Xm_[k - 1], "Xm_[k] < Xm_[k-1] required.");
+			// now it makes sense to allocate memory
+			sigmaP_.resize(Xp_.size());
+			sigmaM_.resize(Xm_.size());
+			Sp_.resize(Xp_.size());
+			Sm_.resize(Xm_.size());
+			// initialize deep-in-the-model parameters
+			initializeDeepInTheModelParameters();
+			// now we may calculate local volatility
+			calculateSGrid();  // we need this preprocessing step since we only input x instead of S
+			updateLocalVol();
+			calibrateATM();
+			if (adjustATM_) adjustATM();
+		}
+
+
 
 		// inspectors
 

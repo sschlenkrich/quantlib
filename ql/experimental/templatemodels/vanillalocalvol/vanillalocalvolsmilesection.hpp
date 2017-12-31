@@ -58,6 +58,7 @@ namespace QuantLib {
 			const boost::shared_ptr<VanillaLocalVolModelSmileSection>& smile1,
 			const boost::shared_ptr<VanillaLocalVolModelSmileSection>& smile2,
 			const Real&                                       rho,
+			const bool                                        calcSimple = true,  // use only ATM vol for x-grid calculation
 			const DayCounter&                                 dc = Actual365Fixed(),
 			const Date&                                       referenceDate = Date(),
 			const VolatilityType                              type = Normal,

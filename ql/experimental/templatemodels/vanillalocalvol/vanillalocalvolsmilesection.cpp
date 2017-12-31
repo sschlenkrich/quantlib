@@ -192,6 +192,7 @@ namespace QuantLib {
 		const boost::shared_ptr<VanillaLocalVolModelSmileSection>& smile1,
 		const boost::shared_ptr<VanillaLocalVolModelSmileSection>& smile2,
 		const Real&                                       rho,
+		const bool                                        calcSimple,  // use only ATM vol for x-grid calculation
 		const DayCounter&                                 dc,
 		const Date&                                       referenceDate,
 		const VolatilityType                              type,
@@ -208,20 +209,22 @@ namespace QuantLib {
 		}
 		// normalize S1 to x1
 		std::vector<Real> m1(smile1->model()->localVolSlope());
-		std::vector<Real> x1(smile1->model()->underlyingS());
+		std::vector<Real> x1(smile1->model()->underlyingS());   // default implementation is only based on ATM volatility
 		for (size_t k = 0; k < x1.size(); ++k) x1[k] = (x1[k] - smile1->model()->forward()) / smile1->model()->sigmaATM() / sqrt(smile1->model()->timeToExpiry());
+		if (!calcSimple) x1 = smile1->model()->underlyingX();   // we overwrite the simple calculation...
 		size_t zeroIdx1 = 0;
 		while ((zeroIdx1 < x1.size() - 1) && (x1[zeroIdx1] < 0.0)) ++zeroIdx1;
 		QL_REQUIRE(x1[zeroIdx1] == 0.0, "x1[zeroIdx1] == 0.0 required");
 		// normalize S2 to x2
 		std::vector<Real> m2(smile2->model()->localVolSlope());
-		std::vector<Real> x2(smile2->model()->underlyingS());
+		std::vector<Real> x2(smile2->model()->underlyingS());   // default implementation is only based on ATM volatility
 		for (size_t k = 0; k < x2.size(); ++k) x2[k] = (x2[k] - smile2->model()->forward()) / smile2->model()->sigmaATM() / sqrt(smile2->model()->timeToExpiry());
+		if (!calcSimple) x2 = smile2->model()->underlyingX();   // we overwrite the simple calculation...
 		size_t zeroIdx2 = 0;
 		while ((zeroIdx2 < x2.size() - 1) && (x2[zeroIdx2] < 0.0)) ++zeroIdx2;
 		QL_REQUIRE(x2[zeroIdx2] == 0.0, "x2[zeroIdx2] == 0.0 required");
 		// merge Sp
-		std::vector<Real> Sp, Mp;
+		std::vector<Real> Xp, Sp, Mp;
 		{
 			size_t i1 = zeroIdx1 + 1, i2 = zeroIdx2 + 1;
 			Real xLast = 0.0;
@@ -242,12 +245,13 @@ namespace QuantLib {
 					if (i1 < x1.size() - 1) ++i1;
 					if (i2 < x2.size() - 1) ++i2;
 				}
+				Xp.push_back(xLast);
 				Sp.push_back(forward + xLast * atmNormalVolatility * sqrt(timeToExpiry));
 				if ((xLast >= x1[i1]) && (xLast >= x2[i2])) break;
 			}
 		}
 		// merge Sm
-		std::vector<Real> Sm, Mm;
+		std::vector<Real> Xm, Sm, Mm;
 		{
 			size_t i1 = zeroIdx1, i2 = zeroIdx2;
 			Real xLast = 0.0;
@@ -268,13 +272,20 @@ namespace QuantLib {
 					if (i1 > 1) --i1;
 					if (i2 > 1) --i2;
 				}
+				Xm.push_back(xLast);
 				Sm.push_back(forward + xLast * atmNormalVolatility * sqrt(timeToExpiry));
 				if ((xLast <= x1[i1-1]) && (xLast <= x2[i2-1])) break;
 			}
 		}
+		// estimate sigma0 by the interpolated offsets
+		Real sigma0Scaling1 = smile1->model()->localVol()[zeroIdx1] / smile1->model()->sigmaATM();
+		Real sigma0Scaling2 = smile2->model()->localVol()[zeroIdx2] / smile2->model()->sigmaATM();
+		Real sigma0 = ((1.0 - rho)*sigma0Scaling1 + rho*sigma0Scaling2)*atmNormalVolatility;
 		boost::shared_ptr<VanillaLocalVolModel> refModel = (rho < 0.5) ? (smile1->model()) : (smile2->model());
 		model_ = boost::shared_ptr<VanillaLocalVolModel>(
-			new VanillaLocalVolModel(timeToExpiry, forward, atmNormalVolatility, Sp, Sm, Mp, Mm, refModel->maxCalibrationIters(), refModel->onlyForwardCalibrationIters(), refModel->adjustATMFlag(), refModel->enableLogging()));
+			(calcSimple)
+			? (new VanillaLocalVolModel(timeToExpiry, forward, atmNormalVolatility, Sp, Sm, Mp, Mm, refModel->maxCalibrationIters(), refModel->onlyForwardCalibrationIters(), refModel->adjustATMFlag(), refModel->enableLogging()))
+			: (new VanillaLocalVolModel(timeToExpiry, forward, atmNormalVolatility, sigma0, Xp, Xm, Mp, Mm, refModel->maxCalibrationIters(), refModel->onlyForwardCalibrationIters(), refModel->adjustATMFlag(), refModel->enableLogging())));
 	}
 
 
