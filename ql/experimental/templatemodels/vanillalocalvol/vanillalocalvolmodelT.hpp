@@ -19,12 +19,13 @@
 #include <ql/errors.hpp>
 
 #include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
+#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
 
 
 namespace QuantLib {
 
 	template <class DateType, class PassiveType, class ActiveType>    
-	class VanillaLocalVolModelT {
+	class VanillaLocalVolModelT : public StochasticProcessT<DateType,PassiveType,ActiveType> {
 	private:
 		// input parameters
 		DateType    T_;                    // time to expiry (in years)
@@ -155,6 +156,49 @@ namespace QuantLib {
 				term2 = (sigma0 / m0 - (S0 + nu_ / alpha_)) * Ny;
 			}
 			return alpha_ * (term1 - term2);
+		}
+
+		inline PassiveType primitiveFSquare(const bool isRightWing, const size_t k, const PassiveType x) {
+			// this is an unsafe method specifying the primitive function F(x) = \int [alpha S(x) + nu]^2 p(x) dx
+			// on the individual segments
+			PassiveType sigma0, x0, S0, m0;
+			if (isRightWing) {
+				QL_REQUIRE(k < sigmaP_.size(), "k < sigmaP_.size() required.");
+				sigma0 = (k > 0) ? sigmaP_[k - 1] : sigma0_;
+				x0 = (k > 0) ? Xp_[k - 1] : 0.0;
+				S0 = (k > 0) ? Sp_[k - 1] : S0_;
+				m0 = Mp_[k];
+			}
+			else {
+				QL_REQUIRE(k < sigmaM_.size(), "k < sigmaM_.size() required.");
+				sigma0 = (k > 0) ? sigmaM_[k - 1] : sigma0_;
+				x0 = (k > 0) ? Xm_[k - 1] : 0.0;
+				S0 = (k > 0) ? Sm_[k - 1] : S0_;
+				m0 = Mm_[k];
+			}
+			PassiveType	y0 = (x0 - mu_) / sqrt(T_);
+			PassiveType y1 = (x - mu_) / sqrt(T_);
+			PassiveType h = m0 * sqrt(T_);
+			PassiveType Ny = TemplateAuxilliaries::Phi(y1);
+			PassiveType sum = 0;
+			if (m0 == 0.0) {
+				PassiveType K3 = S0 + nu_ / alpha_ - sigma0 * sqrt(T_) * y0;
+				PassiveType term1 = (K3 * K3 + sigma0 * sigma0 * T_) * Ny;
+				PassiveType term2 = 2.0 * sigma0 * sqrt(T_) * K3 + sigma0 * sigma0 * T_ * y1;
+				term2 *= TemplateAuxilliaries::phi(y1);  // use dN/dx = dN/dy / sqrt(T)
+				sum = term1 - term2;
+			}
+			else {
+				PassiveType NyMinush  = TemplateAuxilliaries::Phi(y1 - h);
+				PassiveType NyMinus2h = TemplateAuxilliaries::Phi(y1 - 2.0*h);
+				PassiveType K1 = sigma0 / m0 * exp(h*(h - y0));
+				PassiveType K2 = S0 + nu_ / alpha_ - sigma0 / m0;
+				PassiveType term1 = K2 * K2 * Ny;
+				PassiveType term2 = 2.0 * K1 * K2 * exp(-h*h / 2.0) * NyMinush;
+				PassiveType term3 = K1 * K1 * NyMinus2h;
+				sum = term1 + term2 + term3;
+			}
+			return alpha_ * alpha_ * sum;
 		}
 
 		inline void updateLocalVol() {
@@ -448,6 +492,79 @@ namespace QuantLib {
 				return intS - strike * intK;
 			}
 		}
+
+		const PassiveType variance(bool isRightWing, PassiveType strike) {
+			// calculate the forward price of an OTM power option with payoff 1_{S>K}(S-K)^2
+			size_t idx = 0;
+			if (isRightWing) {
+				QL_REQUIRE(strike >= S0_, "strike >= S0_ required");
+				while ((idx < Sp_.size()) && (Sp_[idx] <= strike)) ++idx;  // make sure strike < Sp_[idx]
+				if (idx == Sp_.size()) return 0.0;  // we are beyond exrapolation
+				PassiveType strikeX = underlyingX(isRightWing, idx, strike);
+				PassiveType x0 = (idx > 0) ? Xp_[idx - 1] : 0.0;
+				QL_REQUIRE((x0 <= strikeX) && (strikeX <= Xp_[idx]), "(x0 <= strikeX) && (strikeX <= Xp_[idx]) required");
+				PassiveType intS=0.0, intS2 = 0.0;
+				for (size_t k = idx; k < Sp_.size(); ++k) {
+					PassiveType xStart = (k == idx) ? strikeX : Xp_[k - 1];
+					intS  += (primitiveF(isRightWing, k, Xp_[k]) - primitiveF(isRightWing, k, xStart));
+					intS2 += (primitiveFSquare(isRightWing, k, Xp_[k]) - primitiveFSquare(isRightWing, k, xStart));
+				}
+				// we need to adjust for the Vanilla and strike integral
+				PassiveType xEnd = Xp_.back();
+				PassiveType intK = TemplateAuxilliaries::Phi((xEnd - mu_) / sqrt(T_)) - TemplateAuxilliaries::Phi((strikeX - mu_) / sqrt(T_));
+				return intS2 - 2.0 * strike * intS + strike * strike * intK;
+			}
+			else {
+				QL_REQUIRE(strike <= S0_, "strike <= S0_ required");
+				while ((idx < Sm_.size()) && (Sm_[idx] >= strike)) ++idx;  // make sure Sm_[idx] < strke
+				if (idx == Sm_.size()) return 0.0;  // we are beyond exrapolation
+				PassiveType strikeX = underlyingX(isRightWing, idx, strike);
+				PassiveType x0 = (idx > 0) ? Xm_[idx - 1] : 0.0;
+				QL_REQUIRE((x0 >= strikeX) && (strikeX >= Xm_[idx]), "(x0 >= strikeX) && (strikeX >= Xm_[idx]) required");
+				PassiveType intS = 0.0, intS2 = 0.0;
+				for (size_t k = idx; k < Sm_.size(); ++k) {
+					PassiveType xStart = (k == idx) ? strikeX : Xm_[k - 1];
+					intS  += (primitiveF(isRightWing, k, Xm_[k]) - primitiveF(isRightWing, k, xStart));
+					intS2 += (primitiveFSquare(isRightWing, k, Xm_[k]) - primitiveFSquare(isRightWing, k, xStart));
+				}
+				// we need to adjust for the strike integral
+				PassiveType xEnd = Xm_.back();
+				PassiveType intK = TemplateAuxilliaries::Phi((xEnd - mu_) / sqrt(T_)) - TemplateAuxilliaries::Phi((strikeX - mu_) / sqrt(T_));
+				return -(intS2 - 2.0 * strike * intS + strike * strike * intK);
+			}
+		}
+
+		// we need to implement the stochastic process interface to use the model in MC simulation
+
+		// dimension of X
+		inline virtual size_t size() { return 1; }
+		// stochastic factors (underlying, volatilities and spreads)
+		inline virtual size_t factors() { return 1; }
+		// initial values for simulation
+		inline virtual VecP initialValues() { return VecP(1, S0_); }
+		// a[t,X(t)]
+		inline virtual VecA drift(const DateType t, const VecA& X) { return VecP(1, 0.0); }
+		// b[t,X(t)]
+		inline virtual MatA diffusion(const DateType t, const VecA& X) { return MatA(1, VecA(1, localVol(X[0]))); }
+		// we need to implement evolution based on local shifted-lognormal dynamics
+		inline virtual void evolve(const DateType t0, const VecA& X0, const DateType dt, const VecD& dW, VecA& X1) {
+			// we do not want to use low-level implementation details because these might change
+			// instead we "assume" unknown local shifted lognormal dynamics
+			PassiveType S = X0[0], epsilon = 1.0e-6;
+			PassiveType sigma = localVol(S), sigma2 = localVol(S + epsilon);
+			PassiveType m = (sigma2 - sigma) / epsilon;
+			PassiveType dS = sigma * dW[0] * sqrt(dt);  // default for normal model
+			if (m != 0.0) dS = (exp(m*dW[0]*sqrt(dt) - m*m/2.0*dt) - 1.0)*sigma/m;
+			X1[0] = S + dS;
+		 	truncate(t0 + dt, X1);
+		 	return;
+		}
+		// the numeraire in the domestic currency used for discounting future payoffs
+		inline virtual ActiveType numeraire(const DateType t, const VecA& X) { return 1.0; }
+		// an asset with (individual) drift and volatility
+		inline virtual ActiveType asset(const DateType t, const VecA& X, const std::string& alias) { return X[0]; }
+		inline virtual ActiveType forwardAsset(const DateType t, const DateType T, const VecA& X, const std::string& alias) { return X[0]; }
+		inline virtual ActiveType zeroBond(const DateType t, const DateType T, const VecA& X) { return 1.0; }
 
 
 	};
