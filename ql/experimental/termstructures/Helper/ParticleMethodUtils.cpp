@@ -27,9 +27,9 @@ namespace QuantLib {
 
 	ParticleMethodUtils::ParticleMethodUtils(const std::string& kernel, unsigned int numberOfPaths, Time maxTime,
 		Time deltaT, Time tMin, Real kappa, Real sigmaAVR, Real exponentN, Real gridMinQuantile,
-		Real gridMaxQuantile){
-		//numberOfPaths_(numberOfPaths), maxTime_(maxTime), deltaT_(deltaT), tMin_(tMin), kappa_(kappa),
-		//sigmaAVR_(sigmaAVR), exponentN_(exponentN), gridMinQuantile_(gridMinQuantile), gridMaxQuantile_(gridMaxQuantile) {
+		Real gridMaxQuantile) :
+		numberOfPaths_(numberOfPaths), maxTime_(maxTime), deltaT_(deltaT), tMin_(tMin), kappa_(kappa),
+		sigmaAVR_(sigmaAVR), exponentN_(exponentN), gridMinQuantile_(gridMinQuantile), gridMaxQuantile_(gridMaxQuantile) {
 	
 		if (kernel == "QuarticKernel") {
 			kernel_ = boost::shared_ptr<KernelInterface>(new QuarticKernel());
