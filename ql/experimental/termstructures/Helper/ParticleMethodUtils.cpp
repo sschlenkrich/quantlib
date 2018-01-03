@@ -27,10 +27,10 @@ namespace QuantLib {
 
 	ParticleMethodUtils::ParticleMethodUtils(const std::string& kernel, unsigned int numberOfPaths, Time maxTime,
 		Time deltaT, Time tMin, Real kappa, Real sigmaAVR, Real exponentN, Real gridMinQuantile,
-		Real gridMaxQuantile) :
-		numberOfPaths_(numberOfPaths), maxTime_(maxTime), deltaT_(deltaT), tMin_(tMin), kappa_(kappa),
-		sigmaAVR_(sigmaAVR), exponentN_(exponentN), gridMinQuantile_(gridMinQuantile), gridMaxQuantile_(gridMaxQuantile) {
-		
+		Real gridMaxQuantile){
+		//numberOfPaths_(numberOfPaths), maxTime_(maxTime), deltaT_(deltaT), tMin_(tMin), kappa_(kappa),
+		//sigmaAVR_(sigmaAVR), exponentN_(exponentN), gridMinQuantile_(gridMinQuantile), gridMaxQuantile_(gridMaxQuantile) {
+	
 		if (kernel == "QuarticKernel") {
 			kernel_ = boost::shared_ptr<KernelInterface>(new QuarticKernel());
 		}
@@ -39,9 +39,27 @@ namespace QuantLib {
 		}
 	}
 
-	/*void ParticleMethodUtils::calibrateFX(std::vector<Real>& strikes, std::vector<Time>& times, Matrix& surfaceF,
+	void ParticleMethodUtils::calibrateFX(std::vector<Real>& strikes, std::vector<Time>& times, Matrix& surfaceF,
 		const std::vector<boost::shared_ptr<GeneralizedBlackScholesProcess>>& processes,
 		const boost::shared_ptr<GeneralizedBlackScholesProcess>& processToCal) {
-	
-	}*/	  
+		
+		//work in progress. This is where particle method has to be implemented.
+		
+		strikes.resize(2);
+		times.resize(2);
+		surfaceF = Matrix(2, 2);
+
+		for (size_t i = 0; i < surfaceF.size1(); i++)
+		{
+			for (size_t j = 0; j < surfaceF.size2(); j++)
+			{
+				surfaceF[i][j] = 0.9;
+			}
+		}
+
+		times[0] = 0;
+		times[1] = 1;
+		strikes[0] = 0.7;
+		strikes[1] = 1;
+	}	  
 }

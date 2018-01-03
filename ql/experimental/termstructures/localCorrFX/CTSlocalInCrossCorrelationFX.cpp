@@ -31,9 +31,7 @@ namespace QuantLib {
     : LocalCorrSurfaceABFFX(processes,processToCal,calibratorLocalCorr){
 		initializeF();
 		setInterpolation<Bilinear>();
-
-		//ParticleMethodUtils test = ParticleMethodUtils(std::string(""),2,Time(2), Time(2), Time(2),Real(2), Real(2), Real(2), Real(2), Real(2));
-    }
+	}
 
 	QuantLib::Real CTSlocalInCrossCorrelationFX::localA(Time t, const RealStochasticProcess::VecA& X0,
 		bool extrapolate) const {
@@ -56,24 +54,8 @@ namespace QuantLib {
 
 	void CTSlocalInCrossCorrelationFX::initializeF() {
 
-		//calibratorLocalCorr_->calibrateFX(strikes_, times_, surfaceF_, processes_, processToCal_);
+		calibratorLocalCorr_->calibrateFX(strikes_, times_, surfaceF_, processes_, processToCal_);
 
-		//strikes_.resize(2);
-		//times_.resize(2);
-		//surfaceF_ = Matrix(2,2);
-
-		//for (size_t i = 0; i < surfaceF_.size1(); i++)
-		//{	
-		//	for (size_t j = 0; j < surfaceF_.size2(); j++)
-		//	{
-		//		surfaceF_[i][j] = 0.9;
-		//	}
-		//}
-
-		//times_[0] = 0;
-		//times_[1] = 1;
-		//strikes_[0] = 0.7;
-		//strikes_[1] = 1;
 	}
 }
 

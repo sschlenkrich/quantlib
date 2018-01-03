@@ -24,6 +24,8 @@
 #ifndef quantlib_kernelInterface_hpp
 #define quantlib_kernelInterface_hpp
 
+#include <math.h>
+#include <ql\types.hpp>
 
 namespace QuantLib {
 

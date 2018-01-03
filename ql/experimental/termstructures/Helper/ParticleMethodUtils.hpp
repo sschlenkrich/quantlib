@@ -37,16 +37,16 @@ namespace QuantLib {
 	*/
     class ParticleMethodUtils : public CalibratorLocalCorrInt {
       public:
-		  ParticleMethodUtils() : CalibratorLocalCorrInt(){};
+		  //ParticleMethodUtils() : CalibratorLocalCorrInt(){};
 		  ParticleMethodUtils(const std::string& kernel, unsigned int numberOfPaths, Time maxTime,
 			  Time deltaT, Time tMin, Real kappa, Real sigmaAVR, Real exponentN, Real gridMinQuantile,
 			  Real gridMaxQuantile);
 
 		  virtual void calibrateFX(std::vector<Real>& strikes, std::vector<Time>& times, Matrix& surfaceF,
 			  const std::vector<boost::shared_ptr<GeneralizedBlackScholesProcess>>& processes,
-			  const boost::shared_ptr<GeneralizedBlackScholesProcess>& processToCal) {};
+			  const boost::shared_ptr<GeneralizedBlackScholesProcess>& processToCal);
 		  
-		  boost::shared_ptr<KernelInterface>& getKernel() { return kernel_; };
+		  /*boost::shared_ptr<KernelInterface>& getKernel() { return kernel_; };
 		  unsigned int getNumberOfPaths() { return numberOfPaths_; };
 		  Time getMaxTime() { return maxTime_;};
 		  Time getDeltaT() { return deltaT_;};
@@ -55,7 +55,7 @@ namespace QuantLib {
 		  Real getSigmaAVR() { return sigmaAVR_; };
 		  Real getExponentN() { return exponentN_; };
 		  Real getGridMinQuantile() { return gridMinQuantile_; };
-		  Real getGridMaxQuantile() { return gridMaxQuantile_; };
+		  Real getGridMaxQuantile() { return gridMaxQuantile_; };*/
       protected:
 		  
 	  private:

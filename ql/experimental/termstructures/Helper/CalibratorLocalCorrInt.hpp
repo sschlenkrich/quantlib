@@ -23,6 +23,12 @@
 #ifndef quantlib_calibratorlocalcorrint_hpp
 #define quantlib_calibratorlocalcorrint_hpp
 
+#include <vector>
+#include <ql\math\matrix.hpp>
+#include <ql\types.hpp>
+#include <boost\smart_ptr\shared_ptr.hpp>
+#include <ql/processes/blackscholesprocess.hpp>
+
 namespace QuantLib {
 
     //! CalibratorLocalCorrInt derived 
