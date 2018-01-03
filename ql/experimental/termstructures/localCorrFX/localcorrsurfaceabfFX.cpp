@@ -23,8 +23,9 @@ namespace QuantLib {
 
     LocalCorrSurfaceABFFX::LocalCorrSurfaceABFFX(
 		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
-		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&  		    processToCal)
-    : LocalCorrSurfaceABF(processes, processToCal){
+		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&  		    processToCal,
+		boost::shared_ptr<CalibratorLocalCorrInt>&										calibratorLocalCorr)
+    : LocalCorrSurfaceABF(processes, processToCal), calibratorLocalCorr_(calibratorLocalCorr){
 		corr0_ = RealStochasticProcess::MatA(2);
 		corr1_ = RealStochasticProcess::MatA(2);
 		
@@ -61,24 +62,6 @@ namespace QuantLib {
 	}
 
 
-	void LocalCorrSurfaceABFFX::initializeF(){
 	
-		strikes_.resize(2);
-		times_.resize(2);
-		surfaceF_ = Matrix(2,2);
-
-		for (size_t i = 0; i < surfaceF_.size1(); i++)
-		{	
-			for (size_t j = 0; j < surfaceF_.size2(); j++)
-			{
-				surfaceF_[i][j] = 0.9;
-			}
-		}
-
-		times_[0] = 0;
-		times_[1] = 1;
-		strikes_[0] = 0.7;
-		strikes_[1] = 1;
-	}
 }
 

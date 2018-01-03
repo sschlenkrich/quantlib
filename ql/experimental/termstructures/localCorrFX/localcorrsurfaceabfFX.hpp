@@ -25,6 +25,7 @@
 #define quantlib_localcorrsurfaceabffx_hpp
 
 #include <ql/experimental/termstructures/localcorrsurfaceabf.hpp>
+#include <ql\experimental\termstructures\Helper\CalibratorLocalCorrInt.hpp>
 
 namespace QuantLib {
 
@@ -36,7 +37,8 @@ namespace QuantLib {
     class LocalCorrSurfaceABFFX : public LocalCorrSurfaceABF {
       public:
         LocalCorrSurfaceABFFX(const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
-							  const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			  processToCal);
+							  const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			  processToCal,
+							  boost::shared_ptr<CalibratorLocalCorrInt>&									calibratorLocalCorr);
 		//@}
 		//! \name Visitability
 		//@{
@@ -49,9 +51,11 @@ namespace QuantLib {
 			  bool extrapolate = false) const = 0;
 		  virtual QuantLib::Real localF(Time t, const RealStochasticProcess::VecA& X0,
 			  bool extrapolate = false) const;
-		  virtual void initializeF();
+		  
+		  virtual void initializeF()=0;
+
+		  boost::shared_ptr<CalibratorLocalCorrInt> calibratorLocalCorr_;
 	  private:
-        
     };
 
 }

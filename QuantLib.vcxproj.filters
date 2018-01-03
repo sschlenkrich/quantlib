@@ -364,6 +364,9 @@
     <Filter Include="experimental\termStructures\localCorrFX">
       <UniqueIdentifier>{bddb3d6a-8874-44e6-b751-e0e0f699a706}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\termStructures\Helper">
+      <UniqueIdentifier>{26413621-2f1d-4fd7-ab63-4691c951175a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -4318,6 +4321,18 @@
     </ClInclude>
     <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.hpp">
       <Filter>experimental\termStructures\localCorrFX</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\Helper\KernelInterface.hpp">
+      <Filter>experimental\termStructures\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp">
+      <Filter>experimental\termStructures\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.cpp">
+      <Filter>experimental\termStructures\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\Helper\CalibratorLocalCorrInt.hpp">
+      <Filter>experimental\termStructures\Helper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
