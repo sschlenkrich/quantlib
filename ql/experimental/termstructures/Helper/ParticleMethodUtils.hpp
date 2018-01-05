@@ -40,9 +40,9 @@ namespace QuantLib {
 		  //ParticleMethodUtils() : CalibratorLocalCorrInt(){};
 		  ParticleMethodUtils(const std::string& kernel, unsigned int numberOfPaths, Time maxTime,
 			  Time deltaT, Time tMin, Real kappa, Real sigmaAVR, Real exponentN, Real gridMinQuantile,
-			  Real gridMaxQuantile);
+			  Real gridMaxQuantile, unsigned int ns1, unsigned int ns2);
 
-		  virtual void calibrateFX(std::vector<Real>& strikes, std::vector<Time>& times, Matrix& surfaceF,
+		  virtual void calibrateFX(std::vector<std::vector<Real>>& strikes, std::vector<Time>& times, std::vector<std::vector<Real>>& surfaceF,
 			  const std::vector<boost::shared_ptr<GeneralizedBlackScholesProcess>>& processes,
 			  const boost::shared_ptr<GeneralizedBlackScholesProcess>& processToCal);
 		  
@@ -59,16 +59,22 @@ namespace QuantLib {
       protected:
 		  
 	  private:
-		    boost::shared_ptr<KernelInterface> kernel_;
-			unsigned int numberOfPaths_;
-			Time maxTime_;
-			Time deltaT_;
-			Time tMin_;
-			Real kappa_;
-			Real sigmaAVR_;
-			Real exponentN_;
-			Real gridMinQuantile_;
-			Real gridMaxQuantile_;
+		  Real bandwidth(Time t, Real s0) const;
+		  Real kernel(Real bandwidth, Real x) const;
+		  
+		  boost::shared_ptr<KernelInterface> kernel_;
+		  unsigned int numberOfPaths_;
+		  Time maxTime_;
+		  Time deltaT_;
+		  Time tMin_;
+		  Real kappa_;
+		  Real sigmaAVR_;
+		  Real exponentN_;
+		  Real gridMinQuantile_;
+		  Real gridMaxQuantile_;
+		  unsigned int ns1_;
+		  unsigned int ns2_;
+
 
     };
 

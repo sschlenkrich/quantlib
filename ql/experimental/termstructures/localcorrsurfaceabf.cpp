@@ -25,6 +25,7 @@ namespace QuantLib {
 		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
 		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    processToCal)
     : LocalCorrTermStructure(processes, processToCal){
+		
     }
 
     void LocalCorrSurfaceABF::accept(AcyclicVisitor& v) {
@@ -37,8 +38,7 @@ namespace QuantLib {
     }
 
 	void LocalCorrSurfaceABF::localCorrImpl(RealStochasticProcess::MatA& corrMatrix, Time t, const RealStochasticProcess::VecA& X0,
-		bool extrapolate)
-		const {
+		bool extrapolate) {
 		Real lambda = (localF(t,X0, extrapolate)-localA(t,X0, extrapolate))/localB(t,X0, extrapolate);
 		for (size_t i = 0; i < corrMatrix.size(); i++)
 		{
@@ -49,6 +49,21 @@ namespace QuantLib {
 				corrMatrix[j][i] = corrMatrix[i][j];
 			}
 		}
+	}
+
+	QuantLib::Real LocalCorrSurfaceABF::localF(Time t, const RealStochasticProcess::VecA& X0,
+		bool extrapolate) {
+		
+		double strike = localFStrike(t, X0);
+
+		//first interpolate strike dimension
+		for (size_t i = 0; i < times_.size(); i++)
+		{
+			valuesSecInt_[i] = interpolatorStrikesF_[i](strike, extrapolate);
+		}
+
+		//second interpolate time dimension 
+		return interpolatorTimesF_(t, extrapolate);
 	}
 }
 

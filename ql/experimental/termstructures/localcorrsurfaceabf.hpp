@@ -25,7 +25,7 @@
 #define quantlib_localcorrsurfaceabf_hpp
 
 #include <ql/experimental/termstructures/localcorrtermstructure.hpp>
-#include <ql/math/interpolations/interpolation2d.hpp>
+#include <ql/math/interpolation.hpp>
 
 namespace QuantLib {
 
@@ -51,45 +51,46 @@ namespace QuantLib {
 		//@{
 		template <class Interpolator>
 		void setInterpolation(const Interpolator& i = Interpolator()) {
-			interpolatorF_ =
-				i.interpolate(times_.begin(), times_.end(),
-					strikes_.begin(), strikes_.end(),
-					surfaceF_);
+			std::vector<std::vector<Real> >::iterator strike_iterator;
+			std::vector<std::vector<Real> >::iterator surface_iterator = surfaceF_.begin();
+
+			size_t j = 0;
+
+			for (strike_iterator = strikes_.begin();strike_iterator != strikes_.end();++strike_iterator,++j,++surface_iterator) {
+					interpolatorStrikesF_[j] =
+						i.interpolate((*strike_iterator).begin(), (*strike_iterator).end(), (*surface_iterator).begin());
+			}
+			interpolatorTimesF_ = i.interpolate(times_.begin(), times_.end(), valuesSecInt_.begin());
 			notifyObservers();
 		}
-		//@}
-		//! \name VolatilityTermStructure interface
-		//@{
-		Real minStrike() const {
-			return strikes_.front();
-		}
-		Real maxStrike() const {
-			return strikes_.back();
-		}
+
 		Date maxDate() const {
 			return maxDate_;
 		}
       protected:
 		  void localCorrImpl(RealStochasticProcess::MatA& corrMatrix, Time t, const RealStochasticProcess::VecA& X0,
-			  bool extrapolate = false) const;
+			  bool extrapolate = false);
 		  virtual QuantLib::Real localA(Time t, const RealStochasticProcess::VecA& X0,
 			  bool extrapolate = false) const = 0;
 		  virtual QuantLib::Real localB(Time t, const RealStochasticProcess::VecA& X0,
 			  bool extrapolate = false) const = 0;
-		  virtual QuantLib::Real localF(Time t, const RealStochasticProcess::VecA& X0,
-			  bool extrapolate = false) const = 0;
+		  QuantLib::Real localF(Time t, const RealStochasticProcess::VecA& X0,
+			  bool extrapolate = false);
+		  virtual QuantLib::Real localFStrike(Time t, const RealStochasticProcess::VecA& X0) = 0;
 
 		  virtual void initializeF() =0;
 
 		  RealStochasticProcess::MatA corr0_;
 		  RealStochasticProcess::MatA corr1_;
 
-		  Interpolation2D interpolatorF_;
+		  std::vector<Interpolation> interpolatorStrikesF_; //interpolated first
+		  Interpolation interpolatorTimesF_; //interpolated second
 
 		  Date maxDate_;
-		  std::vector<Real> strikes_;
 		  std::vector<Time> times_;
-		  Matrix surfaceF_;
+		  std::vector<std::vector<Real>> strikes_; //each time step has its own strike grid
+		  std::vector<std::vector<Real>> surfaceF_;
+		  std::vector<Real> valuesSecInt_;
 
 	  private:
         

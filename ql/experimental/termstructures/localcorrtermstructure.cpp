@@ -31,7 +31,7 @@ namespace QuantLib {
     void LocalCorrTermStructure::localCorr(RealStochasticProcess::MatA& corrMatrix, 
 											   const Date& d,
 											   const RealStochasticProcess::VecA& X0,
-                                               bool extrapolate) const {
+                                               bool extrapolate) {
         
 		for (size_t i = 0; i < X0.size(); i++)
 		{
@@ -46,7 +46,7 @@ namespace QuantLib {
     void LocalCorrTermStructure::localCorr(RealStochasticProcess::MatA& corrMatrix, 
 											   Time t,
 											   const RealStochasticProcess::VecA& X0,
-                                               bool extrapolate) const {
+                                               bool extrapolate) {
 		checkRange(t, extrapolate);
 		for (size_t i = 0; i < X0.size(); i++)
 		{

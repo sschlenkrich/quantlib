@@ -18,7 +18,7 @@
 */
 
 #include <ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.hpp>
-#include <ql/math/interpolations/bilinearinterpolation.hpp>
+#include <ql/math/interpolations/linearinterpolation.hpp>
 
 #include <ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp>
 
@@ -30,7 +30,7 @@ namespace QuantLib {
 		boost::shared_ptr<CalibratorLocalCorrInt>&										calibratorLocalCorr)
     : LocalCorrSurfaceABFFX(processes,processToCal,calibratorLocalCorr){
 		initializeF();
-		setInterpolation<Bilinear>();
+		setInterpolation<Linear>();
 	}
 
 	QuantLib::Real CTSlocalInCrossCorrelationFX::localA(Time t, const RealStochasticProcess::VecA& X0,
@@ -55,7 +55,8 @@ namespace QuantLib {
 	void CTSlocalInCrossCorrelationFX::initializeF() {
 
 		calibratorLocalCorr_->calibrateFX(strikes_, times_, surfaceF_, processes_, processToCal_);
-
+		interpolatorStrikesF_.resize(times_.size());
+		valuesSecInt_.resize(times_.size());
 	}
 }
 

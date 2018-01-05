@@ -58,11 +58,11 @@ namespace QuantLib {
         void localCorr(RealStochasticProcess::MatA& correlationMatrix, 
 							const Date& d,
 							const RealStochasticProcess::VecA& X0,
-                            bool extrapolate = false) const;
+                            bool extrapolate = false);
         void localCorr(RealStochasticProcess::MatA& correlationMatrix,
 							Time t,
 							const RealStochasticProcess::VecA& X0, 
-                            bool extrapolate = false) const;
+                            bool extrapolate = false);
         //@}
         //! \name Visitability
         //@{
@@ -89,7 +89,7 @@ namespace QuantLib {
         //@{
         //! local corr calculation
         virtual void localCorrImpl(RealStochasticProcess::MatA& corrMatrix, Time t, const RealStochasticProcess::VecA& X0,
-			bool extrapolate = false) const = 0;
+			bool extrapolate = false) = 0;
         //@}
 		std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>> processes_;
 		boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>			    processToCal_;

@@ -33,7 +33,7 @@ namespace QuantLib {
     class KernelInterface {
       public:
 		  KernelInterface() {};
-		  virtual Real operator()(Real x) const = 0;
+		  virtual Real value(Real x) const = 0;
       protected:
 		  
 	  private:
@@ -43,7 +43,7 @@ namespace QuantLib {
 	class QuarticKernel : public KernelInterface {
 	public:
 		QuarticKernel() : KernelInterface() {};
-		virtual Real operator()(Real x) const { return abs(x) < 1 ? (1 - x*x) : 0; };
+		virtual Real value(Real x) const { return abs(x) < 1 ? (1 - x*x) : 0; };
 	};
 
 }

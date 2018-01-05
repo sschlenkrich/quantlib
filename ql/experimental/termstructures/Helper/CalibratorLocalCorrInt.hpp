@@ -37,7 +37,7 @@ namespace QuantLib {
     */
     class CalibratorLocalCorrInt {
       public:
-		  virtual void calibrateFX(std::vector<Real>& strikes, std::vector<Time>& times, Matrix& surfaceF, 
+		  virtual void calibrateFX(std::vector<std::vector<Real>>& strikes, std::vector<Time>& times, std::vector<std::vector<Real>>& surfaceF,
 			  const std::vector<boost::shared_ptr<GeneralizedBlackScholesProcess>>& processes,
 			  const boost::shared_ptr<GeneralizedBlackScholesProcess>& processToCal) = 0;
 

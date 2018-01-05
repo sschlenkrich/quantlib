@@ -49,8 +49,7 @@ namespace QuantLib {
 			  bool extrapolate = false) const = 0;
 		  virtual QuantLib::Real localB(Time t, const RealStochasticProcess::VecA& X0,
 			  bool extrapolate = false) const = 0;
-		  virtual QuantLib::Real localF(Time t, const RealStochasticProcess::VecA& X0,
-			  bool extrapolate = false) const;
+		  virtual QuantLib::Real localFStrike(Time t, const RealStochasticProcess::VecA& X0);
 		  
 		  virtual void initializeF()=0;
 

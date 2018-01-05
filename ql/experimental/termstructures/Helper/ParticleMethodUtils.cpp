@@ -22,14 +22,16 @@
 */
 
 #include <ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp>
+#include <math.h>
 
 namespace QuantLib {
 
 	ParticleMethodUtils::ParticleMethodUtils(const std::string& kernel, unsigned int numberOfPaths, Time maxTime,
 		Time deltaT, Time tMin, Real kappa, Real sigmaAVR, Real exponentN, Real gridMinQuantile,
-		Real gridMaxQuantile) :
+		Real gridMaxQuantile, unsigned int ns1, unsigned int ns2) :
 		numberOfPaths_(numberOfPaths), maxTime_(maxTime), deltaT_(deltaT), tMin_(tMin), kappa_(kappa),
-		sigmaAVR_(sigmaAVR), exponentN_(exponentN), gridMinQuantile_(gridMinQuantile), gridMaxQuantile_(gridMaxQuantile) {
+		sigmaAVR_(sigmaAVR), exponentN_(exponentN), gridMinQuantile_(gridMinQuantile), 
+		gridMaxQuantile_(gridMaxQuantile), ns1_(ns1), ns2_(ns2) {
 	
 		if (kernel == "QuarticKernel") {
 			kernel_ = boost::shared_ptr<KernelInterface>(new QuarticKernel());
@@ -39,27 +41,43 @@ namespace QuantLib {
 		}
 	}
 
-	void ParticleMethodUtils::calibrateFX(std::vector<Real>& strikes, std::vector<Time>& times, Matrix& surfaceF,
+	void ParticleMethodUtils::calibrateFX(std::vector<std::vector<Real>>& strikes, std::vector<Time>& times, std::vector<std::vector<Real>>& surfaceF,
 		const std::vector<boost::shared_ptr<GeneralizedBlackScholesProcess>>& processes,
 		const boost::shared_ptr<GeneralizedBlackScholesProcess>& processToCal) {
 		
-		//work in progress. This is where particle method has to be implemented.
-		
-		strikes.resize(2);
-		times.resize(2);
-		surfaceF = Matrix(2, 2);
-
-		for (size_t i = 0; i < surfaceF.size1(); i++)
-		{
-			for (size_t j = 0; j < surfaceF.size2(); j++)
-			{
-				surfaceF[i][j] = 0.9;
-			}
+		//time grid from t=0 to maxTime:
+		times.resize(1);
+		times[0] = 0;
+		size_t i = 0;
+		while (times[i] * deltaT_ < maxTime_) {
+			times.push_back(times[i]+deltaT_);
+			i++;
 		}
 
-		times[0] = 0;
-		times[1] = 1;
-		strikes[0] = 0.7;
-		strikes[1] = 1;
+		//start to create strike grid
+
+		surfaceF.resize(times.size());
+		strikes.resize(times.size());
+
+		for (size_t i = 0; i < surfaceF.size(); i++)
+		{
+			surfaceF[i].resize(2);
+			strikes[i].resize(2);
+			for (size_t j = 0; j < surfaceF[i].size(); j++)
+			{
+				surfaceF[i][j] = 0.9;
+				strikes[i][0] = 0.7;
+				strikes[i][1] = 1.2;
+			}
+		}
 	}	  
+
+	Real ParticleMethodUtils::bandwidth(Time t, Real s0) const {
+		return kappa_*sigmaAVR_* s0 * sqrt(t>tMin_ ? t : tMin_) * pow(numberOfPaths_,exponentN_);
+	}
+
+	Real ParticleMethodUtils::kernel(Real bandwidth, Real x) const {
+		QL_REQUIRE(bandwidth != 0, "Error in ParticleMethodUtils: bandwidth is not allowed to be zero.");
+		return kernel_->value(x / bandwidth) / bandwidth;
+	}
 }
