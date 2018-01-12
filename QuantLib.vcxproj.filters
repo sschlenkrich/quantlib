@@ -4328,12 +4328,6 @@
     <ClInclude Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp">
       <Filter>experimental\termStructures\Helper</Filter>
     </ClInclude>
-    <ClInclude Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.cpp">
-      <Filter>experimental\termStructures\Helper</Filter>
-    </ClInclude>
-    <ClInclude Include="ql\experimental\termstructures\Helper\CalibratorLocalCorrInt.hpp">
-      <Filter>experimental\termStructures\Helper</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6921,6 +6915,7 @@
     <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.cpp">
       <Filter>experimental\termStructures\localCorrFX</Filter>
     </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">

@@ -18,14 +18,14 @@
 */
 
 #include <ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.hpp>
+#include <ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp>
 
 namespace QuantLib {
 
     LocalCorrSurfaceABFFX::LocalCorrSurfaceABFFX(
 		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
-		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&  		    processToCal,
-		boost::shared_ptr<CalibratorLocalCorrInt>&										calibratorLocalCorr)
-    : LocalCorrSurfaceABF(processes, processToCal), calibratorLocalCorr_(calibratorLocalCorr){
+		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&  		    processToCal)
+    : LocalCorrSurfaceABF(processes, processToCal){
 		corr0_ = RealStochasticProcess::MatA(2);
 		corr1_ = RealStochasticProcess::MatA(2);
 		
@@ -48,14 +48,8 @@ namespace QuantLib {
 	QuantLib::Real LocalCorrSurfaceABFFX::localFStrike(Time t, const RealStochasticProcess::VecA& X0) {
 		QL_REQUIRE(X0.size() == 2, "Local Correlation for FX only works for two dimensional FX model.");
 
-		double strike; 
-		if (X0[1] != 0) {
-			strike = X0[0] / X0[1];
-		}
-		else if (X0[0] == 0) strike = 0;
-		else QL_FAIL("second FX rate is not allowed to be zero if first FX rate is unequal to zero");
+		return ParticleMethodUtils::getCrossFX(processes_[0]->x0() * std::exp(X0[0]) , (processes_[1]->x0() * std::exp(X0[1])));
 		
-		return strike;
 	}
 	
 	void LocalCorrSurfaceABFFX::accept(AcyclicVisitor& v) {
@@ -67,7 +61,19 @@ namespace QuantLib {
 			LocalCorrSurfaceABF::accept(v);
 	}
 
+	Real LocalCorrSurfaceABFFX::localCorrImplTeq0(Time t, const RealStochasticProcess::VecA& X0, bool extrapolate) {
+		
+		//smiled surface will through an error, therefore assume one minute ahead
+		t = 1.0 / (365 * 24 * 60);
+		
+		Real s1 = processes_[0]->x0() * std::exp(X0[0]);
+		Real s2 = processes_[1]->x0() * std::exp(X0[1]);
+		Real vol1 = processes_[0]->localVolatility()->localVol(t, s1, extrapolate);
+		Real vol2 = processes_[1]->localVolatility()->localVol(t, s2, extrapolate);
+		Real vol3 = processToCal_->localVolatility()->localVol(t, ParticleMethodUtils::getCrossFX(s1 , s2), extrapolate);
 
+		return (vol1*vol1 + vol2*vol2 - vol3*vol3) / (2 * vol1*vol2);
+	}
 	
 }
 

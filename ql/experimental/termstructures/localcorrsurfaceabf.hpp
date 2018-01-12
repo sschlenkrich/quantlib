@@ -34,32 +34,43 @@ namespace QuantLib {
         
         \bug this class is untested, probably unreliable.
     */
-    class LocalCorrSurfaceABF : public LocalCorrTermStructure {
-      public:
-        LocalCorrSurfaceABF(const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
-						    const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&		  	    processToCal);
-        
-        
-        //@}
-        //! \name Visitability
-        //@{
-        virtual void accept(AcyclicVisitor&);
-        
+	class LocalCorrSurfaceABF : public LocalCorrTermStructure {
+	public:
+		LocalCorrSurfaceABF(const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
+			const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&		  	    processToCal);
+
+
+		//@}
+		//! \name Visitability
+		//@{
+		virtual void accept(AcyclicVisitor&);
+
 		//@}
 		//@}
 		//! \name Modifiers
 		//@{
 		template <class Interpolator>
-		void setInterpolation(const Interpolator& i = Interpolator()) {
+		void setInterpolationStrike(size_t idx_time, const Interpolator& i = Interpolator()) {
 			std::vector<std::vector<Real> >::iterator strike_iterator;
 			std::vector<std::vector<Real> >::iterator surface_iterator = surfaceF_.begin();
 
 			size_t j = 0;
+			bool stop = false;
 
-			for (strike_iterator = strikes_.begin();strike_iterator != strikes_.end();++strike_iterator,++j,++surface_iterator) {
+			for (strike_iterator = strikes_.begin();strike_iterator != strikes_.end() && ! stop;++strike_iterator, ++j, ++surface_iterator) {
+				if (j == idx_time) {
 					interpolatorStrikesF_[j] =
 						i.interpolate((*strike_iterator).begin(), (*strike_iterator).end(), (*surface_iterator).begin());
+					stop = true;
+				}
 			}
+			interpolatorTimesF_ = i.interpolate(times_.begin(), times_.end(), valuesSecInt_.begin());
+			notifyObservers();
+		}
+		template <class Interpolator>
+		void setInterpolationTime(const Interpolator& i = Interpolator()) {
+			valuesSecInt_.resize(times_.size());
+			interpolatorStrikesF_.resize(times_.size());
 			interpolatorTimesF_ = i.interpolate(times_.begin(), times_.end(), valuesSecInt_.begin());
 			notifyObservers();
 		}
@@ -67,18 +78,23 @@ namespace QuantLib {
 		Date maxDate() const {
 			return maxDate_;
 		}
+
+		virtual Real localCorrImplTeq0(Time t, const RealStochasticProcess::VecA& X0, bool extrapolate = false) = 0;
+		virtual QuantLib::Real localA(Time t, const RealStochasticProcess::VecA& assets,
+			bool extrapolate = false) const = 0;
+		virtual QuantLib::Real localB(Time t, const RealStochasticProcess::VecA& assets,
+			bool extrapolate = false) const = 0;
+
+		std::vector<Time>& getTimes() { return times_; };
+		std::vector<std::vector<Real>>& getStrikes() {return strikes_;};
+		std::vector<std::vector<Real>>& getSurfaceF() { return surfaceF_; };
+
       protected:
 		  void localCorrImpl(RealStochasticProcess::MatA& corrMatrix, Time t, const RealStochasticProcess::VecA& X0,
 			  bool extrapolate = false);
-		  virtual QuantLib::Real localA(Time t, const RealStochasticProcess::VecA& X0,
-			  bool extrapolate = false) const = 0;
-		  virtual QuantLib::Real localB(Time t, const RealStochasticProcess::VecA& X0,
-			  bool extrapolate = false) const = 0;
 		  QuantLib::Real localF(Time t, const RealStochasticProcess::VecA& X0,
 			  bool extrapolate = false);
 		  virtual QuantLib::Real localFStrike(Time t, const RealStochasticProcess::VecA& X0) = 0;
-
-		  virtual void initializeF() =0;
 
 		  RealStochasticProcess::MatA corr0_;
 		  RealStochasticProcess::MatA corr1_;

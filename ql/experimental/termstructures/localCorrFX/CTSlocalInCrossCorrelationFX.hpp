@@ -36,19 +36,18 @@ namespace QuantLib {
     class CTSlocalInCrossCorrelationFX : public LocalCorrSurfaceABFFX {
       public:
 		  CTSlocalInCrossCorrelationFX(const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
-								  const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&					processToCal,
-								  boost::shared_ptr<CalibratorLocalCorrInt>&										 calibratorLocalCorr);
+								  const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&					processToCal);
 		  //@}
 		  //! \name Visitability
 		  //@{
 		  virtual void accept(AcyclicVisitor&);
         //@}
+		  virtual QuantLib::Real localA(Time t, const RealStochasticProcess::VecA& assets,
+			  bool extrapolate = false) const;
+		  virtual QuantLib::Real localB(Time t, const RealStochasticProcess::VecA& assets,
+			  bool extrapolate = false) const;
       protected:
-		  virtual QuantLib::Real localA(Time t, const RealStochasticProcess::VecA& X0,
-			  bool extrapolate = false) const;
-		  virtual QuantLib::Real localB(Time t, const RealStochasticProcess::VecA& X0,
-			  bool extrapolate = false) const;
-		  virtual void initializeF();
+		  //virtual void initializeF();
 	  private:
         
     };

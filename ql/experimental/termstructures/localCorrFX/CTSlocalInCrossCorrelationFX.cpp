@@ -18,7 +18,6 @@
 */
 
 #include <ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.hpp>
-#include <ql/math/interpolations/linearinterpolation.hpp>
 
 #include <ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp>
 
@@ -26,19 +25,18 @@ namespace QuantLib {
 
 	CTSlocalInCrossCorrelationFX::CTSlocalInCrossCorrelationFX(
 		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
-		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    processToCal,
-		boost::shared_ptr<CalibratorLocalCorrInt>&										calibratorLocalCorr)
-    : LocalCorrSurfaceABFFX(processes,processToCal,calibratorLocalCorr){
-		initializeF();
-		setInterpolation<Linear>();
+		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    processToCal)
+    : LocalCorrSurfaceABFFX(processes,processToCal){
+		//initializeF();
+		//setInterpolation<Linear>();
 	}
 
-	QuantLib::Real CTSlocalInCrossCorrelationFX::localA(Time t, const RealStochasticProcess::VecA& X0,
+	QuantLib::Real CTSlocalInCrossCorrelationFX::localA(Time t, const RealStochasticProcess::VecA& assets,
 		bool extrapolate) const {
 		return 0;
 	}
 
-	QuantLib::Real CTSlocalInCrossCorrelationFX::localB(Time t, const RealStochasticProcess::VecA& X0,
+	QuantLib::Real CTSlocalInCrossCorrelationFX::localB(Time t, const RealStochasticProcess::VecA& assets,
 		bool extrapolate) const {
 		return 1;
 	}
@@ -52,11 +50,10 @@ namespace QuantLib {
 	}
 
 
-	void CTSlocalInCrossCorrelationFX::initializeF() {
-
-		calibratorLocalCorr_->calibrateFX(strikes_, times_, surfaceF_, processes_, processToCal_);
-		interpolatorStrikesF_.resize(times_.size());
-		valuesSecInt_.resize(times_.size());
-	}
+	//void CTSlocalInCrossCorrelationFX::initializeF() {
+	//	calibratorLocalCorr_->calibrateFX(strikes_, times_, surfaceF_, processes_, processToCal_);
+	//	interpolatorStrikesF_.resize(times_.size());
+	//	valuesSecInt_.resize(times_.size());
+	//}
 }
 

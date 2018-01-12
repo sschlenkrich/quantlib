@@ -53,6 +53,22 @@ namespace QuantLib {
 			checkStrike(X0[i], i, extrapolate);
 		}
         localCorrImpl(corrMatrix, t, X0, extrapolate);
+
+		//cap to 1 and floor to -1:
+		for (size_t i = 0; i < corrMatrix.size(); i++)
+		{
+			for (size_t j = i+1; j < corrMatrix.size(); j++)
+			{
+				if (corrMatrix[i][j] > 1) {
+					corrMatrix[i][j] = 1;
+					corrMatrix[j][i] = 1;
+				}
+				if (corrMatrix[i][j] < -1) {
+					corrMatrix[i][j] = -1;
+					corrMatrix[j][i] = -1;
+				}
+			}
+		}
     }
 
     void LocalCorrTermStructure::accept(AcyclicVisitor& v) {

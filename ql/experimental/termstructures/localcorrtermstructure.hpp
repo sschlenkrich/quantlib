@@ -78,6 +78,10 @@ namespace QuantLib {
 		//@{
 		Real minStrike(Natural ulId) const;
 		Real maxStrike(Natural ulId) const;
+
+		std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& getProcesses() { return processes_; };
+		boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    getProcessToCal() { return processToCal_; };
+
       protected:
         /*! \name Calculations
 

@@ -636,7 +636,6 @@
     <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.hpp" />
     <ClInclude Include="ql\experimental\termstructures\corrtermstructureStrike.hpp" />
     <ClInclude Include="ql\experimental\termstructures\Helper\KernelInterface.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\Helper\CalibratorLocalCorrInt.hpp" />
     <ClInclude Include="ql\experimental\termstructures\localcorrsurfaceabf.hpp" />
     <ClInclude Include="ql\experimental\termstructures\localcorrtermstructure.hpp" />
     <ClInclude Include="ql\indexes\ibor\aonia.hpp" />

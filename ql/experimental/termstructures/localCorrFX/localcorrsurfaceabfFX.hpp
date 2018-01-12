@@ -25,7 +25,6 @@
 #define quantlib_localcorrsurfaceabffx_hpp
 
 #include <ql/experimental/termstructures/localcorrsurfaceabf.hpp>
-#include <ql\experimental\termstructures\Helper\CalibratorLocalCorrInt.hpp>
 
 namespace QuantLib {
 
@@ -37,23 +36,20 @@ namespace QuantLib {
     class LocalCorrSurfaceABFFX : public LocalCorrSurfaceABF {
       public:
         LocalCorrSurfaceABFFX(const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
-							  const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			  processToCal,
-							  boost::shared_ptr<CalibratorLocalCorrInt>&									calibratorLocalCorr);
+							  const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			  processToCal);
 		//@}
 		//! \name Visitability
 		//@{
 		virtual void accept(AcyclicVisitor&);
         //@}
+		virtual Real localCorrImplTeq0(Time t, const RealStochasticProcess::VecA& X0, bool extrapolate = false);
+		virtual QuantLib::Real localA(Time t, const RealStochasticProcess::VecA& assets,
+			bool extrapolate = false) const = 0;
+		virtual QuantLib::Real localB(Time t, const RealStochasticProcess::VecA& assets,
+			bool extrapolate = false) const = 0;
       protected:
-		  virtual QuantLib::Real localA(Time t, const RealStochasticProcess::VecA& X0,
-			  bool extrapolate = false) const = 0;
-		  virtual QuantLib::Real localB(Time t, const RealStochasticProcess::VecA& X0,
-			  bool extrapolate = false) const = 0;
 		  virtual QuantLib::Real localFStrike(Time t, const RealStochasticProcess::VecA& X0);
 		  
-		  virtual void initializeF()=0;
-
-		  boost::shared_ptr<CalibratorLocalCorrInt> calibratorLocalCorr_;
 	  private:
     };
 

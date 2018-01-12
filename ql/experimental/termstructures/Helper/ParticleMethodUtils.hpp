@@ -25,8 +25,7 @@
 #define quantlib_particleMethodUtils_hpp
 
 #include <ql\experimental\termstructures\Helper\KernelInterface.hpp>
-#include <ql\experimental\termstructures\Helper\CalibratorLocalCorrInt.hpp>
-#include <ql/processes/blackscholesprocess.hpp>
+#include <ql/experimental/termstructures/localCorrFX/localcorrsurfaceabfFX.hpp>
 #include <ql\handle.hpp>
 #include <string.h>
 
@@ -35,47 +34,20 @@ namespace QuantLib {
     //!  
     /*! 
 	*/
-    class ParticleMethodUtils : public CalibratorLocalCorrInt {
+    class ParticleMethodUtils {
       public:
-		  //ParticleMethodUtils() : CalibratorLocalCorrInt(){};
-		  ParticleMethodUtils(const std::string& kernel, unsigned int numberOfPaths, Time maxTime,
+
+		  static void calibrateFX(Handle<LocalCorrSurfaceABFFX> surface,const std::string& kernelIn, unsigned int numberOfPaths, Time maxTime,
 			  Time deltaT, Time tMin, Real kappa, Real sigmaAVR, Real exponentN, Real gridMinQuantile,
 			  Real gridMaxQuantile, unsigned int ns1, unsigned int ns2);
-
-		  virtual void calibrateFX(std::vector<std::vector<Real>>& strikes, std::vector<Time>& times, std::vector<std::vector<Real>>& surfaceF,
-			  const std::vector<boost::shared_ptr<GeneralizedBlackScholesProcess>>& processes,
-			  const boost::shared_ptr<GeneralizedBlackScholesProcess>& processToCal);
-		  
-		  /*boost::shared_ptr<KernelInterface>& getKernel() { return kernel_; };
-		  unsigned int getNumberOfPaths() { return numberOfPaths_; };
-		  Time getMaxTime() { return maxTime_;};
-		  Time getDeltaT() { return deltaT_;};
-		  Time getTMin() { return tMin_;};
-		  Real getKappa() { return kappa_; };
-		  Real getSigmaAVR() { return sigmaAVR_; };
-		  Real getExponentN() { return exponentN_; };
-		  Real getGridMinQuantile() { return gridMinQuantile_; };
-		  Real getGridMaxQuantile() { return gridMaxQuantile_; };*/
+		  static Real getCrossFX(Real asset1, Real asset2);
       protected:
 		  
 	  private:
-		  Real bandwidth(Time t, Real s0) const;
-		  Real kernel(Real bandwidth, Real x) const;
+		  static Real bandwidth(Time t, Real s0, Real kappa, Real sigmaAVR, Real tMin, unsigned int numberOfPaths, Real exponentN);
+		  static Real kernel(Real bandwidth, Real x, boost::shared_ptr<KernelInterface>& kernel);
+		  static size_t numberStrikeGrid(Time t, unsigned int ns1, unsigned int ns2);
 		  
-		  boost::shared_ptr<KernelInterface> kernel_;
-		  unsigned int numberOfPaths_;
-		  Time maxTime_;
-		  Time deltaT_;
-		  Time tMin_;
-		  Real kappa_;
-		  Real sigmaAVR_;
-		  Real exponentN_;
-		  Real gridMinQuantile_;
-		  Real gridMaxQuantile_;
-		  unsigned int ns1_;
-		  unsigned int ns2_;
-
-
     };
 
 }

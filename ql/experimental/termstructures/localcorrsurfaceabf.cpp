@@ -39,7 +39,14 @@ namespace QuantLib {
 
 	void LocalCorrSurfaceABF::localCorrImpl(RealStochasticProcess::MatA& corrMatrix, Time t, const RealStochasticProcess::VecA& X0,
 		bool extrapolate) {
-		Real lambda = (localF(t,X0, extrapolate)-localA(t,X0, extrapolate))/localB(t,X0, extrapolate);
+		Real lambda;
+		if (t <= times_[1]) { //first time step in grid does not depend on F,a,b.
+			lambda = localCorrImplTeq0(t,X0, extrapolate);
+		}
+		else
+		{
+			lambda = (localF(t, X0, extrapolate) - localA(t, X0, extrapolate)) / localB(t, X0, extrapolate);
+		}
 		for (size_t i = 0; i < corrMatrix.size(); i++)
 		{
 			for (size_t j = i; j < corrMatrix[i].size(); j++)
@@ -56,12 +63,18 @@ namespace QuantLib {
 		
 		double strike = localFStrike(t, X0);
 
-		//first interpolate strike dimension
-		for (size_t i = 0; i < times_.size(); i++)
+		//first interpolate strike dimension, function F merely called after t1 (before local corr independent of a,b,F)
+		for (size_t i = 1; i < times_.size(); i++)
 		{
-			valuesSecInt_[i] = interpolatorStrikesF_[i](strike, extrapolate);
+			if (strikes_[i].size() != 0) {
+				valuesSecInt_[i] = interpolatorStrikesF_[i](strike, extrapolate);
+			}
+			else {
+				//calibration not completed, this is why size of strike array can be zero for a certain time.
+				valuesSecInt_[i] = valuesSecInt_[i - 1]; //constant extrapolation during calibration
+			}
 		}
-
+		interpolatorTimesF_.update();
 		//second interpolate time dimension 
 		return interpolatorTimesF_(t, extrapolate);
 	}

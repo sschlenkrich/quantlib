@@ -22,62 +22,186 @@
 */
 
 #include <ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp>
+#include <ql\termstructures\yield\flatforward.hpp>
+#include <ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.hpp>
+#include <ql\experimental\templatemodels\montecarlo\montecarlomodells.hpp>
+#include <ql\experimental\templatemodels\montecarlo\mcpayoffT.hpp>
+#include <ql/math/interpolations/linearinterpolation.hpp>
 #include <math.h>
+#include <boost\math\distributions.hpp>
+#include <boost\shared_ptr.hpp>
 
 namespace QuantLib {
 
-	ParticleMethodUtils::ParticleMethodUtils(const std::string& kernel, unsigned int numberOfPaths, Time maxTime,
+	void ParticleMethodUtils::calibrateFX(Handle<LocalCorrSurfaceABFFX> surface, const std::string& kernelIn, unsigned int numberOfPaths, Time maxTime,
 		Time deltaT, Time tMin, Real kappa, Real sigmaAVR, Real exponentN, Real gridMinQuantile,
-		Real gridMaxQuantile, unsigned int ns1, unsigned int ns2) :
-		numberOfPaths_(numberOfPaths), maxTime_(maxTime), deltaT_(deltaT), tMin_(tMin), kappa_(kappa),
-		sigmaAVR_(sigmaAVR), exponentN_(exponentN), gridMinQuantile_(gridMinQuantile), 
-		gridMaxQuantile_(gridMaxQuantile), ns1_(ns1), ns2_(ns2) {
-	
-		if (kernel == "QuarticKernel") {
-			kernel_ = boost::shared_ptr<KernelInterface>(new QuarticKernel());
+		Real gridMaxQuantile, unsigned int ns1, unsigned int ns2) {
+		
+		boost::shared_ptr<KernelInterface> kernel;
+
+		if (kernelIn == "QuarticKernel") {
+			kernel = boost::shared_ptr<KernelInterface>(new QuarticKernel());
 		}
 		else {
 			QL_REQUIRE(false, "Kernel not supported. Supported is: QuarticKernel");
 		}
-	}
 
-	void ParticleMethodUtils::calibrateFX(std::vector<std::vector<Real>>& strikes, std::vector<Time>& times, std::vector<std::vector<Real>>& surfaceF,
-		const std::vector<boost::shared_ptr<GeneralizedBlackScholesProcess>>& processes,
-		const boost::shared_ptr<GeneralizedBlackScholesProcess>& processToCal) {
-		
+		std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>> processes = surface->getProcesses();
+		boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>			    processToCal= surface->getProcessToCal();
+
+		//build assetModel for simulation
+		boost::shared_ptr<YieldTermStructure> yld(new FlatForward(processToCal->blackVolatility()->referenceDate(),0, processToCal->blackVolatility()->dayCounter()));
+		Handle<YieldTermStructure> yldH = Handle<YieldTermStructure>(yld);
+		std::vector<std::string> aliases(2);
+		aliases[0] = "fx1";
+		aliases[1] = "fx2";
+		Handle<LocalCorrTermStructure> surfaceGen(surface.currentLink());
+		boost::shared_ptr<LocalCorrelationBSModel> assetModel(new LocalCorrelationBSModel(yldH,aliases,processes, surfaceGen));
+
+		std::vector<Time>& times = surface->getTimes();
+		std::vector<std::vector<Real>>& strikes = surface->getStrikes();
+		std::vector<std::vector<Real>>& surfaceF = surface->getSurfaceF();
+
 		//time grid from t=0 to maxTime:
 		times.resize(1);
 		times[0] = 0;
 		size_t i = 0;
-		while (times[i] * deltaT_ < maxTime_) {
-			times.push_back(times[i]+deltaT_);
+		while (times[i] < maxTime) {
+			times.push_back(times[i]+deltaT);
 			i++;
 		}
+		surface->setInterpolationTime<Linear>();
 
-		//start to create strike grid
+		RealMCSimulation simulation(assetModel, times, times, numberOfPaths,1,false,true,false);
 
+		//start to create strike grid. 
+		//the strike grid depends on simulation results (min and max quantile)
+		//However, the simulation itself depends on local correlation
+		//which will be calibrated using this function.
+		//This is why the strike grid can merely be calculated successively during calibration
+		
+		size_t numberStrikes;
+		Real strikeStep;
 		surfaceF.resize(times.size());
 		strikes.resize(times.size());
+		std::vector<Real> state;
+		std::vector<Real> assets(2);
+		std::vector<Real> crossFX(numberOfPaths);
 
-		for (size_t i = 0; i < surfaceF.size(); i++)
+		Real vol1;
+		Real vol2;
+		Real vol3;
+		Real eNum = 0;
+		Real eDen = 0;
+		Real eScale = 0;
+		Real a = 0;
+		Real b = 0;
+		Real kernelV = 0;
+		Real bandwidth = 0;
+		Real minPosBw;
+		Real maxNegBw;
+		Real bwIn;
+		Real bwRatio;
+
+		//Calculate local correlation successively over time
+
+		for (size_t i = 1; i < surfaceF.size()-1; i++) //iteration over time, for i=0 nothing to do as correlation independent of a,b,f. In last entry, no additional simulation necessary.
 		{
-			surfaceF[i].resize(2);
-			strikes[i].resize(2);
-			for (size_t j = 0; j < surfaceF[i].size(); j++)
+			numberStrikes = numberStrikeGrid(times[i],ns1,ns2);
+			QL_REQUIRE(numberStrikes>1,"ns1 or ns2 has to be increased, strike grid cannot be calculated.");
+			simulation.simulateTimeStep();
+
+			//Now strike grid can be calculated
+
+			surfaceF[i].resize(numberStrikes);
+			strikes[i].resize(numberStrikes);
+			for (size_t k = 0; k < numberOfPaths; k++)
 			{
-				surfaceF[i][j] = 0.9;
-				strikes[i][0] = 0.7;
-				strikes[i][1] = 1.2;
+				state = simulation.state(k, times[i]);
+				assets[0] = processes[0]->x0() * std::exp(state[0]);
+				assets[1] = processes[1]->x0() * std::exp(state[1]);
+				crossFX[k] = getCrossFX(assets[0] , assets[1]);
 			}
+
+			std::sort(crossFX.begin(),crossFX.end());
+
+			strikes[i][0] = crossFX[numberOfPaths*gridMinQuantile];
+			strikes[i][strikes[i].size()-1] = crossFX[numberOfPaths*gridMaxQuantile];
+
+			strikeStep = (strikes[i][strikes[i].size() - 1] - strikes[i][0]) / (numberStrikes-1);
+
+			bandwidth = ParticleMethodUtils::bandwidth(times[i], processes[0]->x0() / processes[1]->x0(), kappa, sigmaAVR, tMin, numberOfPaths, exponentN);
+
+			for (size_t j = 1; j < strikes[i].size()-1; j++)
+			{
+				strikes[i][j] = strikes[i][j-1] + strikeStep;
+			}
+
+			//Particle method for that time step
+
+			for (size_t j = 0; j < surfaceF[i].size(); j++) //iteration over strike dimension
+			{
+				eNum = 0;
+				eDen = 0;
+				eScale = 0;
+
+				minPosBw = 10000000;
+				maxNegBw = -10000000;
+				
+				for (size_t k = 0;  k < numberOfPaths;  k++) //particle method: over MC paths
+				{
+					state = simulation.state(k, times[i]);
+
+					assets[0] = processes[0]->x0() * std::exp(state[0]);
+					assets[1] = processes[1]->x0() * std::exp(state[1]);
+
+					vol1 = processes[0]->localVolatility()->localVol(times[i], assets[0], true);
+					vol2 = processes[1]->localVolatility()->localVol(times[i], assets[1], true);
+					vol3 = processToCal->localVolatility()->localVol(times[i], getCrossFX(assets[0] , assets[1]), true);
+
+					a = surface->localA(times[i], assets, true);
+					b = surface->localB(times[i], assets, true);
+
+					bwIn = getCrossFX(assets[0] , assets[1]) - strikes[i][j];
+					bwRatio = bwIn / bandwidth;
+
+					if (bwRatio > maxNegBw && bwRatio<=0) maxNegBw = bwRatio;
+					if (bwRatio < minPosBw && bwRatio>=0) minPosBw = bwRatio;
+
+					kernelV = assets[1] * ParticleMethodUtils::kernel(bandwidth, bwIn ,kernel);
+
+					eNum += (vol1*vol1+vol2*vol2+2*a*vol1*vol2/b)*kernelV;
+					eDen += vol1*vol2*kernelV/b;
+					eScale += kernelV;
+				}
+				
+				QL_REQUIRE(eScale != 0, std::string("ParticleMethodUtils::calibrateFX: resulting bandwidth is too small for calibration (support: < ") + std::to_string(maxNegBw)
+					+ std::string(" and > ") + std::to_string(minPosBw) 
+					+ std::string("). Either decrease number of MC paths or increase exponentN or kappa."));
+				
+				surfaceF[i][j] = (eNum/eScale - vol3*vol3) / (2 * eDen / eScale);
+			}
+
+			//set interpolation on new dimension:
+			surface->setInterpolationStrike<Linear>(i);
 		}
 	}	  
 
-	Real ParticleMethodUtils::bandwidth(Time t, Real s0) const {
-		return kappa_*sigmaAVR_* s0 * sqrt(t>tMin_ ? t : tMin_) * pow(numberOfPaths_,exponentN_);
+	Real ParticleMethodUtils::bandwidth(Time t, Real s0, Real kappa, Real sigmaAVR, Real tMin, unsigned int numberOfPaths, Real exponentN) {
+		Real mult = pow(numberOfPaths, exponentN);
+		return kappa*sigmaAVR* s0 * sqrt(t>tMin ? t : tMin) * mult;
 	}
 
-	Real ParticleMethodUtils::kernel(Real bandwidth, Real x) const {
+	Real ParticleMethodUtils::kernel(Real bandwidth, Real x, boost::shared_ptr<KernelInterface>& kernel) {
 		QL_REQUIRE(bandwidth != 0, "Error in ParticleMethodUtils: bandwidth is not allowed to be zero.");
-		return kernel_->value(x / bandwidth) / bandwidth;
+		return kernel->value(x / bandwidth) / bandwidth;
+	}
+	size_t ParticleMethodUtils::numberStrikeGrid(Time t, unsigned int ns1, unsigned int ns2) {
+		double numberOfStrikes = ns1*sqrt(t);
+		return (size_t) numberOfStrikes > ns2 ? numberOfStrikes : ns2;
+	}
+	
+	Real ParticleMethodUtils::getCrossFX(Real asset1, Real asset2) {
+		return asset1 / asset2;
 	}
 }
