@@ -104,4 +104,5 @@ namespace QuantLib {
 	Real LocalCorrTermStructure::maxStrike(Natural ulId) const {
 		return processes_[ulId]->blackVolatility()->maxStrike();
 	}
+
 }

@@ -64,7 +64,6 @@ namespace QuantLib {
 					stop = true;
 				}
 			}
-			interpolatorTimesF_ = i.interpolate(times_.begin(), times_.end(), valuesSecInt_.begin());
 			notifyObservers();
 		}
 		template <class Interpolator>

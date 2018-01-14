@@ -152,7 +152,8 @@ namespace QuantLib {
             QL_ENSURE(result>=0.0,
                       "negative local vol^2 at strike " << strike
                       << " and time " << t
-                      << "; the black vol surface is not smooth enough");
+                      << "; the black vol surface is not smooth enough ( dwdt:" << dwdt << ", w:" << w
+					  << ", y:" << y << ", dwdy:" << dwdy << ", d2wdy2:" << d2wdy2 << ")");
 
             return std::sqrt(result);
         }

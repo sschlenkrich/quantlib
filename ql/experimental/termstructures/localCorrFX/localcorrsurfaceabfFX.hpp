@@ -47,6 +47,8 @@ namespace QuantLib {
 			bool extrapolate = false) const = 0;
 		virtual QuantLib::Real localB(Time t, const RealStochasticProcess::VecA& assets,
 			bool extrapolate = false) const = 0;
+
+		Matrix getLocalCorrelationSurface(Time t, std::vector<Real> assetGrid1, std::vector<Real> assetGrid2);
       protected:
 		  virtual QuantLib::Real localFStrike(Time t, const RealStochasticProcess::VecA& X0);
 		  

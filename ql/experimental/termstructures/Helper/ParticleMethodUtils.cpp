@@ -90,10 +90,10 @@ namespace QuantLib {
 
 		Real vol1;
 		Real vol2;
-		Real vol3;
-		Real eNum = 0;
-		Real eDen = 0;
-		Real eScale = 0;
+		std::vector<Real> vol3;
+		std::vector<Real> eNum;
+		std::vector<Real> eDen;
+		std::vector<Real> eScale;
 		Real a = 0;
 		Real b = 0;
 		Real kernelV = 0;
@@ -130,58 +130,70 @@ namespace QuantLib {
 
 			strikeStep = (strikes[i][strikes[i].size() - 1] - strikes[i][0]) / (numberStrikes-1);
 
-			bandwidth = ParticleMethodUtils::bandwidth(times[i], processes[0]->x0() / processes[1]->x0(), kappa, sigmaAVR, tMin, numberOfPaths, exponentN);
+			bandwidth = ParticleMethodUtils::bandwidth(times[i], getCrossFX(processes[0]->x0(),processes[1]->x0()), kappa, sigmaAVR, tMin, numberOfPaths, exponentN);
 
 			for (size_t j = 1; j < strikes[i].size()-1; j++)
 			{
 				strikes[i][j] = strikes[i][j-1] + strikeStep;
 			}
 
-			//Particle method for that time step
+			//Particle method for that time step 
 
-			for (size_t j = 0; j < surfaceF[i].size(); j++) //iteration over strike dimension
+			eNum.resize(strikes[i].size());
+			eDen.resize(strikes[i].size());
+			eScale.resize(strikes[i].size());
+			vol3.resize(strikes[i].size());
+
+			for (size_t j = 0; j < strikes[i].size(); j++)
 			{
-				eNum = 0;
-				eDen = 0;
-				eScale = 0;
-
-				minPosBw = 10000000;
-				maxNegBw = -10000000;
-				
-				for (size_t k = 0;  k < numberOfPaths;  k++) //particle method: over MC paths
-				{
-					state = simulation.state(k, times[i]);
-
-					assets[0] = processes[0]->x0() * std::exp(state[0]);
-					assets[1] = processes[1]->x0() * std::exp(state[1]);
-
-					vol1 = processes[0]->localVolatility()->localVol(times[i], assets[0], true);
-					vol2 = processes[1]->localVolatility()->localVol(times[i], assets[1], true);
-					vol3 = processToCal->localVolatility()->localVol(times[i], getCrossFX(assets[0] , assets[1]), true);
-
-					a = surface->localA(times[i], assets, true);
-					b = surface->localB(times[i], assets, true);
-
-					bwIn = getCrossFX(assets[0] , assets[1]) - strikes[i][j];
-					bwRatio = bwIn / bandwidth;
-
-					if (bwRatio > maxNegBw && bwRatio<=0) maxNegBw = bwRatio;
-					if (bwRatio < minPosBw && bwRatio>=0) minPosBw = bwRatio;
-
-					kernelV = assets[1] * ParticleMethodUtils::kernel(bandwidth, bwIn ,kernel);
-
-					eNum += (vol1*vol1+vol2*vol2+2*a*vol1*vol2/b)*kernelV;
-					eDen += vol1*vol2*kernelV/b;
-					eScale += kernelV;
-				}
-				
-				QL_REQUIRE(eScale != 0, std::string("ParticleMethodUtils::calibrateFX: resulting bandwidth is too small for calibration (support: < ") + std::to_string(maxNegBw)
-					+ std::string(" and > ") + std::to_string(minPosBw) 
-					+ std::string("). Either decrease number of MC paths or increase exponentN or kappa."));
-				
-				surfaceF[i][j] = (eNum/eScale - vol3*vol3) / (2 * eDen / eScale);
+				eNum[j] = 0;
+				eDen[j] = 0;
+				eScale[j] = 0;
+				vol3[j] = processToCal->localVolatility()->localVol(times[i], strikes[i][j], true);
 			}
 
+			for (size_t k = 0; k < numberOfPaths; k++) //particle method: over MC paths
+			{
+				state = simulation.state(k, times[i]);
+
+				assets[0] = processes[0]->x0() * std::exp(state[0]);
+				assets[1] = processes[1]->x0() * std::exp(state[1]);
+
+				vol1 = processes[0]->localVolatility()->localVol(times[i], assets[0], true);
+				vol2 = processes[1]->localVolatility()->localVol(times[i], assets[1], true);
+
+				a = surface->localA(times[i], assets, true);
+				b = surface->localB(times[i], assets, true);
+
+
+				for (size_t j = 0; j < surfaceF[i].size(); j++) //iteration over strike dimension
+				{
+
+					minPosBw = 10000000;
+					maxNegBw = -10000000;
+
+					bwIn = getCrossFX(assets[0], assets[1]) - strikes[i][j];
+					bwRatio = bwIn / bandwidth;
+
+					if (bwRatio > maxNegBw && bwRatio <= 0) maxNegBw = bwRatio;
+					if (bwRatio < minPosBw && bwRatio >= 0) minPosBw = bwRatio;
+
+					kernelV = assets[1] * ParticleMethodUtils::kernel(bandwidth, bwIn, kernel);
+
+					eNum[j] += (vol1*vol1 + vol2*vol2 + 2 * a*vol1*vol2 / b)*kernelV;
+					eDen[j] += vol1*vol2*kernelV / b;
+					eScale[j] += kernelV;
+				}
+			}
+			
+			for (size_t j = 0; j < surfaceF[i].size(); j++) //iteration over strike dimension
+			{
+				QL_REQUIRE(eScale[j] != 0, std::string("ParticleMethodUtils::calibrateFX: resulting bandwidth is too small for calibration (support: < ") + std::to_string(maxNegBw)
+					+ std::string(" and > ") + std::to_string(minPosBw)
+					+ std::string("). Either decrease number of MC paths or increase exponentN or kappa."));
+
+				surfaceF[i][j] = (eNum[j] / eScale[j] - vol3[j] * vol3[j]) / (2 * eDen[j] / eScale[j]);
+			}
 			//set interpolation on new dimension:
 			surface->setInterpolationStrike<Linear>(i);
 		}

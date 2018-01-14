@@ -75,5 +75,27 @@ namespace QuantLib {
 		return (vol1*vol1 + vol2*vol2 - vol3*vol3) / (2 * vol1*vol2);
 	}
 	
+
+	Matrix LocalCorrSurfaceABFFX::getLocalCorrelationSurface(Time t,
+		std::vector<Real> assetGrid1, std::vector<Real> assetGrid2) {
+		Matrix result(assetGrid1.size(), assetGrid2.size());
+		std::vector<std::vector<Real>> corrM = std::vector<std::vector<Real>>(2, std::vector<Real>(2));
+
+		std::vector<Real> x0(2);
+
+		for (size_t i = 0; i < assetGrid1.size(); i++)
+		{
+			for (size_t j = 0; j < assetGrid2.size(); j++)
+			{
+				x0[0] = log(assetGrid1[i] / processes_[0]->x0());
+				x0[1] = log(assetGrid2[j] / processes_[1]->x0());
+
+				localCorr(corrM, t, x0, true);
+				result[i][j] = corrM[0][1];
+			}
+		}
+		return result;
+	}
+
 }
 
