@@ -211,7 +211,10 @@ namespace QuantLib {
 		std::vector<Real> m1(smile1->model()->localVolSlope());
 		std::vector<Real> x1(smile1->model()->underlyingS());   // default implementation is only based on ATM volatility
 		for (size_t k = 0; k < x1.size(); ++k) x1[k] = (x1[k] - smile1->model()->forward()) / smile1->model()->sigmaATM() / sqrt(smile1->model()->timeToExpiry());
-		if (!calcSimple) x1 = smile1->model()->underlyingX();   // we overwrite the simple calculation...
+		if (!calcSimple) {
+			x1 = smile1->model()->underlyingX();   // we overwrite the simple calculation...
+			for (size_t k = 0; k < x1.size(); ++k) x1[k] = x1[k] / sqrt(smile1->model()->timeToExpiry());
+		}
 		size_t zeroIdx1 = 0;
 		while ((zeroIdx1 < x1.size() - 1) && (x1[zeroIdx1] < 0.0)) ++zeroIdx1;
 		QL_REQUIRE(x1[zeroIdx1] == 0.0, "x1[zeroIdx1] == 0.0 required");
@@ -219,7 +222,10 @@ namespace QuantLib {
 		std::vector<Real> m2(smile2->model()->localVolSlope());
 		std::vector<Real> x2(smile2->model()->underlyingS());   // default implementation is only based on ATM volatility
 		for (size_t k = 0; k < x2.size(); ++k) x2[k] = (x2[k] - smile2->model()->forward()) / smile2->model()->sigmaATM() / sqrt(smile2->model()->timeToExpiry());
-		if (!calcSimple) x2 = smile2->model()->underlyingX();   // we overwrite the simple calculation...
+		if (!calcSimple) {
+			x2 = smile2->model()->underlyingX();   // we overwrite the simple calculation...
+			for (size_t k = 0; k < x2.size(); ++k) x2[k] = x2[k] / sqrt(smile2->model()->timeToExpiry());
+		}
 		size_t zeroIdx2 = 0;
 		while ((zeroIdx2 < x2.size() - 1) && (x2[zeroIdx2] < 0.0)) ++zeroIdx2;
 		QL_REQUIRE(x2[zeroIdx2] == 0.0, "x2[zeroIdx2] == 0.0 required");
@@ -245,7 +251,7 @@ namespace QuantLib {
 					if (i1 < x1.size() - 1) ++i1;
 					if (i2 < x2.size() - 1) ++i2;
 				}
-				Xp.push_back(xLast);
+				Xp.push_back(xLast * sqrt(timeToExpiry));
 				Sp.push_back(forward + xLast * atmNormalVolatility * sqrt(timeToExpiry));
 				if ((xLast >= x1[i1]) && (xLast >= x2[i2])) break;
 			}
@@ -272,7 +278,7 @@ namespace QuantLib {
 					if (i1 > 1) --i1;
 					if (i2 > 1) --i2;
 				}
-				Xm.push_back(xLast);
+				Xm.push_back(xLast * sqrt(timeToExpiry));
 				Sm.push_back(forward + xLast * atmNormalVolatility * sqrt(timeToExpiry));
 				if ((xLast <= x1[i1-1]) && (xLast <= x2[i2-1])) break;
 			}
