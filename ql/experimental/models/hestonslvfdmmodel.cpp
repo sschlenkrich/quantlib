@@ -384,7 +384,7 @@ namespace QuantLib {
         for (Size i=1; i < timeGrid->size(); ++i) {
             xMesher.push_back(localVolRND.mesher(timeGrid->at(i)));
 
-            if (i == rescaleSteps[rescaleIdx]) {
+            if (rescaleIdx < rescaleSteps.size() && i == rescaleSteps[rescaleIdx]) {
                 ++rescaleIdx;
                 vMesher.push_back(varianceMesher(squareRootRnd,
                     timeGrid->at(rescaleSteps[rescaleIdx-1]),
@@ -439,6 +439,12 @@ namespace QuantLib {
         }
 
         for (Size i=2; i < times.size(); ++i) {
+
+			if (i == 65) {
+				const int bla = 0;
+			}
+
+
             const Time t = timeGrid->at(i);
             const Time dt = t - timeGrid->at(i-1);
 
@@ -496,29 +502,31 @@ namespace QuantLib {
                     leverageFct->setInterpolation(Linear());
                 }
 
-                const Real sLowerBound = std::max(x.front(),
-                    std::exp(localVolRND.invcdf(
-                        params_.leverageFctPropEps, t)));
-                const Real sUpperBound = std::min(x.back(),
-                    std::exp(localVolRND.invcdf(
-                        1.0-params_.leverageFctPropEps, t)));
+				if (params_.leverageFctPropEps > 0) {
+					const Real sLowerBound = std::max(x.front(),
+						std::exp(localVolRND.invcdf(
+							params_.leverageFctPropEps, t)));
+					const Real sUpperBound = std::min(x.back(),
+						std::exp(localVolRND.invcdf(
+							1.0-params_.leverageFctPropEps, t)));
 
-                const Real lowerL = leverageFct->localVol(t, sLowerBound);
-                const Real upperL = leverageFct->localVol(t, sUpperBound);
+					const Real lowerL = leverageFct->localVol(t, sLowerBound);
+					const Real upperL = leverageFct->localVol(t, sUpperBound);
 
-                for (Size j=0; j < x.size(); ++j) {
-                    if (x[j] < sLowerBound)
-                        std::fill(L->row_begin(j)+i,
-                          std::min(L->row_begin(j)+i+1, L->row_end(j)),
-                          lowerL);
-                    else if (x[j] > sUpperBound)
-                        std::fill(L->row_begin(j)+i,
-                          std::min(L->row_begin(j)+i+1, L->row_end(j)),
-                          upperL);
-                    else if ((*L)[j][i] == Null<Real>())
-                        QL_FAIL("internal error");
-                }
-                leverageFct->setInterpolation(Linear());
+					for (Size j=0; j < x.size(); ++j) {
+						if (x[j] < sLowerBound)
+							std::fill(L->row_begin(j)+i,
+							  std::min(L->row_begin(j)+i+1, L->row_end(j)),
+							  lowerL);
+						else if (x[j] > sUpperBound)
+							std::fill(L->row_begin(j)+i,
+							  std::min(L->row_begin(j)+i+1, L->row_end(j)),
+							  upperL);
+						else if ((*L)[j][i] == Null<Real>())
+							QL_FAIL("internal error");
+					}
+					leverageFct->setInterpolation(Linear());
+				}
 
                 pn = p;
 
