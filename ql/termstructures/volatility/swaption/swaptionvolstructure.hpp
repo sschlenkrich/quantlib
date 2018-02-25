@@ -51,20 +51,20 @@ namespace QuantLib {
         */
         SwaptionVolatilityStructure(BusinessDayConvention bdc,
                                     const DayCounter& dc = DayCounter(),
-								    const VolatilityType& volatilityType = Lognormal);
+								    const VolatilityType& volatilityType = ShiftedLognormal);
 
         //! initialize with a fixed reference date
         SwaptionVolatilityStructure(const Date& referenceDate,
                                     const Calendar& calendar,
                                     BusinessDayConvention bdc,
                                     const DayCounter& dc = DayCounter(),
-								    const VolatilityType& volatilityType = Lognormal);
+								    const VolatilityType& volatilityType = ShiftedLognormal);
         //! calculate the reference date based on the global evaluation date
         SwaptionVolatilityStructure(Natural settlementDays,
                                     const Calendar&,
                                     BusinessDayConvention bdc,
                                     const DayCounter& dc = DayCounter(),
-								    const VolatilityType& volatilityType = Lognormal);
+								    const VolatilityType& volatilityType = ShiftedLognormal);
         //@}
         virtual ~SwaptionVolatilityStructure() {}
         //! \name Volatility, variance and smile
@@ -187,12 +187,6 @@ namespace QuantLib {
         virtual const Period& maxSwapTenor() const = 0;
         //! the largest swapLength for which the term structure can return vols
         Time maxSwapLength() const;
-        //@}
-        //@{
-        //! volatility type
-        virtual VolatilityType volatilityType() const {
-            return ShiftedLognormal;
-        }
         //@}
         //! implements the conversion between swap tenor and swap (time) length
         Time swapLength(const Period& swapTenor) const;

@@ -66,14 +66,17 @@ namespace QuantLib {
 			if (smiles_[idxj[k]][idxi[0]]->exerciseTime() < smiles_[idxj[k]][idxi[1]]->exerciseTime())
 				rhoi = (optionTime - smiles_[idxj[k]][idxi[0]]->exerciseTime()) / (smiles_[idxj[k]][idxi[1]]->exerciseTime() - smiles_[idxj[k]][idxi[0]]->exerciseTime());
 			// now we may interpolate in expiry direction
-			Rate forward = index_->clone(swapTerms_[idxj[k]])->fixing(optionDate);  // this might fail if optionDate is no good business day
+			Date fixingDate = index_->fixingCalendar().adjust(optionDate, Following); // we can only calculate a forward for a good business day
+			Rate forward = index_->clone(swapTerms_[idxj[k]])->fixing(fixingDate);  // this might fail if optionDate is no good business day
 			Real atmVol = atmVolTS_->volatility(optionTime, swapLength, forward);
 			smilesj[k] = boost::shared_ptr<VanillaLocalVolModelSmileSection>(
-				new VanillaLocalVolModelSmileSection(optionDate, forward, atmVol, smiles_[idxj[k]][idxi[0]], smiles_[idxj[k]][idxi[1]], rhoi, true, dayCounter(), referenceDate(), VolatilityType(), atmVolTS_->shift(optionDate, swapLength)));				
+				new VanillaLocalVolModelSmileSection(optionDate, forward, atmVol, smiles_[idxj[k]][idxi[0]], smiles_[idxj[k]][idxi[1]], rhoi, true, dayCounter(), referenceDate(), volatilityType(), atmVolTS_->shift(optionDate, swapLength))); // shift relies on same volatilityType as ATM	vol
 		}
-		Rate forward = index_->clone(swapTerm)->fixing(optionDate);  // this might fail if optionDate is no good business day
+
+		Date fixingDate = index_->fixingCalendar().adjust(optionDate, Following); // we can only calculate a forward for a good business day
+		Rate forward = index_->clone(swapTerm)->fixing(fixingDate);  // this might fail if optionDate is no good business day
 		Real atmVol = atmVolTS_->volatility(optionTime, swapLength, forward); // we want to be as accuarate as possible on the ATM interpolation thus using times
-		boost::shared_ptr<VanillaLocalVolModelSmileSection> smile(new VanillaLocalVolModelSmileSection(optionDate, forward, atmVol, smilesj[0], smilesj[1], rhoj, true, dayCounter(), referenceDate(), VolatilityType(), atmVolTS_->shift(optionDate, swapLength)));
+		boost::shared_ptr<VanillaLocalVolModelSmileSection> smile(new VanillaLocalVolModelSmileSection(optionDate, forward, atmVol, smilesj[0], smilesj[1], rhoj, true, dayCounter(), referenceDate(), volatilityType(), atmVolTS_->shift(optionDate, swapLength)));
 		return smile;
 	}
 
