@@ -57,7 +57,10 @@ namespace QuantLib {
 			vars[k]  = smiles_[k]->variance(strike);     // assume no volatility type conversion
 		}
 		MonotonicCubicNaturalSpline interp(times.begin(),times.end(),vars.begin());  // assume ascending times
-		return interp(t,true);
+		Real unSafeVariance = interp(t, true);
+		Real minVariance = 1.0e-8 * t;  // assume 1bp minimum volatility
+		Real safeVariance = (unSafeVariance < minVariance) ? (minVariance) : (unSafeVariance);
+		return safeVariance;
 	}
 
 	Volatility SmiledSurface::blackVolImpl(Time t, Real strike) const {
