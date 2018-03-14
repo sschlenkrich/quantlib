@@ -16,6 +16,7 @@
 //#include <ql/experimental/templatehullwhite/adtageo/adtageo.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/minimADVariable2T.hpp>
 #include <ql/experimental/templatemodels/hullwhite/hullwhitemodelT.hpp>
+#include <ql/experimental/templatemodels/hullwhite/g2ppT.hpp>
 
 
 namespace QuantLib {
@@ -75,6 +76,7 @@ namespace QuantLib {
 		const std::vector<QuantLib::Real>&                bermudanVega()            const { return bermudanVega_; }
 	};
 
+	typedef G2ppT<QuantLib::Time, QuantLib::Real, QuantLib::Real> RealG2ppModel;
 }
 
 #endif  /* ifndef quantlib_templatehullwhitemodel_hpp */

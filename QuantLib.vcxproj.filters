@@ -4388,6 +4388,9 @@
     <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvoltermstructures.hpp">
       <Filter>experimental\templatemodels\vanillalocalvol</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\hullwhite\g2ppT.hpp">
+      <Filter>experimental\templatemodels\hullwhite</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
