@@ -7,6 +7,7 @@
 
 
 #include <ql/experimental/templatemodels/auxilliaries/svdT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/choleskyfactorisationT.hpp>
 
 #include <ql/experimental/templatemodels/multiasset/multiassetbsmodel.hpp>
 
@@ -25,7 +26,7 @@ namespace QuantLib {
 		QL_REQUIRE(processes_.size() == correlations.size(), "Number of processes doesn't match correlation");
 		for (size_t k=0; k< correlations.size(); ++k)
 		    QL_REQUIRE(processes_.size() == correlations[k].size(), "Number of processes doesn't match correlation");
-		DT_ = TemplateAuxilliaries::svdSqrt(correlations);
+		DT_ = TemplateAuxilliaries::cholesky(correlations);
 	}
 
 	// initial values for simulation

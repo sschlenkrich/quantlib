@@ -2,6 +2,8 @@
 
 /*! \file svdT.hpp
     \brief standalone singular value decomposition
+	Note: This routine seems to work properly only for square matrices.
+	      It calculates A = V^T S U (!)
 */
 
 #include <vector>
@@ -280,6 +282,36 @@ namespace TemplateAuxilliaries {
 			delete[] S_;
 			delete[] V_;
 			*INFO=0;
+	}
+
+	template<class T>
+	std::vector< std::vector< T > > svd(const std::vector< std::vector< T > >& A, std::string tag) {
+		size_t m = A.size();
+		if (m == 0) throw std::exception();
+		size_t n = A[0].size();
+		for (size_t k = 1; k < m; ++k) if (n != A[k].size()) throw std::exception();
+		T *A_ = new T[m*n];
+		T *U_ = new T[m*m];
+		T *S_ = new T[(m < n) ? (m) : (n)];
+		T *V_ = new T[n*n];
+		for (size_t i = 0; i < m; ++i)
+			for (size_t j = 0; j < n; ++j) A_[i*n + j] = A[i][j];
+		// dummy auxilliary variables
+		T work;
+		int lwork, info;
+		svd("S", "S", (int*)&m, (int*)&n, A_, (int*)&m, S_, U_, (int*)&m, V_, (int*)&(n), &work, &lwork, &info);
+		std::vector< std::vector< T > > U(m, std::vector< T >(m));
+		for (size_t i = 0; i < m; ++i)
+			for (size_t j = 0; j < m; ++j) U[i][j] = U_[i*n + j];
+		std::vector< std::vector< T > > S(m, std::vector< T >(n, 0.0));
+		for (size_t i = 0; i < ((m < n) ? (m) : (n)); ++i) S[i][i] = S_[i];
+		std::vector< std::vector< T > > VT(m, std::vector< T >(m));
+		for (size_t i = 0; i < n; ++i)
+			for (size_t j = 0; j < n; ++j) VT[i][j] = V_[i*n + j];
+		if (tag == "U") return U;
+		if (tag == "S") return S;
+		if (tag == "VT") return VT;
+		return std::vector< std::vector< T > >(0);
 	}
 
 

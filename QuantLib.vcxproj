@@ -627,6 +627,7 @@
     <ClInclude Include="ql\experimental\models\hestonslvmcmodel.hpp" />
     <ClInclude Include="ql\experimental\models\normalclvmodel.hpp" />
     <ClInclude Include="ql\experimental\models\squarerootclvmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\choleskyfactorisationT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hullwhite\g2ppT.hpp" />
     <ClInclude Include="ql\experimental\volatility\sabrvoltermstructure.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcscriptT.hpp" />

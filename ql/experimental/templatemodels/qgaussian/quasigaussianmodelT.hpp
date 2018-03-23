@@ -29,6 +29,7 @@
 #include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/integratorsT.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/svdT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/choleskyfactorisationT.hpp>
 
 
 
@@ -209,28 +210,12 @@ namespace QuantLib {
 			PassiveType *U  = new PassiveType[dim*dim];
 			PassiveType *S  = new PassiveType[dim];
 			PassiveType *VT = new PassiveType[dim*dim];
+			PassiveType minS;
 			// dummy auxilliary variables
 			PassiveType work;
 			int lwork, info;
-			// Gamma = V^T S U
-			for (size_t i=0; i<dim; ++i) {
-				for (size_t j=0; j<dim; ++j) {
-					A[i*dim+j] = Gamma_[i][j];
-				}
-			}
-			TemplateAuxilliaries::svd("S","S",(int*)&dim,(int*)&dim,A,(int*)&dim,S,U,(int*)&dim,VT,(int*)&dim,&work,&lwork,&info);
-			// check min(S)>0
-			PassiveType minS=S[0];
-			for (size_t i=1; i<dim; ++i) if (S[i]<minS) minS = S[i];
-			if (minS<=0) { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel non-singular Gamma required."); }
-			// evaluate Df^T = V^T S^{1/2}
-			DfT_.resize(dim);
-			for (size_t i=0; i<dim; ++i) {
-				DfT_[i].resize(dim);
-				for (size_t j=0; j<dim; ++j) {
-					DfT_[i][j] = VT[i*dim+j]*sqrt(S[j]);
-				}
-			}
+			DfT_ = TemplateAuxilliaries::cholesky(Gamma_);
+
 			// [ Hf H^{-1} ] = [ exp{-chi_j*delta_i} ] = V^T S U
 			for (size_t i=0; i<dim; ++i) {
 				for (size_t j=0; j<dim; ++j) {
@@ -543,6 +528,10 @@ namespace QuantLib {
 
 		// integrate X1 = X0 + drift()*dt + diffusion()*dW*sqrt(dt)
 		inline void evolve( const DateType t0, const VecA& X0, const DateType dt, const VecD& dW, VecA& X1 ) {
+			if (volEvolv() == LocalGaussian) {
+				evolveAsLocalGaussian(t0, X0, dt, dW, X1);  // this is not really good coding style
+				return;
+			}
 			// ensure X1 has size of X0
 			VecA a = drift(t0, X0);
 			MatA b = diffusion(t0, X0);
@@ -567,6 +556,73 @@ namespace QuantLib {
 			truncate( t0+dt, X1 );
 			return;
 		}
+
+		// simulate Quasi-Gaussian model as Gaussian model with frozen vol matrix
+		inline void evolveAsLocalGaussian(const DateType t0, const VecA& X0, const DateType dt, const VecD& dW, VecA& X1) {
+			// first we simulate stochastic vol via lognormal approximation...
+			ActiveType e = expectationZ(t0, X0[X0.size() - 2], dt);
+			ActiveType v = varianceZ(t0, X0[X0.size() - 2], dt);
+			ActiveType dZ = dW[dW.size() - 1];  // last risk factor is for vol process
+			ActiveType si = sqrt(log(1.0 + v / e / e));
+			ActiveType mu = log(e) - si*si / 2.0;
+			X1[X1.size() - 2] = exp(mu + si*dZ);
+			ActiveType averageZ = 0.5*(X0[X0.size() - 2] + X1[X1.size() - 2]);  // we freeze z for subsequent calculation
+			// next we need V = z * sigmaxT sigmax
+			State state(X0, d_);
+			MatA sigmaxT = sigma_xT(t0, state.x, state.y);
+			MatA V(d_, VecA(d_, 0.0));
+			for (size_t i = 0; i < d_; ++i) {
+				for (size_t j = 0; j <= i; ++j) {
+					for (size_t k = 0; k < d_; ++k) V[i][j] += sigmaxT[i][k] * sigmaxT[j][k];  // sigma_x^T * sigma_x (!)
+					V[i][j] *= averageZ;
+					if (j < i) V[j][i] = V[i][j];  // exploit symmetry
+				}
+			}
+			// we also calculate intermediate variables; these do strictly depend on X and could be cached as well
+			VecP expMinusChiDT(d_);
+			for (size_t i = 0; i < d_; ++i) expMinusChiDT[i] = exp(-chi_[i] * dt);
+			VecP OneMinusExpMinusChiDT(d_);
+			for (size_t i = 0; i < d_; ++i) OneMinusExpMinusChiDT[i] = 1.0 - expMinusChiDT[i];
+			// now we can calculate y
+			MatA a(d_, VecA(d_, 0.0)), b(d_, VecA(d_,0.0));
+			for (size_t i = 0; i < d_; ++i) {
+				for (size_t j = 0; j <= i; ++j) {
+					b[i][j] = V[i][j] / (chi_[i] + chi_[j]);
+					a[i][j] = X0[d_ + i*d_ + j] - b[i][j];
+					if (j < i) {
+						b[j][i] = b[i][j];
+						a[j][i] = a[i][j];
+					}
+				}
+			}
+			for (size_t i = 0; i < d_; ++i)
+				for (size_t j = 0; j < d_; ++j) X1[d_ + i*d_ + j] = a[i][j] * expMinusChiDT[i] * expMinusChiDT[j] + b[i][j]; //= y[i][j]
+			// finally we calculate x
+			for (size_t i = 0; i < d_; ++i) {  // E[ x1 | x0 ]
+				X1[i] = X0[i];
+				for (size_t j = 0; j < d_; ++j) X1[i] += a[i][j] / chi_[j] * OneMinusExpMinusChiDT[j];
+				X1[i] *= expMinusChiDT[i];
+				ActiveType sumB = 0.0;
+				for (size_t j = 0; j < d_; ++j) sumB += b[i][j];
+				X1[i] += sumB / chi_[i] * OneMinusExpMinusChiDT[i];
+			}
+			// we overwrite V by the variance
+			for (size_t i = 0; i < d_; ++i)
+				for (size_t j = 0; j < d_; ++j)
+					V[i][j] *= (1.0 - expMinusChiDT[i] * expMinusChiDT[j]) / (chi_[i] + chi_[j]);
+			MatA L = TemplateAuxilliaries::cholesky(V);
+			for (size_t i = 0; i < d_; ++i)
+				for (size_t j = 0; j < d_; ++j)
+					X1[i] += L[i][j] * dW[j];  // maybe also exploit that L is lower triangular
+			// we don't truncate for the moment
+			// finally, we need to update s as well
+			ActiveType r0 = termStructure_->forwardRate(t0, t0, Continuous);
+			for (size_t i = 0; i < d_; ++i) r0 += X0[i];
+			ActiveType r1 = termStructure_->forwardRate(t0+dt, t0+dt, Continuous);
+			for (size_t i = 0; i < d_; ++i) r1 += X1[i];
+			X1[X1.size() - 1] = X0[X0.size() - 1] + 0.5*(r0 + r1)*dt;
+		}
+
 
 		// truncate process to its well-defined domain and return true (truncated) or false (not truncated)
 		inline virtual bool truncate( const DateType t, VecA& X ) {

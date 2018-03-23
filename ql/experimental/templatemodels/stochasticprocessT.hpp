@@ -89,10 +89,11 @@ namespace QuantLib {
 		// this is currently used for commodity payoffs
 		inline virtual ActiveType futureAsset(const DateType t, const DateType T, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: (multi) asset not implemented"); return 0; }
 
-		// options for z-integration
+		// options for integration
 	    enum VolEvolv {
 			FullTruncation         = 0,
 			LogNormalApproximation = 1,
+			LocalGaussian          = 2,
 			Other                  = -1
 		};
 
