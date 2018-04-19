@@ -4394,6 +4394,9 @@
     <ClInclude Include="ql\experimental\templatemodels\auxilliaries\choleskyfactorisationT.hpp">
       <Filter>experimental\templatemodels\auxilliaries</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\stochvol\quadraticlvsvmodelT.hpp">
+      <Filter>experimental\templatemodels\stochvol</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
