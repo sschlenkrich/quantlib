@@ -4328,6 +4328,9 @@
     <ClInclude Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp">
       <Filter>experimental\termStructures\Helper</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCovarianceFX.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6916,6 +6919,9 @@
       <Filter>experimental\termStructures\localCorrFX</Filter>
     </ClCompile>
     <ClCompile Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCovarianceFX.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">

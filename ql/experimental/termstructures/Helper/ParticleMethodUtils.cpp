@@ -72,7 +72,16 @@ namespace QuantLib {
 		}
 		surface->setInterpolationTime<Linear>();
 
-		RealMCSimulation simulation(assetModel, times, times, numberOfPaths,1,false,true,false);
+		//local vol needs at least daily simulation to cope become arbitrage free with implied vols.
+		//currently no input parameter by user
+		std::vector<Time> timesSim((maxTime+1) * 320);
+		for (size_t i = 0; i < timesSim.size(); i++)
+		{
+			timesSim[i] = i*1.0 / 320;
+		}
+
+
+		RealMCSimulation simulation(assetModel, timesSim, times, numberOfPaths,1,false,true,false);
 
 		//start to create strike grid. 
 		//the strike grid depends on simulation results (min and max quantile)
@@ -109,7 +118,7 @@ namespace QuantLib {
 		{
 			numberStrikes = numberStrikeGrid(times[i],ns1,ns2);
 			QL_REQUIRE(numberStrikes>1,"ns1 or ns2 has to be increased, strike grid cannot be calculated.");
-			simulation.simulateTimeStep();
+			simulation.simulateObsTimeStep();
 
 			//Now strike grid can be calculated
 

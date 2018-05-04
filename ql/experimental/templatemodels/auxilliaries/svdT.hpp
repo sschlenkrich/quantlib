@@ -7,6 +7,7 @@
 #include <vector>
 #include <cassert>
 #include <cstring>
+#include <ql\errors.hpp>
 //#include <cmath>
 
 #ifndef quantlib_templatesvd_hpp
@@ -24,7 +25,7 @@ namespace TemplateAuxilliaries {
 		T c=a/r;
 		T s=-b/r;
 
-#pragma omp parallel for
+//#pragma omp parallel for
 		for(size_t i=0;i<dim[1];i++){
 			T S0=S(m+0,i);
 			T S1=S(m+1,i);
@@ -42,7 +43,7 @@ namespace TemplateAuxilliaries {
 		T c=a/r;
 		T s=-b/r;
 
-#pragma omp parallel for
+//#pragma omp parallel for
 		for(size_t i=0;i<dim[0];i++){
 			T S0=S(i,m+0);
 			T S1=S(i,m+1);
@@ -84,7 +85,7 @@ namespace TemplateAuxilliaries {
 						house_vec[j]=-house_vec[j];
 					}
 				}
-#pragma omp parallel for
+//#pragma omp parallel for
 				for(size_t k=i;k<dim[1];k++){
 					T dot_prod=0;
 					for(size_t j=i;j<dim[0];j++){
@@ -94,7 +95,7 @@ namespace TemplateAuxilliaries {
 						S(j,k)-=dot_prod*house_vec[j];
 					}
 				}
-#pragma omp parallel for
+//#pragma omp parallel for
 				for(size_t k=0;k<dim[0];k++){
 					T dot_prod=0;
 					for(size_t j=i;j<dim[0];j++){
@@ -128,7 +129,7 @@ namespace TemplateAuxilliaries {
 						house_vec[j]=-house_vec[j];
 					}
 				}
-#pragma omp parallel for
+//#pragma omp parallel for
 				for(size_t k=i;k<dim[0];k++){
 					T dot_prod=0;
 					for(size_t j=i+1;j<dim[1];j++){
@@ -138,7 +139,7 @@ namespace TemplateAuxilliaries {
 						S(k,j)-=dot_prod*house_vec[j];
 					}
 				}
-#pragma omp parallel for
+//#pragma omp parallel for
 				for(size_t k=0;k<dim[1];k++){
 					T dot_prod=0;
 					for(size_t j=i+1;j<dim[1];j++){
@@ -324,8 +325,69 @@ namespace TemplateAuxilliaries {
 			}
 		}
 		return DT;
+	
 	}
 	
+	template<class T>
+	void performCholesky(std::vector< std::vector<T> >& matrix, size_t dimIn) {
+		size_t dim = dimIn;
+		
+		for (size_t i = 0; i < dim; i++)
+		{
+			for (size_t j = i; j < dim; j++)
+			{
+				if (abs(matrix[i][j] - matrix[j][i])>QL_EPSILON)
+					QL_FAIL(std::string("A symmetrix matrix is necessary to apply Cholesky Decomposition"));
+			}
+		}
+
+		//Perform Decomposition as described in script of Trottenberg (S. 47):
+		//Because script delivers Upper right matrix, we interchange indizes in order to end up with lower left matrix.
+
+		//First step:
+		matrix[0][0] = sqrt(matrix[0][0]);
+		if (abs(matrix[0][0]) < QL_EPSILON)
+			QL_FAIL("No Correlation Matrix because rank is not full.");
+		for (size_t i = 1; i < dim; i++)
+		{
+			matrix[i][0] = matrix[i][0] / matrix[0][0];
+		}
+
+
+		//Now iterate:
+		for (size_t i = 1; i < dim; i++)
+		{
+			for (size_t k = 0; k < i; k++)
+			{
+				matrix[i][i] = matrix[i][i] - matrix[i][k] * matrix[i][k];
+			}
+
+			matrix[i][i] = sqrt(matrix[i][i]);
+			if (abs(matrix[i][i]) < QL_EPSILON)
+				QL_FAIL(std::string("No Correlation Matrix because rank is not full."));
+			if (matrix[i][i] != matrix[i][i])
+				QL_FAIL(std::string("No Correlation Matrix as diagonal square entry is negative."));
+
+			for (size_t j = 0; j < dim; j++)
+			{
+				if (j >= i + 1)
+				{
+					for (size_t k = 0; k < i; k++)
+					{
+						matrix[j][i] = matrix[j][i] - matrix[i][k] * matrix[j][k];
+					}
+					matrix[j][i] = matrix[j][i] / matrix[i][i];
+				}
+				else if (j<i) {
+					matrix[j][i] = 0;
+				}
+				else {
+					//Nothing because diagonale.
+				}
+			}
+		}
+	}
+
 
 } // namespace TemplateAuxilliaries
 

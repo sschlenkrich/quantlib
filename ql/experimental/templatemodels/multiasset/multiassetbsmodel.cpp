@@ -32,22 +32,26 @@ namespace QuantLib {
 				if (correlations[k][l] != 0) isDiagonal = false;
 			}
 		}
-		if (isDiagonal) {
-			//due to ones on diagonal simply copy the matrix.
-			DT_ = RealStochasticProcess::MatA(processes.size());
-			for (size_t k = 0; k<2; ++k) DT_[k].resize(processes.size());
+		
+		
+		DT_ = RealStochasticProcess::MatA(processes.size());
+		for (size_t k = 0; k<DT_.size(); ++k) DT_[k].resize(processes.size());
 
-			for (size_t i = 0; i < processes.size(); i++)
+		for (size_t i = 0; i < processes.size(); i++)
+		{
+			for (size_t j = i; j < processes.size(); j++)
 			{
-				for (size_t j = i; j < processes.size(); j++)
-				{
-					DT_[i][j] = correlations[i][j];
-					DT_[j][i] = correlations[i][j];
-				}
+				DT_[i][j] = correlations[i][j];
+				DT_[j][i] = correlations[i][j];
 			}
 		}
+		
+		if (! isDiagonal) {
+			TemplateAuxilliaries::performCholesky(DT_, DT_.size());
+			//DT_ = TemplateAuxilliaries::svdSqrt(correlations);
+		}
 		else {
-			DT_ = TemplateAuxilliaries::svdSqrt(correlations);
+			//due to ones on diagonal simply copy the matrix.
 		}
 	}
 	MultiAssetBSModel::MultiAssetBSModel(
@@ -58,7 +62,7 @@ namespace QuantLib {
 		QL_REQUIRE(processes_.size() > 0, "No BS processes supplied");
 		//no correlation matrix means, we simply assume independence
 		RealStochasticProcess::MatA corrM = RealStochasticProcess::MatA(processes.size());
-		for (size_t k = 0; k<2; ++k) corrM[k].resize(processes.size());
+		for (size_t k = 0; k<corrM.size(); ++k) corrM[k].resize(processes.size());
 
 		for (size_t i = 0; i < processes.size(); i++)
 		{

@@ -94,8 +94,13 @@ namespace QuantLib {
         Real strike, y, dy, strikep, strikem;
         Real w, wp, wm, dwdy, d2wdy2;
         strike = underlyingLevel;
+
+		//otherwise variance may decrease through extrapolation, temporarily constant extrapolation
+		if (strike > blackTS_->maxStrike()) strike = blackTS_->maxStrike();
+		if (strike < blackTS_->minStrike()) strike = blackTS_->minStrike();
+
         y = std::log(strike/forwardValue);
-        dy = ((std::fabs(y) > 0.001) ? y*0.0001 : 0.000001);
+        dy = ((std::fabs(y) > 0.001) ? y*0.0001 : 0.0001); //change: 0.000001 due to errors non-convexity for close to atm
         strikep=strike*std::exp(dy);
         strikem=strike/std::exp(dy);
         w  = blackTS_->blackVariance(t, strike,  true);
@@ -148,6 +153,10 @@ namespace QuantLib {
             Real den3 = 0.5*d2wdy2;
             Real den = den1+den2+den3;
             Real result = dwdt / den;
+
+			if (result < 0.0) {
+				result = result*1.1;
+			}
 
             QL_ENSURE(result>=0.0,
                       "negative local vol^2 at strike " << strike

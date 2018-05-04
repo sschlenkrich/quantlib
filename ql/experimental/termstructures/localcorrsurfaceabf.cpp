@@ -40,7 +40,8 @@ namespace QuantLib {
 	void LocalCorrSurfaceABF::localCorrImpl(RealStochasticProcess::MatA& corrMatrix, Time t, const RealStochasticProcess::VecA& X0,
 		bool extrapolate) {
 		Real lambda;
-		if (t <= times_[1]) { //first time step in grid does not depend on F,a,b.
+		QL_REQUIRE(times_.size()>0,"Local correlation model not calibrated yet.")
+		if (t < times_[1]) { //first time step in grid does not depend on F,a,b.
 			lambda = localCorrImplTeq0(t,X0, extrapolate);
 		}
 		else
@@ -62,12 +63,18 @@ namespace QuantLib {
 		bool extrapolate) {
 		
 		double strike = localFStrike(t, X0);
+		double strikeIn;
 
 		//first interpolate strike dimension, function F merely called after t1 (before local corr independent of a,b,F)
 		for (size_t i = 1; i < times_.size(); i++)
 		{
 			if (strikes_[i].size() != 0) {
-				valuesSecInt_[i] = interpolatorStrikesF_[i](strike, extrapolate);
+				//no extrapolation for now as proposed in paper....
+				strikeIn = strike;
+				if (strike > strikes_[i][strikes_[i].size()-1]) strikeIn = strikes_[i][strikes_[i].size()-1];
+				if (strike < strikes_[i][0]) strikeIn = strikes_[i][0];
+
+				valuesSecInt_[i] = interpolatorStrikesF_[i](strikeIn, extrapolate);
 			}
 			else {
 				//calibration not completed, this is why size of strike array can be zero for a certain time.

@@ -60,12 +60,12 @@ namespace QuantLib {
 			for (size_t j = i+1; j < corrMatrix.size(); j++)
 			{
 				if (corrMatrix[i][j] > 1) {
-					corrMatrix[i][j] = 1;
-					corrMatrix[j][i] = 1;
+					corrMatrix[i][j] = 0.999;
+					corrMatrix[j][i] = 0.999;
 				}
 				if (corrMatrix[i][j] < -1) {
-					corrMatrix[i][j] = -1;
-					corrMatrix[j][i] = -1;
+					corrMatrix[i][j] = -0.999;
+					corrMatrix[j][i] = -0.999;
 				}
 			}
 		}

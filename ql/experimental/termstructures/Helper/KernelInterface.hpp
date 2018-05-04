@@ -43,7 +43,7 @@ namespace QuantLib {
 	class QuarticKernel : public KernelInterface {
 	public:
 		QuarticKernel() : KernelInterface() {};
-		virtual Real value(Real x) const { return abs(x) < 1 ? (1 - x*x) : 0; };
+		virtual Real value(Real x) const { return abs(x) < 1 ? (1 - x*x)*(1 - x*x) : 0; };
 	};
 
 }
