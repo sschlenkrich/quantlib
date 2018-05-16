@@ -25,7 +25,7 @@ namespace QuantLib {
 		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
 		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    processToCal)
     : LocalCorrTermStructure(processes, processToCal){
-		
+		assetTemp_ = std::vector<QuantLib::Real>(processes_.size());
     }
 
     void LocalCorrSurfaceABF::accept(AcyclicVisitor& v) {
@@ -46,7 +46,11 @@ namespace QuantLib {
 		}
 		else
 		{
-			lambda = (localF(t, X0, extrapolate) - localA(t, X0, extrapolate)) / localB(t, X0, extrapolate);
+			for (size_t i = 0; i < assetTemp_.size(); i++)
+			{
+				assetTemp_[i] = processes_[i]->x0()*std::exp(X0[i]);
+			}
+			lambda = (localF(t, X0, extrapolate) - localA(t, assetTemp_, extrapolate)) / localB(t, assetTemp_, extrapolate);
 		}
 		for (size_t i = 0; i < corrMatrix.size(); i++)
 		{

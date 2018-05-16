@@ -107,6 +107,8 @@ namespace QuantLib {
 		  std::vector<std::vector<Real>> surfaceF_;
 		  std::vector<Real> valuesSecInt_;
 
+		  std::vector<Real> assetTemp_;
+
 	  private:
         
     };
