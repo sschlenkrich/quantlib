@@ -171,20 +171,17 @@ namespace QuantLib {
 		};
 
 
-		// 1 unit call or put exercised at observation time and settled at pay time
-		// deprecated; does not use alias!
+		// 1 unit call or put exercised and settled at observation time
 		class VanillaOption : public MCPayoffT {
 		protected:
-			DateType    payTime_;
+			std::string alias_;
 			PassiveType callOrPut_;
 			PassiveType strike_;
 		public:
-			VanillaOption(DateType obsTime, DateType payTime, PassiveType strike, PassiveType callOrPut) : MCPayoffT(obsTime), payTime_(payTime), strike_(strike), callOrPut_(callOrPut) { }
+			VanillaOption(DateType obsTime, const std::string alias, PassiveType strike, PassiveType callOrPut) : MCPayoffT(obsTime), alias_(alias), strike_(strike), callOrPut_(callOrPut) { }
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
-				if (payTime_ < observationTime()) return (ActiveType)0.0;
-				ActiveType DF = p->zeroBond(observationTime(), payTime_);
-				ActiveType S = p->asset(observationTime(), "");
-				ActiveType V = callOrPut_ * DF * (S - strike_);
+				ActiveType S = p->asset(observationTime(), alias_);
+				ActiveType V = callOrPut_ * (S - strike_);
 				return (V > 0.0) ? (V) : ((ActiveType)0.0);
 			}
 		};

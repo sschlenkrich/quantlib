@@ -367,6 +367,9 @@
     <Filter Include="experimental\templatemodels\vanillalocalvol">
       <UniqueIdentifier>{21152dea-80ef-4d10-ab21-80d17ec444b8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\templatemodels\qgaussian2">
+      <UniqueIdentifier>{7f4a74b0-c742-4243-b1a9-65c79ab22ccb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -4396,6 +4399,12 @@
     </ClInclude>
     <ClInclude Include="ql\experimental\templatemodels\stochvol\quadraticlvsvmodelT.hpp">
       <Filter>experimental\templatemodels\stochvol</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\quasigaussianmodel2T.hpp">
+      <Filter>experimental\templatemodels\qgaussian2</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgswapratemodelT.hpp">
+      <Filter>experimental\templatemodels\qgaussian2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
