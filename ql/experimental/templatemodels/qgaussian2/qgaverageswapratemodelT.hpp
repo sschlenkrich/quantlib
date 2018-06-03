@@ -23,6 +23,8 @@
 
 #include <ql/experimental/templatemodels/qgaussian2/quasigaussianmodel2T.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/solver1dT.hpp>
+#include <ql/experimental/templatemodels/stochvol/hestonmodelT.hpp>
+
 
 // #include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
 // #include <ql/types.hpp>
@@ -40,9 +42,16 @@ namespace QuantLib {
 	template <class DateType, class PassiveType, class ActiveType>
 	class QGAverageSwaprateModelT : public QGSwaprateModelT<DateType, PassiveType, ActiveType> {
 	protected:
+		// average parameters
 		ActiveType sigma_;
 		ActiveType slope_;
 		ActiveType eta_;
+
+		// Vanilla option pricing
+		enum { Heston, ShiftedLogNormal, Normal, StochVolNormal } type_;
+		boost::shared_ptr< HestonModelT<DateType, PassiveType, ActiveType> > hestonModel_;
+		ActiveType S0_;
+		ActiveType shift_;
 
 		inline ActiveType slopeOverSigma(const DateType t) { return QGSwaprateModelT::slope(t) / QGSwaprateModelT::sigma(t); }
 
@@ -51,7 +60,7 @@ namespace QuantLib {
 			ActiveType gamma = sqrt((theta*theta + 2.0 * eta*eta * c2));
 			ActiveType t1 = theta*z0 / eta / eta * (theta + gamma)*dt;
 			ActiveType t2 = 1.0 + (theta + gamma + c1 * eta*eta) * (exp(gamma * dt) - 1.0) / 2.0 / gamma;
-			QL_REQUIRE(t2>0, "A_CIR: require positive log()-argument");
+			QL_REQUIRE(t2>0, "QGAverageSwaprateModelT: A_CIR: require positive log()-argument");
 			return t1 - 2.0*theta*z0 / eta / eta*log(t2);
 		}
 
@@ -93,11 +102,36 @@ namespace QuantLib {
 		QGAverageSwaprateModelT(
 			const boost::shared_ptr< QGSwaprateModelT<DateType,PassiveType,ActiveType> >&   model
 			) : QGSwaprateModelT(*model) {
+			// set up averaging
 			eta_ = averageEta();
+			QL_REQUIRE(eta_>=0.0, "QGAverageSwaprateModelT: eta >= 0 required.");
 			ActiveType b = averageSlopeOverSigma();
 			sigma_ = averageSigma(eta_, b);
+			QL_REQUIRE(sigma_ >= 0.0, "QGAverageSwaprateModelT: sigma >= 0 required.");  // maybe we need strict > 0
 			slope_ = sigma_*b;
-			// implement averaging...
+			// set up Vanilla option pricing
+			if (eta_ < 1.0e-2) {  // vol-of-vol below 1% is effectively deterministic
+				if (slope_ < 1.0e-4) type_ = Normal;             // we can not really handle negative slopes, therefore also normal if negative
+				else                 type_ = ShiftedLogNormal;
+			}
+			else {
+				if (slope_ < 1.0e-6) type_ = StochVolNormal;     // we are a bit more agressive here because this is not implemented yet
+				else                 type_ = Heston;
+			}
+			QL_REQUIRE(type_ != StochVolNormal, "QGAverageSwaprateModelT: StochVolNormal not implemented.");
+			S0_ = QGSwaprateModelT::S0();
+			if ((type_ == ShiftedLogNormal) || (type_ == Heston)) shift_ = sigma_ / slope_ - S0_;
+			if (type_ == Heston) {
+				hestonModel_ = boost::shared_ptr< HestonModelT<DateType, PassiveType, ActiveType> >(
+					new HestonModelT<DateType, PassiveType, ActiveType>(
+						// state transformations ~S(t) = S(t) + shift, v(t) = z(t) slope^2
+						theta(),               // kappa
+						z0()*slope_*slope_,    // theta
+						eta_*slope_,           // sigma
+						rho(),                 // rho
+						z0()*slope_*slope_     // v0
+						));
+			}
 		}
 
 		inline ActiveType averageEta() {
@@ -219,6 +253,18 @@ namespace QuantLib {
 		inline virtual ActiveType slope() { return slope_; }
 		inline virtual ActiveType eta()   { return eta_;   }
 
+		// undiscounted expectation of vanilla payoff
+		inline ActiveType vanillaOption(const PassiveType strikePrice, const int callOrPut, const PassiveType accuracy = 1.0-6, const size_t maxEvaluations = 1000) {
+			DateType term = modelTimes()[modelTimes().size() - 1] - modelTimes()[0];
+			if (type_ == Heston)
+				return hestonModel_->vanillaOption(S0_ + shift_, strikePrice + shift_, term, callOrPut, accuracy, maxEvaluations);
+			if (type_ == ShiftedLogNormal)
+				return TemplateAuxilliaries::Black76(S0_ + shift_, strikePrice + shift_, slope_, term, callOrPut);
+			if (type_ == Normal)
+				return TemplateAuxilliaries::Bachelier(S0_, strikePrice, sigma_, term, callOrPut);
+			QL_REQUIRE(false, "QGAverageSwaprateModelT: unknown model type.");
+			return 0;
+		}
 
 	};
 
