@@ -83,6 +83,7 @@ namespace QuantLib {
 		std::vector<MatA>  barY_;     // E^A [ y(t) ] 
 		VecA               x0_;       // = VecA(model_->factors()-1,0.0);
 		MatA               y0_;       // = MatA(model_->factors()-1,x0_);
+		bool               useExpectedXY_;
 		// we cache sigma and slope evaluation
 		VecA               sigma_;
 		VecA               slope_;
@@ -453,7 +454,7 @@ namespace QuantLib {
 			const VecD&                                                                               fixedWeights,  // w[1], ..., w[N-1]
 			const VecD&                                                                               modelTimes,    // time grid for numerical integration
 			const bool                                                                                useExpectedXY  // evaluate E^A [ x(t) ], E^A [ y(t) ] as expansion points
-			) 	: model_(model), swap_(floatTimes,floatWeights,fixedTimes,fixedWeights), times_(modelTimes) {
+			) 	: model_(model), swap_(floatTimes,floatWeights,fixedTimes,fixedWeights), times_(modelTimes), useExpectedXY_(useExpectedXY) {
 			// check consistency of swap
 			// float leg
 			QL_REQUIRE(swap_.floatWeights.size()>0,"TemplateQGSwaptionModel: empty float weights.");
@@ -478,7 +479,7 @@ namespace QuantLib {
 			barX_ = std::vector<VecA>(times_.size(),x0_);
 			barY_ = std::vector<MatA>(times_.size(),y0_);
 			// evaluate expectations...
-			if (useExpectedXY) evaluateExpXY();
+			if (useExpectedXY_) evaluateExpXY();
 			// cache sigma and slope
 			sigma_.resize(times_.size());
 			slope_.resize(times_.size());
@@ -487,6 +488,16 @@ namespace QuantLib {
 				slope_[k] = slope(swap_, times_[k], barX(times_[k]), barY(times_[k]));
 			}
 		}
+
+		inline const boost::shared_ptr< QuasiGaussianModel2T<DateType, PassiveType, ActiveType> >&  model() { return model_; }
+		inline const VecD& floatTimes()    { return swap_.floatTimes;   }
+		inline const VecD& floatWeights()  { return swap_.floatWeights; }
+		inline const VecD& fixedTimes()    { return swap_.fixedTimes;   }
+		inline const VecD& fixedWeights()  { return swap_.fixedWeights; }
+		inline const VecD& modelTimes()    { return times_;             }
+		inline const bool  useExpectedXY() { return }
+
+
 
 		inline void evaluateExpXY() {
 			// first we need y as it inputs to x
@@ -557,8 +568,6 @@ namespace QuantLib {
 		inline virtual ActiveType  z0()                      { return model_->z0();                    }
 		inline virtual ActiveType  rho()                     { return 0.0;                             }
 		inline virtual ActiveType  S0()                      { return swapRate(swap_,0.0,x0_,y0_);     }
-
-		inline const VecD& modelTimes() { return times_; }
 
 		// stochastic process interface
 		// dimension of X

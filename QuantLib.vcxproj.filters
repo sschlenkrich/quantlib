@@ -4406,6 +4406,9 @@
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgswapratemodelT.hpp">
       <Filter>experimental\templatemodels\qgaussian2</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgaverageswapratemodelT.hpp">
+      <Filter>experimental\templatemodels\qgaussian2</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">

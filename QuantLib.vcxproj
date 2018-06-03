@@ -629,6 +629,7 @@
     <ClInclude Include="ql\experimental\models\squarerootclvmodel.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\auxilliaries\choleskyfactorisationT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hullwhite\g2ppT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgaverageswapratemodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgswapratemodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\quasigaussianmodel2T.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\stochvol\quadraticlvsvmodelT.hpp" />
