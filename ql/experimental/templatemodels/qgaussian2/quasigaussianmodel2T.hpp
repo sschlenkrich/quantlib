@@ -277,6 +277,15 @@ namespace QuantLib {
 			return b;
 		}
 
+        // unsafe update
+		inline void update(const MatA &                sigma,   // volatility
+			               const MatA &                slope,   // skew
+			               const VecA &                eta) {   // vol-of-vol
+			sigma_ = sigma;
+			slope_ = slope;
+			eta_ = eta;
+		}
+
 		// clone the model
 		virtual boost::shared_ptr<QuasiGaussianModel2T> clone() { return boost::shared_ptr<QuasiGaussianModel2T>(new QuasiGaussianModel2T(*this)); }
 

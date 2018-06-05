@@ -630,6 +630,7 @@
     <ClInclude Include="ql\experimental\templatemodels\auxilliaries\choleskyfactorisationT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hullwhite\g2ppT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgaverageswapratemodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgswapratemodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\quasigaussianmodel2T.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\stochvol\quadraticlvsvmodelT.hpp" />
@@ -2010,6 +2011,7 @@
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Lexer.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\stochvol\stochvolcalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolsmilesection.cpp" />
