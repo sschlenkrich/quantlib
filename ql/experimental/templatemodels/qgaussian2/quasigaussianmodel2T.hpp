@@ -74,6 +74,7 @@ namespace QuantLib {
 		VecP                       f0_;      // f(0,delta_i)
 		MatP                       DfT_;     // factorized correlation matrix Df^T with Df^T * Df = Gamma
 		MatP                       HHfInv_;  // weighting matrix H*Hf^-1 = [ exp{-chi_j*delta_i} ]^-1
+		PassiveType                condHHf_; // condition number of H*Hf; this is calculated from singular values and acts as control to avoid numerical instability
 
 		// lightweight container holding the current state of the yield curve
 		class State {
@@ -197,7 +198,6 @@ namespace QuantLib {
 			PassiveType *U  = new PassiveType[dim*dim];
 			PassiveType *S  = new PassiveType[dim];
 			PassiveType *VT = new PassiveType[dim*dim];
-			PassiveType minS;
 			// dummy auxilliary variables
 			PassiveType work;
 			int lwork, info;
@@ -210,10 +210,14 @@ namespace QuantLib {
 				}
 			}
 			TemplateAuxilliaries::svd("S","S",(int*)&dim,(int*)&dim,A,(int*)&dim,S,U,(int*)&dim,VT,(int*)&dim,&work,&lwork,&info);
-			// check min(S)>0
-			minS=S[0];
-			for (size_t i=1; i<dim; ++i) if (S[i]<minS) minS = S[i];
+			// calculate and check condition number
+			PassiveType minS = S[0], maxS = S[0];
+			for (size_t i = 1; i < dim; ++i) {
+				if (S[i] < minS) minS = S[i];
+				if (S[i] > maxS) maxS = S[i];
+			}
 			if (minS<=0) { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel non-singular Gamma required."); }
+			condHHf_ = maxS / minS;
 			// evaluate H*Hf^-1 = U^T S^{-1} V
 			HHfInv_.resize(dim);
 			for (size_t i=0; i<dim; ++i) {
@@ -303,6 +307,8 @@ namespace QuantLib {
 		inline const VecP& chi()    { return chi_;    }
 		inline const ActiveType theta() { return theta_; } 
 		inline const ActiveType z0()    { return z0_;    } 
+
+		inline const PassiveType condHHf() { return condHHf_; }
 
 		// parameter functions (no dimension checks)
 		inline virtual ActiveType sigma ( const size_t i, const DateType t) { return sigma_[maxidx(i)][idx(t)]; }
