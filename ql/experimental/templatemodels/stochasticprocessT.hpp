@@ -14,6 +14,8 @@
 #ifndef quantlib_templatestochasticprocess_hpp
 #define quantlib_templatestochasticprocess_hpp
 
+#include <boost/enable_shared_from_this.hpp>
+
 #include <ql/types.hpp>
 #include <ql/errors.hpp>
 
@@ -22,7 +24,7 @@ namespace QuantLib {
 
 	// Declaration of stochastic process class
 	template <class DateType, class PassiveType, class ActiveType>
-	class StochasticProcessT {
+	class StochasticProcessT : public boost::enable_shared_from_this< StochasticProcessT<DateType,PassiveType,ActiveType> > {
 	public:
 		// container class definitions
 		typedef std::vector<DateType>                      VecD;

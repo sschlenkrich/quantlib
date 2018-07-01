@@ -325,6 +325,32 @@ namespace QuantLib {
 			for (size_t k=0; k<X_.size(); ++k) simulatePath(k);
 		}
 
+		// the following two routines are for sliced simulation
+
+		inline void prepareSimulation() {  // this routine checks constraints and prepares for below simulate(idx) calls
+			QL_REQUIRE(storeBrownians_ == true, "TemplateMCSimulation: storeBrownians required");
+			QL_REQUIRE(richardsonExtrapolation_==false, "TemplateMCSimulation: Richardson extrapolation not supported");
+			QL_REQUIRE(simTimes_.size() == obsTimes_.size(), "TemplateMCSimulation: simTimes_ == obsTimes required");
+            for (size_t k=0; k<simTimes_.size(); ++k)
+				QL_REQUIRE(simTimes_[k] == obsTimes_[k], "TemplateMCSimulation: simTimes_ == obsTimes required");
+			initialiseRSG();
+			preEvaluateBrownians();
+			// better set a flag that indicates that all is ready for simulation
+		}
+
+		inline void simulate(const size_t idx) {
+			if (idx == 0) {
+				for (size_t path = 0; path < X_.size(); ++path) X_[path][0] = process_->initialValues();
+				return;
+			}
+			Real dt = obsTimes_[idx] - obsTimes_[idx - 1];
+			for (size_t path = 0; path < X_.size(); ++path) {
+				process_->evolve(obsTimes_[idx-1], X_[path][idx-1], dt, getBrownianIncrements(path)[idx-1], X_[path][idx]);
+			}
+		}
+
+
+
 		// inspectors
 
 		inline const boost::shared_ptr<ProcessType> process() { return process_; }

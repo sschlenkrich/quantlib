@@ -537,6 +537,10 @@ namespace QuantLib {
 
 		// the time-indexed inspectors are unsafe in the sense that they don't check if t > floatTimes[0]
 
+		inline ActiveType annuity(DateType t, const VecA& x, const MatA& y)      { return annuity(swap_,t,x,y);      }
+		inline ActiveType swapRate(DateType t, const VecA& x, const MatA& y)     { return swapRate(swap_, t, x, y);  }
+		inline VecA       swapGradient(DateType t, const VecA& x, const MatA& y) { return swapGradient(swap_,t,x,y); }
+
 		// inspectors 
 		inline virtual ActiveType sigma(const DateType t) {
 			// return sigma(swap_,t,barX(t),barY(t));

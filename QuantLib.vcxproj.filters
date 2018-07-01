@@ -4412,6 +4412,9 @@
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.hpp">
       <Filter>experimental\templatemodels\qgaussian2</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qglocalvolmodel.hpp">
+      <Filter>experimental\templatemodels\qgaussian2</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -7039,6 +7042,9 @@
       <Filter>experimental\templatemodels\vanillalocalvol</Filter>
     </ClCompile>
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.cpp">
+      <Filter>experimental\templatemodels\qgaussian2</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglocalvolmodel.cpp">
       <Filter>experimental\templatemodels\qgaussian2</Filter>
     </ClCompile>
   </ItemGroup>

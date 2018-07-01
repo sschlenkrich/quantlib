@@ -368,7 +368,7 @@ namespace QuantLib {
 			return res;
 		}
 
-		inline  // sigma_x^T
+		inline virtual // sigma_x^T
 		MatA sigma_xT( const DateType t, const VecA& x, const MatA&  y) {
 			MatA tmp(d_), res(d_);
 			VecA sigmaf = sigma_f(t,x,y);
