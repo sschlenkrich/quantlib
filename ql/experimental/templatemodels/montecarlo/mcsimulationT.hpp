@@ -339,6 +339,7 @@ namespace QuantLib {
 		}
 
 		inline void simulate(const size_t idx) {
+			QL_REQUIRE(idx < obsTimes_.size(), "idx<obsTimes_.size() required");
 			if (idx == 0) {
 				for (size_t path = 0; path < X_.size(); ++path) X_[path][0] = process_->initialValues();
 				return;
