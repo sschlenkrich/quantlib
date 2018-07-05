@@ -69,6 +69,11 @@ namespace QuantLib {
 		// paths stored X_[paths][obsTimes][size]
 		std::vector< MatA > X_;
 
+		// adjust numeraire by exp{adj(t)*t} to meet E{ 1/N(t) } = P(0,t)
+		bool applyNumeraireAdjuster_;
+		VecD numeraireObservTimes_;
+		VecA numeraireAdjuster_;
+
 		// adjust simulated zcb by exp{-adj(t,t+dt)(t+dt)} to meet initial yield curve
 		bool applyZcbAdjuster_;
 		VecD zcbObservTimes_;
@@ -204,7 +209,8 @@ namespace QuantLib {
 			// we delegate (and decorate) the implementation to the stochastic process
 
 			inline ActiveType numeraire(DateType obsTime) {
-				return process_->numeraire(obsTime,sim_->state(idx_,obsTime));
+				return sim_->numeraireAdjuster(obsTime)*
+					process_->numeraire(obsTime,sim_->state(idx_,obsTime));
 			}
 
 			inline ActiveType zeroBond(DateType obsTime, DateType payTime) {
@@ -315,8 +321,9 @@ namespace QuantLib {
 			reallocateMemory(nPaths);
 			// ready to simulate...
 			// but first set up adjusters
-			applyZcbAdjuster_ = false;     // default
-			applyAssetAdjuster_  = false;  // default
+			applyNumeraireAdjuster_ = false;  // defauls
+			applyZcbAdjuster_       = false;  // default
+			applyAssetAdjuster_     = false;  // default
 		}
 
 		inline void simulate() {  // the procedure Initialise/PreEvBrownians/Simulate needs to be re-factorised
@@ -392,6 +399,48 @@ namespace QuantLib {
 			return dW_[idx]; 
 		}
 
+		// numeraire adjuster
+
+		inline void calculateNumeraireAdjuster(const VecD&  numeraireObservTimes) {
+			numeraireObservTimes_ = numeraireObservTimes;
+			// check time grids
+			QL_REQUIRE(numeraireObservTimes_.size()>1, "TemplateMCSimulation: at least two numeraireObservTimes_ required");
+			QL_REQUIRE(numeraireObservTimes_[0] >= 0, "TemplateMCSimulation: numeraireObservTimes_[0]>=0 required");
+			for (size_t k = 1; k<numeraireObservTimes_.size(); ++k) QL_REQUIRE(numeraireObservTimes_[k - 1]<numeraireObservTimes_[k], "TemplateMCSimulation: numeraireObservTimes_ in ascending order required");
+            // initialise adjuster
+			numeraireAdjuster_ = VecA(numeraireObservTimes_.size(), 0.0);
+			for (size_t k = 0; k<nPaths(); ++k) {
+				for (size_t i = 0; i<numeraireObservTimes_.size(); ++i) {
+					VecA       s = state(k, numeraireObservTimes_[i]);
+					numeraireAdjuster_[i] += 1.0 / process_->numeraire(numeraireObservTimes_[i], s);
+				}
+			}
+			for (size_t i = 0; i < numeraireObservTimes_.size(); ++i) {
+				numeraireAdjuster_[i] /= nPaths();  //  E{ 1/N(t) }
+				numeraireAdjuster_[i] /= process_->zeroBond(0.0, numeraireObservTimes_[i], process_->initialValues()); // adj =  E{ 1/N(t) } / P(0,t)
+				numeraireAdjuster_[i] = log(numeraireAdjuster_[i]) / numeraireObservTimes_[i];
+			}
+
+			// calculate adjuster..., tbd
+			applyNumeraireAdjuster_ = true;
+		}
+
+		inline const VecA& numeraireAdjuster() { return numeraireAdjuster_; }
+
+		inline ActiveType numeraireAdjuster(const DateType t) {
+			if (!applyNumeraireAdjuster_) return 1.0; // implement adjuster interpolation
+			// linear interpolation
+			size_t obsIdx = TemplateAuxilliaries::idx(numeraireObservTimes_, t);
+			if (obsIdx<1) obsIdx = 1;
+			DateType rhoObs = (t - numeraireObservTimes_[obsIdx - 1]) / (numeraireObservTimes_[obsIdx] - numeraireObservTimes_[obsIdx - 1]);
+			// flat extrapolation
+			if (rhoObs<0) rhoObs = 0;
+			if (rhoObs>1) rhoObs = 1;
+			//
+			ActiveType z = numeraireAdjuster_[obsIdx - 1] * (1 - rhoObs) + numeraireAdjuster_[obsIdx] * rhoObs;
+			return exp(z*t);
+		}
+
 		// zero coupon bond adjuster
 
 		inline void calculateZCBAdjuster( const VecD&  zcbObservTimes,
@@ -411,7 +460,7 @@ namespace QuantLib {
 			for (size_t k=0; k<nPaths(); ++k) {
 				for (size_t i=0; i<zcbObservTimes_.size(); ++i) {
 					VecA       s   = state(k,zcbObservTimes_[i]);
-					ActiveType num = process_->numeraire(zcbObservTimes_[i],s);
+					ActiveType num = this->numeraireAdjuster(zcbObservTimes_[i]) * process_->numeraire(zcbObservTimes_[i],s);
 					for (size_t j=0; j<zcbOffsetTimes_.size(); ++j) {
 						zcb[i][j] += process_->zeroBond(zcbObservTimes_[i], zcbObservTimes_[i]+zcbOffsetTimes_[j], s ) / num;
 					}
@@ -423,7 +472,7 @@ namespace QuantLib {
 					// we ommited division by nuneraire(0) = 1 here
 					zcb[i][j] /= nPaths();
 					adjDF /= zcb[i][j];
-					zcbAdjuster_[i][j] = - log(adjDF) / (zcbObservTimes_[i]+zcbOffsetTimes_[j]);
+					zcbAdjuster_[i][j] = - log(adjDF) / (zcbOffsetTimes_[j]);
 				}
 			}
 			applyZcbAdjuster_ = true;  // ready to use zcb adjuster
@@ -452,7 +501,7 @@ namespace QuantLib {
 				           zcbAdjuster_[obsIdx  ][offIdx-1] * (rhoObs)     * (1.0-rhoOff) +
 				           zcbAdjuster_[obsIdx-1][offIdx  ] * (1.0-rhoObs) * (rhoOff)     +
 				           zcbAdjuster_[obsIdx  ][offIdx  ] * (rhoObs)     * (rhoOff)     ;
-			return exp(-z*T);
+			return exp(-z*(T-t));
 		}
 
 		// asset adjuster
@@ -475,8 +524,8 @@ namespace QuantLib {
 				for (size_t i = 0; i<assetObservTimes_.size(); ++i) {
 					for (size_t j = 0; j<nPaths(); ++j) {
 						VecA       s = state(j, assetObservTimes_[i]);
-						avAsset[i] += process_->asset(assetObservTimes_[i], s, aliases[k]) / process_->numeraire(assetObservTimes_[i], s);
-						avZero[i] += 1.0 / process_->numeraire(assetObservTimes_[i], s);
+						avAsset[i] += process_->asset(assetObservTimes_[i], s, aliases[k]) / (this->numeraireAdjuster(assetObservTimes_[i])*process_->numeraire(assetObservTimes_[i], s));
+						avZero[i] += 1.0 / (this->numeraireAdjuster(assetObservTimes_[i])*process_->numeraire(assetObservTimes_[i], s));
 					}
 					avAsset[i] /= nPaths();
 					avZero[i] /= nPaths();
