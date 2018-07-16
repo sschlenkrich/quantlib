@@ -85,6 +85,20 @@ namespace QuantLib {
 				return npv / simulation->nPaths();
 			}
 
+			inline static std::vector<ActiveType> NPVs(const std::vector< boost::shared_ptr<MCPayoffT> >&  payoffs,
+				                                       const boost::shared_ptr<SimulationType>&            simulation) {
+				std::vector<ActiveType> res(payoffs.size());
+				for (size_t n = 0; n < simulation->nPaths(); ++n) {
+					for (size_t k = 0; k < payoffs.size(); ++k) {
+						res[k] += payoffs[k]->discountedAt(simulation->path(n));
+					}
+				}
+				for (size_t k = 0; k < payoffs.size(); ++k) {
+					res[k] /= simulation->nPaths();
+				}
+				return res;
+			}
+
 			Pricer(const std::vector< boost::shared_ptr<MCPayoffT> >&   payoffs,
 				const boost::shared_ptr<SimulationType>&             simulation)
 				: payoffs_(payoffs), simulation_(simulation) { }
