@@ -315,8 +315,14 @@ namespace QuantLib {
 				}
 				if (k>0) { // we use secant if available
 					// only update derivative if we had a step, otherwise use from previous iteration
-					if (fabs(dmu)>1.0e-16) dfwd_dmu = (forwardMinusStrike1 - forwardMinusStrike0) / dmu;
-					if (fabs(dlogSigma0)>1.0e-16) dstr_dlogSigma0 = (straddleMinusATM1 - straddleMinusATM0) / dlogSigma0;
+					// also avoid division by zero and zero derivative
+					PassiveType eps = 1.0e-12;  // we aim at beeing a bit more robust
+					if ((fabs(forwardMinusStrike1 - forwardMinusStrike0) > eps) && (fabs(dmu) > eps)) {
+						dfwd_dmu = (forwardMinusStrike1 - forwardMinusStrike0) / dmu;
+					}
+					if ((fabs(straddleMinusATM1 - straddleMinusATM0) > eps) && (fabs(dlogSigma0) > eps)) {
+						dstr_dlogSigma0 = (straddleMinusATM1 - straddleMinusATM0) / dlogSigma0;
+					}
 				}
 				dmu = -forwardMinusStrike1 / dfwd_dmu;
 				if (k < onlyForwardCalibrationIters_) dlogSigma0 = 0.0;  // keep sigma0 fixed and only calibrate forward
