@@ -371,5 +371,102 @@ namespace QuantLib {
 		QL_REQUIRE(false, "post-calibration mode for sigma_x not implemented yet");
 	}
 
+	std::vector< std::vector<Real> > QGLocalvolModel::calibrationTest(const std::vector<Date>& exerciseDates,
+		                                                              const std::vector<Real>&  stdDevStrikes) {
+        // add adjusters...
+		std::vector< std::vector<Real> > resultTable;
+		// we need to do some sanity checks 
+		QL_REQUIRE(simulation_, "non-empty simulation_ required");
+		// derive adjuster dates
+		std::vector<Real> adjObsTimes;
+		for (size_t i = 0; i < exerciseDates.size(); ++i) {
+			if (exerciseDates[i] <= termStructure()->referenceDate()) continue; // skip dates in the past
+			Date fixingDate = exerciseDates[i];
+			if (!swapIndex_->isValidFixingDate(fixingDate)) fixingDate = swapIndex_->fixingCalendar().adjust(fixingDate, Following);
+			Time exerciseTime = Actual365Fixed().yearFraction(termStructure()->referenceDate(), fixingDate);
+			adjObsTimes.push_back(exerciseTime);
+		}
+		// derive offset dates
+		std::vector<Real> adjOffsetTimes;
+		if (swapIndex_->tenor().units() == Months) {
+			adjOffsetTimes.push_back(swapIndex_->tenor().length() / 12.0);
+		}
+		if (swapIndex_->tenor().units() == Years) {
+			for (Integer i=1; i<=swapIndex_->tenor().length(); ++i) adjOffsetTimes.push_back((Real)i);
+		}
+		QL_REQUIRE(adjOffsetTimes.size() > 0, "adjOffsetTimes.size()>0 required");
+		// calculate adjusters
+		simulation_->calculateNumeraireAdjuster(adjObsTimes);
+		simulation_->calculateZCBAdjuster(adjObsTimes, adjOffsetTimes);
+		// now we may calculate instruments...
+		for (size_t i = 0; i < exerciseDates.size(); ++i) {
+			if (exerciseDates[i] <= termStructure()->referenceDate()) continue; // skip dates in the past
+			Date fixingDate = exerciseDates[i];
+			if (!swapIndex_->isValidFixingDate(fixingDate)) fixingDate = swapIndex_->fixingCalendar().adjust(fixingDate, Following);
+			Time exerciseTime = Actual365Fixed().yearFraction(termStructure()->referenceDate(), fixingDate);
+			SwapCashFlows scf(swapIndex_->underlyingSwap(fixingDate), termStructure_, true);
+			SwaptionFactory testFactory(exerciseTime, scf);
+
+			// swap rate etc.
+			Real annuity = 0.0;
+			for (size_t k = 0; k < scf.fixedTimes().size(); ++k) annuity += scf.annuityWeights()[k] * termStructure()->discount(scf.fixedTimes()[k]);
+			Real floatLeg = 0.0;
+			for (size_t k = 0; k < scf.floatTimes().size(); ++k) floatLeg += scf.floatWeights()[k] * termStructure()->discount(scf.floatTimes()[k]);
+			Real swapRate = floatLeg / annuity;
+
+			// set up smile section and strike grid
+			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(exerciseTime, swapIndex_->tenor(), true);
+			Real stdDev = smileSection->optionPrice(swapRate, Option::Call) / M_1_SQRTPI / M_SQRT_2;
+			std::vector<Real> strikeGrid(stdDevStrikes);
+			for (size_t k = 0; k < strikeGrid.size(); ++k) strikeGrid[k] = strikeGrid[k] * stdDev + swapRate;
+
+			std::vector< boost::shared_ptr<MCPayoff> > options;
+			for (size_t k = 0; k < strikeGrid.size(); ++k) {
+				options.push_back(testFactory.swaption(strikeGrid[k], 1.0));   // call
+				options.push_back(testFactory.swaption(strikeGrid[k], -1.0));  // put
+			}
+			// cached version of MC simulation
+			std::vector<Real> optionNPVs = MCPayoff::Pricer::NPVs(options, simulation_);
+
+			for (size_t k = 0; k < strikeGrid.size(); ++k) {
+				Real call = smileSection->optionPrice(strikeGrid[k], Option::Call);
+				Real testCall = optionNPVs[2*k];
+				Real testPut = optionNPVs[2*k+1];
+				testCall /= annuity;
+				testPut /= annuity;
+				Real callVol = 0.0;
+				Real putVol = 0.0;
+				Real vanVol = 0.0;
+				try {
+					callVol = bachelierBlackFormulaImpliedVol(Option::Call, strikeGrid[k], swapRate, exerciseTime, testCall);
+				} catch (std::exception e) {}
+				try {
+					putVol = bachelierBlackFormulaImpliedVol(Option::Put, strikeGrid[k], swapRate, exerciseTime, testPut);
+				} catch (std::exception e) {}
+				try {
+					vanVol = bachelierBlackFormulaImpliedVol(Option::Call, strikeGrid[k], swapRate, exerciseTime, call);
+				} catch (std::exception e) {}
+				std::vector<Real> resultRow = { (double)exerciseDates[i].serialNumber(),
+												(double)fixingDate.serialNumber(),
+												exerciseTime,
+												swapRate,
+												(double)k,
+					                            stdDevStrikes[k],
+					                            strikeGrid[k],
+												call,
+												testCall,
+												testPut,
+												vanVol,
+												callVol,
+												putVol                                       };
+				resultTable.push_back(resultRow);
+			}
+		}
+		return resultTable;
+	}
+
+
+
+
 }
 

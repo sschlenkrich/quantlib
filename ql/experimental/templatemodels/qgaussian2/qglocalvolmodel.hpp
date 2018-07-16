@@ -110,6 +110,10 @@ namespace QuantLib {
 		inline const Real sigmaS(const size_t idx, const Real s) { return sigmaS_[idx](s); }
 
 		std::vector<std::string> debugLog() { return debugLog_; }
+
+		// test the calibration of the model
+		std::vector< std::vector<Real> > calibrationTest(const std::vector<Date>&  exerciseDates,
+			                                             const std::vector<Real>&  stdDevStrikes );
     };
 
 }
