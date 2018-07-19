@@ -38,7 +38,7 @@ namespace QuantLib {
 		typedef RatesPayoffT<QuantLib::Time, QuantLib::Real, QuantLib::Real>::Annuity MCAnnuity;
 		typedef RatesPayoffT<QuantLib::Time, QuantLib::Real, QuantLib::Real>::GeneralSwaption MCSwaption;
 
-	private:
+	protected:
 		// calibration target volatilities
 		boost::shared_ptr<SwaptionVolatilityStructure> volTS_;
         
@@ -100,7 +100,7 @@ namespace QuantLib {
 			             const size_t                                           debugLevel = 1);
 
 		// do the actual calculation
-		void simulateAndCalibrate();
+		virtual void simulateAndCalibrate() = 0;
 
 		inline virtual std::vector< std::vector<Real> >
 		sigma_xT(const Real t, const std::vector<Real>& x, const std::vector< std::vector<Real> >&  y);
@@ -115,6 +115,80 @@ namespace QuantLib {
 		std::vector< std::vector<Real> > calibrationTest(const std::vector<Date>&  exerciseDates,
 			                                             const std::vector<Real>&  stdDevStrikes );
     };
+
+	// alternative backward-looking calibration methodology for QGLocalvolModel
+	class QGLocalvolModelBackwardFlavor : public QGLocalvolModel {
+	public:
+		QGLocalvolModelBackwardFlavor(
+			const Handle<YieldTermStructure>&                      termStructure,
+			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			const Real                                             chi,
+			const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			const std::vector<Real>&                               times,
+			const std::vector<Real>&                               stdDevGrid,
+			const size_t                                           nPaths,
+			const BigNatural                                       seed = 1234,
+			const size_t                                           debugLevel = 1)
+			: QGLocalvolModel(termStructure, volTS, chi, swapIndex, times, stdDevGrid, nPaths, seed, debugLevel) {}
+		// do the actual calculation
+		virtual void simulateAndCalibrate();
+	};
+
+	// alternative forward-looking calibration methodology for QGLocalvolModel
+	class QGLocalvolModelForwardFlavor : public QGLocalvolModel {
+	public:
+		QGLocalvolModelForwardFlavor(
+			const Handle<YieldTermStructure>&                      termStructure,
+			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			const Real                                             chi,
+			const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			const std::vector<Real>&                               times,
+			const std::vector<Real>&                               stdDevGrid,
+			const size_t                                           nPaths,
+			const BigNatural                                       seed = 1234,
+			const size_t                                           debugLevel = 1)
+			: QGLocalvolModel(termStructure, volTS, chi, swapIndex, times, stdDevGrid, nPaths, seed, debugLevel) {}
+		// do the actual calculation
+		virtual void simulateAndCalibrate();
+	};
+
+	// alternative analytical calibration methodology for QGLocalvolModel
+	class QGLocalvolModelAnalyticFlavor : public QGLocalvolModel {
+	public:
+		QGLocalvolModelAnalyticFlavor(
+			const Handle<YieldTermStructure>&                      termStructure,
+			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			const Real                                             chi,
+			const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			const std::vector<Real>&                               times,
+			const std::vector<Real>&                               stdDevGrid,
+			const size_t                                           nPaths,
+			const BigNatural                                       seed = 1234,
+			const size_t                                           debugLevel = 1)
+			: QGLocalvolModel(termStructure, volTS, chi, swapIndex, times, stdDevGrid, nPaths, seed, debugLevel) {}
+		// do the actual calculation
+		virtual void simulateAndCalibrate();
+	};
+
+	// alternative forward-looking calibration methodology for QGLocalvolModel
+	class QGLocalvolModelMonteCarloFlavor : public QGLocalvolModel {
+	public:
+		QGLocalvolModelMonteCarloFlavor(
+			const Handle<YieldTermStructure>&                      termStructure,
+			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			const Real                                             chi,
+			const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			const std::vector<Real>&                               times,
+			const std::vector<Real>&                               stdDevGrid,
+			const size_t                                           nPaths,
+			const BigNatural                                       seed = 1234,
+			const size_t                                           debugLevel = 1)
+			: QGLocalvolModel(termStructure, volTS, chi, swapIndex, times, stdDevGrid, nPaths, seed, debugLevel) {}
+		// do the actual calculation
+		virtual void simulateAndCalibrate();
+	};
+
+
 
 }
 
