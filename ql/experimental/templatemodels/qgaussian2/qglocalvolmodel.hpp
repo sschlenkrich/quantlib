@@ -84,20 +84,66 @@ namespace QuantLib {
 		// find idx = min_j{ x <= X[j] }
 		inline static size_t minIdx(const std::vector<Real>& X, const Real x);
 
+		boost::shared_ptr<QGSwaprateModel> qGSwapRateModel(const SwapCashFlows& scf, const Real obsTime);
+
 		// encapsulate initial set up
-		inline void setUpSimulation(Date& today);
+		class Initialiser {
+		private:
+			Date today_;
+		public:
+			Initialiser(boost::shared_ptr<QGLocalvolModel> model);
+			const Date& today() const { return today_; }
+		};
+
+		// set up swap rate and provide corresponding quantities
+		class SwapRate {
+			Real swapRate_, annuity_;
+			Date fixingDate_;
+			SwapCashFlows scf_;
+		public:
+			SwapRate(const QGLocalvolModel *model, const Date today, const Real fixingTime);
+			const Real  swapRate()   const { return swapRate_;   }
+			const Real  annuity()    const { return annuity_;    }
+			const Date& fixingDate() const { return fixingDate_; }
+			const SwapCashFlows& scf() const { return scf_; }
+		};
 
 		// encapsulate the MC calculation
-		inline void calculateMCPrices(const Real               obsTime,
-			                          const SwapCashFlows&     scf,
-			                          const Real               annuity,
-			                          const Real               swapRate,
-			                          const std::vector<Real>& smileStrikeGrid,
-			                          std::vector<Real>&       oneOverBSample,  // assume size simulation_->nPaths()
-									  std::vector<Real>&       annuitySample,   // assume size simulation_->nPaths()
-									  std::vector<Real>&       swapRateSample,  // assume size simulation_->nPaths()
-			                          std::vector<Real>&       vanillaOptions,  // assume vanillaOptions(smileStrikeGrid.size(), 0.0);
-			                          Real&                    avgCalcStrikes); 
+		class McCalculator {
+		private:
+			std::vector<Real>  oneOverBSample_;  // assume size simulation_->nPaths()
+			std::vector<Real>  annuitySample_;   // assume size simulation_->nPaths()
+			std::vector<Real>  swapRateSample_;  // assume size simulation_->nPaths()
+			std::vector<Real>  vanillaOptions_;  // assume vanillaOptions(smileStrikeGrid.size(), 0.0);
+			Real               avgCalcStrikes_;
+		public:
+			McCalculator(QGLocalvolModel          *model,
+				         const Real               obsTime,
+				         const SwapCashFlows&     scf,
+				         const Real               annuity,
+				         const Real               swapRate,
+				         const std::vector<Real>& smileStrikeGrid);
+			const std::vector<Real>&  oneOverBSample() const { return oneOverBSample_; }
+			const std::vector<Real>&  annuitySample()  const { return annuitySample_;  }
+			const std::vector<Real>&  swapRateSample() const { return swapRateSample_; }
+			const std::vector<Real>&  vanillaOptions() const { return vanillaOptions_; }
+			const Real                avgCalcStrikes() const { return avgCalcStrikes_; }
+		};
+
+		// encapsulate stoch vol adjustment; calculate E^A[ z(T) | S(T) = K ] 
+		class StochvolExpectation {
+		private:
+			std::vector<Real>  expectationZCondS_;
+		public:
+			StochvolExpectation(const QGLocalvolModel     *model,
+				                const size_t              simIdx,
+				                const Real                lambda,   // lambda = 1.0 / kernelWidth / stdDev
+				                const Real                annuity,
+				                const McCalculator&       mcCalc,
+				                const std::vector<Real>&  strikeGrid,
+				                Real                      (*kernel)(const Real) );
+			const std::vector<Real>&  expectationZCondS() const { return expectationZCondS_; }
+		};
 
 		inline void checkMCPrices( const Real obsTime,
 			                       const SwapCashFlows&     scf,
@@ -231,7 +277,7 @@ namespace QuantLib {
 	class QGLocalvolModelForwardStochVolFlavor : public QGLocalvolModel {
 	private:
 		Real kernelWidth_; // kernel width for conditional expectation calculation in terms of stdDevs
-		inline Real kernel(const Real u) const { return ((fabs(u) < 1.0) ? (1.0-fabs(u)) : (0.0)); }
+		inline static Real kernel(const Real u) { return ((fabs(u) < 1.0) ? (1.0-fabs(u)) : (0.0)); }
 	public:
 		QGLocalvolModelForwardStochVolFlavor(
 			const Handle<YieldTermStructure>&                      termStructure,

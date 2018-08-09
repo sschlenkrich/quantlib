@@ -64,31 +64,6 @@ namespace QuantLib {
 		// we can't calibrate here because *this needs to be assigned to shared pointer first
 	}
 
-
-	// we cache the float leg and fixed leg valuation to speed-up MC simulation
-	QGLocalvolModel::SwaptionFactory::SwaptionFactory(const Time obsTime, const SwapCashFlows& scf)
-		: floatLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Cache(
-			boost::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.floatTimes(), scf.floatWeights()))))),
-		annuityLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Cache(
-			boost::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.fixedTimes(), scf.annuityWeights())))))
-	{}
-
-	boost::shared_ptr<QGLocalvolModel::MCPayoff> QGLocalvolModel::SwaptionFactory::swaption(const Real strike, const Real callOrPut) {
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedRate(new QGLocalvolModel::MCPayoff::FixedAmount(strike));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedLeg(new QGLocalvolModel::MCPayoff::Mult(fixedRate, annuityLeg_));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> swap;
-		if (callOrPut == 1.0) {
-			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Axpy(-1.0, fixedLeg, floatLeg_));
-		}
-		else {
-			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Axpy(-1.0, floatLeg_, fixedLeg));
-		}
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> zero(new QGLocalvolModel::MCPayoff::FixedAmount(0.0));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> swpt(new QGLocalvolModel::MCPayoff::Max(swap, zero));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> pay(new QGLocalvolModel::MCPayoff::Pay(swpt, floatLeg_->observationTime()));
-		return pay;
-	}
-
 	inline std::vector< std::vector<Real> >
 	QGLocalvolModel::sigma_xT(const Real t, const std::vector<Real>& x, const std::vector< std::vector<Real> >&  y) {
 		if (sigmaMode_ == Parent) return QuasiGaussianModel::sigma_xT(t, x, y);  // this is more like a fall back if volatility is irrelevant
@@ -130,6 +105,30 @@ namespace QuantLib {
 			return  std::vector< std::vector<Real> >(1, std::vector<Real>(1, lvol / swapGradient));
 		}
 		QL_REQUIRE(false, "post-calibration mode for sigma_x not implemented yet");
+	}
+
+	// we cache the float leg and fixed leg valuation to speed-up MC simulation
+	QGLocalvolModel::SwaptionFactory::SwaptionFactory(const Time obsTime, const SwapCashFlows& scf)
+		: floatLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Cache(
+			boost::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.floatTimes(), scf.floatWeights()))))),
+		annuityLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Cache(
+			boost::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.fixedTimes(), scf.annuityWeights())))))
+	{}
+
+	boost::shared_ptr<QGLocalvolModel::MCPayoff> QGLocalvolModel::SwaptionFactory::swaption(const Real strike, const Real callOrPut) {
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedRate(new QGLocalvolModel::MCPayoff::FixedAmount(strike));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedLeg(new QGLocalvolModel::MCPayoff::Mult(fixedRate, annuityLeg_));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> swap;
+		if (callOrPut == 1.0) {
+			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Axpy(-1.0, fixedLeg, floatLeg_));
+		}
+		else {
+			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Axpy(-1.0, floatLeg_, fixedLeg));
+		}
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> zero(new QGLocalvolModel::MCPayoff::FixedAmount(0.0));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> swpt(new QGLocalvolModel::MCPayoff::Max(swap, zero));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> pay(new QGLocalvolModel::MCPayoff::Pay(swpt, floatLeg_->observationTime()));
+		return pay;
 	}
 
 	std::vector< std::vector<Real> > QGLocalvolModel::calibrationTest(const std::vector<Date>& exerciseDates,
@@ -241,183 +240,228 @@ namespace QuantLib {
 		return b;
 	}
 
-	inline void QGLocalvolModel::setUpSimulation(Date& today) {
-		// reset local volatility attributes and debugging
-		debugLog_.clear();
-		sigmaS_.clear();
-		strikeGrid_.clear();
-		locvolGrid_.clear();
-
-		// initialise MC simulation
-		simulation_ = boost::shared_ptr<MCSimulation>(new MCSimulation(shared_from_this(), this->times(), this->times(), nPaths_, seed_, false, true, true));
-		simulation_->prepareSimulation();
-		simulation_->simulate(0);
-		QL_REQUIRE(simulation_->simTimes().size() == times().size() + 1, "simulation_->simTimes().size()==times().size()+1 required.");
-
-		// prepare for first simulation step using approximate local vol
-		today = termStructure()->referenceDate(); // check if this is the correct date...
-													   // we need to set up an initial swap rate model for gradient calculation
-		Date fixingDate = swapIndex_->fixingCalendar().advance(today, 1, Days, Following);
-		SwapCashFlows scf(swapIndex_->underlyingSwap(fixingDate), termStructure_, true);
-		std::vector<Real> swapRateModelTimes{ 0.0, Actual365Fixed().yearFraction(today,fixingDate) };
+	boost::shared_ptr<QGLocalvolModel::QGSwaprateModel> QGLocalvolModel::qGSwapRateModel(const SwapCashFlows& scf, const Real obsTime) {
+		std::vector<Real> swapRateModelTimes{ 0.0, obsTime };
 		sigmaMode_ = Parent; // switch-off sigma_x calculation; we only need yield curve information
-		swapRateModel_ = boost::shared_ptr<QGSwaprateModel>(new QGSwaprateModel(boost::static_pointer_cast<QuasiGaussianModel>(shared_from_this()),
+		boost::shared_ptr<QGSwaprateModel> swapRateModel(new QGSwaprateModel(boost::static_pointer_cast<QuasiGaussianModel>(shared_from_this()),
 			scf.floatTimes(), scf.floatWeights(), scf.fixedTimes(), scf.annuityWeights(), swapRateModelTimes, false));
 		sigmaMode_ = Calibration; // switch-on sigma_x calculation for simulation and evolve calls
+		return swapRateModel;
 	}
 
-	// encapsulate the MC calculation
-	inline void QGLocalvolModel::calculateMCPrices(
+
+	QGLocalvolModel::Initialiser::Initialiser(boost::shared_ptr<QGLocalvolModel> model) {
+		// reset local volatility attributes and debugging
+		model->debugLog_.clear();
+		model->sigmaS_.clear();
+		model->strikeGrid_.clear();
+		model->locvolGrid_.clear();
+
+		// initialise MC simulation
+		model->simulation_ = boost::shared_ptr<MCSimulation>(new MCSimulation(model, model->times(), model->times(), model->nPaths_, model->seed_, false, true, true));
+		model->simulation_->prepareSimulation();
+		model->simulation_->simulate(0);
+		QL_REQUIRE(model->simulation_->simTimes().size() == model->times().size() + 1, "simulation_->simTimes().size()==times().size()+1 required.");
+
+		// prepare for first simulation step using approximate local vol
+		today_ = model->termStructure_->referenceDate(); // check if this is the correct date...
+												  // we need to set up an initial swap rate model for gradient calculation
+		Date fixingDate = model->swapIndex_->fixingCalendar().advance(today_, 1, Days, Following);
+		SwapCashFlows scf(model->swapIndex_->underlyingSwap(fixingDate), model->termStructure_, true);
+		model->swapRateModel_ = model->qGSwapRateModel(scf, Actual365Fixed().yearFraction(today_, fixingDate));
+	}
+
+	// setup swap rate etc. for given time point
+	QGLocalvolModel::SwapRate::SwapRate(const QGLocalvolModel *model, const Date today, const Real fixingTime) {
+		Date fixingDate_ = today + ((BigInteger)ClosestRounding(0)(fixingTime * 365.0)); // assuming act/365 day counting
+		if (!model->swapIndex_->isValidFixingDate(fixingDate_)) fixingDate_ = model->swapIndex_->fixingCalendar().adjust(fixingDate_, Following);
+		scf_ = SwapCashFlows(model->swapIndex_->underlyingSwap(fixingDate_), model->termStructure_, true);        // assume continuous tenor spreads
+		annuity_ = 0.0;
+		for (size_t k = 0; k < scf_.fixedTimes().size(); ++k) annuity_ += scf_.annuityWeights()[k] * model->termStructure_->discount(scf_.fixedTimes()[k]);
+		Real floatLeg = 0.0;
+		for (size_t k = 0; k < scf_.floatTimes().size(); ++k) floatLeg += scf_.floatWeights()[k] * model->termStructure_->discount(scf_.floatTimes()[k]);
+		swapRate_ = floatLeg / annuity_;
+	}
+
+	QGLocalvolModel::McCalculator::McCalculator(
+		QGLocalvolModel          *model,  // model cannot be const coz we push into debugLog_
 		const Real               obsTime,
 		const SwapCashFlows&     scf,
 		const Real               annuity,
 		const Real               swapRate,
-		const std::vector<Real>& smileStrikeGrid,
-		std::vector<Real>&       oneOverBSample,  // assume size simulation_->nPaths()
-		std::vector<Real>&       annuitySample,   // assume size simulation_->nPaths()
-		std::vector<Real>&       swapRateSample,  // assume size simulation_->nPaths()
-		std::vector<Real>&       vanillaOptions,  // assume vanillaOptions(smileStrikeGrid.size(), 0.0);
-		Real&                    avgCalcStrikes) {
+		const std::vector<Real>& smileStrikeGrid) 
+		: oneOverBSample_(model->simulation_->nPaths(),0.0),
+		annuitySample_(model->simulation_->nPaths(), 0.0),
+		swapRateSample_(model->simulation_->nPaths(), 0.0),
+		vanillaOptions_(smileStrikeGrid.size(), 0.0),
+		avgCalcStrikes_(0.0) {
 		boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFloatLeg(new MCAnnuity(obsTime, scf.floatTimes(), scf.floatWeights()));
 		boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFixedLeg(new MCAnnuity(obsTime, scf.fixedTimes(), scf.annuityWeights()));
 		boost::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCPayoff::FixedAmount(1.0));
 		boost::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCPayoff::Pay(one, obsTime));
-		for (size_t k = 0; k < simulation_->nPaths(); ++k) {
-			boost::shared_ptr<MCSimulation::Path> p = simulation_->path(k);
-			oneOverBSample[k] = oneAtT->discountedAt(p);
-			annuitySample[k] = mcFixedLeg->at(p);
-			swapRateSample[k] = mcFloatLeg->at(p) / annuitySample[k];
+		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) {
+			boost::shared_ptr<MCSimulation::Path> p = model->simulation_->path(k);
+			oneOverBSample_[k] = oneAtT->discountedAt(p);
+			annuitySample_[k] = mcFixedLeg->at(p);
+			swapRateSample_[k] = mcFloatLeg->at(p) / annuitySample_[k];
 		}
 		// calculate adjusters suksessively
 		Real mcDF = 0.0;
-		for (size_t k = 0; k < simulation_->nPaths(); ++k) mcDF += oneOverBSample[k];
-		mcDF /= simulation_->nPaths();
-		Real adjOneOverB = termStructure()->discount(obsTime) / mcDF;
-		for (size_t k = 0; k < simulation_->nPaths(); ++k) oneOverBSample[k] *= adjOneOverB;
+		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) mcDF += oneOverBSample_[k];
+		mcDF /= model->simulation_->nPaths();
+		Real adjOneOverB = model->termStructure_->discount(obsTime) / mcDF;
+		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) oneOverBSample_[k] *= adjOneOverB;
 		Real mcAnnuity = 0.0;
-		for (size_t k = 0; k < simulation_->nPaths(); ++k) mcAnnuity += (annuitySample[k] * oneOverBSample[k]);
-		mcAnnuity /= simulation_->nPaths();
+		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) mcAnnuity += (annuitySample_[k] * oneOverBSample_[k]);
+		mcAnnuity /= model->simulation_->nPaths();
 		Real adjAnnuity = annuity / mcAnnuity;
-		for (size_t k = 0; k < simulation_->nPaths(); ++k) annuitySample[k] *= adjAnnuity;
+		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) annuitySample_[k] *= adjAnnuity;
 		Real mcFloat = 0.0;
-		for (size_t k = 0; k < simulation_->nPaths(); ++k) mcFloat += (annuitySample[k] * swapRateSample[k] * oneOverBSample[k]);
-		mcFloat /= simulation_->nPaths();
+		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) mcFloat += (annuitySample_[k] * swapRateSample_[k] * oneOverBSample_[k]);
+		mcFloat /= model->simulation_->nPaths();
 		Real adjSwapRate = swapRate - mcFloat / annuity;
-		for (size_t k = 0; k < simulation_->nPaths(); ++k) swapRateSample[k] += adjSwapRate;
+		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) swapRateSample_[k] += adjSwapRate;
 		// find index s.t. strike[idx]>=swapRate
 		size_t callIdx = smileStrikeGrid.size();
 		for (size_t j = smileStrikeGrid.size(); j > 0; --j)
 			if (smileStrikeGrid[j - 1] >= swapRate) callIdx = j - 1; // not very efficient
-
+		
 		// calculate out-of-the-money option prices
-		for (size_t k = 0; k < simulation_->nPaths(); ++k) {
+		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) {
 			// find index in ascending vector, evaluate n s.t. strike[n-1] < s <= strike[n]
-			size_t strikeIdx = minIdx(smileStrikeGrid, swapRateSample[k]);
-			avgCalcStrikes += fabs(1.0*strikeIdx - 1.0*callIdx);
+			size_t strikeIdx = minIdx(smileStrikeGrid, swapRateSample_[k]);
+			avgCalcStrikes_ += fabs(1.0*strikeIdx - 1.0*callIdx);
 			// calculate put option prices
 			// for (size_t j = callIdx; j > strikeIdx; --j) {
 			for (size_t j = strikeIdx; j < callIdx; ++j) {
-				Real value = smileStrikeGrid[j] - swapRateSample[k];
+				Real value = smileStrikeGrid[j] - swapRateSample_[k];
 				if (value < 0.0) {
 					value = 0.0; // better safe
-					if (debugLevel_ > 2) debugLog_.push_back("Warning (put): callIdx = " + std::to_string(callIdx) + ", k = " + std::to_string(k) + ", strikeIdx = " + std::to_string(strikeIdx) + ", j = " + std::to_string(j));
+					if (model->debugLevel_ > 2) model->debugLog_.push_back("Warning (put): callIdx = " + std::to_string(callIdx) + ", k = " + std::to_string(k) + ", strikeIdx = " + std::to_string(strikeIdx) + ", j = " + std::to_string(j));
 				}
-				vanillaOptions[j] += (annuitySample[k] * value*oneOverBSample[k]);
+				vanillaOptions_[j] += (annuitySample_[k] * value*oneOverBSample_[k]);
 			}
 			// calculate call option prices
 			for (size_t j = callIdx; j < strikeIdx; ++j) {
-				Real value = swapRateSample[k] - smileStrikeGrid[j];
+				Real value = swapRateSample_[k] - smileStrikeGrid[j];
 				if (value < 0.0) {
 					value = 0.0; // better safe
-					if (debugLevel_ > 2) debugLog_.push_back("Warning (call): callIdx = " + std::to_string(callIdx) + ", k = " + std::to_string(k) + ", strikeIdx = " + std::to_string(strikeIdx) + ", j = " + std::to_string(j));
+					if (model->debugLevel_ > 2) model->debugLog_.push_back("Warning (call): callIdx = " + std::to_string(callIdx) + ", k = " + std::to_string(k) + ", strikeIdx = " + std::to_string(strikeIdx) + ", j = " + std::to_string(j));
 				}
-				vanillaOptions[j] += (annuitySample[k] * value*oneOverBSample[k]);
+				vanillaOptions_[j] += (annuitySample_[k] * value*oneOverBSample_[k]);
 			}
 		}
-		avgCalcStrikes = avgCalcStrikes / simulation_->nPaths();
-		for (size_t j = 0; j < vanillaOptions.size(); ++j) vanillaOptions[j] = vanillaOptions[j] / simulation_->nPaths() / annuity;
+		avgCalcStrikes_ = avgCalcStrikes_ / model->simulation_->nPaths();
+		for (size_t j = 0; j < vanillaOptions_.size(); ++j) vanillaOptions_[j] = vanillaOptions_[j] / model->simulation_->nPaths() / annuity;
 		// translate put into call prices
-		for (size_t j = 0; j < vanillaOptions.size(); ++j) {
+		for (size_t j = 0; j < vanillaOptions_.size(); ++j) {
 			if (smileStrikeGrid[j] < swapRate) {
-				vanillaOptions[j] = vanillaOptions[j] + swapRate - smileStrikeGrid[j];
+				vanillaOptions_[j] = vanillaOptions_[j] + swapRate - smileStrikeGrid[j];
 			}
 		}
 
-		if (debugLevel_ > 2) {
+		if (model->debugLevel_ > 2) {
 			// brute-force double-check call and put calculation
 			std::vector<Real> vanillaCalls(smileStrikeGrid.size(), 0.0);
 			std::vector<Real> vanillaPuts(smileStrikeGrid.size(), 0.0);
-			for (size_t k = 0; k < simulation_->nPaths(); ++k) {
+			for (size_t k = 0; k < model->simulation_->nPaths(); ++k) {
 				for (size_t j = 0; j < smileStrikeGrid.size(); ++j) {
-					Real call = swapRateSample[k] - smileStrikeGrid[j];
+					Real call = swapRateSample_[k] - smileStrikeGrid[j];
 					Real put = -call;
 					if (call < 0.0) call = 0.0;
 					if (put < 0.0) put = 0.0;
-					vanillaCalls[j] += (annuitySample[k] * call * oneOverBSample[k]);
-					vanillaPuts[j] += (annuitySample[k] * put * oneOverBSample[k]);
+					vanillaCalls[j] += (annuitySample_[k] * call * oneOverBSample_[k]);
+					vanillaPuts[j] += (annuitySample_[k] * put * oneOverBSample_[k]);
 				}
 			}
 			for (size_t j = 0; j < smileStrikeGrid.size(); ++j) {
-				vanillaCalls[j] = vanillaCalls[j] / simulation_->nPaths() / annuity;
-				vanillaPuts[j] = vanillaPuts[j] / simulation_->nPaths() / annuity;
+				vanillaCalls[j] = vanillaCalls[j] / model->simulation_->nPaths() / annuity;
+				vanillaPuts[j] = vanillaPuts[j] / model->simulation_->nPaths() / annuity;
 			}
 			for (size_t j = 0; j < smileStrikeGrid.size(); ++j) {
-				debugLog_.push_back("obsTime = " + std::to_string(obsTime) + ", swapRate = " + std::to_string(swapRate) + ", j = " + std::to_string(j) + ", strike = " + std::to_string(smileStrikeGrid[j]) + ", vanilla = " + std::to_string(vanillaOptions[j]) + ", call = " + std::to_string(vanillaCalls[j]) + ", put = " + std::to_string(vanillaPuts[j]) + ", P/C(bp) = " + std::to_string((vanillaCalls[j] - vanillaPuts[j] - (swapRate - smileStrikeGrid[j]))*1.0e4) + ", (V-C)bp = " + std::to_string((vanillaOptions[j] - vanillaCalls[j])*1.0e4));
+				model->debugLog_.push_back("obsTime = " + std::to_string(obsTime) + ", swapRate = " + std::to_string(swapRate) + ", j = " + std::to_string(j) + ", strike = " + std::to_string(smileStrikeGrid[j]) + ", vanilla = " + std::to_string(vanillaOptions_[j]) + ", call = " + std::to_string(vanillaCalls[j]) + ", put = " + std::to_string(vanillaPuts[j]) + ", P/C(bp) = " + std::to_string((vanillaCalls[j] - vanillaPuts[j] - (swapRate - smileStrikeGrid[j]))*1.0e4) + ", (V-C)bp = " + std::to_string((vanillaOptions_[j] - vanillaCalls[j])*1.0e4));
 			}
 		}
 	}
 
-		inline void QGLocalvolModel::checkMCPrices( const Real               obsTime,
-			                                        const SwapCashFlows&     scf,
-			                                        const Real               annuity,
-			                                        const Real               swapRate,
-			                                        const std::vector<Real>& smileStrikeGrid ) {
-			SwaptionFactory testFactory(obsTime, scf);
-			for (size_t k = 0; k < smileStrikeGrid.size(); ++k) {
-				boost::shared_ptr<MCPayoff> mcCall = testFactory.swaption(smileStrikeGrid[k], 1.0);
-				boost::shared_ptr<MCPayoff> mcPut = testFactory.swaption(smileStrikeGrid[k], -1.0);
-				Real testCall = MCPayoff::Pricer::NPV(std::vector< boost::shared_ptr<MCPayoff> >(1, mcCall), simulation_);
-				Real testPut = MCPayoff::Pricer::NPV(std::vector< boost::shared_ptr<MCPayoff> >(1, mcPut), simulation_);
-				testCall /= annuity;
-				testPut /= annuity;
-				debugLog_.push_back("T = " + std::to_string(obsTime) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(smileStrikeGrid[k]) + ", testCall = " + std::to_string(testCall) + ", testPut = " + std::to_string(testPut) );
-				try {
-					Real callVol = bachelierBlackFormulaImpliedVol(Option::Call, smileStrikeGrid[k], swapRate, obsTime, testCall);
-					Real putVol = bachelierBlackFormulaImpliedVol(Option::Put, smileStrikeGrid[k], swapRate, obsTime, testPut);
-					Real vanVol = volTS_->volatility(obsTime, swapIndex_->tenor(), smileStrikeGrid[k], true);
-					debugLog_.push_back("obsTime = " + std::to_string(obsTime) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(smileStrikeGrid[k]) + ", callVol = " + std::to_string(callVol) + ", putVol = " + std::to_string(putVol) + ", vanVol = " + std::to_string(vanVol));
-				}
-				catch (std::exception e) {
-					std::string what = e.what();
-					debugLog_.push_back("Error: " + what);
-				}
+	QGLocalvolModel::StochvolExpectation::StochvolExpectation(
+			const QGLocalvolModel  *model,
+			const size_t           simIdx,
+		    const Real             lambda,   // lambda = 1.0 / kernelWidth / stdDev
+		    const Real             annuity,
+			const McCalculator&    mcCalc,
+			const std::vector<Real>&  strikeGrid,
+		    Real                  (*kernel)(const Real)
+		)
+			: expectationZCondS_(strikeGrid.size(), 0.0) {
+		// first we need to extract z(T) from the simulation
+		std::vector<Real> stochVarianceSample(model->simulation_->nPaths());
+		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) stochVarianceSample[k] = model->simulation_->observedPath(k)[simIdx][2];
+		// now we can iterate the paths and calculate conditional expectations
+		// E^A[.] = E^Q[ z(T)*q(T) | S(T)=K ] / E^Q[ q(T) | S(T)=K ]
+		// E^Q[.] = sum{ z_i*q_i*Kernel(S_i) } / n
+		// R.-N.-Derivative q(T) = N(0)/An(0) * An(T)/N(T)
+		std::vector<Real> zTimesQGrid(strikeGrid.size(), 0.0);  // numerator
+		std::vector<Real> qGrid(strikeGrid.size(), 0.0);  // denumerator
+		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) {
+			size_t startIdx = minIdx(strikeGrid, mcCalc.swapRateSample()[k] - 1.0/lambda);
+			size_t endIdx = minIdx(strikeGrid, mcCalc.swapRateSample()[k] + 1.0 / lambda);
+			Real q = mcCalc.annuitySample()[k] * mcCalc.oneOverBSample()[k] / annuity;  // N(0)=1
+			for (size_t j = startIdx; j < endIdx; ++j) {
+				Real kernelAtStrike = lambda * (*kernel)(lambda*(mcCalc.swapRateSample()[k] - strikeGrid[j]));
+				zTimesQGrid[j] += stochVarianceSample[k] * q * kernelAtStrike;
+				qGrid[j] += q * kernelAtStrike;
 			}
 		}
+		// finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
+		for (size_t j = 0; j < strikeGrid.size(); ++j) expectationZCondS_[j] = zTimesQGrid[j] / qGrid[j];
+	}
+
+
+
+	inline void QGLocalvolModel::checkMCPrices( const Real               obsTime,
+		                                        const SwapCashFlows&     scf,
+		                                        const Real               annuity,
+		                                        const Real               swapRate,
+		                                        const std::vector<Real>& smileStrikeGrid ) {
+		SwaptionFactory testFactory(obsTime, scf);
+		for (size_t k = 0; k < smileStrikeGrid.size(); ++k) {
+			boost::shared_ptr<MCPayoff> mcCall = testFactory.swaption(smileStrikeGrid[k], 1.0);
+			boost::shared_ptr<MCPayoff> mcPut = testFactory.swaption(smileStrikeGrid[k], -1.0);
+			Real testCall = MCPayoff::Pricer::NPV(std::vector< boost::shared_ptr<MCPayoff> >(1, mcCall), simulation_);
+			Real testPut = MCPayoff::Pricer::NPV(std::vector< boost::shared_ptr<MCPayoff> >(1, mcPut), simulation_);
+			testCall /= annuity;
+			testPut /= annuity;
+			debugLog_.push_back("T = " + std::to_string(obsTime) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(smileStrikeGrid[k]) + ", testCall = " + std::to_string(testCall) + ", testPut = " + std::to_string(testPut) );
+			try {
+				Real callVol = bachelierBlackFormulaImpliedVol(Option::Call, smileStrikeGrid[k], swapRate, obsTime, testCall);
+				Real putVol = bachelierBlackFormulaImpliedVol(Option::Put, smileStrikeGrid[k], swapRate, obsTime, testPut);
+				Real vanVol = volTS_->volatility(obsTime, swapIndex_->tenor(), smileStrikeGrid[k], true);
+				debugLog_.push_back("obsTime = " + std::to_string(obsTime) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(smileStrikeGrid[k]) + ", callVol = " + std::to_string(callVol) + ", putVol = " + std::to_string(putVol) + ", vanVol = " + std::to_string(vanVol));
+			}
+			catch (std::exception e) {
+				std::string what = e.what();
+				debugLog_.push_back("Error: " + what);
+			}
+		}
+	}
 
 
 	void QGLocalvolModelBackwardFlavor::simulateAndCalibrate() {
-		Date today;
-		setUpSimulation(today);
+		Initialiser init(boost::static_pointer_cast<QGLocalvolModelBackwardFlavor>(shared_from_this()));
 		// run simulation and calibration
 		for (size_t idx = 0; idx < times().size(); ++idx) {
 			// simulate next step T[idx-1] to T[idx], note X[] starts at 0
 			simulation_->simulate(idx + 1);
 
 			// specify swap rate at T[idx]
-			Date fixingDate = today + ((BigInteger)ClosestRounding(0)(times()[idx] * 365.0)); // assuming act/365 day counting
-			if (!swapIndex_->isValidFixingDate(fixingDate))	fixingDate = swapIndex_->fixingCalendar().adjust(fixingDate, Following);
-			SwapCashFlows scf(swapIndex_->underlyingSwap(fixingDate), termStructure_, true);        // assume continuous tenor spreads
-			Real annuity = 0.0;
-			for (size_t k = 0; k < scf.fixedTimes().size(); ++k) annuity += scf.annuityWeights()[k] * termStructure()->discount(scf.fixedTimes()[k]);
-			Real floatLeg = 0.0;
-			for (size_t k = 0; k < scf.floatTimes().size(); ++k) floatLeg += scf.floatWeights()[k] * termStructure()->discount(scf.floatTimes()[k]);
-			Real swapRate = floatLeg / annuity;
+			SwapRate swapRate(this, init.today(), times()[idx]);
 
 			// set up smile section and strike grid
 			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);
-			Real stdDev = smileSection->optionPrice(swapRate, Option::Call) / M_1_SQRTPI / M_SQRT_2;
+			Real stdDev = smileSection->optionPrice(swapRate.swapRate(), Option::Call) / M_1_SQRTPI / M_SQRT_2;
 			std::vector<Real> initialStrikeGrid(stdDevGrid_);
-			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate;
+			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate.swapRate();
 
 			// these are the grids used for smile section calculation
 			std::vector<Real> smileStrikeGrid;
@@ -433,7 +477,7 @@ namespace QuantLib {
 				// we only calculate local vol if within [1e-6, 1 - 1e-6] quantile 
 				Real quantile = 1.0 + (callph - callmh) / 2.0 / h;
 				Real d2CalldK2 = (callph + callmh - 2.0*call) / h / h;
-				if (debugLevel_>1) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(initialStrikeGrid[k]) + ", call = " + std::to_string(call) + ", callph = " + std::to_string(callph) + ", callmh = " + std::to_string(callmh) + ", quantile = " + std::to_string(quantile) + ", d2CalldK2 = " + std::to_string(d2CalldK2));
+				if (debugLevel_>1) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate.swapRate()) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(initialStrikeGrid[k]) + ", call = " + std::to_string(call) + ", callph = " + std::to_string(callph) + ", callmh = " + std::to_string(callmh) + ", quantile = " + std::to_string(quantile) + ", d2CalldK2 = " + std::to_string(d2CalldK2));
 				if ((quantile < 1.0e-6) || (quantile > 1.0 - 1.e-6)) {
 					if (debugLevel_>1) debugLog_.push_back("Warning: Skip local vol.");
 					continue;  // skip calculation
@@ -447,24 +491,18 @@ namespace QuantLib {
 				d2CalldK2Grid.push_back(d2CalldK2);
 			}
 			// test calibration
-			if (debugLevel_ > 2) checkMCPrices(times()[idx], scf, annuity, swapRate, initialStrikeGrid); // we might want to evaluate MC swaptions for debugging
-
+			if (debugLevel_ > 2) checkMCPrices(times()[idx], swapRate.scf(), swapRate.annuity(), swapRate.swapRate(), initialStrikeGrid); // we might want to evaluate MC swaptions for debugging
 
 			// calculate MC option prices
 			Time obsTime = (idx>0) ? (times()[idx - 1]) : (0.0);
-			std::vector<Real> oneOverBSample(simulation_->nPaths());
-			std::vector<Real> annuitySample(simulation_->nPaths());
-			std::vector<Real> swapRateSample(simulation_->nPaths());
-			std::vector<Real> vanillaOptions(smileStrikeGrid.size(), 0.0);
-			Real avgCalcStrikes = 0.0;
-			calculateMCPrices(obsTime, scf, annuity, swapRate, smileStrikeGrid, oneOverBSample, annuitySample, swapRateSample, vanillaOptions, avgCalcStrikes);
+			McCalculator mcCalc(this, obsTime, swapRate.scf(), swapRate.annuity(), swapRate.swapRate(), smileStrikeGrid);
 
 			std::vector<Real> strikeGrid;
 			std::vector<Real> dCalldTGrid;
 			std::vector<Real> localVol;
 			// calculate dC/dT and setup final strikes and vols
-			for (size_t j = 0; j < vanillaOptions.size(); ++j) {
-				Real dCalldT = (callGrid[j] - vanillaOptions[j]) / (times()[idx] - obsTime);
+			for (size_t j = 0; j < mcCalc.vanillaOptions().size(); ++j) {
+				Real dCalldT = (callGrid[j] - mcCalc.vanillaOptions()[j]) / (times()[idx] - obsTime);
 				if (dCalldT < 1.0e-8) {
 					if (debugLevel_>1) debugLog_.push_back("Warning: dCalldT = " + std::to_string(dCalldT) + ", Skip local vol.");
 					continue;  // skip calculation
@@ -476,7 +514,7 @@ namespace QuantLib {
 			}
 
 			// logging
-			if (debugLevel_ > 0) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", fixingDate = " + std::to_string(fixingDate.serialNumber()) + ", swapRate = " + std::to_string(swapRate) + ", annuity = " + std::to_string(annuity) + ", stdDev = " + std::to_string(stdDev) + ", avgCalcStrikes = " + std::to_string(avgCalcStrikes));
+			if (debugLevel_ > 0) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", fixingDate = " + std::to_string(swapRate.fixingDate().serialNumber()) + ", swapRate = " + std::to_string(swapRate.swapRate()) + ", annuity = " + std::to_string(swapRate.annuity()) + ", stdDev = " + std::to_string(stdDev) + ", avgCalcStrikes = " + std::to_string(mcCalc.avgCalcStrikes()));
 			if (debugLevel_ > 1) {
 				for (size_t j = 0; j < strikeGrid.size(); ++j) {
 					debugLog_.push_back("strike = " + std::to_string(strikeGrid[j]) + ", dCalldT = " + std::to_string(dCalldTGrid[j]) + ", localVol = " + std::to_string(localVol[j]));
@@ -490,37 +528,25 @@ namespace QuantLib {
 			sigmaS_.push_back(Linear().interpolate(strikeGrid_.back().begin(), strikeGrid_.back().end(), locvolGrid_.back().begin()));
 
 			// set up swap rate model here such that we don't need to care about it during sigma_x calculation
-			std::vector<Real> swapRateModelTimes{ 0.0, times()[idx] };  // gradient observation date is at next grid point
-			sigmaMode_ = Parent; // switch-off sigma_x calculation; we only need yield curve information
-			swapRateModel_ = boost::shared_ptr<QGSwaprateModel>(new QGSwaprateModel(boost::static_pointer_cast<QuasiGaussianModel>(shared_from_this()),
-				scf.floatTimes(), scf.floatWeights(), scf.fixedTimes(), scf.annuityWeights(), swapRateModelTimes, false));
-			sigmaMode_ = Calibration; // switch-on sigma_x calculation for simulation and evolve calls
+			swapRateModel_ = qGSwapRateModel(swapRate.scf(), times()[idx]);
 		}
 	}
 
 	void QGLocalvolModelForwardFlavor::simulateAndCalibrate() {
 		QL_REQUIRE(volTS_->volatilityType() == VolatilityType::Normal, "Normal volatilities required.");
-		Date today;
-		setUpSimulation(today);
+		Initialiser init(boost::static_pointer_cast<QGLocalvolModelBackwardFlavor>(shared_from_this()));
 		simulation_->simulate(1);
 
 		// run actual simulation and calibration
 		for (size_t idx = 1; idx < times().size(); ++idx) {
 			// specify swap rate fixing at T[idx], but observed at T[idx-1]
-			Date fixingDate = today + ((BigInteger)ClosestRounding(0)(times()[idx] * 365.0)); // assuming act/365 day counting
-			if (!swapIndex_->isValidFixingDate(fixingDate))	fixingDate = swapIndex_->fixingCalendar().adjust(fixingDate, Following);
-			SwapCashFlows scf(swapIndex_->underlyingSwap(fixingDate), termStructure_, true);        // assume continuous tenor spreads
-			Real annuity = 0.0;
-			for (size_t k = 0; k < scf.fixedTimes().size(); ++k) annuity += scf.annuityWeights()[k] * termStructure()->discount(scf.fixedTimes()[k]);
-			Real floatLeg = 0.0;
-			for (size_t k = 0; k < scf.floatTimes().size(); ++k) floatLeg += scf.floatWeights()[k] * termStructure()->discount(scf.floatTimes()[k]);
-			Real swapRate = floatLeg / annuity;
+			SwapRate swapRate(this, init.today(), times()[idx]);
 
 			// set up smile section and strike grid
 			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
-			Real stdDev = smileSection->volatility(swapRate) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
+			Real stdDev = smileSection->volatility(swapRate.swapRate()) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
 			std::vector<Real> initialStrikeGrid(stdDevGrid_);
-			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate;
+			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate.swapRate();
 
 			// these are the grids used for smile section calculation
 			std::vector<Real> smileStrikeGrid;
@@ -530,14 +556,14 @@ namespace QuantLib {
 
 				Real h = 1.0e-5; // 0.1bp shift size
 				// basic idea is to approximate forward smile based on terminal smile from vanilla model
-				Real call = bachelierBlackFormula(Option::Call, initialStrikeGrid[k], swapRate, smileSection->volatility(initialStrikeGrid[k])*sqrt(times()[idx - 1]));
-				Real callph = bachelierBlackFormula(Option::Call, initialStrikeGrid[k]+h, swapRate, smileSection->volatility(initialStrikeGrid[k]+h)*sqrt(times()[idx - 1]));
-				Real callmh = bachelierBlackFormula(Option::Call, initialStrikeGrid[k]-h, swapRate, smileSection->volatility(initialStrikeGrid[k]-h)*sqrt(times()[idx - 1]));
+				Real call = bachelierBlackFormula(Option::Call, initialStrikeGrid[k], swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k])*sqrt(times()[idx - 1]));
+				Real callph = bachelierBlackFormula(Option::Call, initialStrikeGrid[k]+h, swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k]+h)*sqrt(times()[idx - 1]));
+				Real callmh = bachelierBlackFormula(Option::Call, initialStrikeGrid[k]-h, swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k]-h)*sqrt(times()[idx - 1]));
 
 				// we only calculate local vol if within [1e-6, 1 - 1e-6] quantile 
 				Real quantile = 1.0 + (callph - callmh) / 2.0 / h;
 				Real d2CalldK2 = (callph + callmh - 2.0*call) / h / h;
-				if (debugLevel_>1) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(initialStrikeGrid[k]) + ", call = " + std::to_string(call) + ", callph = " + std::to_string(callph) + ", callmh = " + std::to_string(callmh) + ", quantile = " + std::to_string(quantile) + ", d2CalldK2 = " + std::to_string(d2CalldK2));
+				if (debugLevel_>1) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate.swapRate()) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(initialStrikeGrid[k]) + ", call = " + std::to_string(call) + ", callph = " + std::to_string(callph) + ", callmh = " + std::to_string(callmh) + ", quantile = " + std::to_string(quantile) + ", d2CalldK2 = " + std::to_string(d2CalldK2));
 				if ((quantile < 1.0e-6) || (quantile > 1.0 - 1.e-6)) {
 					if (debugLevel_>1) debugLog_.push_back("Warning: Skip local vol.");
 					continue;  // skip calculation
@@ -552,25 +578,18 @@ namespace QuantLib {
 				smileStrikeGrid.push_back(initialStrikeGrid[k]);
 				callGrid.push_back(call);
 				d2CalldK2Grid.push_back(d2CalldK2);
-
-				// done!
 			}
 
 			// calculate MC option prices
 			Time obsTime = (idx>0) ? (times()[idx - 1]) : (0.0);  // this should always be T[idx-1] here
-			std::vector<Real> oneOverBSample(simulation_->nPaths());
-			std::vector<Real> annuitySample(simulation_->nPaths());
-			std::vector<Real> swapRateSample(simulation_->nPaths());
-			std::vector<Real> vanillaOptions(smileStrikeGrid.size(), 0.0);
-			Real avgCalcStrikes = 0.0;
-			calculateMCPrices(obsTime, scf, annuity, swapRate, smileStrikeGrid, oneOverBSample, annuitySample, swapRateSample, vanillaOptions, avgCalcStrikes);
+			McCalculator mcCalc(this, obsTime, swapRate.scf(), swapRate.annuity(), swapRate.swapRate(), smileStrikeGrid);
 
 			std::vector<Real> strikeGrid;
 			std::vector<Real> dCalldTGrid;
 			std::vector<Real> localVol;
 			// calculate dC/dT and setup final strikes and vols
-			for (size_t j = 0; j < vanillaOptions.size(); ++j) {
-				Real dCalldT = (callGrid[j] - vanillaOptions[j]) / (times()[idx] - obsTime);
+			for (size_t j = 0; j < mcCalc.vanillaOptions().size(); ++j) {
+				Real dCalldT = (callGrid[j] - mcCalc.vanillaOptions()[j]) / (times()[idx] - obsTime);
 				if (dCalldT < 1.0e-8) {
 					if (debugLevel_>1) debugLog_.push_back("Warning: dCalldT = " + std::to_string(dCalldT) + ", Skip local vol.");
 					continue;  // skip calculation
@@ -582,7 +601,7 @@ namespace QuantLib {
 			}
 
 			// logging
-			if (debugLevel_ > 0) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", fixingDate = " + std::to_string(fixingDate.serialNumber()) + ", swapRate = " + std::to_string(swapRate) + ", annuity = " + std::to_string(annuity) + ", stdDev = " + std::to_string(stdDev) + ", avgCalcStrikes = " + std::to_string(avgCalcStrikes));
+			if (debugLevel_ > 0) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", fixingDate = " + std::to_string(swapRate.fixingDate().serialNumber()) + ", swapRate = " + std::to_string(swapRate.swapRate()) + ", annuity = " + std::to_string(swapRate.annuity()) + ", stdDev = " + std::to_string(stdDev) + ", avgCalcStrikes = " + std::to_string(mcCalc.avgCalcStrikes()));
 			if (debugLevel_ > 1) {
 				for (size_t j = 0; j < strikeGrid.size(); ++j) {
 					debugLog_.push_back("strike = " + std::to_string(strikeGrid[j]) + ", dCalldT = " + std::to_string(dCalldTGrid[j]) + ", localVol = " + std::to_string(localVol[j]));
@@ -596,43 +615,31 @@ namespace QuantLib {
 			sigmaS_.push_back(Linear().interpolate(strikeGrid_.back().begin(), strikeGrid_.back().end(), locvolGrid_.back().begin()));
 
 			// set up swap rate model here such that we don't need to care about it during sigma_x calculation
-			std::vector<Real> swapRateModelTimes{ 0.0, times()[idx-1] };  // gradient observation date is at current grid point
-			sigmaMode_ = Parent; // switch-off sigma_x calculation; we only need yield curve information
-			swapRateModel_ = boost::shared_ptr<QGSwaprateModel>(new QGSwaprateModel(boost::static_pointer_cast<QuasiGaussianModel>(shared_from_this()),
-				scf.floatTimes(), scf.floatWeights(), scf.fixedTimes(), scf.annuityWeights(), swapRateModelTimes, false));
-			sigmaMode_ = Calibration; // switch-on sigma_x calculation for simulation and evolve calls
+			swapRateModel_ = qGSwapRateModel(swapRate.scf(), times()[idx-1]);
 
 			// simulate the next step T[idx-1] to T[idx]
 			simulation_->simulate(idx + 1);
 
 			// test calibration
-			if (debugLevel_ > 2) checkMCPrices(times()[idx], scf, annuity, swapRate, smileStrikeGrid); // we might want to evaluate MC swaptions for debugging
+			if (debugLevel_ > 2) checkMCPrices(times()[idx], swapRate.scf(), swapRate.annuity(), swapRate.swapRate(), smileStrikeGrid); // we might want to evaluate MC swaptions for debugging
 		}
 	}
 
 	void QGLocalvolModelAnalyticFlavor::simulateAndCalibrate() {
 		QL_REQUIRE(volTS_->volatilityType() == VolatilityType::Normal, "Normal volatilities required.");
-		Date today;
-		setUpSimulation(today);
+		Initialiser init(boost::static_pointer_cast<QGLocalvolModelBackwardFlavor>(shared_from_this()));
 		simulation_->simulate(1);
 
 		// run actual simulation and calibration
 		for (size_t idx = 1; idx < times().size(); ++idx) {
 			// specify swap rate fixing at T[idx], but observed at T[idx-1]
-			Date fixingDate = today + ((BigInteger)ClosestRounding(0)(times()[idx] * 365.0)); // assuming act/365 day counting
-			if (!swapIndex_->isValidFixingDate(fixingDate))	fixingDate = swapIndex_->fixingCalendar().adjust(fixingDate, Following);
-			SwapCashFlows scf(swapIndex_->underlyingSwap(fixingDate), termStructure_, true);        // assume continuous tenor spreads
-			Real annuity = 0.0;
-			for (size_t k = 0; k < scf.fixedTimes().size(); ++k) annuity += scf.annuityWeights()[k] * termStructure()->discount(scf.fixedTimes()[k]);
-			Real floatLeg = 0.0;
-			for (size_t k = 0; k < scf.floatTimes().size(); ++k) floatLeg += scf.floatWeights()[k] * termStructure()->discount(scf.floatTimes()[k]);
-			Real swapRate = floatLeg / annuity;
+			SwapRate swapRate(this, init.today(), times()[idx]);
 
 			// set up smile section and strike grid
 			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
-			Real stdDev = smileSection->volatility(swapRate) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
+			Real stdDev = smileSection->volatility(swapRate.swapRate()) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
 			std::vector<Real> initialStrikeGrid(stdDevGrid_);
-			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate;
+			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate.swapRate();
 
 			// these are the grids used for smile section calculation
 			std::vector<Real> smileStrikeGrid;
@@ -642,14 +649,14 @@ namespace QuantLib {
 
 				Real h = 1.0e-5; // 0.1bp shift size
 								 // basic idea is to approximate forward smile based on terminal smile from vanilla model
-				Real call0  = bachelierBlackFormula(Option::Call, initialStrikeGrid[k], swapRate, smileSection->volatility(initialStrikeGrid[k])*sqrt(times()[idx - 1]));
-				Real callph = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] + h, swapRate, smileSection->volatility(initialStrikeGrid[k] + h)*sqrt(times()[idx - 1]));
-				Real callmh = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] - h, swapRate, smileSection->volatility(initialStrikeGrid[k] - h)*sqrt(times()[idx - 1]));
+				Real call0  = bachelierBlackFormula(Option::Call, initialStrikeGrid[k], swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k])*sqrt(times()[idx - 1]));
+				Real callph = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] + h, swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k] + h)*sqrt(times()[idx - 1]));
+				Real callmh = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] - h, swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k] - h)*sqrt(times()[idx - 1]));
 
 				// we only calculate local vol if within [1e-6, 1 - 1e-6] quantile 
 				Real quantile = 1.0 + (callph - callmh) / 2.0 / h;
 				Real d2CalldK2 = (callph + callmh - 2.0*call0) / h / h;
-				if (debugLevel_>1) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(initialStrikeGrid[k]) + ", call0 = " + std::to_string(call0) + ", callph = " + std::to_string(callph) + ", callmh = " + std::to_string(callmh) + ", quantile = " + std::to_string(quantile) + ", d2CalldK2 = " + std::to_string(d2CalldK2));
+				if (debugLevel_>1) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate.swapRate()) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(initialStrikeGrid[k]) + ", call0 = " + std::to_string(call0) + ", callph = " + std::to_string(callph) + ", callmh = " + std::to_string(callmh) + ", quantile = " + std::to_string(quantile) + ", d2CalldK2 = " + std::to_string(d2CalldK2));
 				if ((quantile < 1.0e-6) || (quantile > 1.0 - 1.e-6)) {
 					if (debugLevel_>1) debugLog_.push_back("Warning: Skip local vol.");
 					continue;  // skip calculation
@@ -665,8 +672,6 @@ namespace QuantLib {
 				callGrid0.push_back(call0);
 				callGrid1.push_back(call1);
 				d2CalldK2Grid.push_back(d2CalldK2);
-
-				// done!
 			}
 
 			std::vector<Real> strikeGrid;
@@ -686,7 +691,7 @@ namespace QuantLib {
 			}
 
 			// logging
-			if (debugLevel_ > 0) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", fixingDate = " + std::to_string(fixingDate.serialNumber()) + ", swapRate = " + std::to_string(swapRate) + ", annuity = " + std::to_string(annuity) + ", stdDev = " + std::to_string(stdDev) );
+			if (debugLevel_ > 0) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", fixingDate = " + std::to_string(swapRate.fixingDate().serialNumber()) + ", swapRate = " + std::to_string(swapRate.swapRate()) + ", annuity = " + std::to_string(swapRate.annuity()) + ", stdDev = " + std::to_string(stdDev) );
 			if (debugLevel_ > 1) {
 				for (size_t j = 0; j < strikeGrid.size(); ++j) {
 					debugLog_.push_back("strike = " + std::to_string(strikeGrid[j]) + ", dCalldT = " + std::to_string(dCalldTGrid[j]) + ", localVol = " + std::to_string(localVol[j]));
@@ -700,44 +705,32 @@ namespace QuantLib {
 			sigmaS_.push_back(Linear().interpolate(strikeGrid_.back().begin(), strikeGrid_.back().end(), locvolGrid_.back().begin()));
 
 			// set up swap rate model here such that we don't need to care about it during sigma_x calculation
-			std::vector<Real> swapRateModelTimes{ 0.0, times()[idx - 1] };  // gradient observation date is at current grid point
-			sigmaMode_ = Parent; // switch-off sigma_x calculation; we only need yield curve information
-			swapRateModel_ = boost::shared_ptr<QGSwaprateModel>(new QGSwaprateModel(boost::static_pointer_cast<QuasiGaussianModel>(shared_from_this()),
-				scf.floatTimes(), scf.floatWeights(), scf.fixedTimes(), scf.annuityWeights(), swapRateModelTimes, false));
-			sigmaMode_ = Calibration; // switch-on sigma_x calculation for simulation and evolve calls
+			swapRateModel_ = qGSwapRateModel(swapRate.scf(), times()[idx - 1]);
 
 		    // simulate the next step T[idx-1] to T[idx]
 			simulation_->simulate(idx + 1);
 
 			// test calibration
-			if (debugLevel_ > 2) checkMCPrices(times()[idx], scf, annuity, swapRate, smileStrikeGrid); // we might want to evaluate MC swaptions for debugging
+			if (debugLevel_ > 2) checkMCPrices(times()[idx], swapRate.scf(), swapRate.annuity(), swapRate.swapRate(), smileStrikeGrid); // we might want to evaluate MC swaptions for debugging
 		}
 	}
 
 
 	void QGLocalvolModelMonteCarloFlavor::simulateAndCalibrate() {
 		QL_REQUIRE(volTS_->volatilityType() == VolatilityType::Normal, "Normal volatilities required.");
-		Date today;
-		setUpSimulation(today);
+		Initialiser init(boost::static_pointer_cast<QGLocalvolModelBackwardFlavor>(shared_from_this()));
 		simulation_->simulate(1);
 
 		// run actual simulation and calibration
 		for (size_t idx = 1; idx < times().size(); ++idx) {
 			// specify swap rate fixing at T[idx], but observed at T[idx-1]
-			Date fixingDate = today + ((BigInteger)ClosestRounding(0)(times()[idx] * 365.0)); // assuming act/365 day counting
-			if (!swapIndex_->isValidFixingDate(fixingDate))	fixingDate = swapIndex_->fixingCalendar().adjust(fixingDate, Following);
-			SwapCashFlows scf(swapIndex_->underlyingSwap(fixingDate), termStructure_, true);        // assume continuous tenor spreads
-			Real annuity = 0.0;
-			for (size_t k = 0; k < scf.fixedTimes().size(); ++k) annuity += scf.annuityWeights()[k] * termStructure()->discount(scf.fixedTimes()[k]);
-			Real floatLeg = 0.0;
-			for (size_t k = 0; k < scf.floatTimes().size(); ++k) floatLeg += scf.floatWeights()[k] * termStructure()->discount(scf.floatTimes()[k]);
-			Real swapRate = floatLeg / annuity;
+			SwapRate swapRate(this, init.today(), times()[idx]);
 
 			// set up smile section and strike grid
 			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
-			Real stdDev = smileSection->volatility(swapRate) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
+			Real stdDev = smileSection->volatility(swapRate.swapRate()) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
 			std::vector<Real> initialStrikeGrid(stdDevGrid_);
-			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate;
+			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate.swapRate();
 
 			// these are the grids used for smile section calculation
 			std::vector<Real> smileStrikeGrid;
@@ -747,14 +740,14 @@ namespace QuantLib {
 
 				Real h = 1.0e-5; // 0.1bp shift size
 								 // basic idea is to approximate forward smile based on terminal smile from vanilla model
-				Real call = bachelierBlackFormula(Option::Call, initialStrikeGrid[k], swapRate, smileSection->volatility(initialStrikeGrid[k])*sqrt(times()[idx - 1]));
-				Real callph = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] + h, swapRate, smileSection->volatility(initialStrikeGrid[k] + h)*sqrt(times()[idx - 1]));
-				Real callmh = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] - h, swapRate, smileSection->volatility(initialStrikeGrid[k] - h)*sqrt(times()[idx - 1]));
+				Real call = bachelierBlackFormula(Option::Call, initialStrikeGrid[k], swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k])*sqrt(times()[idx - 1]));
+				Real callph = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] + h, swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k] + h)*sqrt(times()[idx - 1]));
+				Real callmh = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] - h, swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k] - h)*sqrt(times()[idx - 1]));
 
 				// we only calculate local vol if within [1e-6, 1 - 1e-6] quantile 
 				Real quantile = 1.0 + (callph - callmh) / 2.0 / h;
 				Real d2CalldK2 = (callph + callmh - 2.0*call) / h / h;
-				if (debugLevel_>1) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(initialStrikeGrid[k]) + ", call = " + std::to_string(call) + ", callph = " + std::to_string(callph) + ", callmh = " + std::to_string(callmh) + ", quantile = " + std::to_string(quantile) + ", d2CalldK2 = " + std::to_string(d2CalldK2));
+				if (debugLevel_>1) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate.swapRate()) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(initialStrikeGrid[k]) + ", call = " + std::to_string(call) + ", callph = " + std::to_string(callph) + ", callmh = " + std::to_string(callmh) + ", quantile = " + std::to_string(quantile) + ", d2CalldK2 = " + std::to_string(d2CalldK2));
 				if ((quantile < 1.0e-6) || (quantile > 1.0 - 1.e-6)) {
 					if (debugLevel_>1) debugLog_.push_back("Warning: Skip local vol.");
 					continue;  // skip calculation
@@ -769,32 +762,25 @@ namespace QuantLib {
 				smileStrikeGrid.push_back(initialStrikeGrid[k]);
 				callGrid.push_back(call);
 				d2CalldK2Grid.push_back(d2CalldK2);
-
-				// done!
 			}
 
 			// calculate MC option prices
 			Time obsTime = (idx>0) ? (times()[idx - 1]) : (0.0);  // this should always be T[idx-1] here
-			std::vector<Real> oneOverBSample(simulation_->nPaths());
-			std::vector<Real> annuitySample(simulation_->nPaths());
-			std::vector<Real> swapRateSample(simulation_->nPaths());
-			std::vector<Real> vanillaOptions(smileStrikeGrid.size(), 0.0);
-			Real avgCalcStrikes = 0.0;
-			calculateMCPrices(obsTime, scf, annuity, swapRate, smileStrikeGrid, oneOverBSample, annuitySample, swapRateSample, vanillaOptions, avgCalcStrikes);
+			McCalculator mcCalc(this, obsTime, swapRate.scf(), swapRate.annuity(), swapRate.swapRate(), smileStrikeGrid);
 
 			std::vector<Real> strikeGrid;
 			std::vector<Real> dCalldTGrid;
 			std::vector<Real> localVol;
 			// calculate dC/dT and d^2C/dK^2 based on MC prices  and setup final strikes and vols
-			for (size_t j = 1; j < vanillaOptions.size()-1; ++j) { // we can only calculate d^2C/dK^2 for inner grid points
-				Real dCalldT = (callGrid[j] - vanillaOptions[j]) / (times()[idx] - obsTime);
+			for (size_t j = 1; j < mcCalc.vanillaOptions().size()-1; ++j) { // we can only calculate d^2C/dK^2 for inner grid points
+				Real dCalldT = (callGrid[j] - mcCalc.vanillaOptions()[j]) / (times()[idx] - obsTime);
 				if (dCalldT < 1.0e-8) {
 					if (debugLevel_>1) debugLog_.push_back("Warning: dCalldT = " + std::to_string(dCalldT) + ", Skip local vol.");
 					continue;  // skip calculation
 				}
 				// MC-based calculation
-				Real dCalldKph = (vanillaOptions[j+1] - vanillaOptions[j]) / (smileStrikeGrid[j+1] - smileStrikeGrid[j]);
-				Real dCalldKmh = (vanillaOptions[j] - vanillaOptions[j-1]) / (smileStrikeGrid[j] - smileStrikeGrid[j-1]);
+				Real dCalldKph = (mcCalc.vanillaOptions()[j+1] - mcCalc.vanillaOptions()[j]) / (smileStrikeGrid[j+1] - smileStrikeGrid[j]);
+				Real dCalldKmh = (mcCalc.vanillaOptions()[j] - mcCalc.vanillaOptions()[j-1]) / (smileStrikeGrid[j] - smileStrikeGrid[j-1]);
 				Real d2CalldK2mc = (dCalldKph - dCalldKmh) / (smileStrikeGrid[j+1] - smileStrikeGrid[j-1]) * 2.0;
 				if (d2CalldK2mc < 1.0e-8) { // catch numerical issues with mc prices 
 					if (debugLevel_>1) debugLog_.push_back("Warning: d2CalldK2mc = " + std::to_string(d2CalldK2mc) + "Skip local vol.");
@@ -811,7 +797,7 @@ namespace QuantLib {
 			}
 
 			// logging
-			if (debugLevel_ > 0) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", fixingDate = " + std::to_string(fixingDate.serialNumber()) + ", swapRate = " + std::to_string(swapRate) + ", annuity = " + std::to_string(annuity) + ", stdDev = " + std::to_string(stdDev) + ", avgCalcStrikes = " + std::to_string(avgCalcStrikes));
+			if (debugLevel_ > 0) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", fixingDate = " + std::to_string(swapRate.fixingDate().serialNumber()) + ", swapRate = " + std::to_string(swapRate.swapRate()) + ", annuity = " + std::to_string(swapRate.annuity()) + ", stdDev = " + std::to_string(stdDev) + ", avgCalcStrikes = " + std::to_string(mcCalc.avgCalcStrikes()));
 			if (debugLevel_ > 1) {
 				for (size_t j = 0; j < strikeGrid.size(); ++j) {
 					debugLog_.push_back("strike = " + std::to_string(strikeGrid[j]) + ", dCalldT = " + std::to_string(dCalldTGrid[j]) + ", localVol = " + std::to_string(localVol[j]));
@@ -825,65 +811,28 @@ namespace QuantLib {
 			sigmaS_.push_back(Linear().interpolate(strikeGrid_.back().begin(), strikeGrid_.back().end(), locvolGrid_.back().begin()));
 
 			// set up swap rate model here such that we don't need to care about it during sigma_x calculation
-			std::vector<Real> swapRateModelTimes{ 0.0, times()[idx - 1] };  // gradient observation date is at current grid point
-			sigmaMode_ = Parent; // switch-off sigma_x calculation; we only need yield curve information
-			swapRateModel_ = boost::shared_ptr<QGSwaprateModel>(new QGSwaprateModel(boost::static_pointer_cast<QuasiGaussianModel>(shared_from_this()),
-				scf.floatTimes(), scf.floatWeights(), scf.fixedTimes(), scf.annuityWeights(), swapRateModelTimes, false));
-			sigmaMode_ = Calibration; // switch-on sigma_x calculation for simulation and evolve calls
+			swapRateModel_ = qGSwapRateModel(swapRate.scf(), times()[idx - 1]);
 
-									  // simulate the next step T[idx-1] to T[idx]
+			// simulate the next step T[idx-1] to T[idx]
 			simulation_->simulate(idx + 1);
-
-			// test calibration
-			if (debugLevel_ > 2) {
-				// we might want to evaluate MC swaptions for debugging
-				SwaptionFactory testFactory(times()[idx], scf);
-				for (size_t k = 0; k < smileStrikeGrid.size(); ++k) {
-					boost::shared_ptr<MCPayoff> mcCall = testFactory.swaption(smileStrikeGrid[k], 1.0);
-					boost::shared_ptr<MCPayoff> mcPut = testFactory.swaption(smileStrikeGrid[k], -1.0);
-					Real testCall = MCPayoff::Pricer::NPV(std::vector< boost::shared_ptr<MCPayoff> >(1, mcCall), simulation_);
-					Real testPut = MCPayoff::Pricer::NPV(std::vector< boost::shared_ptr<MCPayoff> >(1, mcPut), simulation_);
-					testCall /= annuity;
-					testPut /= annuity;
-					debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(smileStrikeGrid[k]) + ", testCall = " + std::to_string(testCall) + ", testPut = " + std::to_string(testPut) + ", call = " + std::to_string(callGrid[k]));
-					try {
-						Real callVol = bachelierBlackFormulaImpliedVol(Option::Call, smileStrikeGrid[k], swapRate, times()[idx], testCall);
-						Real putVol = bachelierBlackFormulaImpliedVol(Option::Put, smileStrikeGrid[k], swapRate, times()[idx], testPut);
-						Real vanVol = bachelierBlackFormulaImpliedVol(Option::Call, smileStrikeGrid[k], swapRate, times()[idx], callGrid[k]);
-						debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(smileStrikeGrid[k]) + ", callVol = " + std::to_string(callVol) + ", putVol = " + std::to_string(putVol) + ", vanVol = " + std::to_string(vanVol));
-					}
-					catch (std::exception e) {
-						std::string what = e.what();
-						debugLog_.push_back("Error: " + what);
-					}
-				}
-			}
 		}
 	}
 
 	void QGLocalvolModelForwardStochVolFlavor::simulateAndCalibrate() {
 		QL_REQUIRE(volTS_->volatilityType() == VolatilityType::Normal, "Normal volatilities required.");
-		Date today;
-		setUpSimulation(today);
+		Initialiser init(boost::static_pointer_cast<QGLocalvolModelBackwardFlavor>(shared_from_this()));
 		simulation_->simulate(1);
 
 		// run actual simulation and calibration
 		for (size_t idx = 1; idx < times().size(); ++idx) {
 			// specify swap rate fixing at T[idx], but observed at T[idx-1]
-			Date fixingDate = today + ((BigInteger)ClosestRounding(0)(times()[idx] * 365.0)); // assuming act/365 day counting
-			if (!swapIndex_->isValidFixingDate(fixingDate))	fixingDate = swapIndex_->fixingCalendar().adjust(fixingDate, Following);
-			SwapCashFlows scf(swapIndex_->underlyingSwap(fixingDate), termStructure_, true);        // assume continuous tenor spreads
-			Real annuity = 0.0;
-			for (size_t k = 0; k < scf.fixedTimes().size(); ++k) annuity += scf.annuityWeights()[k] * termStructure()->discount(scf.fixedTimes()[k]);
-			Real floatLeg = 0.0;
-			for (size_t k = 0; k < scf.floatTimes().size(); ++k) floatLeg += scf.floatWeights()[k] * termStructure()->discount(scf.floatTimes()[k]);
-			Real swapRate = floatLeg / annuity;
+			SwapRate swapRate(this, init.today(), times()[idx]);
 
 			// set up smile section and strike grid
 			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
-			Real stdDev = smileSection->volatility(swapRate) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
+			Real stdDev = smileSection->volatility(swapRate.swapRate()) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
 			std::vector<Real> initialStrikeGrid(stdDevGrid_);
-			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate;
+			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate.swapRate();
 
 			// these are the grids used for smile section calculation
 			std::vector<Real> smileStrikeGrid;
@@ -893,14 +842,14 @@ namespace QuantLib {
 
 				Real h = 1.0e-5; // 0.1bp shift size
 								 // basic idea is to approximate forward smile based on terminal smile from vanilla model
-				Real call = bachelierBlackFormula(Option::Call, initialStrikeGrid[k], swapRate, smileSection->volatility(initialStrikeGrid[k])*sqrt(times()[idx - 1]));
-				Real callph = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] + h, swapRate, smileSection->volatility(initialStrikeGrid[k] + h)*sqrt(times()[idx - 1]));
-				Real callmh = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] - h, swapRate, smileSection->volatility(initialStrikeGrid[k] - h)*sqrt(times()[idx - 1]));
+				Real call = bachelierBlackFormula(Option::Call, initialStrikeGrid[k], swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k])*sqrt(times()[idx - 1]));
+				Real callph = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] + h, swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k] + h)*sqrt(times()[idx - 1]));
+				Real callmh = bachelierBlackFormula(Option::Call, initialStrikeGrid[k] - h, swapRate.swapRate(), smileSection->volatility(initialStrikeGrid[k] - h)*sqrt(times()[idx - 1]));
 
 				// we only calculate local vol if within [1e-6, 1 - 1e-6] quantile 
 				Real quantile = 1.0 + (callph - callmh) / 2.0 / h;
 				Real d2CalldK2 = (callph + callmh - 2.0*call) / h / h;
-				if (debugLevel_>1) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(initialStrikeGrid[k]) + ", call = " + std::to_string(call) + ", callph = " + std::to_string(callph) + ", callmh = " + std::to_string(callmh) + ", quantile = " + std::to_string(quantile) + ", d2CalldK2 = " + std::to_string(d2CalldK2));
+				if (debugLevel_>1) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", swapRate = " + std::to_string(swapRate.swapRate()) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(initialStrikeGrid[k]) + ", call = " + std::to_string(call) + ", callph = " + std::to_string(callph) + ", callmh = " + std::to_string(callmh) + ", quantile = " + std::to_string(quantile) + ", d2CalldK2 = " + std::to_string(d2CalldK2));
 				if ((quantile < 1.0e-6) || (quantile > 1.0 - 1.e-6)) {
 					if (debugLevel_>1) debugLog_.push_back("Warning: Skip local vol.");
 					continue;  // skip calculation
@@ -921,19 +870,14 @@ namespace QuantLib {
 
 			// calculate MC option prices
 			Time obsTime = (idx>0) ? (times()[idx - 1]) : (0.0);  // this should always be T[idx-1] here
-			std::vector<Real> oneOverBSample(simulation_->nPaths());
-			std::vector<Real> annuitySample(simulation_->nPaths());
-			std::vector<Real> swapRateSample(simulation_->nPaths());
-			std::vector<Real> vanillaOptions(smileStrikeGrid.size(), 0.0);
-			Real avgCalcStrikes = 0.0;
-			calculateMCPrices(obsTime, scf, annuity, swapRate, smileStrikeGrid, oneOverBSample, annuitySample, swapRateSample, vanillaOptions, avgCalcStrikes);
+			McCalculator mcCalc(this, obsTime, swapRate.scf(), swapRate.annuity(), swapRate.swapRate(), smileStrikeGrid);
 
 			std::vector<Real> strikeGrid;
 			std::vector<Real> dCalldTGrid;
 			std::vector<Real> localVol;
 			// calculate dC/dT and setup final strikes and vols
-			for (size_t j = 0; j < vanillaOptions.size(); ++j) {
-				Real dCalldT = (callGrid[j] - vanillaOptions[j]) / (times()[idx] - obsTime);
+			for (size_t j = 0; j < mcCalc.vanillaOptions().size(); ++j) {
+				Real dCalldT = (callGrid[j] - mcCalc.vanillaOptions()[j]) / (times()[idx] - obsTime);
 				if (dCalldT < 1.0e-8) {
 					if (debugLevel_>1) debugLog_.push_back("Warning: dCalldT = " + std::to_string(dCalldT) + ", Skip local vol.");
 					continue;  // skip calculation
@@ -945,56 +889,32 @@ namespace QuantLib {
 			}
 
 			// logging
-			if (debugLevel_ > 0) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", fixingDate = " + std::to_string(fixingDate.serialNumber()) + ", swapRate = " + std::to_string(swapRate) + ", annuity = " + std::to_string(annuity) + ", stdDev = " + std::to_string(stdDev) + ", avgCalcStrikes = " + std::to_string(avgCalcStrikes));
+			if (debugLevel_ > 0) debugLog_.push_back("T = " + std::to_string(times()[idx]) + ", fixingDate = " + std::to_string(swapRate.fixingDate().serialNumber()) + ", swapRate = " + std::to_string(swapRate.swapRate()) + ", annuity = " + std::to_string(swapRate.annuity()) + ", stdDev = " + std::to_string(stdDev) + ", avgCalcStrikes = " + std::to_string(mcCalc.avgCalcStrikes()));
 			if (debugLevel_ > 1) {
 				for (size_t j = 0; j < strikeGrid.size(); ++j) {
 					debugLog_.push_back("strike = " + std::to_string(strikeGrid[j]) + ", dCalldT = " + std::to_string(dCalldTGrid[j]) + ", localVol = " + std::to_string(localVol[j]));
 				}
 			}
 
-			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
 
-			// first we need to extract z(T) from the simulation
-			std::vector<Real> stochVarianceSample(simulation_->nPaths());
-			for (size_t k = 0; k < simulation_->nPaths(); ++k) stochVarianceSample[k] = simulation_->observedPath(k)[idx][2];
-			// now we can iterate the paths and calculate conditional expectations
-			// E^A[.] = E^Q[ z(T)*q(T) | S(T)=K ] / E^Q[ q(T) | S(T)=K ]
-			// E^Q[.] = sum{ z_i*q_i*Kernel(S_i) } / n
-			// R.-N.-Derivative q(T) = N(0)/An(0) * An(T)/N(T)
-			std::vector<Real> zTimesQGrid(strikeGrid.size(), 0.0);  // numerator
-			std::vector<Real> qGrid(strikeGrid.size(), 0.0);  // denumerator
-			Real lambda = 1.0 / kernelWidth_ / stdDev;
-			for (size_t k = 0; k < simulation_->nPaths(); ++k) {
-				size_t startIdx = minIdx(strikeGrid, swapRateSample[k] - kernelWidth_*stdDev);
-				size_t endIdx   = minIdx(strikeGrid, swapRateSample[k] + kernelWidth_*stdDev);
-				Real q = annuitySample[k] * oneOverBSample[k] / annuity;  // N(0)=1
-				for (size_t j = startIdx; j < endIdx; ++j) {
-					Real kernelAtStrike = lambda * kernel(lambda*(swapRateSample[k] - strikeGrid[j]));
-					zTimesQGrid[j] += stochVarianceSample[k] * q * kernelAtStrike;
-					qGrid[j] += q * kernelAtStrike;
-				}
-			}
+			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
+			StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);
 			// finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
-			for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / zTimesQGrid[j] * qGrid[j];
+			for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];
 
 			// set up interpolation
-			// sigmaS_.push_back(LinearInterpolation(strikeGrid.begin(), strikeGrid.end(), localVol.begin()));
 			strikeGrid_.push_back(strikeGrid);
 			locvolGrid_.push_back(localVol);
 			sigmaS_.push_back(Linear().interpolate(strikeGrid_.back().begin(), strikeGrid_.back().end(), locvolGrid_.back().begin()));
 
 			// set up swap rate model here such that we don't need to care about it during sigma_x calculation
-			std::vector<Real> swapRateModelTimes{ 0.0, times()[idx - 1] };  // gradient observation date is at current grid point
-			sigmaMode_ = Parent; // switch-off sigma_x calculation; we only need yield curve information
-			swapRateModel_ = boost::shared_ptr<QGSwaprateModel>(new QGSwaprateModel(boost::static_pointer_cast<QuasiGaussianModel>(shared_from_this()),
-				scf.floatTimes(), scf.floatWeights(), scf.fixedTimes(), scf.annuityWeights(), swapRateModelTimes, false));
-			sigmaMode_ = Calibration; // switch-on sigma_x calculation for simulation and evolve calls
+			swapRateModel_ = qGSwapRateModel(swapRate.scf(), times()[idx - 1]);
 
 			// simulate the next step T[idx-1] to T[idx]
 			simulation_->simulate(idx + 1);
 
 			// test calibration
-			if (debugLevel_ > 2) checkMCPrices(times()[idx], scf, annuity, swapRate, smileStrikeGrid); // we might want to evaluate MC swaptions for debugging
+			if (debugLevel_ > 2) checkMCPrices(times()[idx], swapRate.scf(), swapRate.annuity(), swapRate.swapRate(), smileStrikeGrid); // we might want to evaluate MC swaptions for debugging
 		}
 	}
 
