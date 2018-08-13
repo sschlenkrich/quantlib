@@ -56,6 +56,10 @@ namespace QuantLib {
 		std::vector < std::vector<Real> > strikeGrid_;  // we need to separately store data for interpolation
 		std::vector < std::vector<Real> > locvolGrid_;
 
+		// stochastic volatility uses kernel-based conditional expectation evaluation
+		bool calcStochVolAdjustment_;  // switch adjustment on/off independent of vol-of-vol marking
+		Real kernelWidth_; // kernel width for conditional expectation calculation in terms of stdDevs
+		inline static Real kernel(const Real u) { return ((fabs(u) < 1.0) ? (1.0 - fabs(u)) : (0.0)); }
 
 		// we have three modes for sigma_x calculation (during and after calibration phase)
 		enum { 
@@ -180,6 +184,8 @@ namespace QuantLib {
 			            const boost::shared_ptr<SwapIndex>&                    swapIndex,
 			            const std::vector<Real>&                               times,
 			            const std::vector<Real>&                               stdDevGrid,
+			            const bool                                             calcStochVolAdjustment,
+			            const Real                                             kernelWidth,
 			            const size_t                                           nPaths,
 			            const BigNatural                                       seed = 1234,
 			            const size_t                                           debugLevel = 1);
@@ -208,13 +214,17 @@ namespace QuantLib {
 			const Handle<YieldTermStructure>&                      termStructure,
 			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
 			const Real                                             chi,
+			const Real                                             theta,
+			const Real                                             eta,
 			const boost::shared_ptr<SwapIndex>&                    swapIndex,
 			const std::vector<Real>&                               times,
 			const std::vector<Real>&                               stdDevGrid,
+			const bool                                             calcStochVolAdjustment,
+			const Real                                             kernelWidth,
 			const size_t                                           nPaths,
 			const BigNatural                                       seed = 1234,
 			const size_t                                           debugLevel = 1)
-			: QGLocalvolModel(termStructure, volTS, chi, swapIndex, times, stdDevGrid, nPaths, seed, debugLevel) {}
+			: QGLocalvolModel(termStructure, volTS, chi, theta, eta, swapIndex, times, stdDevGrid, calcStochVolAdjustment, kernelWidth, nPaths, seed, debugLevel) {}
 		// do the actual calculation
 		virtual void simulateAndCalibrate();
 	};
@@ -226,13 +236,17 @@ namespace QuantLib {
 			const Handle<YieldTermStructure>&                      termStructure,
 			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
 			const Real                                             chi,
+			const Real                                             theta,
+			const Real                                             eta,
 			const boost::shared_ptr<SwapIndex>&                    swapIndex,
 			const std::vector<Real>&                               times,
 			const std::vector<Real>&                               stdDevGrid,
+			const bool                                             calcStochVolAdjustment,
+			const Real                                             kernelWidth,
 			const size_t                                           nPaths,
 			const BigNatural                                       seed = 1234,
 			const size_t                                           debugLevel = 1)
-			: QGLocalvolModel(termStructure, volTS, chi, swapIndex, times, stdDevGrid, nPaths, seed, debugLevel) {}
+			: QGLocalvolModel(termStructure, volTS, chi, theta, eta, swapIndex, times, stdDevGrid, calcStochVolAdjustment, kernelWidth, nPaths, seed, debugLevel) {}
 		// do the actual calculation
 		virtual void simulateAndCalibrate();
 	};
@@ -262,13 +276,17 @@ namespace QuantLib {
 			const Handle<YieldTermStructure>&                      termStructure,
 			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
 			const Real                                             chi,
+			const Real                                             theta,
+			const Real                                             eta,
 			const boost::shared_ptr<SwapIndex>&                    swapIndex,
 			const std::vector<Real>&                               times,
 			const std::vector<Real>&                               stdDevGrid,
+			const bool                                             calcStochVolAdjustment,
+			const Real                                             kernelWidth,
 			const size_t                                           nPaths,
 			const BigNatural                                       seed = 1234,
 			const size_t                                           debugLevel = 1)
-			: QGLocalvolModel(termStructure, volTS, chi, swapIndex, times, stdDevGrid, nPaths, seed, debugLevel) {}
+			: QGLocalvolModel(termStructure, volTS, chi, theta, eta, swapIndex, times, stdDevGrid, calcStochVolAdjustment, kernelWidth, nPaths, seed, debugLevel) {}
 		// do the actual calculation
 		virtual void simulateAndCalibrate();
 	};
@@ -276,8 +294,6 @@ namespace QuantLib {
 	// alternative forward-looking calibration methodology for QGLocalvolModel
 	class QGLocalvolModelForwardStochVolFlavor : public QGLocalvolModel {
 	private:
-		Real kernelWidth_; // kernel width for conditional expectation calculation in terms of stdDevs
-		inline static Real kernel(const Real u) { return ((fabs(u) < 1.0) ? (1.0-fabs(u)) : (0.0)); }
 	public:
 		QGLocalvolModelForwardStochVolFlavor(
 			const Handle<YieldTermStructure>&                      termStructure,
@@ -292,7 +308,7 @@ namespace QuantLib {
 			const size_t                                           nPaths,
 			const BigNatural                                       seed = 1234,
 			const size_t                                           debugLevel = 1)
-			: QGLocalvolModel(termStructure, volTS, chi, theta, eta, swapIndex, times, stdDevGrid, nPaths, seed, debugLevel), kernelWidth_(kernelWidth) {}
+			: QGLocalvolModel(termStructure, volTS, chi, theta, eta, swapIndex, times, stdDevGrid, true, kernelWidth, nPaths, seed, debugLevel) {}
 		// do the actual calculation
 		virtual void simulateAndCalibrate();
 	};

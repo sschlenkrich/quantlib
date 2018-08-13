@@ -34,7 +34,8 @@ namespace QuantLib {
 			std::vector< std::vector<Real> >(1, std::vector<Real>(1, 1.0)),             // Gamma
 			0.1                                                                         // theta
 		),
-		volTS_(volTS), swapIndex_(swapIndex), stdDevGrid_(stdDevGrid), nPaths_(nPaths), seed_(seed), debugLevel_(debugLevel){
+		volTS_(volTS), swapIndex_(swapIndex), stdDevGrid_(stdDevGrid), nPaths_(nPaths), seed_(seed), debugLevel_(debugLevel),
+		calcStochVolAdjustment_(false), kernelWidth_(0.0) {
         // we can't calibrate here because *this needs to be assigned to shared pointer first
 	}
 
@@ -47,6 +48,8 @@ namespace QuantLib {
 		const boost::shared_ptr<SwapIndex>&                    swapIndex,
 		const std::vector< Real >&                             times,
 		const std::vector<Real>&                               stdDevGrid,
+		const bool                                             calcStochVolAdjustment,
+		const Real                                             kernelWidth,
 		const size_t                                           nPaths,
 		const BigNatural                                       seed,
 		const size_t                                           debugLevel)
@@ -60,7 +63,8 @@ namespace QuantLib {
 			std::vector< std::vector<Real> >(1, std::vector<Real>(1, 1.0)),             // Gamma
 			theta                                                                       // theta
 		),
-		volTS_(volTS), swapIndex_(swapIndex), stdDevGrid_(stdDevGrid), nPaths_(nPaths), seed_(seed), debugLevel_(debugLevel) {
+		volTS_(volTS), swapIndex_(swapIndex), stdDevGrid_(stdDevGrid), calcStochVolAdjustment_(calcStochVolAdjustment),
+		kernelWidth_(kernelWidth), nPaths_(nPaths), seed_(seed), debugLevel_(debugLevel) {
 		// we can't calibrate here because *this needs to be assigned to shared pointer first
 	}
 
@@ -521,6 +525,12 @@ namespace QuantLib {
 				}
 			}
 
+			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
+			if (calcStochVolAdjustment_) {
+				StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);				
+				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];  // finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
+			}
+
 			// set up interpolation
 			// sigmaS_.push_back(LinearInterpolation(strikeGrid.begin(), strikeGrid.end(), localVol.begin()));
 			strikeGrid_.push_back(strikeGrid);
@@ -606,6 +616,12 @@ namespace QuantLib {
 				for (size_t j = 0; j < strikeGrid.size(); ++j) {
 					debugLog_.push_back("strike = " + std::to_string(strikeGrid[j]) + ", dCalldT = " + std::to_string(dCalldTGrid[j]) + ", localVol = " + std::to_string(localVol[j]));
 				}
+			}
+
+			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
+			if (calcStochVolAdjustment_) {
+				StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);
+				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];  // finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
 			}
 
 			// set up interpolation
@@ -802,6 +818,12 @@ namespace QuantLib {
 				for (size_t j = 0; j < strikeGrid.size(); ++j) {
 					debugLog_.push_back("strike = " + std::to_string(strikeGrid[j]) + ", dCalldT = " + std::to_string(dCalldTGrid[j]) + ", localVol = " + std::to_string(localVol[j]));
 				}
+			}
+
+			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
+			if (calcStochVolAdjustment_) {
+				StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);
+				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];  // finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
 			}
 
 			// set up interpolation
