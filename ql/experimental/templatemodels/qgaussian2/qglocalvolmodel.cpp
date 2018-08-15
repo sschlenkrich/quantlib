@@ -277,7 +277,7 @@ namespace QuantLib {
 
 	// setup swap rate etc. for given time point
 	QGLocalvolModel::SwapRate::SwapRate(const QGLocalvolModel *model, const Date today, const Real fixingTime) {
-		Date fixingDate_ = today + ((BigInteger)ClosestRounding(0)(fixingTime * 365.0)); // assuming act/365 day counting
+		fixingDate_ = today + ((BigInteger)ClosestRounding(0)(fixingTime * 365.0)); // assuming act/365 day counting
 		if (!model->swapIndex_->isValidFixingDate(fixingDate_)) fixingDate_ = model->swapIndex_->fixingCalendar().adjust(fixingDate_, Following);
 		scf_ = SwapCashFlows(model->swapIndex_->underlyingSwap(fixingDate_), model->termStructure_, true);        // assume continuous tenor spreads
 		annuity_ = 0.0;

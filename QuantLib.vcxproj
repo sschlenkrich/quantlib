@@ -632,6 +632,7 @@
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgaverageswapratemodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qglocalvolmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgswapratemodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\quasigaussianmodel2T.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\stochvol\quadraticlvsvmodelT.hpp" />
@@ -2014,6 +2015,7 @@
     <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglocalvolmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\stochvol\stochvolcalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolsmilesection.cpp" />
