@@ -20,6 +20,7 @@ namespace QuantLib {
 	class QGLSVModel : public QGLocalvolModel {
     protected:
         size_t nStrikes_;
+		Real   svKernelScaling_;
 	public:
 		QGLSVModel(
 			const Handle<YieldTermStructure>&                      termStructure,
@@ -31,10 +32,12 @@ namespace QuantLib {
 			const std::vector<Real>&                               times,
 			const size_t                                           nStrikes,
 			const bool                                             calcStochVolAdjustment,
+			const Real                                             kernelWidth,       // 1.06 N^0.2, see Silverman's rule of thumb
+			const Real                                             svKernelScaling,   // ~3.0, smooth conditional expectation typically requires larger kernel width
 			const size_t                                           nPaths,
 			const BigNatural                                       seed = 1234,
 			const size_t                                           debugLevel = 1)
-			: QGLocalvolModel(termStructure, volTS, chi, theta, eta, swapIndex, times, std::vector<Real>(), calcStochVolAdjustment, 0.0, nPaths, seed, debugLevel), nStrikes_(nStrikes) {}
+			: QGLocalvolModel(termStructure, volTS, chi, theta, eta, swapIndex, times, std::vector<Real>(), calcStochVolAdjustment, kernelWidth, nPaths, seed, debugLevel), nStrikes_(nStrikes), svKernelScaling_(svKernelScaling) {}
 		// do the actual calculation
         
 		virtual void simulateAndCalibrate();

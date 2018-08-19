@@ -24,6 +24,21 @@ namespace QuantLib {
 				return (*vector_)[a] < (*vector_)[b];
 			}
 		};
+
+		inline size_t minIdxSorted(const std::vector<Real>& X, const std::vector<size_t>& sort, const Real x) {
+			if (x <= X[sort[0]]) return 0;
+			if (x > X[sort.back()]) return X.size();
+			// bisection search
+			size_t a = 0, b = X.size() - 1;
+			while (b - a > 1) {
+				size_t s = (a + b) / 2;
+				if (x <= X[sort[s]]) b = s;
+				else           a = s;
+			}
+			return b;
+		}
+
+		inline Real triangularKernel(const Real u) { return ((fabs(u) < 1.0) ? (1.0 - fabs(u)) : (0.0)); }
 	}
 
 	void QGLSVModel::simulateAndCalibrate() {
@@ -99,8 +114,12 @@ namespace QuantLib {
 
 			// calculate call prices and probability function
 			startTime = std::chrono::steady_clock::now();
+			Real stdDev = 0.0;
+			for (size_t k = 0; k < simulation_->nPaths(); k++) stdDev += swapRateSample[k] * swapRateSample[k] * annuitySample[k] * oneOverBSample[k];  // including R.-N.-derivative
+			stdDev = sqrt(stdDev / simulation_->nPaths() / swapRate.annuity() - swapRate.swapRate()*swapRate.swapRate());  // Var[X] = E[X^2] - E[x]^2			
 			std::vector<Real> mcCall(nStrikes_,0.0);
-			std::vector<Real> mcProb(nStrikes_,0.0);
+			std::vector<Real> mcProb(nStrikes_,0.0);   // this is only for debugging
+			std::vector<Real> mcDens(nStrikes_, 0.0);
 			Real sumOfRNDerivative = 0.0;
 			for (size_t k=strikes.size(); k>0; --k) {
 				if (k < strikes.size()) mcCall[k - 1] = mcCall[k] + sumOfRNDerivative*(strikes[k] - strikes[k - 1]);
@@ -115,14 +134,23 @@ namespace QuantLib {
 					mcCall[k - 1] += radonNikodymDerivative * call;
 					mcProb[k - 1] -= radonNikodymDerivative;
 				}
+				// calculate density including change of meassure
+				Real h = kernelWidth_ * stdDev;  // effective kernel width for density calculation
+				size_t loIdxDens = minIdxSorted(swapRateSample, sorted, strikes[k - 1] - h);
+				size_t upIdxDens = minIdxSorted(swapRateSample, sorted, strikes[k - 1] + h);
+				for (size_t j = loIdxDens; j < upIdxDens; ++j) {
+					Real radonNikodymDerivative = annuitySample[sorted[j]] * oneOverBSample[sorted[j]] / swapRate.annuity();
+					mcDens[k - 1] += radonNikodymDerivative * triangularKernel((swapRateSample[sorted[j]] - strikes[k - 1]) / h) / h;
+				}
 			}
 			for (size_t k = 0; k < strikes.size(); ++k) mcCall[k] /= simulation_->nPaths();
 			for (size_t k = 0; k < strikes.size(); ++k) mcProb[k] /= simulation_->nPaths();
+			for (size_t k = 0; k < strikes.size(); ++k) mcDens[k] /= simulation_->nPaths();
 			compTime["Pricing"] += std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count();
 
 			// calculate density via monotonic interpolaion
 			startTime = std::chrono::steady_clock::now();
-			Interpolation probInterpolation = MonotonicCubicNaturalSpline(strikes.begin(), strikes.end(), mcProb.begin());
+			Interpolation probInterpolation = AkimaCubicInterpolation(strikes.begin(), strikes.end(), mcProb.begin());
 			compTime["Interp"] += std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count();
 
 			// calculate local volatility
@@ -130,13 +158,15 @@ namespace QuantLib {
 			std::vector<Real> smileCall(nStrikes_, 0.0);
 			std::vector<Real> dCalldT(nStrikes_, 0.0);
 			std::vector<Real> d2CalldK2(nStrikes_, 0.0);
+			std::vector<Real> dProbdK(nStrikes_, 0.0);  // debugging and benchmarking
 			std::vector<Real> tmpStrikes;
 			std::vector<Real> tmpLocalVol;
 			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);
 			for (size_t k = 0; k < strikes.size(); ++k) {
 				smileCall[k] = smileSection->optionPrice(strikes[k], Option::Call);
 				dCalldT[k] = (smileCall[k] - mcCall[k]) / (times()[idx] - times()[idx - 1]);
-				d2CalldK2[k] = probInterpolation.derivative(strikes[k], true);
+				dProbdK[k] = probInterpolation.derivative(strikes[k]); 
+				d2CalldK2[k] = mcDens[k];
 				if (dCalldT[k] < 1.0e-8) {
 					if (debugLevel_ > 1) debugLog_.push_back("Warning! Skip local vol at T: " + std::to_string(times()[idx - 1]) + ", k: " + std::to_string(k) + ", K: " + std::to_string(strikes[k]) + ", mcCall: " + std::to_string(mcCall[k]) + ", smileCall: " + std::to_string(smileCall[k]));
 					continue;
@@ -165,14 +195,12 @@ namespace QuantLib {
 				std::vector<Real> zTimesQGrid(nStrikes_, 0.0);  // numerator
 				std::vector<Real> qGrid(nStrikes_, 0.0);  // denumerator
 				for (size_t k = 0; k < strikes.size(); ++k) {
-					size_t loIdx = (k == 0) ? (0) : (strikeIdx[k - 1]);
-					size_t upIdx = (k == strikes.size()-1) ? (simulation_->nPaths()-1) : (strikeIdx[k + 1]);
-					Real widthUp = swapRateSample[sorted[upIdx]] - strikes[k];
-					Real widthLo = strikes[k] - swapRateSample[sorted[loIdx]];
-					Real kernelWidth = (widthUp < widthLo) ? (widthUp) : (widthLo); // min(.,.)
-					for (size_t j = loIdx; j <= upIdx; ++j) {
+					Real h = svKernelScaling_ * kernelWidth_ * stdDev;  // effective kernel width for density calculation
+					size_t loIdx = minIdxSorted(swapRateSample, sorted, strikes[k] - h);
+					size_t upIdx = minIdxSorted(swapRateSample, sorted, strikes[k] + h);
+					for (size_t j = loIdx; j < upIdx; ++j) {
 						Real radonNikodymDerivative = annuitySample[sorted[j]] * oneOverBSample[sorted[j]] / swapRate.annuity();
-						Real kernelAtStrike = (*kernel)((swapRateSample[sorted[j]] - strikes[k])/ kernelWidth) / kernelWidth;
+						Real kernelAtStrike = triangularKernel((swapRateSample[sorted[j]] - strikes[k])/ h) / h;
 						zTimesQGrid[k] += stochVarianceSample[sorted[j]] * radonNikodymDerivative * kernelAtStrike;
 						qGrid[k] += radonNikodymDerivative * kernelAtStrike;
 					}
@@ -200,7 +228,7 @@ namespace QuantLib {
 			compTime["Simul"] += std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count();
 
 			if (debugLevel_ > 0) debugLog_.push_back("T = " + std::to_string(times()[idx-1]) + ", fixingDate = " + std::to_string(swapRate.fixingDate().serialNumber()) + ", swapRate = " + std::to_string(swapRate.swapRate()) + ", annuity = " + std::to_string(swapRate.annuity()));
-			if (debugLevel_ > 1) for (size_t k = 0; k < strikes.size(); ++k) debugLog_.push_back("T = " + std::to_string(times()[idx - 1]) + ", k: " + std::to_string(k) + ", K: " + std::to_string(strikes[k]) + ", dCdT: " + std::to_string(dCalldT[k]) + ", d2CdK2: " + std::to_string(d2CalldK2[k]) + ", lVol: " + std::to_string(localVol[k]) + ", E[z|S]: " + std::to_string(expectationZCondS[k]));
+			if (debugLevel_ > 1) for (size_t k = 0; k < strikes.size(); ++k) debugLog_.push_back("T = " + std::to_string(times()[idx - 1]) + ", k: " + std::to_string(k) + ", K: " + std::to_string(strikes[k]) + ", dCdT: " + std::to_string(dCalldT[k]) + ", d2CdK2: " + std::to_string(d2CalldK2[k]) + ", dProbdK: " + std::to_string(dProbdK[k]) + ", lVol: " + std::to_string(localVol[k]) + ", E[z|S]: " + std::to_string(expectationZCondS[k]));
 		}
 		if (debugLevel_ > 0) debugLog_.push_back("Profiling (in sec.) Samples: " + std::to_string(compTime["Samples"]) + ", Sort: " + std::to_string(compTime["Sort"]) + ", Pricing: " + std::to_string(compTime["Pricing"]) + ", Interp: " + std::to_string(compTime["Interp"]) + ", LocVol: " + std::to_string(compTime["LocVol"]) + ", SvAdj: " + std::to_string(compTime["SvAdj"]) + ", Simul: " + std::to_string(compTime["Simul"]));
 	}
