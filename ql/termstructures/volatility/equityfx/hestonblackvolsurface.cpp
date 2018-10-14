@@ -28,8 +28,8 @@
 #include <ql/pricingengines/blackformula.hpp>
 #include <ql/termstructures/volatility/equityfx/hestonblackvolsurface.hpp>
 
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
+#include <ql/bind.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <limits>
 
@@ -47,14 +47,17 @@ namespace QuantLib {
     }
 
     HestonBlackVolSurface::HestonBlackVolSurface(
-        const Handle<HestonModel>& hestonModel)
+        const Handle<HestonModel>& hestonModel,
+        const AnalyticHestonEngine::ComplexLogFormula cpxLogFormula,
+        const AnalyticHestonEngine::Integration& integration)
     : BlackVolTermStructure(
           hestonModel->process()->riskFreeRate()->referenceDate(),
           NullCalendar(),
           Following,
           hestonModel->process()->riskFreeRate()->dayCounter()),
       hestonModel_(hestonModel),
-      integration_(AnalyticHestonEngine::Integration::gaussLaguerre(164)) {
+      cpxLogFormula_(cpxLogFormula),
+      integration_(integration) {
         registerWith(hestonModel_);
     }
 
@@ -76,7 +79,8 @@ namespace QuantLib {
     }
 
     Volatility HestonBlackVolSurface::blackVolImpl(Time t, Real strike) const {
-        const boost::shared_ptr<HestonProcess> process = hestonModel_->process();
+        using namespace ext::placeholders;
+        const ext::shared_ptr<HestonProcess> process = hestonModel_->process();
 
         const DiscountFactor df = process->riskFreeRate()->discount(t, true);
         const DiscountFactor div = process->dividendYield()->discount(t, true);
@@ -96,10 +100,9 @@ namespace QuantLib {
         const Real sigma = hestonModel_->sigma();
         const Real v0    = hestonModel_->v0();
 
-        const AnalyticHestonEngine::ComplexLogFormula cpxLogFormula
-            = AnalyticHestonEngine::Gatheral;
-
-        const AnalyticHestonEngine* const hestonEnginePtr = 0;
+        const boost::scoped_ptr<AnalyticHestonEngine> hestonEngine(
+            new AnalyticHestonEngine(
+                hestonModel_.currentLink(), cpxLogFormula_, integration_));
 
         Real npv;
         Size evaluations;
@@ -107,8 +110,8 @@ namespace QuantLib {
         AnalyticHestonEngine::doCalculation(
             df, div, spotPrice, strike, t,
             kappa, theta, sigma, v0, rho,
-            payoff, integration_, cpxLogFormula,
-            hestonEnginePtr, npv, evaluations);
+            payoff, integration_, cpxLogFormula_,
+            hestonEngine.get(), npv, evaluations);
 
         if (npv <= 0.0) return std::sqrt(theta);
 
@@ -117,7 +120,7 @@ namespace QuantLib {
         const Volatility guess = std::sqrt(theta);
         const Real accuracy = std::numeric_limits<Real>::epsilon();
 
-        const boost::function<Real(Real)> f = boost::bind(
+        const ext::function<Real(Real)> f = ext::bind(
             &blackValue, payoff.optionType(), strike, fwd, t, _1, df, npv);
 
         return solver.solve(f, accuracy, guess, 0.01);
