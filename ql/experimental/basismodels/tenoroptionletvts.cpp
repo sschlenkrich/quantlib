@@ -24,9 +24,10 @@ namespace QuantLib {
 			               const boost::shared_ptr<IborIndex>&                    baseIndex,
 		                   const boost::shared_ptr<IborIndex>&                    targIndex,
 						   const boost::shared_ptr<CorrelationStructure>&         correlation)
-						   : OptionletVolatilityStructure(baseVTS->referenceDate(),baseVTS->calendar(),baseVTS->businessDayConvention(),baseVTS->dayCounter()),
+						   : OptionletVolatilityStructure(baseVTS->referenceDate(),baseVTS->calendar(),baseVTS->businessDayConvention(),baseVTS->dayCounter(),Normal),
 		                  baseVTS_(baseVTS), baseIndex_(baseIndex), targIndex_(targIndex), correlation_(correlation) {
-	    // check that target frequency is a multiple of base frequency
+		QL_REQUIRE(baseIndex_->tenor().frequency() % targIndex_->tenor().frequency() == 0,
+			"Base index frequency must be a multiple of target tenor frequency");
 	}
 
 

@@ -216,7 +216,7 @@ namespace QuantLib {
 
     inline VolatilityType
     OptionletVolatilityStructure::volatilityType() const {
-        return ShiftedLognormal;
+        return VolatilityTermStructure::volatilityType();
     }
 
     inline Real OptionletVolatilityStructure::displacement() const {
