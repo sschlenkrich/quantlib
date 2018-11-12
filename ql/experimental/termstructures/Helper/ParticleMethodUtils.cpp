@@ -81,7 +81,7 @@ namespace QuantLib {
 		}
 
 
-		RealMCSimulation simulation(assetModel, timesSim, times, numberOfPaths,1,true,true,false);
+		RealMCSimulation simulation(assetModel, timesSim, times, numberOfPaths,1,false,true,false);
 
 		//start to create strike grid. 
 		//the strike grid depends on simulation results (min and max quantile)
@@ -201,7 +201,7 @@ namespace QuantLib {
 					+ std::string(" and > ") + std::to_string(minPosBw)
 					+ std::string("). Either decrease number of MC paths or increase exponentN or kappa."));
 
-				surfaceF[i][j] = (eNum[j] / eScale[j] - vol3[j] * vol3[j]) / (2 * eDen[j] / eScale[j]);
+				surfaceF[i][j] = (eNum[j] - vol3[j] * vol3[j]* eScale[j]) / (2 * eDen[j]);
 			}
 			//set interpolation on new dimension:
 			surface->setInterpolationStrike<Linear>(i);

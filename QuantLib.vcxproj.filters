@@ -6933,4 +6933,11 @@
       <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
     </Bison>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+    <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
+    <None Include="ClassDiagram3.cd" />
+    <None Include="ClassDiagram4.cd" />
+  </ItemGroup>
 </Project>

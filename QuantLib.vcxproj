@@ -2854,6 +2854,13 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'">true</ExcludedFromBuild>
     </Bison>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+    <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
+    <None Include="ClassDiagram3.cd" />
+    <None Include="ClassDiagram4.cd" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="ql\experimental\templatemodels\montecarlo\scripting\win_flex_bison_custom_build.targets" />
