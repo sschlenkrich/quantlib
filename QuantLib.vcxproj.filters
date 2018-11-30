@@ -3769,12 +3769,6 @@
     <ClInclude Include="ql\userconfig.hpp" />
     <ClInclude Include="ql\version.hpp" />
     <ClInclude Include="ql\volatilitymodel.hpp" />
-    <ClInclude Include="ql\cashflows\cpicoupon.hpp">
-      <Filter>cashflows</Filter>
-    </ClInclude>
-    <ClInclude Include="ql\cashflows\cpicouponpricer.hpp">
-      <Filter>cashflows</Filter>
-    </ClInclude>
     <ClInclude Include="ql\instruments\cpicapfloor.hpp">
       <Filter>instruments</Filter>
     </ClInclude>
@@ -4307,15 +4301,6 @@
     <ClInclude Include="ql\experimental\basismodels\spreadyieldtermstructure.hpp">
       <Filter>experimental\basismodels</Filter>
     </ClInclude>
-    <ClInclude Include="ql\experimental\basismodels\swaptioncfs.hpp">
-      <Filter>experimental\basismodels</Filter>
-    </ClInclude>
-    <ClInclude Include="ql\experimental\basismodels\tenoroptionletvts.hpp">
-      <Filter>experimental\basismodels</Filter>
-    </ClInclude>
-    <ClInclude Include="ql\experimental\basismodels\tenorswaptionvts.hpp">
-      <Filter>experimental\basismodels</Filter>
-    </ClInclude>
     <ClInclude Include="ql\experimental\templatemodels\auxilliaries\auxilliariesT.hpp">
       <Filter>experimental\templatemodels\auxilliaries</Filter>
     </ClInclude>
@@ -4486,6 +4471,21 @@
     </ClInclude>
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.hpp">
       <Filter>experimental\templatemodels\qgaussian2</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\basismodels\swaptioncfs.hpp">
+      <Filter>experimental\basismodels</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\basismodels\tenoroptionletvts.hpp">
+      <Filter>experimental\basismodels</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\basismodels\tenorswaptionvts.hpp">
+      <Filter>experimental\basismodels</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\cashflows\cpicoupon.hpp">
+      <Filter>cashflows</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\cashflows\cpicouponpricer.hpp">
+      <Filter>cashflows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -7077,12 +7077,6 @@
     <ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp">
       <Filter>experimental\sabrswaptioncube</Filter>
     </ClCompile>
-    <ClCompile Include="ql\cashflows\cpicoupon.cpp">
-      <Filter>cashflows</Filter>
-    </ClCompile>
-    <ClCompile Include="ql\cashflows\cpicouponpricer.cpp">
-      <Filter>cashflows</Filter>
-    </ClCompile>
     <ClCompile Include="ql\experimental\basismodels\basisswap.cpp">
       <Filter>experimental\basismodels</Filter>
     </ClCompile>
@@ -7093,15 +7087,6 @@
       <Filter>experimental\basismodels</Filter>
     </ClCompile>
     <ClCompile Include="ql\experimental\basismodels\fxfwdratehelper.cpp">
-      <Filter>experimental\basismodels</Filter>
-    </ClCompile>
-    <ClCompile Include="ql\experimental\basismodels\swaptioncfs.cpp">
-      <Filter>experimental\basismodels</Filter>
-    </ClCompile>
-    <ClCompile Include="ql\experimental\basismodels\tenoroptionletvts.cpp">
-      <Filter>experimental\basismodels</Filter>
-    </ClCompile>
-    <ClCompile Include="ql\experimental\basismodels\tenorswaptionvts.cpp">
       <Filter>experimental\basismodels</Filter>
     </ClCompile>
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\bondoptionengine.cpp">
@@ -7154,6 +7139,21 @@
     </ClCompile>
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.cpp">
       <Filter>experimental\templatemodels\qgaussian2</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\basismodels\swaptioncfs.cpp">
+      <Filter>experimental\basismodels</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\basismodels\tenoroptionletvts.cpp">
+      <Filter>experimental\basismodels</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\basismodels\tenorswaptionvts.cpp">
+      <Filter>experimental\basismodels</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\cashflows\cpicoupon.cpp">
+      <Filter>cashflows</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\cashflows\cpicouponpricer.cpp">
+      <Filter>cashflows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

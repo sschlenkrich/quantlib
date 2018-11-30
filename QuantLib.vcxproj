@@ -687,9 +687,6 @@
     <ClInclude Include="ql\experimental\basismodels\basisswapratehelpers.hpp" />
     <ClInclude Include="ql\experimental\basismodels\fxfwdratehelper.hpp" />
     <ClInclude Include="ql\experimental\basismodels\spreadyieldtermstructure.hpp" />
-    <ClInclude Include="ql\experimental\basismodels\swaptioncfs.hpp" />
-    <ClInclude Include="ql\experimental\basismodels\tenoroptionletvts.hpp" />
-    <ClInclude Include="ql\experimental\basismodels\tenorswaptionvts.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\auxilliaries\auxilliariesT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\auxilliaries\complexT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\auxilliaries\gausslobattoT.hpp" />
@@ -2059,9 +2056,6 @@
     <ClCompile Include="ql\experimental\basismodels\basisswapengine.cpp" />
     <ClCompile Include="ql\experimental\basismodels\basisswapratehelpers.cpp" />
     <ClCompile Include="ql\experimental\basismodels\fxfwdratehelper.cpp" />
-    <ClCompile Include="ql\experimental\basismodels\swaptioncfs.cpp" />
-    <ClCompile Include="ql\experimental\basismodels\tenoroptionletvts.cpp" />
-    <ClCompile Include="ql\experimental\basismodels\tenorswaptionvts.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\bondoptionengine.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\fixedratebondoption.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.cpp" />
@@ -2083,9 +2077,6 @@
     <ClCompile Include="ql\math\pascaltriangle.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\operators\fdmornsteinuhlenbeckop.cpp" />
     <ClCompile Include="ql\patterns\observable.cpp" />
-    <ClCompile Include="ql\cashflows\cpicoupon.cpp" />
-    <ClCompile Include="ql\cashflows\cpicouponpricer.cpp" />
-    <ClCompile Include="ql\rebatedexercise.cpp" />
     <ClInclude Include="ql\experimental\finitedifferences\all.hpp" />
     <ClCompile Include="ql\experimental\finitedifferences\dynprogvppintrinsicvalueengine.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdextoujumpvanillaengine.cpp" />
