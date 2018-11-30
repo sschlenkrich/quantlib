@@ -1,7 +1,20 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2015 Sebastian Schlenkrich
+Copyright (C) 2018 Sebastian Schlenkrich
+
+This file is part of QuantLib, a free-software/open-source library
+for financial quantitative analysts and developers - http://quantlib.org/
+
+QuantLib is free software: you can redistribute it and/or modify it
+under the terms of the QuantLib license.  You should have received a
+copy of the license along with this program; if not, please email
+<quantlib-dev@lists.sf.net>. The license is also available online at
+<http://quantlib.org/license.shtml>.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
 /*! \file tenoroptionletvts.cpp
@@ -20,11 +33,11 @@
 namespace QuantLib {
 
 	TenorOptionletVTS::TenorOptionletVTS(
-		                   const Handle<OptionletVolatilityStructure>&            baseVTS,
-			               const boost::shared_ptr<IborIndex>&                    baseIndex,
-		                   const boost::shared_ptr<IborIndex>&                    targIndex,
-						   const boost::shared_ptr<CorrelationStructure>&         correlation)
-						   : OptionletVolatilityStructure(baseVTS->referenceDate(),baseVTS->calendar(),baseVTS->businessDayConvention(),baseVTS->dayCounter(),Normal),
+		                   const Handle<OptionletVolatilityStructure>&   baseVTS,
+			               const ext::shared_ptr<IborIndex>&             baseIndex,
+		                   const ext::shared_ptr<IborIndex>&             targIndex,
+						   const ext::shared_ptr<CorrelationStructure>&  correlation)
+						   : OptionletVolatilityStructure(baseVTS->referenceDate(),baseVTS->calendar(),baseVTS->businessDayConvention(),baseVTS->dayCounter()),
 		                  baseVTS_(baseVTS), baseIndex_(baseIndex), targIndex_(targIndex), correlation_(correlation) {
 		QL_REQUIRE(baseIndex_->tenor().frequency() % targIndex_->tenor().frequency() == 0,
 			"Base index frequency must be a multiple of target tenor frequency");

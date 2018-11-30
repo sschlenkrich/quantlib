@@ -1,7 +1,20 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2015 Sebastian Schlenkrich
+Copyright (C) 2018 Sebastian Schlenkrich
+
+This file is part of QuantLib, a free-software/open-source library
+for financial quantitative analysts and developers - http://quantlib.org/
+
+QuantLib is free software: you can redistribute it and/or modify it
+under the terms of the QuantLib license.  You should have received a
+copy of the license along with this program; if not, please email
+<quantlib-dev@lists.sf.net>. The license is also available online at
+<http://quantlib.org/license.shtml>.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
 /*! \file tenoroptionletvts.hpp
@@ -18,10 +31,6 @@
 #include <ql/math/interpolation.hpp>
 #include <ql/time/dategenerationrule.hpp>
 
-//#include <ql/instruments/swaption.hpp>
-//#include <ql/termstructures/yieldtermstructure.hpp>
-//#include <ql/time/date.hpp>
-//#include <ql/option.hpp>
 
 namespace QuantLib {
 
@@ -33,12 +42,12 @@ namespace QuantLib {
 
 		class TenorOptionletSmileSection : public SmileSection {
 		protected:
-			boost::shared_ptr<CorrelationStructure>      correlation_;
-		    std::vector<boost::shared_ptr<SmileSection>> baseSmileSection_;
-			std::vector<Time>                            startTimeBase_;  // for correlation parametrisation
-			std::vector<Real>                            fraRateBase_;
-			Real                                         fraRateTarg_;
-			std::vector<Real>                            v_;
+			ext::shared_ptr<CorrelationStructure>         correlation_;
+		    std::vector<ext::shared_ptr<SmileSection> >   baseSmileSection_;
+			std::vector<Time>                             startTimeBase_;  // for correlation parametrisation
+			std::vector<Real>                             fraRateBase_;
+			Real                                          fraRateTarg_;
+			std::vector<Real>                             v_;
 			// implement transformation formula
             virtual Volatility volatilityImpl(Rate strike) const;
 		public:
@@ -52,10 +61,10 @@ namespace QuantLib {
 			virtual Real atmLevel() const  { return fraRateTarg_;  }
 		};
 
-		Handle<OptionletVolatilityStructure>            baseVTS_;
-		boost::shared_ptr<IborIndex>                    baseIndex_;
-		boost::shared_ptr<IborIndex>                    targIndex_;
-		boost::shared_ptr<CorrelationStructure>         correlation_;
+		Handle<OptionletVolatilityStructure>          baseVTS_;
+		ext::shared_ptr<IborIndex>                    baseIndex_;
+		ext::shared_ptr<IborIndex>                    targIndex_;
+		ext::shared_ptr<CorrelationStructure>         correlation_;
 
 	public:
 
@@ -64,33 +73,33 @@ namespace QuantLib {
 		public:
 			// return the correlation between two FRA rates starting at start1 and start2
 			virtual Real operator() (const Time& start1, const Time& start2) const = 0;
+			virtual ~CorrelationStructure() {};
 		};
 
 		// very basic choice for correlation structure
 		class TwoParameterCorrelation : public CorrelationStructure {
 		protected:
-			boost::shared_ptr<Interpolation> rhoInf_;
-			boost::shared_ptr<Interpolation> beta_;
+			ext::shared_ptr<Interpolation> rhoInf_;
+			ext::shared_ptr<Interpolation> beta_;
 		public:
-			TwoParameterCorrelation ( const boost::shared_ptr<Interpolation>& rhoInf,
-				                      const boost::shared_ptr<Interpolation>& beta) {
+			TwoParameterCorrelation ( const ext::shared_ptr<Interpolation>& rhoInf,
+				                      const ext::shared_ptr<Interpolation>& beta) {
 				rhoInf_ = rhoInf;
 				beta_   = beta;
 			}
-			virtual Real operator() (const Time& start1, const Time& start2) const {
+			Real operator() (const Time& start1, const Time& start2) const {
 				Real rhoInf = (*rhoInf_)(start1);
 				Real beta   = (*beta_)(start1);
 				Real rho = rhoInf + (1.0 - rhoInf)*exp(-beta*fabs(start2-start1));
 				return rho;
-				//return (*rhoInf_)(start1) * (1.0 - (*rhoInf_)(start1))*exp(-(*beta_)(start1)*fabs(start2-start1));
 			}
 		};
 
 		// constructor
-		TenorOptionletVTS( const Handle<OptionletVolatilityStructure>&            baseVTS,
-			               const boost::shared_ptr<IborIndex>&                    baseIndex,
-		                   const boost::shared_ptr<IborIndex>&                    targIndex,
-						   const boost::shared_ptr<CorrelationStructure>&         correlation);  
+		TenorOptionletVTS( const Handle<OptionletVolatilityStructure>&          baseVTS,
+			               const ext::shared_ptr<IborIndex>&                    baseIndex,
+		                   const ext::shared_ptr<IborIndex>&                    targIndex,
+						   const ext::shared_ptr<CorrelationStructure>&         correlation);  
 
 		// Termstructure interface
 
@@ -100,7 +109,7 @@ namespace QuantLib {
 		// VolatilityTermstructure interface
 
         //! implements the actual smile calculation in derived classes
-		virtual boost::shared_ptr<SmileSection> smileSectionImpl(Time optionTime) const { return boost::shared_ptr<SmileSection>(new TenorOptionletSmileSection(*this,optionTime)); }
+		virtual ext::shared_ptr<SmileSection> smileSectionImpl(Time optionTime) const { return ext::shared_ptr<SmileSection>(new TenorOptionletSmileSection(*this,optionTime)); }
         //! implements the actual volatility calculation in derived classes
 		virtual Volatility volatilityImpl(Time optionTime,Rate strike) const { return smileSection(optionTime)->volatility(strike); }
 
@@ -109,6 +118,10 @@ namespace QuantLib {
 		virtual Rate minStrike() const { return baseVTS_->minStrike(); }
         //! the maximum strike for which the term structure can return vols
         virtual Rate maxStrike() const {return baseVTS_->maxStrike(); }
+
+		// the methodology is designed for normal volatilities
+		VolatilityType volatilityType() const { return Normal; }
+
 
 	};
 

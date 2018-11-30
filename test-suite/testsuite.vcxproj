@@ -636,6 +636,7 @@
     <ClCompile Include="assetswap.cpp" />
     <ClCompile Include="autocovariances.cpp" />
     <ClCompile Include="barrieroption.cpp" />
+    <ClCompile Include="basismodels.cpp" />
     <ClCompile Include="basketoption.cpp" />
     <ClCompile Include="batesmodel.cpp" />
     <ClCompile Include="bermudanswaption.cpp" />
@@ -748,6 +749,7 @@
     <ClCompile Include="sampledcurve.cpp" />
     <ClCompile Include="schedule.cpp" />
     <ClCompile Include="shortratemodels.cpp" />
+    <ClCompile Include="sofrfutures.cpp" />
     <ClCompile Include="solvers.cpp" />
     <ClCompile Include="spreadoption.cpp" />
     <ClCompile Include="squarerootclvmodel.cpp" />
@@ -783,6 +785,7 @@
     <ClInclude Include="assetswap.hpp" />
     <ClInclude Include="autocovariances.hpp" />
     <ClInclude Include="barrieroption.hpp" />
+    <ClInclude Include="basismodels.hpp" />
     <ClInclude Include="basketoption.hpp" />
     <ClInclude Include="batesmodel.hpp" />
     <ClInclude Include="bermudanswaption.hpp" />
@@ -896,6 +899,7 @@
     <ClInclude Include="sampledcurve.hpp" />
     <ClInclude Include="schedule.hpp" />
     <ClInclude Include="shortratemodels.hpp" />
+    <ClInclude Include="sofrfutures.hpp" />
     <ClInclude Include="solvers.hpp" />
     <ClInclude Include="speedlevel.hpp" />
     <ClInclude Include="spreadoption.hpp" />

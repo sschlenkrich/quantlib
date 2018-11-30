@@ -1,19 +1,26 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2015 Sebastian Schlenkrch
+Copyright (C) 2018 Sebastian Schlenkrich
+
+This file is part of QuantLib, a free-software/open-source library
+for financial quantitative analysts and developers - http://quantlib.org/
+
+QuantLib is free software: you can redistribute it and/or modify it
+under the terms of the QuantLib license.  You should have received a
+copy of the license along with this program; if not, please email
+<quantlib-dev@lists.sf.net>. The license is also available online at
+<http://quantlib.org/license.shtml>.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
 /*! \file tenorswaptionvts.cpp
     \brief swaption volatility term structure based on volatility transformation
 */
 
-
-//#include <ql/settings.hpp>
-//#include <ql/exercise.hpp>
-//#include <ql/cashflows/coupon.hpp>
-//#include <ql/cashflows/simplecashflow.hpp>
-//#include <ql/cashflows/fixedratecoupon.hpp>
 
 #include <ql/experimental/basismodels/tenorswaptionvts.hpp>
 #include <ql/experimental/basismodels/swaptioncfs.hpp>
@@ -43,22 +50,19 @@ namespace QuantLib {
 		Schedule baseFloatSchedule(effectiveDate, maturityDate, volTS.baseIndex_->tenor(),volTS.baseIndex_->fixingCalendar(),ModifiedFollowing,Unadjusted,DateGeneration::Backward,false);
 		Schedule targFloatSchedule(effectiveDate, maturityDate, volTS.targIndex_->tenor(),volTS.baseIndex_->fixingCalendar(),ModifiedFollowing,Unadjusted,DateGeneration::Backward,false);
 		// and swaps
-		boost::shared_ptr<VanillaSwap> baseSwap( new VanillaSwap(VanillaSwap::Payer,1.0,baseFixedSchedule,1.0,volTS.baseFixedDC_,baseFloatSchedule,volTS.baseIndex_,0.0,volTS.baseIndex_->dayCounter()));
-		boost::shared_ptr<VanillaSwap> targSwap( new VanillaSwap(VanillaSwap::Payer,1.0,baseFixedSchedule,1.0,volTS.baseFixedDC_,targFloatSchedule,volTS.targIndex_,0.0,volTS.targIndex_->dayCounter()));
-		boost::shared_ptr<VanillaSwap> finlSwap( new VanillaSwap(VanillaSwap::Payer,1.0,finlFixedSchedule,1.0,volTS.targFixedDC_,targFloatSchedule,volTS.targIndex_,0.0,volTS.targIndex_->dayCounter()));
-		//VanillaSwap baseSwap(VanillaSwap::Payer,10000,baseFixedSchedule,1.0,volTS.baseFixedDC_,baseFloatSchedule,volTS.baseIndex_,0.0,volTS.baseIndex_->dayCounter());
-		//VanillaSwap targSwap(VanillaSwap::Payer,10000,baseFixedSchedule,1.0,volTS.baseFixedDC_,targFloatSchedule,volTS.targIndex_,0.0,volTS.targIndex_->dayCounter());
-		//VanillaSwap finlSwap(VanillaSwap::Payer,10000,finlFixedSchedule,1.0,volTS.targFixedDC_,targFloatSchedule,volTS.targIndex_,0.0,volTS.targIndex_->dayCounter());
+		ext::shared_ptr<VanillaSwap> baseSwap( new VanillaSwap(VanillaSwap::Payer,1.0,baseFixedSchedule,1.0,volTS.baseFixedDC_,baseFloatSchedule,volTS.baseIndex_,0.0,volTS.baseIndex_->dayCounter()));
+		ext::shared_ptr<VanillaSwap> targSwap( new VanillaSwap(VanillaSwap::Payer,1.0,baseFixedSchedule,1.0,volTS.baseFixedDC_,targFloatSchedule,volTS.targIndex_,0.0,volTS.targIndex_->dayCounter()));
+		ext::shared_ptr<VanillaSwap> finlSwap( new VanillaSwap(VanillaSwap::Payer,1.0,finlFixedSchedule,1.0,volTS.targFixedDC_,targFloatSchedule,volTS.targIndex_,0.0,volTS.targIndex_->dayCounter()));
 		// adding engines
-		baseSwap->setPricingEngine(boost::shared_ptr<PricingEngine>(new DiscountingSwapEngine(volTS.discountCurve_)));
-		targSwap->setPricingEngine(boost::shared_ptr<PricingEngine>(new DiscountingSwapEngine(volTS.discountCurve_)));
-		finlSwap->setPricingEngine(boost::shared_ptr<PricingEngine>(new DiscountingSwapEngine(volTS.discountCurve_)));
+		baseSwap->setPricingEngine(ext::shared_ptr<PricingEngine>(new DiscountingSwapEngine(volTS.discountCurve_)));
+		targSwap->setPricingEngine(ext::shared_ptr<PricingEngine>(new DiscountingSwapEngine(volTS.discountCurve_)));
+		finlSwap->setPricingEngine(ext::shared_ptr<PricingEngine>(new DiscountingSwapEngine(volTS.discountCurve_)));
 		// swap rates
 		swapRateBase_ = baseSwap->fairRate();
 		swapRateTarg_ = targSwap->fairRate();
 		swapRateFinl_ = finlSwap->fairRate();
-		SwaptionCashFlows cfs(boost::shared_ptr<Swaption>(new Swaption(baseSwap, boost::shared_ptr<Exercise>(new EuropeanExercise(exerciseDate)))), volTS.discountCurve_);
-		SwaptionCashFlows cf2(boost::shared_ptr<Swaption>(new Swaption(targSwap, boost::shared_ptr<Exercise>(new EuropeanExercise(exerciseDate)))), volTS.discountCurve_);
+		SwaptionCashFlows cfs(ext::shared_ptr<Swaption>(new Swaption(baseSwap, ext::shared_ptr<Exercise>(new EuropeanExercise(exerciseDate)))), volTS.discountCurve_);
+		SwaptionCashFlows cf2(ext::shared_ptr<Swaption>(new Swaption(targSwap, ext::shared_ptr<Exercise>(new EuropeanExercise(exerciseDate)))), volTS.discountCurve_);
 		// calculate affine TSR model u and v
 		// Sum tau_j   (fixed leg)
 		Real sumTauj = 0.0;

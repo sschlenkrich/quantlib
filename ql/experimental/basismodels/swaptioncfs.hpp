@@ -1,7 +1,20 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2010 Sebastian Schlenkrich
+Copyright (C) 2018 Sebastian Schlenkrich
+
+This file is part of QuantLib, a free-software/open-source library
+for financial quantitative analysts and developers - http://quantlib.org/
+
+QuantLib is free software: you can redistribute it and/or modify it
+under the terms of the QuantLib license.  You should have received a
+copy of the license along with this program; if not, please email
+<quantlib-dev@lists.sf.net>. The license is also available online at
+<http://quantlib.org/license.shtml>.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
 /*! \file swaptioncfs.hpp
@@ -43,9 +56,9 @@ namespace QuantLib {
 		std::vector<Real>                    fixedWeights_;
 		std::vector<Real>                    annuityWeights_;
 	public:
-		SwapCashFlows ( const boost::shared_ptr<VanillaSwap>& swap,
-			            const Handle<YieldTermStructure>&     discountCurve,
-						bool                                  contTenorSpread = true );
+		SwapCashFlows ( const ext::shared_ptr<VanillaSwap>& swap,
+			            const Handle<YieldTermStructure>&   discountCurve,
+						bool                                contTenorSpread = true );
 		SwapCashFlows() {};  // allow default constructor which does nothing
 		// inspectors
         inline const Leg&               fixedLeg()         const  { return fixedLeg_; }
@@ -57,16 +70,16 @@ namespace QuantLib {
 
     class SwaptionCashFlows : public SwapCashFlows {
 	protected:
-		boost::shared_ptr<Swaption>          swaption_;
-		std::vector<Real>                    exerciseTimes_;
+		ext::shared_ptr<Swaption> swaption_;
+		std::vector<Real>         exerciseTimes_;
 	public:
-   	    SwaptionCashFlows ( const boost::shared_ptr<Swaption>&    swaption,
-			                const Handle<YieldTermStructure>&     discountCurve,
-						    bool                                  contTenorSpread = true );
+   	    SwaptionCashFlows ( const ext::shared_ptr<Swaption>&  swaption,
+			                const Handle<YieldTermStructure>& discountCurve,
+						    bool                              contTenorSpread = true );
 		SwaptionCashFlows() {};  // allow default constructor which does nothing
 		// inspectors
-		inline const boost::shared_ptr<Swaption> swaption() const { return swaption_; }
-		inline const std::vector<Real>& exerciseTimes()    const  { return  exerciseTimes_;  }
+		inline const ext::shared_ptr<Swaption> swaption() const { return swaption_; }
+		inline const std::vector<Real>& exerciseTimes()   const { return exerciseTimes_;  }
 	};
 
 
