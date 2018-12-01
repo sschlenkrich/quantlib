@@ -5,19 +5,37 @@
 
 */
 
-#include <ql/experimental/templatemodels/vanillalocalvol/vanillalocalvolsmilesection.hpp>
+#include <ql/experimental/vanillalocalvolmodel/vanillalocalvolsmilesection.hpp>
 #include <ql/math/optimization/costfunction.hpp>
 #include <ql/math/optimization/problem.hpp>
 #include <ql/pricingengines/blackformula.hpp>
 
-#include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
+namespace {
+
+	// we use a transformation to avoid use unconstrained root search for constrained problem
+
+	// transformation (-inf, +inf) -> (a, b)
+	template <typename Type> inline Type directTransform(const Type x, const Type a, const Type b) {
+		Type y = (x<0.0) ? (-1.0 / (x - 1.0)) : (-1.0 / (x + 1.0) + 2.0);
+		y = 0.5*(b - a)*y + a;
+		return y;
+	}
+
+	// transformation (a, b) -> (-inf, +inf)
+	template <typename Type> inline Type inverseTransform(const Type y, const Type a, const Type b) {
+		Type x = 2.0*(y - a) / (b - a);
+		x = (x<1.0) ? (-1.0 / x + 1.0) : (-1.0 / (x - 2.0) - 1.0);
+		return x;
+	}
+
+}
 
 namespace QuantLib {
 
 	namespace {
 
 		class VanillaLocalVolHelper : public CostFunction {
-			boost::shared_ptr<VanillaLocalVolModel>     model_;
+			ext::shared_ptr<VanillaLocalVolModel>     model_;
 			std::vector<Rate>                           relativeStrikes_;
 			std::vector<Real>                           smilePrices_;
 			std::vector<Real>                           vanillaVega_;
@@ -29,7 +47,7 @@ namespace QuantLib {
 			size_t                                      zeroIdx_;    //  the index with relativeStrike[.] = 0
 		public:
 			VanillaLocalVolHelper(
-				const boost::shared_ptr<VanillaLocalVolModel>&     model,
+				const ext::shared_ptr<VanillaLocalVolModel>&     model,
 				const std::vector<Rate>&                           relativeStrikes,
 				const std::vector<Real>&                           smilePrices,
 				const std::vector<Real>&                           vanillaVega,
@@ -52,30 +70,30 @@ namespace QuantLib {
 			    return res / 2.0;
 		    }
 
-			boost::shared_ptr<VanillaLocalVolModel> model(const Array& x) const {
+			ext::shared_ptr<VanillaLocalVolModel> model(const Array& x) const {
 				QL_REQUIRE(x.size() == relativeStrikes_.size() - 1, "(x.size() == relativeStrikes_.size() - 1 required");
 				std::vector<Real> Sm(zeroIdx_), Mm(zeroIdx_);
 				std::vector<Real> Sp(relativeStrikes_.size() - zeroIdx_), Mp(relativeStrikes_.size() - zeroIdx_);  // we need an additional segment for high-strike extrapolation control (CMS)
 				for (size_t k = 0; k < Sm.size(); ++k) {
 					Sm[k] = model_->forward() + relativeStrikes_[zeroIdx_ - 1 - k];
-					Mm[k] = TemplateAuxilliaries::direct<Real>(x[k], minSlope_, maxSlope_);
+					Mm[k] = directTransform<Real>(x[k], minSlope_, maxSlope_);
 					if (k > 0) Mm[k] += Mm[k - 1];  // we want to model relative offsets in slope
 				}
 				for (size_t k = 0; k < Sp.size() - 1; ++k) {  // the last segment is for high-strike extrapolation
 					Sp[k] = model_->forward() + relativeStrikes_[zeroIdx_ + 1 + k];
-					Mp[k] = TemplateAuxilliaries::direct<Real>(x[Sm.size() + k], minSlope_, maxSlope_);
+					Mp[k] = directTransform<Real>(x[Sm.size() + k], minSlope_, maxSlope_);
 					if (k > 0) Mp[k] += Mp[k - 1];  // we want to model relative offsets in slope
 				}
 				Sp[Sp.size() - 1] = model_->forward() + extrapolationRelativeStrike_;
 				Mp[Mp.size() - 1] = extrapolationSlope_;
 				// now we can create a new model...
-				return boost::shared_ptr<VanillaLocalVolModel>(
+				return ext::shared_ptr<VanillaLocalVolModel>(
 					new VanillaLocalVolModel(model_->timeToExpiry(), model_->forward(), model_->sigmaATM(), Sp, Sm, Mp, Mm, model_->maxCalibrationIters(),
 						model_->onlyForwardCalibrationIters(), model_->adjustATMFlag(), model_->enableLogging(), model_->useInitialMu(), model_->initialMu()));
 			}
 
 			virtual Disposable<Array> values(const Array& x) const {
-				boost::shared_ptr<VanillaLocalVolModel> newModel = model(x);
+				ext::shared_ptr<VanillaLocalVolModel> newModel = model(x);
 				size_t sizeF = relativeStrikes_.size() - 1; // ATM is already calibrated on-the-fly
 				if (alpha_ > 0.0) sizeF += relativeStrikes_.size() - 3;  // we may want to minimize curvature, but exclude skew/convexity around ATM
 				                                                         // this relies on having at least three relative strikes provided
@@ -91,16 +109,16 @@ namespace QuantLib {
 				if (alpha_ > 0.0) {
 					size_t startIdx = relativeStrikes_.size() - 1;
 					for (size_t k = 0; k < zeroIdx_ - 1; ++k)
-						objectiveF[startIdx + k] = alpha_ * TemplateAuxilliaries::direct<Real>(x[k + 1], minSlope_, maxSlope_);  // we skip the first slope
+						objectiveF[startIdx + k] = alpha_ * directTransform<Real>(x[k + 1], minSlope_, maxSlope_);  // we skip the first slope
 					startIdx += (zeroIdx_ - 1);
 					for (size_t k = 0; k < relativeStrikes_.size() - zeroIdx_ - 2; ++k)
-						objectiveF[startIdx + k] = alpha_ * TemplateAuxilliaries::direct<Real>(x[zeroIdx_ + k + 1], minSlope_, maxSlope_);  // we skip the first slope
+						objectiveF[startIdx + k] = alpha_ * directTransform<Real>(x[zeroIdx_ + k + 1], minSlope_, maxSlope_);  // we skip the first slope
 				}
 				return objectiveF;
 			}
 
 			Disposable<Array> initialValues() const { // we use zero slope as initial guess
-				return Array(relativeStrikes_.size()-1, TemplateAuxilliaries::inverse<Real>(0.0, minSlope_, maxSlope_));
+				return Array(relativeStrikes_.size()-1, inverseTransform<Real>(0.0, minSlope_, maxSlope_));
 			}
 
 		};
@@ -115,13 +133,13 @@ namespace QuantLib {
 		const Real                                        extrapolationRelativeStrike,
 		const Real                                        extrapolationSlope,
 		bool                                              vegaWeighted,
-		const boost::shared_ptr<EndCriteria>&             endCriteria,
-		const boost::shared_ptr<OptimizationMethod>&      method,
+		const ext::shared_ptr<EndCriteria>&             endCriteria,
+		const ext::shared_ptr<OptimizationMethod>&      method,
 		const DayCounter&                                 dc,
 		const Date&                                       referenceDate,
 		const VolatilityType                              type,
 		const Rate                                        shift,
-		const boost::shared_ptr<VanillaLocalVolModel>&    model,
+		const ext::shared_ptr<VanillaLocalVolModel>&    model,
 		const Real                                        minSlope,    //  lower boundary for m in calibration
 		const Real                                        maxSlope,    //  upper boundary for m in calibration
 		const Real                                        alpha )      //  Tikhonov alpha
@@ -158,9 +176,9 @@ namespace QuantLib {
 		// we also need a consistent model for calibration, thus we set up a normal model matching ATM prices
 		Real sigmaATM = bachelierBlackFormulaImpliedVol(Option::Call, forward, forward, timeToExpiry, smilePrices[zeroIdx]);
 		std::vector<Real> Sm(1, forward + relativeStrikes[zeroIdx - 1]), Sp(1, forward + relativeStrikes[zeroIdx + 1]), Mm(1, 0.0), Mp(1, 0.0);
-		if (model) model_ = boost::shared_ptr<VanillaLocalVolModel>(
+		if (model) model_ = ext::shared_ptr<VanillaLocalVolModel>(
 			new VanillaLocalVolModel(timeToExpiry, forward, sigmaATM, Sp, Sm, Mp, Mm, model->maxCalibrationIters(), model->onlyForwardCalibrationIters(), model->adjustATMFlag(), model->enableLogging(), model->useInitialMu(), model->initialMu()));
-		else model_ = boost::shared_ptr<VanillaLocalVolModel>(
+		else model_ = ext::shared_ptr<VanillaLocalVolModel>(
 			new VanillaLocalVolModel(timeToExpiry, forward, sigmaATM, Sp, Sm, Mp, Mm, 100, 0, true, true, false, 0.0));
 		// now we may set up the optimization problem...
 		VanillaLocalVolHelper costFunction(model_, relativeStrikes, smilePrices, vanillaVega, extrapolationRelativeStrike, extrapolationSlope, minSlope, maxSlope, alpha);
@@ -189,8 +207,8 @@ namespace QuantLib {
 		const Date&                                       expiryDate,
 		const Rate&                                       forward,
 		const Volatility&                                 atmVolatility,
-		const boost::shared_ptr<VanillaLocalVolModelSmileSection>& smile1,
-		const boost::shared_ptr<VanillaLocalVolModelSmileSection>& smile2,
+		const ext::shared_ptr<VanillaLocalVolModelSmileSection>& smile1,
+		const ext::shared_ptr<VanillaLocalVolModelSmileSection>& smile2,
 		const Real&                                       rho,
 		const bool                                        calcSimple,  // use only ATM vol for x-grid calculation
 		const DayCounter&                                 dc,
@@ -287,8 +305,8 @@ namespace QuantLib {
 		Real sigma0Scaling1 = smile1->model()->localVol()[zeroIdx1] / smile1->model()->sigmaATM();
 		Real sigma0Scaling2 = smile2->model()->localVol()[zeroIdx2] / smile2->model()->sigmaATM();
 		Real sigma0 = ((1.0 - rho)*sigma0Scaling1 + rho*sigma0Scaling2)*atmNormalVolatility;
-		boost::shared_ptr<VanillaLocalVolModel> refModel = (rho < 0.5) ? (smile1->model()) : (smile2->model());
-		model_ = boost::shared_ptr<VanillaLocalVolModel>(
+		ext::shared_ptr<VanillaLocalVolModel> refModel = (rho < 0.5) ? (smile1->model()) : (smile2->model());
+		model_ = ext::shared_ptr<VanillaLocalVolModel>(
 			(calcSimple)
 			? (new VanillaLocalVolModel(timeToExpiry, forward, atmNormalVolatility, Sp, Sm, Mp, Mm, refModel->maxCalibrationIters(), refModel->onlyForwardCalibrationIters(), refModel->adjustATMFlag(), refModel->enableLogging()))
 			: (new VanillaLocalVolModel(timeToExpiry, forward, atmNormalVolatility, sigma0, Xp, Xm, Mp, Mm, refModel->maxCalibrationIters(), refModel->onlyForwardCalibrationIters(), refModel->adjustATMFlag(), refModel->enableLogging())));

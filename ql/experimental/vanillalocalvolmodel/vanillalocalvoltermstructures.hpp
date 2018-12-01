@@ -11,7 +11,9 @@
 #ifndef quantlib_vanillalocalvoltermstructures_hpp
 #define quantlib_vanillalocalvoltermstructures_hpp
 
+#include <boost/shared_ptr.hpp>
 
+#include <ql/termstructures/volatility/smilesection.hpp>
 #include <ql/termstructures/volatility/swaption/swaptionvolstructure.hpp>
 
 
@@ -22,12 +24,12 @@ namespace QuantLib {
 
     class VanillaLocalVolSwaptionVTS : public SwaptionVolatilityStructure {
     private:
-		const boost::shared_ptr<SwaptionVolatilityStructure> atmVolTS_;
-		const std::vector< std::vector< boost::shared_ptr<VanillaLocalVolModelSmileSection> > > smiles_;
+		const ext::shared_ptr<SwaptionVolatilityStructure> atmVolTS_;
+		const std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > > smiles_;
 		const std::vector< Period > swapTerms_;
-		const boost::shared_ptr<SwapIndex> index_;  // a template for all the swap index per swap terms
+		const ext::shared_ptr<SwapIndex> index_;  // a template for all the swap index per swap terms
 	protected:
-		virtual boost::shared_ptr<SmileSection> smileSectionImpl(
+		virtual ext::shared_ptr<SmileSection> smileSectionImpl(
 			Time optionTime,
 			Time swapLength) const;
 
@@ -39,10 +41,10 @@ namespace QuantLib {
 
     public:
 		VanillaLocalVolSwaptionVTS(
-			const boost::shared_ptr<SwaptionVolatilityStructure>&                                     atmVolTS,
-			const std::vector< std::vector< boost::shared_ptr<VanillaLocalVolModelSmileSection> > >&  smiles,
-			const std::vector< Period >&                                                              swapTerms,
-			const boost::shared_ptr<SwapIndex>&                                                       index);
+			const ext::shared_ptr<SwaptionVolatilityStructure>&                                     atmVolTS,
+			const std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > >&  smiles,
+			const std::vector< Period >&                                                            swapTerms,
+			const ext::shared_ptr<SwapIndex>&                                                       index);
 
         virtual const Date&   referenceDate() const { return atmVolTS_->referenceDate(); }
         virtual const Period& maxSwapTenor()  const { return atmVolTS_->maxSwapTenor();  }
