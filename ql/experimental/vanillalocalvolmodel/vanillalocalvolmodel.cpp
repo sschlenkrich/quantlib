@@ -1,10 +1,24 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2015, Sebastian Schlenkrich
+Copyright (C) 2018 Sebastian Schlenkrich
 
+This file is part of QuantLib, a free-software/open-source library
+for financial quantitative analysts and developers - http://quantlib.org/
+
+QuantLib is free software: you can redistribute it and/or modify it
+under the terms of the QuantLib license.  You should have received a
+copy of the license along with this program; if not, please email
+<quantlib-dev@lists.sf.net>. The license is also available online at
+<http://quantlib.org/license.shtml>.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
+
+#include <sstream>
 
 #include <ql/math/distributions/normaldistribution.hpp>
 #include <ql/experimental/vanillalocalvolmodel/vanillalocalvolmodel.hpp>
@@ -15,6 +29,13 @@ namespace {
 	// in various places
 	QuantLib::CumulativeNormalDistribution Phi;
 
+	// we need to convert numbers to strings for logging
+	template <typename T>
+	std::string to_string(T val) {
+		std::stringstream stream;
+		stream << val;
+		return stream.str();
+	}
 }
 
 namespace QuantLib {
@@ -31,7 +52,7 @@ namespace QuantLib {
 		S0Tol_ = 1.0e-12;
 	}
 
-    Real VanillaLocalVolModel::localVol(const bool isRightWing, const size_t k, const Real S) {
+    Real VanillaLocalVolModel::localVol(const bool isRightWing, const Size k, const Real S) {
 		// this is an unsafe method specifying the vol function sigma(S) on the individual segments
 		if (isRightWing) {
 			QL_REQUIRE(k < sigmaP_.size(), "k < sigmaP_.size() required.");
@@ -47,7 +68,7 @@ namespace QuantLib {
 		return 0.0;  // this should never be reached
 	}
 
-	Real VanillaLocalVolModel::underlyingS(const bool isRightWing, const size_t k, const Real x) {
+	Real VanillaLocalVolModel::underlyingS(const bool isRightWing, const Size k, const Real x) {
 		// this is an unsafe method specifying the underlying level S(x) on the individual segments
 		if (isRightWing) {
 			QL_REQUIRE(k < sigmaP_.size(), "k < sigmaP_.size() required.");
@@ -68,7 +89,7 @@ namespace QuantLib {
 		return 0.0;  // this should never be reached
 	}
 
-	Real VanillaLocalVolModel::underlyingX(const bool isRightWing, const size_t k, const Real S) {
+	Real VanillaLocalVolModel::underlyingX(const bool isRightWing, const Size k, const Real S) {
 		// this is an unsafe method specifying the underlying level x(S) on the individual segments
 		if (isRightWing) {
 			QL_REQUIRE(k < sigmaP_.size(), "k < sigmaP_.size() required.");
@@ -91,7 +112,7 @@ namespace QuantLib {
 		return 0.0;  // this should never be reached
 	}
 
-	Real VanillaLocalVolModel::primitiveF(const bool isRightWing, const size_t k, const Real x) {
+	Real VanillaLocalVolModel::primitiveF(const bool isRightWing, const Size k, const Real x) {
 		// this is an unsafe method specifying the primitive function F(x) = \int [alpha S(x) + nu] p(x) dx
 		// on the individual segments
 		Real sigma0, x0, S0, m0;
@@ -126,7 +147,7 @@ namespace QuantLib {
 		return alpha_ * (term1 - term2);
 	}
 
-	Real VanillaLocalVolModel::primitiveFSquare(const bool isRightWing, const size_t k, const Real x) {
+	Real VanillaLocalVolModel::primitiveFSquare(const bool isRightWing, const Size k, const Real x) {
 		// this is an unsafe method specifying the primitive function F(x) = \int [alpha S(x) + nu]^2 p(x) dx
 		// on the individual segments
 		Real sigma0, x0, S0, m0;
@@ -173,12 +194,11 @@ namespace QuantLib {
 		// this is an unsafe method to calculate the S-grid for a given x-grid
         // it is intended as a preprocessing step in conjunction with smile interplation
 		// validity of the model is ensured by proceeding it with updateLocalVol()
-		for (size_t k = 0; k < Xp_.size(); ++k) { // right wing calculations
+		for (Size k = 0; k < Xp_.size(); ++k) { // right wing calculations
 			Sp_[k] = underlyingS(true, k, Xp_[k]);
 			sigmaP_[k] = localVol(true, k, Sp_[k]);
 		}
-		for (size_t k = 0; k < Sm_.size(); ++k) { // left wing calculations
-			Real x0 = (k > 0) ? Xm_[k - 1] : 0.0;
+		for (Size k = 0; k < Sm_.size(); ++k) { // left wing calculations
 			Sm_[k] = underlyingS(false, k, Xm_[k]);
 			sigmaM_[k] = localVol(false, k, Sm_[k]);
 		}
@@ -187,9 +207,8 @@ namespace QuantLib {
 	void VanillaLocalVolModel::updateLocalVol() {
 		// use ODE solution to determine x-grid and sigma-grid taking into account constraints of
 		// positive local volatility and local vol extrapolation
-		for (size_t k = 0; k < Sp_.size(); ++k) { // right wing calculations
+		for (Size k = 0; k < Sp_.size(); ++k) { // right wing calculations
 			Real x0 = (k > 0) ? Xp_[k - 1] : 0.0;
-			Real S0 = (k > 0) ? Sp_[k - 1] : S0_;
 			Real sigma0 = (k > 0) ? sigmaP_[k - 1] : sigma0_;
 			QL_REQUIRE(sigma0 >= 0.0, "sigma0 >= 0.0 required.");
 			if ((k == Sp_.size() - 1)||(localVol(true, k, Sp_[k])<=0.0)||(underlyingX(true, k, Sp_[k])>upperBoundX()))  { // right wing extrapolation, maybe better use some epsilon here
@@ -205,9 +224,8 @@ namespace QuantLib {
 			QL_REQUIRE(sigmaP_[k] > 0.0, "sigmaP_[k] > 0.0 required.");
 			Xp_[k] = underlyingX(true, k, Sp_[k]);
 		}
-		for (size_t k = 0; k < Sm_.size(); ++k) { // left wing calculations
+		for (Size k = 0; k < Sm_.size(); ++k) { // left wing calculations
 			Real x0 = (k > 0) ? Xm_[k - 1] : 0.0;
-			Real S0 = (k > 0) ? Sm_[k - 1] : S0_;
 			Real sigma0 = (k > 0) ? sigmaM_[k - 1] : sigma0_;
 			QL_REQUIRE(sigma0 >= 0.0, "sigma0 >= 0.0 required.");
 			if ((k == Sm_.size() - 1)||(localVol(false, k, Sm_[k]) <= 0.0)||(underlyingX(false, k, Sm_[k])<lowerBoundX())) { // left wing extrapolation, maybe better use some epsilon here
@@ -229,7 +247,7 @@ namespace QuantLib {
 		Real straddleVega = straddleATM_ / sigmaATM_;
 		Real forwardMinusStrike0, forwardMinusStrike1, straddleMinusATM0, straddleMinusATM1, dmu, dlogSigma0;
 		Real	dfwd_dmu, dstr_dlogSigma0, logSigma0=log(sigma0_);
-		for (size_t k = 0; k < maxCalibrationIters_; ++k) {
+		for (Size k = 0; k < maxCalibrationIters_; ++k) {
 			Real call = expectation(true, S0_);
 			Real put = expectation(false, S0_);
 			forwardMinusStrike1 = call - put;
@@ -242,10 +260,10 @@ namespace QuantLib {
 				Real lambda = -num / den;
 				Real eps = 1.0e-6;  // see Griewank '86
 				if (lambda < -0.5 - eps) lambda = -0.5;
-				else if (lambda < -eps) lambda = lambda;
+				else if (lambda < -eps); // lambda = lambda;
 				else if (lambda < 0.0) lambda = -eps;
 				else if (lambda <= eps) lambda = eps;
-				else if (lambda <= 0.5 + eps) lambda = lambda;
+				else if (lambda <= 0.5 + eps); // lambda = lambda;
 				else lambda = 1.0;
 				if (lambda < 1.0) { // reject the step and calculate a new try
 					// x = x - dx + lambda dx = x + (lambda - 1.0) dx
@@ -255,13 +273,13 @@ namespace QuantLib {
 					dlogSigma0 *= lambda;
 					sigma0_ = exp(logSigma0);
 					updateLocalVol();
-					if (enableLogging_) logging_.push_back("k: " + std::to_string(k) +
-						"; C: " + std::to_string(call) +
-						"; P: " + std::to_string(put) +
-						"; S: " + std::to_string(straddleATM_) +
-						"; lambda: " + std::to_string(lambda) +
-						"; dmu: " + std::to_string(dmu) +
-						"; dlogSigma0: " + std::to_string(dlogSigma0));
+					if (enableLogging_) logging_.push_back("k: " + to_string(k) +
+						"; C: " + to_string(call) +
+						"; P: " + to_string(put) +
+						"; S: " + to_string(straddleATM_) +
+						"; lambda: " + to_string(lambda) +
+						"; dmu: " + to_string(dmu) +
+						"; dlogSigma0: " + to_string(dlogSigma0));
 					continue;  // don't update derivatives and step direction for rejected steps
 				}
 			}
@@ -293,14 +311,14 @@ namespace QuantLib {
 			// prepare for next iteration
 			forwardMinusStrike0 = forwardMinusStrike1;
 			straddleMinusATM0 = straddleMinusATM1;
-			if (enableLogging_) logging_.push_back("k: " + std::to_string(k) +
-				"; C: " + std::to_string(call) +
-				"; P: " + std::to_string(put) +
-				"; S: " + std::to_string(straddleATM_) +
-				"; dfwd_dmu: " + std::to_string(dfwd_dmu) +
-				"; dstr_dlogSigma0: " + std::to_string(dstr_dlogSigma0) +
-				"; dmu: " + std::to_string(dmu) +
-				"; dlogSigma0: " + std::to_string(dlogSigma0));
+			if (enableLogging_) logging_.push_back("k: " + to_string(k) +
+				"; C: " + to_string(call) +
+				"; P: " + to_string(put) +
+				"; S: " + to_string(straddleATM_) +
+				"; dfwd_dmu: " + to_string(dfwd_dmu) +
+				"; dstr_dlogSigma0: " + to_string(dstr_dlogSigma0) +
+				"; dmu: " + to_string(dmu) +
+				"; dlogSigma0: " + to_string(dlogSigma0));
 			if ((fabs(forwardMinusStrike0) < S0Tol_) && (fabs(sigma0_*dlogSigma0) < sigma0Tol_)) break;
 		}
 	}
@@ -312,12 +330,12 @@ namespace QuantLib {
 		Real call0 = expectation(true, S0_);
 		Real put0 = expectation(false, S0_);
 		nu_ = put0 - call0;
-		if (enableLogging_) logging_.push_back("C0: " + std::to_string(call0) + "; P0: " + std::to_string(put0) + "; nu: " + std::to_string(nu_));
+		if (enableLogging_) logging_.push_back("C0: " + to_string(call0) + "; P0: " + to_string(put0) + "; nu: " + to_string(nu_));
 		Real call1 = expectation(true, S0_);
 		Real put1 = expectation(false, S0_);
 		alpha_ = straddleATM_ / (call1 + put1);
 		nu_ = alpha_*nu_ + (1.0 - alpha_)*S0_;
-		if (enableLogging_) logging_.push_back("C1: " + std::to_string(call1) + "; P1: " + std::to_string(put1) + "; alpha_: " + std::to_string(alpha_) + "; nu_: " + std::to_string(nu_));
+		if (enableLogging_) logging_.push_back("C1: " + to_string(call1) + "; P1: " + to_string(put1) + "; alpha_: " + to_string(alpha_) + "; nu_: " + to_string(nu_));
 	}
 
 	// construct model based on S-grid
@@ -330,15 +348,15 @@ namespace QuantLib {
 			const std::vector<Real>&  Mp,
 			const std::vector<Real>&  Mm,
 			// controls for calibration
-			const size_t              maxCalibrationIters,
-			const size_t              onlyForwardCalibrationIters,
+			const Size                maxCalibrationIters,
+			const Size                onlyForwardCalibrationIters,
 			const bool                adjustATMFlag,
 			const bool                enableLogging,
 			const bool                useInitialMu,
 			const Real                initialMu)
-		: T_(T), S0_(S0), sigmaATM_(sigmaATM), sigma0_(sigmaATM), Sp_(Sp), Sm_(Sm), Mp_(Mp), Mm_(Mm),
+		: T_(T), S0_(S0), sigmaATM_(sigmaATM), Sp_(Sp), Sm_(Sm), Mp_(Mp), Mm_(Mm), sigma0_(sigmaATM),
 		maxCalibrationIters_(maxCalibrationIters), onlyForwardCalibrationIters_(onlyForwardCalibrationIters),
-		adjustATM_(adjustATMFlag), enableLogging_(enableLogging), useInitialMu_(useInitialMu), initialMu_(initialMu) {
+		adjustATM_(adjustATMFlag), useInitialMu_(useInitialMu), initialMu_(initialMu), enableLogging_(enableLogging) {
 		// some basic sanity checks come here to avoid the need for taking care of it later on
 		QL_REQUIRE(T_ > 0, "T_ > 0 required.");
 		QL_REQUIRE(sigmaATM_ > 0, "sigmaATM_ > 0 required.");
@@ -348,9 +366,9 @@ namespace QuantLib {
 		QL_REQUIRE(Mm_.size() == Sm_.size(), "Mm_.size() == Sm_.size() required.");
 		// check for monotonicity
 		QL_REQUIRE(Sp_[0] > S0_, "Sp_[0] > S0_ required.");
-		for (size_t k=1; k<Sp_.size(); ++k) QL_REQUIRE(Sp_[k] > Sp_[k-1], "Sp_[k] > Sp_[k-1] required.");
+		for (Size k=1; k<Sp_.size(); ++k) QL_REQUIRE(Sp_[k] > Sp_[k-1], "Sp_[k] > Sp_[k-1] required.");
 		QL_REQUIRE(Sm_[0] < S0_, "Sm_[0] < S0_ required.");
-		for (size_t k = 1; k<Sm_.size(); ++k) QL_REQUIRE(Sm_[k] < Sm_[k-1], "Sm_[k] < Sm_[k-1] required.");
+		for (Size k = 1; k<Sm_.size(); ++k) QL_REQUIRE(Sm_[k] < Sm_[k-1], "Sm_[k] < Sm_[k-1] required.");
 		// now it makes sense to allocate memory
 		sigmaP_.resize(Sp_.size());
 		sigmaM_.resize(Sm_.size());
@@ -375,15 +393,15 @@ namespace QuantLib {
 			const std::vector<Real>&  Mp,
 			const std::vector<Real>&  Mm,
 			// controls for calibration
-			const size_t              maxCalibrationIters,
-			const size_t              onlyForwardCalibrationIters,
+			const Size                maxCalibrationIters,
+			const Size                onlyForwardCalibrationIters,
 			const bool                adjustATMFlag,
 			const bool                enableLogging,
 			const bool                useInitialMu,
 			const Real                initialMu)
-			: T_(T), S0_(S0), sigmaATM_(sigmaATM), sigma0_(sigma0), Xp_(Xp), Xm_(Xm), Mp_(Mp), Mm_(Mm),
+			: T_(T), S0_(S0), sigmaATM_(sigmaATM), Mp_(Mp), Mm_(Mm), sigma0_(sigma0), Xp_(Xp), Xm_(Xm),
 			maxCalibrationIters_(maxCalibrationIters), onlyForwardCalibrationIters_(onlyForwardCalibrationIters),
-			adjustATM_(adjustATMFlag), enableLogging_(enableLogging), useInitialMu_(useInitialMu), initialMu_(initialMu) {
+			adjustATM_(adjustATMFlag), useInitialMu_(useInitialMu), initialMu_(initialMu), enableLogging_(enableLogging) {
 			// some basic sanity checks come here to avoid the need for taking care of it later on
 			QL_REQUIRE(T_ > 0, "T_ > 0 required.");
 			QL_REQUIRE(sigmaATM_ > 0, "sigmaATM_ > 0 required.");
@@ -394,9 +412,9 @@ namespace QuantLib {
 			QL_REQUIRE(Mm_.size() == Xm_.size(), "Mm_.size() == Xm_.size() required.");
 			// check for monotonicity
 			QL_REQUIRE(Xp_[0] > 0.0, "Xp_[0] > 0.0 required.");
-			for (size_t k = 1; k<Xp_.size(); ++k) QL_REQUIRE(Xp_[k] > Xp_[k - 1], "Xp_[k] > Xp_[k-1] required.");
+			for (Size k = 1; k<Xp_.size(); ++k) QL_REQUIRE(Xp_[k] > Xp_[k - 1], "Xp_[k] > Xp_[k-1] required.");
 			QL_REQUIRE(Xm_[0] < 0.0, "Xm_[0] < 0.0 required.");
-			for (size_t k = 1; k<Xm_.size(); ++k) QL_REQUIRE(Xm_[k] < Xm_[k - 1], "Xm_[k] < Xm_[k-1] required.");
+			for (Size k = 1; k<Xm_.size(); ++k) QL_REQUIRE(Xm_[k] < Xm_[k - 1], "Xm_[k] < Xm_[k-1] required.");
 			// now it makes sense to allocate memory
 			sigmaP_.resize(Xp_.size());
 			sigmaM_.resize(Xm_.size());
@@ -415,33 +433,33 @@ namespace QuantLib {
 
 	const std::vector<Real> VanillaLocalVolModel::underlyingX() {
 		std::vector<Real> X(Xm_.size() + Xp_.size() + 1);
-		for (size_t k = 0; k < Xm_.size(); ++k) X[k] = Xm_[Xm_.size() - k - 1];
+		for (Size k = 0; k < Xm_.size(); ++k) X[k] = Xm_[Xm_.size() - k - 1];
 		X[Xm_.size()] = 0.0;
-		for (size_t k = 0; k < Xp_.size(); ++k) X[Xm_.size() + 1 + k] = Xp_[k];
+		for (Size k = 0; k < Xp_.size(); ++k) X[Xm_.size() + 1 + k] = Xp_[k];
 		return X;
 	}
 
 	const std::vector<Real> VanillaLocalVolModel::underlyingS() {
 		std::vector<Real> S(Sm_.size() + Sp_.size() + 1);
-		for (size_t k = 0; k < Sm_.size(); ++k) S[k] = Sm_[Sm_.size() - k - 1];
+		for (Size k = 0; k < Sm_.size(); ++k) S[k] = Sm_[Sm_.size() - k - 1];
 		S[Sm_.size()] = S0_;
-		for (size_t k = 0; k < Sp_.size(); ++k) S[Sm_.size() + 1 + k] = Sp_[k];
+		for (Size k = 0; k < Sp_.size(); ++k) S[Sm_.size() + 1 + k] = Sp_[k];
 		return S;
 	}
 
 	const std::vector<Real> VanillaLocalVolModel::localVol() {
 		std::vector<Real> sigma(sigmaM_.size() + sigmaP_.size() + 1);
-		for (size_t k = 0; k < sigmaM_.size(); ++k) sigma[k] = sigmaM_[sigmaM_.size() - k - 1];
+		for (Size k = 0; k < sigmaM_.size(); ++k) sigma[k] = sigmaM_[sigmaM_.size() - k - 1];
 		sigma[sigmaM_.size()] = sigma0_;
-		for (size_t k = 0; k < sigmaP_.size(); ++k) sigma[sigmaM_.size() + 1 + k] = sigmaP_[k];
+		for (Size k = 0; k < sigmaP_.size(); ++k) sigma[sigmaM_.size() + 1 + k] = sigmaP_[k];
 		return sigma;
 	}
 
 	const std::vector<Real> VanillaLocalVolModel::localVolSlope() {
 		std::vector<Real> m(Mm_.size() + Mp_.size() + 1);
-		for (size_t k = 0; k < Mm_.size(); ++k) m[k] = Mm_[Mm_.size() - k - 1];
+		for (Size k = 0; k < Mm_.size(); ++k) m[k] = Mm_[Mm_.size() - k - 1];
 		m[Mm_.size()] = 0.0;  // undefined
-		for (size_t k = 0; k < Mp_.size(); ++k) m[Mm_.size() + 1 + k] = Mp_[k];
+		for (Size k = 0; k < Mp_.size(); ++k) m[Mm_.size() + 1 + k] = Mp_[k];
 		return m;
 	}
 
@@ -449,7 +467,7 @@ namespace QuantLib {
 
 	const Real VanillaLocalVolModel::localVol(Real S) {
 		bool isRightWing = (S >= S0_) ? true : false;
-		size_t idx = 0;
+		Size idx = 0;
 		if (isRightWing) while ((idx < Sp_.size() - 1) && (Sp_[idx] < S)) ++idx;
 		else             while ((idx < Sm_.size() - 1) && (Sm_[idx] > S)) ++idx;
 		return localVol(isRightWing, idx, S);
@@ -457,7 +475,7 @@ namespace QuantLib {
 
 	const Real VanillaLocalVolModel::underlyingS(Real x) {
 		bool isRightWing = (x >= 0.0) ? true : false;
-		size_t idx = 0;
+		Size idx = 0;
 		if (isRightWing) while ((idx < Xp_.size() - 1) && (Xp_[idx] < x)) ++idx;
 		else             while ((idx < Xm_.size() - 1) && (Xm_[idx] > x)) ++idx;
 		return underlyingS(isRightWing, idx, x);
@@ -467,7 +485,7 @@ namespace QuantLib {
 
 	const Real VanillaLocalVolModel::expectation(bool isRightWing, Real strike) {
 		// calculate the forward price of an OTM option
-		size_t idx = 0;
+		Size idx = 0;
 		if (isRightWing) {
 			QL_REQUIRE(strike >= S0_, "strike >= S0_ required");
 			while ((idx < Sp_.size()) && (Sp_[idx] <= strike)) ++idx;  // make sure strike < Sp_[idx]
@@ -476,7 +494,7 @@ namespace QuantLib {
 			Real x0 = (idx > 0) ? Xp_[idx - 1] : 0.0;
 			QL_REQUIRE((x0 <= strikeX) && (strikeX <= Xp_[idx]), "(x0 <= strikeX) && (strikeX <= Xp_[idx]) required");
 			Real intS = 0.0;
-			for (size_t k = idx; k < Sp_.size(); ++k) {
+			for (Size k = idx; k < Sp_.size(); ++k) {
 				Real xStart = (k == idx) ? strikeX : Xp_[k - 1];
 				intS += (primitiveF(isRightWing, k, Xp_[k]) - primitiveF(isRightWing, k, xStart));
 			}
@@ -493,7 +511,7 @@ namespace QuantLib {
 			Real x0 = (idx > 0) ? Xm_[idx - 1] : 0.0;
 			QL_REQUIRE((x0 >= strikeX) && (strikeX >= Xm_[idx]), "(x0 >= strikeX) && (strikeX >= Xm_[idx]) required");
 			Real intS = 0.0;
-			for (size_t k = idx; k < Sm_.size(); ++k) {
+			for (Size k = idx; k < Sm_.size(); ++k) {
 				Real xStart = (k == idx) ? strikeX : Xm_[k - 1];
 				intS += (primitiveF(isRightWing, k, Xm_[k]) - primitiveF(isRightWing, k, xStart));
 			}
@@ -506,7 +524,7 @@ namespace QuantLib {
 
 	const Real VanillaLocalVolModel::variance(bool isRightWing, Real strike) {
 		// calculate the forward price of an OTM power option with payoff 1_{S>K}(S-K)^2
-		size_t idx = 0;
+		Size idx = 0;
 		if (isRightWing) {
 			QL_REQUIRE(strike >= S0_, "strike >= S0_ required");
 			while ((idx < Sp_.size()) && (Sp_[idx] <= strike)) ++idx;  // make sure strike < Sp_[idx]
@@ -515,7 +533,7 @@ namespace QuantLib {
 			Real x0 = (idx > 0) ? Xp_[idx - 1] : 0.0;
 			QL_REQUIRE((x0 <= strikeX) && (strikeX <= Xp_[idx]), "(x0 <= strikeX) && (strikeX <= Xp_[idx]) required");
 			Real intS=0.0, intS2 = 0.0;
-			for (size_t k = idx; k < Sp_.size(); ++k) {
+			for (Size k = idx; k < Sp_.size(); ++k) {
 				Real xStart = (k == idx) ? strikeX : Xp_[k - 1];
 				intS  += (primitiveF(isRightWing, k, Xp_[k]) - primitiveF(isRightWing, k, xStart));
 				intS2 += (primitiveFSquare(isRightWing, k, Xp_[k]) - primitiveFSquare(isRightWing, k, xStart));
@@ -533,7 +551,7 @@ namespace QuantLib {
 			Real x0 = (idx > 0) ? Xm_[idx - 1] : 0.0;
 			QL_REQUIRE((x0 >= strikeX) && (strikeX >= Xm_[idx]), "(x0 >= strikeX) && (strikeX >= Xm_[idx]) required");
 			Real intS = 0.0, intS2 = 0.0;
-			for (size_t k = idx; k < Sm_.size(); ++k) {
+			for (Size k = idx; k < Sm_.size(); ++k) {
 				Real xStart = (k == idx) ? strikeX : Xm_[k - 1];
 				intS  += (primitiveF(isRightWing, k, Xm_[k]) - primitiveF(isRightWing, k, xStart));
 				intS2 += (primitiveFSquare(isRightWing, k, Xm_[k]) - primitiveFSquare(isRightWing, k, xStart));

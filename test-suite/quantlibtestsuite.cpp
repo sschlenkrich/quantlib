@@ -192,6 +192,7 @@
 #include "transformedgrid.hpp"
 #include "twoassetbarrieroption.hpp"
 #include "twoassetcorrelationoption.hpp"
+#include "vanillalocalvolmodels.hpp"
 #include "variancegamma.hpp"
 #include "varianceoption.hpp"
 #include "varianceswaps.hpp"
@@ -504,7 +505,8 @@ test_suite* init_unit_test_suite(int, char* []) {
     test->add(SwingOptionTest::suite(speed));
     test->add(TwoAssetBarrierOptionTest::suite());
     test->add(TwoAssetCorrelationOptionTest::suite());
-    test->add(VarianceGammaTest::suite());
+	test->add(VanillaLocalVolModelTest::suite());
+	test->add(VarianceGammaTest::suite());
     test->add(VarianceOptionTest::suite());
     test->add(VPPTest::suite(speed));
     test->add(ZabrTest::suite(speed));

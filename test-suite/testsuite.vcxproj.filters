@@ -450,6 +450,9 @@
     <ClCompile Include="basismodels.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vanillalocalvolmodels.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="americanoption.hpp">
@@ -897,6 +900,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="basismodels.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vanillalocalvolmodels.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

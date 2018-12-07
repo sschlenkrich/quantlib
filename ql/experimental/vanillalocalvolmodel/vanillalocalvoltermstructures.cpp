@@ -1,14 +1,27 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2010 Sebastian Schlenkrich
+Copyright (C) 2018 Sebastian Schlenkrich
+
+This file is part of QuantLib, a free-software/open-source library
+for financial quantitative analysts and developers - http://quantlib.org/
+
+QuantLib is free software: you can redistribute it and/or modify it
+under the terms of the QuantLib license.  You should have received a
+copy of the license along with this program; if not, please email
+<quantlib-dev@lists.sf.net>. The license is also available online at
+<http://quantlib.org/license.shtml>.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
 /*! \file vanillalocalvoltermstructures.cpp
     \brief swaption volatility term structure based on VanillaLocalVolModel
 */
 
-
+#include <ql/handle.hpp>
 #include <ql/indexes/swapindex.hpp>
 
 #include <ql/experimental/vanillalocalvolmodel/vanillalocalvoltermstructures.hpp>
@@ -18,20 +31,20 @@
 namespace QuantLib {
 
 	VanillaLocalVolSwaptionVTS::VanillaLocalVolSwaptionVTS(
-		const ext::shared_ptr<SwaptionVolatilityStructure>&                                     atmVolTS,
+		const Handle<SwaptionVolatilityStructure>&                                              atmVolTS,
 		const std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > >&  smiles,
 		const std::vector< Period >&                                                            swapTerms,
 		const ext::shared_ptr<SwapIndex>&                                                       index)
-	: SwaptionVolatilityStructure(atmVolTS->referenceDate(),atmVolTS->calendar(),atmVolTS->businessDayConvention(), atmVolTS->dayCounter(), atmVolTS->volatilityType()),
+	: SwaptionVolatilityStructure(atmVolTS->referenceDate(),atmVolTS->calendar(),atmVolTS->businessDayConvention(), atmVolTS->dayCounter()),
 		atmVolTS_(atmVolTS), smiles_(smiles), swapTerms_(swapTerms), index_(index) {
-		QL_REQUIRE(atmVolTS_, "atmVolTS required");
+		QL_REQUIRE(!atmVolTS_.empty(), "atmVolTS required");
 		QL_REQUIRE(smiles_.size() == swapTerms_.size(), "smiles_.size()==swapTerms_.size() required");
-		for (size_t k = 1; k < swapTerms_.size(); ++k) {
+		for (Size k = 1; k < swapTerms_.size(); ++k) {
 			QL_REQUIRE(months(swapTerms_[k - 1]) < months(swapTerms_[k]), "months(swapTerms_[k-1])<months(swapTerms_[k]) required");
 		}
-		for (size_t k = 0; k < smiles_.size(); ++k) {
+		for (Size k = 0; k < smiles_.size(); ++k) {
 			QL_REQUIRE(smiles_[k].size() > 0, "smiles_[k].size()>0 required");
-			for (size_t i = 1; i < smiles_[k].size(); ++i) {
+			for (Size i = 1; i < smiles_[k].size(); ++i) {
 				QL_REQUIRE(smiles_[k][i - 1]->exerciseTime() < smiles_[k][i]->exerciseTime(), "smiles_[k][i-1]->exerciseTime()<smiles_[k][i]->exerciseTime() required");
 			}
 		}
@@ -44,7 +57,7 @@ namespace QuantLib {
 		Date optionDate = referenceDate() + optionDays;
 		Period swapTerm((Integer)round(12.0 * swapLength), Months);
 		// first we interpolate in expiry direction for two swap term columns
-		std::vector< size_t > idxj(2);  // swap term indices enclosing swap length
+		std::vector< Size > idxj(2);  // swap term indices enclosing swap length
 		std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > smilesj(2);
 		idxj[0] = swapTerms_.size() - 1;
 		idxj[1] = 0;
@@ -55,8 +68,8 @@ namespace QuantLib {
 		Real rhoj = 0.5;
 		if (months(swapTerms_[idxj[0]]) < months(swapTerms_[idxj[1]]))
 			rhoj = (round(12.0 * swapLength) - months(swapTerms_[idxj[0]])) / (months(swapTerms_[idxj[1]]) - months(swapTerms_[idxj[0]]));
-		for (size_t k = 0; k < 2; ++k) {
-			std::vector< size_t > idxi(2);  // expiry indices enclosing optionTime
+		for (Size k = 0; k < 2; ++k) {
+			std::vector< Size > idxi(2);  // expiry indices enclosing optionTime
 			idxi[0] = smiles_[idxj[k]].size() - 1;
 			idxi[1] = 0;
 			while ((idxi[0] > 0)                           && (smiles_[idxj[k]][idxi[0]]->exerciseTime() > optionTime)) --idxi[0];
