@@ -177,6 +177,21 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">QuantLib-$(qlCompilerTag)-mt</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">QuantLib-$(qlCompilerTag)-x64-mt</TargetName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <CustomBuildBeforeTargets>PreBuildEvent</CustomBuildBeforeTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <CustomBuildBeforeTargets>PreBuildEvent</CustomBuildBeforeTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|Win32'">
+    <CustomBuildBeforeTargets>PreBuildEvent</CustomBuildBeforeTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'">
+    <CustomBuildBeforeTargets>PreBuildEvent</CustomBuildBeforeTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">
+    <CustomBuildBeforeTargets>PreBuildEvent</CustomBuildBeforeTargets>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
@@ -220,6 +235,12 @@
     <Bscmake>
       <SuppressStartupBanner>false</SuppressStartupBanner>
     </Bscmake>
+    <CustomBuildStep>
+      <Command>python.exe buildinfo.py</Command>
+      <Outputs>buildinfo.hpp;runalways.txt;%(Outputs)</Outputs>
+      <Inputs>
+      </Inputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -306,6 +327,12 @@
     <Bscmake>
       <SuppressStartupBanner>false</SuppressStartupBanner>
     </Bscmake>
+    <CustomBuildStep>
+      <Command>python.exe buildinfo.py</Command>
+      <Outputs>buildinfo.hpp;runalways.txt;%(Outputs)</Outputs>
+      <Inputs>
+      </Inputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -392,6 +419,12 @@
     <Bscmake>
       <SuppressStartupBanner>false</SuppressStartupBanner>
     </Bscmake>
+    <CustomBuildStep>
+      <Command>python.exe buildinfo.py</Command>
+      <Outputs>buildinfo.hpp;runalways.txt;%(Outputs)</Outputs>
+      <Inputs>
+      </Inputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|x64'">
     <ClCompile>
@@ -478,6 +511,12 @@
     <Bscmake>
       <SuppressStartupBanner>false</SuppressStartupBanner>
     </Bscmake>
+    <CustomBuildStep>
+      <Command>python.exe buildinfo.py</Command>
+      <Outputs>buildinfo.hpp;runalways.txt;%(Outputs)</Outputs>
+      <Inputs>
+      </Inputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">
     <ClCompile>
@@ -520,6 +559,12 @@
     <Bscmake>
       <SuppressStartupBanner>false</SuppressStartupBanner>
     </Bscmake>
+    <CustomBuildStep>
+      <Command>python.exe buildinfo.py</Command>
+      <Outputs>buildinfo.hpp;runalways.txt;%(Outputs)</Outputs>
+      <Inputs>
+      </Inputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|x64'">
     <ClCompile>
@@ -606,6 +651,7 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ql\buildinfo.hpp" />
     <ClInclude Include="ql\cashflows\all.hpp" />
     <ClInclude Include="ql\cashflows\averagebmacoupon.hpp" />
     <ClInclude Include="ql\cashflows\capflooredcoupon.hpp" />
@@ -2005,6 +2051,7 @@
     <ClInclude Include="ql\volatilitymodel.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ql\buildinfo.cpp" />
     <ClCompile Include="ql\cashflows\averagebmacoupon.cpp" />
     <ClCompile Include="ql\cashflows\capflooredcoupon.cpp" />
     <ClCompile Include="ql\cashflows\capflooredinflationcoupon.cpp" />

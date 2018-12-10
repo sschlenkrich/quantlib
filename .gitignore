@@ -111,4 +111,6 @@ test-suite/bin/*.lib
 test-suite/bin/*.pdb
 test-suite/.unit_test_profile.txt
 
+# auto-generated build info
+buildinfo.hpp
 

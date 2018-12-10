@@ -4493,6 +4493,7 @@
     <ClInclude Include="ql\experimental\vanillalocalvolmodel\vanillalocalvoltermstructures.hpp">
       <Filter>experimental\vanillalocalvolmodel</Filter>
     </ClInclude>
+    <ClInclude Include="ql\buildinfo.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -7164,6 +7165,7 @@
     <ClCompile Include="ql\experimental\vanillalocalvolmodel\vanillalocalvoltermstructures.cpp">
       <Filter>experimental\vanillalocalvolmodel</Filter>
     </ClCompile>
+    <ClCompile Include="ql\buildinfo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">
