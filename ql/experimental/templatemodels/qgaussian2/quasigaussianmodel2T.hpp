@@ -26,13 +26,8 @@
 
 #include <ql/termstructures/yieldtermstructure.hpp>
 #include <ql/experimental/templatemodels/stochasticprocessT.hpp>
-#include <ql/experimental/templatemodels/auxilliaries/svdT.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/qrfactorisationT.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/choleskyfactorisationT.hpp>
-
-// #include <ql/option.hpp>
-// #include <ql/experimental/templatemodels/auxilliaries/integratorsT.hpp>
-// #include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
-
 
 
 namespace QuantLib {
@@ -192,46 +187,16 @@ namespace QuantLib {
 		// return false (and throw exception) on error
 		inline bool factorMatrices(const bool throwException=true){
 			bool ok = true;
-			// row-wise matrices
-			size_t dim = d_;
-			PassiveType *A  = new PassiveType[dim*dim];
-			PassiveType *U  = new PassiveType[dim*dim];
-			PassiveType *S  = new PassiveType[dim];
-			PassiveType *VT = new PassiveType[dim*dim];
-			// dummy auxilliary variables
-			PassiveType work;
-			int lwork, info;
 			DfT_ = TemplateAuxilliaries::cholesky(Gamma_);
-
-			// [ Hf H^{-1} ] = [ exp{-chi_j*delta_i} ] = V^T S U
-			for (size_t i=0; i<dim; ++i) {
-				for (size_t j=0; j<dim; ++j) {
-					A[i*dim+j] = exp(-chi_[j]*delta_[i]);
+			// [ Hf H^{-1} ] = [ exp{-chi_j*delta_i} ]
+			MatA A(d_, VecA(d_, 0.0));
+			for (size_t i = 0; i<d_; ++i) {
+				for (size_t j = 0; j<d_; ++j) {
+					A[i][j] = exp(-chi_[j] * delta_[i]);
 				}
 			}
-			TemplateAuxilliaries::svd("S","S",(int*)&dim,(int*)&dim,A,(int*)&dim,S,U,(int*)&dim,VT,(int*)&dim,&work,&lwork,&info);
-			// calculate and check condition number
-			PassiveType minS = S[0], maxS = S[0];
-			for (size_t i = 1; i < dim; ++i) {
-				if (S[i] < minS) minS = S[i];
-				if (S[i] > maxS) maxS = S[i];
-			}
-			if (minS<=0) { ok = false; if (throwException) QL_REQUIRE(false,"QuasiGaussianModel non-singular Gamma required."); }
-			condHHf_ = maxS / minS;
-			// evaluate H*Hf^-1 = U^T S^{-1} V
-			HHfInv_.resize(dim);
-			for (size_t i=0; i<dim; ++i) {
-				HHfInv_[i].resize(dim);
-				for (size_t j=0; j<dim; ++j) {
-					HHfInv_[i][j] = 0.0;
-					for (size_t k=0; k<dim; ++k) HHfInv_[i][j] += U[k*dim+i] * VT[j*dim+k] / S[k];
-				}
-			}
-			// finished
-			delete A;
-			delete U;
-			delete S;
-			delete VT;
+			HHfInv_ = TemplateAuxilliaries::qrinverse(A);
+			condHHf_ = 0.0;  // we don't have this information with QR factorisation
 			return ok;
 		}
 

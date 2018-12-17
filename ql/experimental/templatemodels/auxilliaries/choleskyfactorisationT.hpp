@@ -23,7 +23,7 @@ namespace TemplateAuxilliaries {
 	// A(i,j) (and L) is stored row-wise as A[i*n+j]
 	// L(i,j) is lower triangular matrix with L L^T = A
 	template <typename Type> 
-    inline void cholesky(Type *A, Type *L, size_t n) {
+    inline void cholesky(std::vector< Type >& A, std::vector< Type >& L, size_t n) {
         for (size_t i = 0; i < n; ++i) {
             for (size_t j = 0; j < (i+1); ++j) {
                 Type s = 0;
@@ -39,8 +39,8 @@ namespace TemplateAuxilliaries {
 
 	template <typename Type>
 	std::vector< std::vector< Type > > cholesky(const std::vector< std::vector< Type > >& A) {
-		Type *arrayA = new Type[A.size()*A.size()];
-		Type *arrayL = new Type[A.size()*A.size()];
+		std::vector<Type> arrayA(A.size()*A.size());
+		std::vector<Type> arrayL(A.size()*A.size());
 		for (size_t i = 0; i < A.size(); ++i) {
 			if (A.size()!=A[i].size()) throw std::exception();
 			for (size_t j = 0; j < A[i].size(); ++j) arrayA[i*A[i].size() + j] = A[i][j];
@@ -50,8 +50,6 @@ namespace TemplateAuxilliaries {
 		for (size_t i = 0; i < L.size(); ++i) {
 			for (size_t j = 0; j <= i; ++j) L[i][j] = arrayL[i*L[i].size() + j];
 		}
-		delete arrayA;
-		delete arrayL;
 		return L;
 	}
 

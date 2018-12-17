@@ -118,6 +118,23 @@ namespace TemplateAuxilliaries {
 		}
     }
 
+	template <typename Type>
+	inline std::vector<std::vector<Type> > qrinverse(const std::vector<std::vector<Type> >&  M) {
+		std::vector<std::vector<Type> > X;
+		for (size_t i = 0; i < M.size(); ++i) {
+			QL_REQUIRE(M[i].size()==M.size(), "QR dimensions miss-match");
+			std::vector<std::vector<Type> > A(M);  // we need to copy due to in-place factorisation
+			std::vector<Type> b(M.size(), 0.0);
+			b[i] = 1.0;
+			qrsolveles(A, b);
+			X.push_back(b);
+		}
+		std::vector<std::vector<Type> > Minv(M.size(), std::vector<Type>(M.size(), 0.0));
+		for (size_t i = 0; i < M.size(); ++i)  // we need to transpose X coz matrix is stored row-wise
+			for (size_t j = 0; j < M.size(); ++j)
+				Minv[i][j] = X[j][i];
+		return Minv;
+	}
 
 }
 

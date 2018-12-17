@@ -17,14 +17,9 @@
 #include <ql/math/optimization/constraint.hpp>
 #include <ql/math/optimization/levenbergmarquardt.hpp>
 
-#include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
-
 #include <ql/experimental/basismodels/swaptioncfs.hpp>
 
-#include <ql/experimental/templatemodels/qgaussian2/quasigaussianmodel2T.hpp>
-#include <ql/experimental/templatemodels/qgaussian2/qgswapratemodelT.hpp>
 #include <ql/experimental/templatemodels/qgaussian2/qgaverageswapratemodelT.hpp>
-//#include <ql/experimental/templatemodels/montecarlo/montecarlomodells.hpp>
 
 
 #define _MIN_( a, b ) ( (a) < (b) ? (a) : (b) )
@@ -50,7 +45,7 @@ namespace QuantLib {
 		// boost::shared_ptr<RealMCSimulation> mcSimulation_;
 
 		// calibration target volatilities
-		boost::shared_ptr<SwaptionVolatilityStructure> volTS_;
+		Handle<SwaptionVolatilityStructure> volTS_;
         
 		// we calibrate to strips of swaption volatilities; maybe also co-terminals can be relevant
 		std::vector< boost::shared_ptr<SwapIndex> > swapIndices_;
@@ -112,7 +107,7 @@ namespace QuantLib {
 				CalibSwaption ( Date                                expiryDate,
 					            const boost::shared_ptr<SwapIndex>& swapindex,
 			                    const Handle<YieldTermStructure>&   discountCurve,
-					            const boost::shared_ptr<SwaptionVolatilityStructure> volTS,
+					            const Handle<SwaptionVolatilityStructure> volTS,
 						        bool                                contTenorSpread = true,
 								Real                                modelTimesStepSize = 1.0/12.0);
 				// inspectors
@@ -169,7 +164,7 @@ namespace QuantLib {
 
 		// constructor
 		QGCalibrator( const boost::shared_ptr<QuasiGaussianModel>&          model,
-			          const boost::shared_ptr<SwaptionVolatilityStructure>& volTS,
+			          const Handle<SwaptionVolatilityStructure>&            volTS,
 			          const std::vector< boost::shared_ptr<SwapIndex> >&    swapIndices,
 					  const Real                                            modelTimesStepSize,
                       const bool                                            useExpectedXY,

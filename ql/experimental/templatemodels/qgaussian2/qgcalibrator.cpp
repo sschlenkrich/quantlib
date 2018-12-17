@@ -20,7 +20,7 @@ namespace QuantLib {
 		Date                                expiryDate,
 		const boost::shared_ptr<SwapIndex>& swapindex,
 		const Handle<YieldTermStructure>&   discountCurve,
-		const boost::shared_ptr<SwaptionVolatilityStructure> volTS,
+		const Handle<SwaptionVolatilityStructure> volTS,
 		bool                                contTenorSpread,
 		Real                                modelTimesStepSize )
 		: SwapCashFlows(swapindex->underlyingSwap(expiryDate),discountCurve,contTenorSpread) {
@@ -276,7 +276,7 @@ namespace QuantLib {
 	// constructor
 	QGCalibrator::QGCalibrator(
 		const boost::shared_ptr<QuasiGaussianModel>&          model,
-		const boost::shared_ptr<SwaptionVolatilityStructure>& volTS,
+		const Handle<SwaptionVolatilityStructure>&            volTS,
 		const std::vector< boost::shared_ptr<SwapIndex> >&    swapIndices,
 		const Real                                            modelTimesStepSize,
 		const bool                                            useExpectedXY,

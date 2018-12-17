@@ -124,7 +124,7 @@ namespace QuantLib {
 			for (size_t k=strikes.size(); k>0; --k) {
 				if (k < strikes.size()) mcCall[k - 1] = mcCall[k] + sumOfRNDerivative*(strikes[k] - strikes[k - 1]);
 				if (k < strikes.size()) mcProb[k - 1] = mcProb[k];
-				else mcProb[k - 1] = simulation_->nPaths();
+				else mcProb[k - 1] = (Real)simulation_->nPaths();
 				size_t upIdx = (k==strikes.size()) ? (simulation_->nPaths()) : (strikeIdx[k]);
 				for (size_t j=upIdx; j>strikeIdx[k-1]; --j) {
 					Real radonNikodymDerivative = annuitySample[sorted[j - 1]] * oneOverBSample[sorted[j - 1]] / swapRate.annuity();

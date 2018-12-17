@@ -21,18 +21,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <ql/experimental/templatemodels/qgaussian2/quasigaussianmodel2T.hpp>
-#include <ql/experimental/templatemodels/auxilliaries/solver1dT.hpp>
 #include <ql/experimental/templatemodels/stochvol/hestonmodelT.hpp>
-
-
-// #include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
-// #include <ql/types.hpp>
-// #include <ql/experimental/templatemodels/stochvol/hestonmodelT.hpp>
-// #include <ql/experimental/templatemodels/stochvol/tdstochvolmodelT.hpp>
-
-
-//#include <ql/experimental/template/auxilliaries/gausslobatto.hpp>
+#include <ql/experimental/templatemodels/qgaussian2/qgswapratemodelT.hpp>
 
 
 
