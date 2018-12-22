@@ -24,7 +24,7 @@ namespace QuantLib {
 	public:
 		QGLSVModel(
 			const Handle<YieldTermStructure>&                      termStructure,
-			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			const Handle<SwaptionVolatilityStructure>&             volTS,
 			const Real                                             chi,
 			const Real                                             theta,
 			const Real                                             eta,

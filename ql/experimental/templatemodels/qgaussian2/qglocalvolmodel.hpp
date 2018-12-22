@@ -40,7 +40,7 @@ namespace QuantLib {
 
 	protected:
 		// calibration target volatilities
-		boost::shared_ptr<SwaptionVolatilityStructure> volTS_;
+		Handle<SwaptionVolatilityStructure> volTS_;
         
 		// simulation derived during calibration; we need to store nPaths_ and seed_ separately
 		// because we can't initialise simulation within constructor
@@ -166,7 +166,7 @@ namespace QuantLib {
 	public:
         // pure local volatility
 		QGLocalvolModel( const Handle<YieldTermStructure>&                      termStructure,
-			             const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			             const Handle<SwaptionVolatilityStructure>&             volTS,
 			             const Real                                             chi,
 			             const boost::shared_ptr<SwapIndex>&                    swapIndex,
 			             const std::vector<Real>&                               times,
@@ -177,7 +177,7 @@ namespace QuantLib {
 
 		// allow for stochastic volatility
 		QGLocalvolModel(const Handle<YieldTermStructure>&                      termStructure,
-			            const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			            const Handle<SwaptionVolatilityStructure>&             volTS,
 			            const Real                                             chi,
 			            const Real                                             theta,
 			            const Real                                             eta,
@@ -212,7 +212,7 @@ namespace QuantLib {
 	public:
 		QGLocalvolModelBackwardFlavor(
 			const Handle<YieldTermStructure>&                      termStructure,
-			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			const Handle<SwaptionVolatilityStructure>&             volTS,
 			const Real                                             chi,
 			const Real                                             theta,
 			const Real                                             eta,
@@ -234,7 +234,7 @@ namespace QuantLib {
 	public:
 		QGLocalvolModelForwardFlavor(
 			const Handle<YieldTermStructure>&                      termStructure,
-			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			const Handle<SwaptionVolatilityStructure>&             volTS,
 			const Real                                             chi,
 			const Real                                             theta,
 			const Real                                             eta,
@@ -256,7 +256,7 @@ namespace QuantLib {
 	public:
 		QGLocalvolModelAnalyticFlavor(
 			const Handle<YieldTermStructure>&                      termStructure,
-			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			const Handle<SwaptionVolatilityStructure>&             volTS,
 			const Real                                             chi,
 			const boost::shared_ptr<SwapIndex>&                    swapIndex,
 			const std::vector<Real>&                               times,
@@ -274,7 +274,7 @@ namespace QuantLib {
 	public:
 		QGLocalvolModelMonteCarloFlavor(
 			const Handle<YieldTermStructure>&                      termStructure,
-			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			const Handle<SwaptionVolatilityStructure>&             volTS,
 			const Real                                             chi,
 			const Real                                             theta,
 			const Real                                             eta,
@@ -297,7 +297,7 @@ namespace QuantLib {
 	public:
 		QGLocalvolModelForwardStochVolFlavor(
 			const Handle<YieldTermStructure>&                      termStructure,
-			const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+			const Handle<SwaptionVolatilityStructure>&             volTS,
 			const Real                                             chi,
 			const Real                                             theta,
 			const Real                                             eta,

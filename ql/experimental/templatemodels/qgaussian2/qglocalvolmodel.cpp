@@ -16,7 +16,7 @@ namespace QuantLib {
     // model implementaion
 	QGLocalvolModel::QGLocalvolModel(
 		const Handle<YieldTermStructure>&                      termStructure,
-		const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+		const Handle<SwaptionVolatilityStructure>&             volTS,
 		const Real                                             chi,
 		const boost::shared_ptr<SwapIndex>&                    swapIndex,
 		const std::vector< Real >&                             times,
@@ -41,7 +41,7 @@ namespace QuantLib {
 
 	QGLocalvolModel::QGLocalvolModel(
 		const Handle<YieldTermStructure>&                      termStructure,
-		const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+		const Handle<SwaptionVolatilityStructure>&             volTS,
 		const Real                                             chi,
 		const Real                                             theta,
 		const Real                                             eta,
