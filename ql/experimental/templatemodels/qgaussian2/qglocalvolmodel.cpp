@@ -69,14 +69,16 @@ namespace QuantLib {
 	}
 
 	inline std::vector< std::vector<Real> >
-	QGLocalvolModel::sigma_xT(const Real t, const std::vector<Real>& x, const std::vector< std::vector<Real> >&  y) {
-		if (sigmaMode_ == Parent) return QuasiGaussianModel::sigma_xT(t, x, y);  // this is more like a fall back if volatility is irrelevant
+	QGLocalvolModel::sigma_xT(const Real t, const State& s) {
+		if (sigmaMode_ == Parent) return QuasiGaussianModel::sigma_xT(t, s);  // this is more like a fall back if volatility is irrelevant
 		if (sigmaMode_ == Calibration) {
 			// the current implementation is intended only for calibration phase
 			// we rely on the swap rate model beeing initialised and updated properly before this function is called
 			// this will most likely not work if model is used with external MC simulation
 			QL_REQUIRE(swapRateModel_ != 0, "swapRateModel_!=0 required");
 			Real observationTime = swapRateModel_->modelTimes().back();  // this should be times()[idx] from calibrateAndSimulate()
+			std::vector<Real> x(1, s.x(0));
+			std::vector< std::vector<Real> > y(1, std::vector<Real>(1, s.y(0, 0)));
 			Real swapRate = swapRateModel_->swapRate(observationTime, x, y);
 			Real swapGradient = (swapRateModel_->swapGradient(observationTime, x, y))[0];
 			Real lvol;

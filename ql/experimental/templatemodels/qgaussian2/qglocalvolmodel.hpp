@@ -194,7 +194,7 @@ namespace QuantLib {
 		virtual void simulateAndCalibrate() = 0;
 
 		inline virtual std::vector< std::vector<Real> >
-		sigma_xT(const Real t, const std::vector<Real>& x, const std::vector< std::vector<Real> >&  y);
+		sigma_xT(const Real t, const State& s);
 
 		// inspectors
 		inline const boost::shared_ptr<MCSimulation> simulation() { return simulation_; }

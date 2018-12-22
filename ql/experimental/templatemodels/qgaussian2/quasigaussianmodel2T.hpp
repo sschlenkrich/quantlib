@@ -71,42 +71,6 @@ namespace QuantLib {
 		MatP                       HHfInv_;  // weighting matrix H*Hf^-1 = [ exp{-chi_j*delta_i} ]^-1
 		PassiveType                condHHf_; // condition number of H*Hf; this is calculated from singular values and acts as control to avoid numerical instability
 
-		// lightweight container holding the current state of the yield curve
-		class State {
-		public:
-		    VecA        x;
-			MatA        y;
-			ActiveType  z;
-			ActiveType  s;
-			// constructor
-			State( const VecA& X, const size_t d) {
-				QL_REQUIRE(X.size()==d+d*d+1+1,"TemplateQuasiGaussianModel::State Constructor: Dimensions mismatch.");
-				x.resize(d);
-				y.resize(d);
-				for (size_t k=0; k<d; ++k) x[k] = X[k];
-				for (size_t i=0; i<d; ++i) {
-					y[i].resize(d);
-					for (size_t j=0; j<d; ++j) y[i][j] = X[d+i*d+j];  // y row-wise
-				}
-				z = X[d+d*d  ];
-				s = X[d+d*d+1];
-			}
-			inline void toVec(VecA& X) {
-				size_t d = x.size();
-				// check dimensions
-				QL_REQUIRE(y.size()==d,"QuasiGaussianModel::State Assignment: y-row dimension mismatch.");
-				for (size_t k=0; k<d; ++k) {
-					QL_REQUIRE(y[k].size()==d,"QuasiGaussianModel::State Assignment: y-column dimension mismatch.")
-				}
-				X.resize(d+d*d+1+1);
-				for (size_t k=0; k<d; ++k) X[k]       = x[k];
-				for (size_t i=0; i<d; ++i)
-				    for (size_t j=0; j<d; ++j) X[d+i*d+j] = y[i][j];
-				X[d+d*d  ]                            = z;
-				X[d+d*d+1]                            = s;
-			}
-		};
-
 		inline virtual bool checkModelParameters(const bool throwException=true){
 			bool ok = true;
 			// check yield curve...
@@ -200,7 +164,93 @@ namespace QuantLib {
 			return ok;
 		}
 
-		public:  
+    protected:
+		// analytic formulas based on internal state representation
+		// these functions need to be consistent to corresponding public methods below!
+
+		// interface for accessing the state of the yield curve
+		class State {
+			const VecA& X_;
+			const size_t d_;
+		public:
+			State(const VecA& X, const size_t d) : X_(X), d_(d) {
+				QL_REQUIRE(X.size() == d + d*d + 1 + 1, "TemplateQuasiGaussianModel::State Constructor: Dimensions mismatch.");
+			}
+			inline const ActiveType x(const size_t i) const { return X_[i]; }
+			inline const ActiveType y(const size_t i, const size_t j) const {
+				return X_[d_ + i*d_ + j];  // y row-wise
+			}
+			inline const ActiveType z() const { return X_[d_ + d_*d_]; }
+			inline const ActiveType s() const { return X_[d_ + d_*d_ + 1]; }
+		};
+
+		inline ActiveType shortRate(const DateType t, const State& s) {
+			ActiveType r = termStructure_->forwardRate(t, t, Continuous);
+			for (size_t k = 0; k<d_; ++k) r += s.x(k);
+			return r;
+		}
+
+		inline ActiveType forwardRate(const DateType t, const DateType T, const State& s) {
+			ActiveType f = termStructure_->forwardRate(T, T, Continuous);  // check t,T
+			for (size_t i = 0; i<d_; ++i) {
+				ActiveType tmp = s.x(i);
+				for (size_t j = 0; j<d_; ++j) tmp += s.y(i,j) * G(j, t, T);
+				f += exp(-chi_[i] * (T - t)) * tmp;
+			}
+			return f;
+		}
+
+		inline ActiveType ZeroBond(const DateType t, const DateType T, const State& s) {
+			QL_REQUIRE(t <= T, "QuasiGaussianModel ZeroBond t <= T required");
+			if (t == T) return (ActiveType)1.0;
+			PassiveType DF1 = termStructure_->discount(t);
+			PassiveType DF2 = termStructure_->discount(T);
+			ActiveType  Gx = 0;   // G^T * x
+			for (size_t i = 0; i<d_; ++i) Gx += s.x(i) * G(i, t, T);
+			ActiveType  GyG = 0;   // G^T * y * G
+			for (size_t i = 0; i<d_; ++i) {
+				ActiveType tmp = 0;
+				for (size_t j = 0; j<d_; ++j) tmp += s.y(i,j) * G(j, t, T);
+				GyG += G(i, t, T)*tmp;
+			}
+			ActiveType ZCB = DF2 / DF1 * exp(-Gx - 0.5*GyG);
+			return ZCB;
+		}
+
+		inline VecA sigma_f(const DateType t, const State& s) { // diagonal vector
+			VecA res(d_);
+			PassiveType eps = 1.0e-4;  // 1bp lower cutoff for volatility
+			for (size_t k = 0; k < d_; ++k) {
+				ActiveType df = forwardRate(t, t + delta_[k], s) - f0_[k];
+				res[k] = sigma(k, t) + slope(k, t)*df + 0.5*curve(k, t)*df*df;
+				if (res[k] < eps) res[k] = eps;
+				if (res[k] > 10.0*sigma(k, t)) res[k] = 10.0*sigma(k, t); // cap local volatility to avoid exploding states
+			}
+			return res;
+		}
+
+		inline virtual MatA sigma_xT(const DateType t, const State& s) {  // sigma_x^T
+			MatA tmp(d_), res(d_);
+			VecA sigmaf = sigma_f(t, s);
+			// tmp = sigma_f * Df^T
+			for (size_t i = 0; i<d_; ++i) {
+				tmp[i].resize(d_);
+				for (size_t j = 0; j<d_; ++j) {
+					tmp[i][j] = sigmaf[i] * DfT_[i][j];
+				}
+			}
+			// res = H*Hf^-1 * tmp
+			for (size_t i = 0; i<d_; ++i) {
+				res[i].resize(d_);
+				for (size_t j = 0; j<d_; ++j) {
+					res[i][j] = 0;
+					for (size_t k = 0; k<d_; ++k) res[i][j] += HHfInv_[i][k] * tmp[k][j];
+				}
+			}
+			return res;
+		}
+
+	public:  
 
 		QuasiGaussianModel2T(
 			const Handle<YieldTermStructure>& termStructure,
@@ -390,25 +440,25 @@ namespace QuantLib {
 			State state(X,d_);
 			// x-variable [ y(t)*1 - chi*x(t) ]
 			for (size_t k=0; k<d_; ++k) {
-				a[k] = -chi_[k]*state.x[k];
-				for (size_t j=0; j<d_; ++j) a[k] += state.y[k][j];
+				a[k] = -chi_[k]*state.x(k);
+				for (size_t j=0; j<d_; ++j) a[k] += state.y(k,j);
 			}
 			// y-variable [ z(t)*sigma_x^T(t,x,y)*sigma_x(t,x,y) - chi*y(t) - y(t)*chi ]
-			MatA sigmaxT = sigma_xT(t,state.x,state.y);
+			MatA sigmaxT = sigma_xT(t,state);
 			for (size_t i=0; i<d_; ++i) {
 				for (size_t j=0; j<d_; ++j) {
 					a[d_+i*d_+j] = 0.0;
 					for (size_t k=0; k<d_; ++k) a[d_+i*d_+j] += sigmaxT[i][k]*sigmaxT[k][j];
-					a[d_+i*d_+j] *= ((state.z>0)?(state.z):(0.0));  // full truncation
-					a[d_+i*d_+j] -= (chi_[i]+chi_[j])*state.y[i][j];
+					a[d_+i*d_+j] *= ((state.z()>0)?(state.z()):(0.0));  // full truncation
+					a[d_+i*d_+j] -= (chi_[i]+chi_[j])*state.y(i,j);
 				}
 			}
 			// z-variable theta [ z0 - z(t)^+ ]  (full truncation)
 			//a[d_+d_*d_] = theta_*(z0_ - ((state.z>0)?(state.z):(0.0)));
 			// push to positive teritory
-			a[d_+d_*d_] = theta_*(z0_ - state.z);
+			a[d_+d_*d_] = theta_*(z0_ - state.z());
 			// s-variable r(t)
-			a[d_+d_*d_+1] = shortRate(t,state.x);
+			a[d_+d_*d_+1] = shortRate(t,state);
 			// finished
 			return a;
 		}
@@ -418,8 +468,8 @@ namespace QuantLib {
 			MatA b(size());
 			for (size_t k=0; k<size(); ++k) b[k].resize(factors());
 			State state(X,d_);
-			ActiveType sqrtz = ((state.z>0)?(sqrt(state.z)):(0.0));   // full truncation
-			MatA sigmaxT = sigma_xT(t,state.x,state.y);
+			ActiveType sqrtz = ((state.z()>0)?(sqrt(state.z())):(0.0));   // full truncation
+			MatA sigmaxT = sigma_xT(t,state);
 			// x-variable sqrt[z(t)]*sigma_x^T(t,x,y)
 			for (size_t i=0; i<d_; ++i) {
 				for (size_t j=0; j<d_; ++j) b[i][j] =  sqrtz * sigmaxT[i][j];
@@ -452,7 +502,7 @@ namespace QuantLib {
 			ActiveType averageZ = 0.5*(X0[X0.size() - 2] + X1[X1.size() - 2]);  // we freeze z for subsequent calculation
 			// next we need V = z * sigmaxT sigmax
 			State state(X0, d_);
-			MatA sigmaxT = sigma_xT(t0, state.x, state.y);
+			MatA sigmaxT = sigma_xT(t0, state);
 			MatA V(d_, VecA(d_, 0.0));
 			for (size_t i = 0; i < d_; ++i) {
 				for (size_t j = 0; j <= i; ++j) {
@@ -499,21 +549,21 @@ namespace QuantLib {
 					X1[i] += L[i][j] * dW[j];  // maybe also exploit that L is lower triangular
 			// we don't truncate for the moment
 			// finally, we need to update s as well
-			ActiveType r0 = termStructure_->forwardRate(t0, t0, Continuous);
+			ActiveType r0 = 0.0;
 			for (size_t i = 0; i < d_; ++i) r0 += X0[i];
-			ActiveType r1 = termStructure_->forwardRate(t0+dt, t0+dt, Continuous);
+			ActiveType r1 = 0.0;
 			for (size_t i = 0; i < d_; ++i) r1 += X1[i];
 			X1[X1.size() - 1] = X0[X0.size() - 1] + 0.5*(r0 + r1)*dt;
 		}
 
 		inline ActiveType numeraire(const DateType t, const VecA& X) {
 			State state(X,d_);
-			return exp(state.s);
+			return exp(state.s())/termStructure_->discount(t,true);
 		}
 
 		inline ActiveType zeroBond(const DateType t, const DateType T, const VecA& X) {
 			State state(X,d_);
-			return ZeroBond(t, T, state.x, state.y);
+			return ZeroBond(t, T, state);
 		}
 
 	};
