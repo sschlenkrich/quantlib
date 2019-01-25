@@ -148,13 +148,33 @@ namespace QuantLib {
 			return grad;
 		}
 
+		// float leg Hessian
+		inline MatA floatLegHessian(const Swap& s, DateType t, const VecA& x, const MatA& y) {
+			MatA hess(x.size(), VecA(x.size(), 0.0));
+			for (size_t k = 0; k<s.floatTimes.size(); ++k) {
+				ActiveType DF = model_->ZeroBond(t, s.floatTimes[k], x, y);
+				for (size_t i = 0; i < x.size(); ++i)
+					for (size_t j = 0; j < x.size(); ++j)
+						hess[i][j] += s.floatWeights[k] * DF * model_->G(i, t, s.floatTimes[k]) * model_->G(j, t, s.floatTimes[k]);
+			}
+			return hess;
+		}
+
+		// annuity Hessian
+		inline MatA annuityHessian(const Swap& s, DateType t, const VecA& x, const MatA& y) {
+			MatA hess(x.size(), VecA(x.size(), 0.0));
+			for (size_t k = 0; k<s.fixedTimes.size(); ++k) {
+				ActiveType DF = model_->ZeroBond(t, s.fixedTimes[k], x, y);
+				for (size_t i = 0; i < x.size(); ++i)
+					for (size_t j = 0; j < x.size(); ++j)
+						hess[i][j] += s.fixedWeights[k] * DF * model_->G(i, t, s.fixedTimes[k]) * model_->G(j, t, s.fixedTimes[k]);
+			}
+			return hess;
+		}
+
+
 		// gradient
 		VecA swapGradient( const Swap& s, DateType t, const VecA& x, const MatA& y) {
-			//VecA grad(x.size());
-			//VecA gZCB(x.size());
-			// numerator
-			//grad = zcbGradient(t,s.times[0],x,y);
-			//gZCB = zcbGradient(t,s.times[s.N],x,y);
 			VecA grad = floatLegGradient(s,t,x,y);
 			VecA angr = annuityGradient(s,t,x,y);
 			ActiveType annuit = annuity(s,t,x,y);
@@ -164,97 +184,34 @@ namespace QuantLib {
 		}
 
 		// hessian
-		MatA swapHessian( const Swap& s, DateType t, const VecA& x, const MatA& y) {
-			MatA hess(x.size());
-			VecA grad(x.size(),0.0);
-			VecA gZCB(x.size(),0.0);
-			VecA dGrad(x.size(),0.0);
-			VecA dGZCB(x.size(),0.0);
-			ActiveType swpRate = swapRate(s,t,x,y);
-			ActiveType annuit  = annuity(s,t,x,y);
-			VecA swapGrad = swapGradient(s,t,x,y);
-			VecA annuGrad = annuityGradient(s,t,x,y);
-			for (size_t i=0; i<x.size(); ++i) {
-			    // numerator
-			    //grad  = zcbGradient(t,s.times[0],x,y);
-			    //gZCB  = zcbGradient(t,s.times[s.N],x,y);
-				//dGrad = zcbHessian(i,t,s.times[0],x,y);
-				//dGZCB = zcbHessian(i,t,s.times[s.N],x,y);
-				for (size_t j=0; j<s.floatTimes.size(); ++j) {
-			    	gZCB  = zcbGradient(t,s.floatTimes[j],x,y);
-					dGZCB = zcbHessian(i,t,s.floatTimes[j],x,y);
-					for (size_t k=0; k<grad.size(); ++k) {
-						grad[k]  += s.floatWeights[j] * gZCB[k] / annuit;                                       // z  = u / v
-						dGrad[k] += s.floatWeights[j] * (dGZCB[k]*annuit - gZCB[k]*annuGrad[i])/annuit/annuit;  // z' = (u'v - uv')/v^2
-					}
-			        //for (size_t k=0; k<grad.size(); ++k) {
-					//    grad[k]  = (grad[k] - gZCB[k]) / annuit;                        // z  = u / v
-					//    dGrad[k] = (dGrad[k] - dGZCB[k] - grad[k]*annuGrad[i])/annuit;  // z' = (u' - z v') / v
-				    // }
-				}
-			    // denumerator
-			    ActiveType dSdAnnuity  = - swpRate / annuit;
-			    ActiveType ddSdAnnuity = - (swapGrad[i] + dSdAnnuity*annuGrad[i])/annuit;   // check + vs -
-			    for (size_t j=0; j<s.fixedTimes.size(); ++j) {
-			    	gZCB  = zcbGradient(t,s.fixedTimes[j],x,y);
-					dGZCB = zcbHessian(i,t,s.fixedTimes[j],x,y);
-			    	for (size_t k=0; k<grad.size(); ++k) {
-						grad[k]  += s.fixedWeights[j] * dSdAnnuity * gZCB[k];
-						dGrad[k] += s.fixedWeights[j] * (ddSdAnnuity*gZCB[k] + dSdAnnuity*dGZCB[k]);
-					}
-			    }
-				// allocate and copy
-				hess[i] = dGrad;
-			}
+		MatA swapHessian(const Swap& s, DateType t, const VecA& x, const MatA& y) {
+			// we set f = u v, v = 1/z, u...floatleg, z...annuity
+			// f'' = u''v + u'v' + [u'v']^T + uv''
+			// v'  = -1/z/z z',  v'' = 1/z/z [2/z z'z' - z'']
+			ActiveType floatL = floatLeg(s, t, x, y);       // u
+			ActiveType annuit = annuity(s, t, x, y);        // z
+			VecA floatGrad = floatLegGradient(s, t, x, y);  // u'
+			VecA annuGrad  = annuityGradient(s, t, x, y);   // z'
+			MatA floatHess = floatLegHessian(s, t, x, y);   // u''
+			MatA annuHess  = annuityHessian(s, t, x, y);    // z''
+			// we calculate u''v
+			MatA hess(floatHess);
+			for (size_t i = 0; i < x.size(); ++i)
+				for (size_t j = 0; j < x.size(); ++j)
+					hess[i][j] /= annuit;
+			// we add u'v' + [u'v']^T
+			VecA vPrime(annuGrad);
+			for (size_t i = 0; i < x.size(); ++i) vPrime[i] *= (-1.0) / annuit / annuit;
+			for (size_t i = 0; i < x.size(); ++i)
+				for (size_t j = 0; j < x.size(); ++j)
+					hess[i][j] += floatGrad[i] * vPrime[j] + floatGrad[j] * vPrime[i];
+			// we add uv''
+			for (size_t i = 0; i < x.size(); ++i)
+				for (size_t j = 0; j < x.size(); ++j)
+					hess[i][j] += floatL / annuit / annuit * (2.0 / annuit * annuGrad[i] * annuGrad[j] - annuHess[i][j]);
 			return hess;
 		}
-
-
-		/*
-		VecA swapGradient( const Swap& s, DateType t, const VecA& x, const MatA& y) {
-			PassiveType eps = 1.0e-7;
-			VecA grad(x.size());
-			VecA xm(x), xp(x);
-			for (size_t k=0; k<x.size(); ++k) {
-				// bump
-				xm[k] -= eps;
-				xp[k] += eps;
-				// recalculate
-				ActiveType ym = swapRate(s,t,xm,y);
-				ActiveType yp = swapRate(s,t,xp,y);
-				// first derivs
-				grad[k] = yp/2.0/eps - ym/2.0/eps;
-				// reset
-				xm[k] = x[k];
-				xp[k] = x[k];
-			}
-			return grad;
-		}
-		*/
-		/*
-		// hessian via central differences to avoid errors in tedious calculations
-		MatA swapHessian( const Swap& s, DateType t, const VecA& x, const MatA& y) {
-			PassiveType eps = 1.0e-7;
-			MatA hess(x.size());
-			VecA xm(x), xp(x), ym(x.size()), yp(x.size());
-			for (size_t k=0; k<x.size(); ++k) {
-				// bump
-				xm[k] -= eps;
-				xp[k] += eps;
-				// recalculate
-				ym = swapGradient(s,t,xm,y);
-				yp = swapGradient(s,t,xp,y);
-				// second derivs
-				hess[k].resize(x.size());
-				for (size_t i=0; i<x.size(); ++i) hess[k][i] = yp[i]/2.0/eps - ym[i]/2.0/eps;
-				// reset
-				xm[k] = x[k];
-				xp[k] = x[k];
-			}
-			// maybe better check symetry
-			return hess;
-		}
-		*/
+			
 
 		// E^A [ x(T) ] = H(T)H(t)^-1 E^A [ x(t) ] + int_t^T H(T)H(s)^-1 [ E^A[y(s)]*1 + sigma_x^T sigma_x G_A(s) ] ds
 		inline VecA expectationAx( const Swap& s, DateType t, DateType T, const MatA& barYtT, const VecA& barXt ) {
@@ -531,6 +488,7 @@ namespace QuantLib {
 		inline ActiveType annuity(DateType t, const VecA& x, const MatA& y)      { return annuity(swap_,t,x,y);      }
 		inline ActiveType swapRate(DateType t, const VecA& x, const MatA& y)     { return swapRate(swap_, t, x, y);  }
 		inline VecA       swapGradient(DateType t, const VecA& x, const MatA& y) { return swapGradient(swap_,t,x,y); }
+		inline MatA       swapHessian(DateType t, const VecA& x, const MatA& y)  { return swapHessian(swap_,t,x,y);  }
 
 		// inspectors 
 		inline virtual ActiveType sigma(const DateType t) {

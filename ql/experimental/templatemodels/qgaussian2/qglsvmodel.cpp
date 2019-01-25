@@ -212,7 +212,7 @@ namespace QuantLib {
 			compTime["SvAdj"] += std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count();
 
 			// adjust local volatility
-			for (size_t k = 0; k < strikes.size(); ++k) localVol[k] /= expectationZCondS[k];
+			for (size_t k = 0; k < strikes.size(); ++k) localVol[k] /= sqrt(expectationZCondS[k]);
 
 			// set up interpolation
 			strikeGrid_.push_back(strikes);

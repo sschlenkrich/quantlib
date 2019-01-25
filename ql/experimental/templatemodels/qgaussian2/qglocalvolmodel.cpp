@@ -530,7 +530,7 @@ namespace QuantLib {
 			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
 			if (calcStochVolAdjustment_) {
 				StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);				
-				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];  // finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
+				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / sqrt(expZ.expectationZCondS()[j]);  // finally adjust sigma_SV = sigma_LV / sqrt(E^A[ z(T) | S(T) = K ])
 			}
 
 			// set up interpolation
@@ -623,7 +623,7 @@ namespace QuantLib {
 			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
 			if (calcStochVolAdjustment_) {
 				StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);
-				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];  // finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
+				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / sqrt(expZ.expectationZCondS()[j]);  // finally adjust sigma_SV = sigma_LV / sqrt(E^A[ z(T) | S(T) = K ])
 			}
 
 			// set up interpolation
@@ -825,7 +825,7 @@ namespace QuantLib {
 			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
 			if (calcStochVolAdjustment_) {
 				StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);
-				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];  // finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
+				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / sqrt(expZ.expectationZCondS()[j]);  // finally adjust sigma_SV = sigma_LV / sqrt(E^A[ z(T) | S(T) = K ])
 			}
 
 			// set up interpolation
@@ -924,7 +924,7 @@ namespace QuantLib {
 			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
 			StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);
 			// finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
-			for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];
+			for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / sqrt(expZ.expectationZCondS()[j]);
 
 			// set up interpolation
 			strikeGrid_.push_back(strikeGrid);

@@ -182,10 +182,10 @@ namespace QuantLib {
 					Real callATM  = swaprateModels[i][j]->vanillaOption(S0, 1, 1.0e-6, 1000);
 					Real expTime = swaprateModels[i][j]->modelTimes()[swaprateModels[i][j]->modelTimes().size() - 1];
 					sigmaATM = bachelierBlackFormulaImpliedVol(Option::Call, S0, S0, expTime, callATM);
-					Real putMinus = swaprateModels[i][j]->vanillaOption(S0 - sigmaATM*sqrt(expTime), -1, 1.0e-6, 1000);
-					Real callPlus = swaprateModels[i][j]->vanillaOption(S0 + sigmaATM*sqrt(expTime),  1, 1.0e-6, 1000);
-					Real sigmaMns = bachelierBlackFormulaImpliedVol(Option::Put, S0 - sigmaATM*sqrt(expTime), S0, expTime, putMinus);
-					Real sigmaPls = bachelierBlackFormulaImpliedVol(Option::Call, S0 + sigmaATM*sqrt(expTime), S0, expTime, callPlus);
+					Real putMinus = swaprateModels[i][j]->vanillaOption(S0 - calibSwaptions_[i][j]->sigmaATM()*sqrt(expTime), -1, 1.0e-6, 1000);
+					Real callPlus = swaprateModels[i][j]->vanillaOption(S0 + calibSwaptions_[i][j]->sigmaATM()*sqrt(expTime),  1, 1.0e-6, 1000);
+					Real sigmaMns = bachelierBlackFormulaImpliedVol(Option::Put, S0 - calibSwaptions_[i][j]->sigmaATM()*sqrt(expTime), S0, expTime, putMinus);
+					Real sigmaPls = bachelierBlackFormulaImpliedVol(Option::Call, S0 + calibSwaptions_[i][j]->sigmaATM()*sqrt(expTime), S0, expTime, callPlus);
 					skew = sigmaPls - sigmaMns;
 					smile = sigmaPls + sigmaMns - 2.0*sigmaATM;
 				}
