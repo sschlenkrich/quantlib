@@ -52,7 +52,7 @@ namespace QuantLib {
 		// unique grid for time-dependent parameters
 		VecD                       times_;   // time-grid of left-constant model parameter values
 		// time-dependent parameters, left-piecewise constant on times_-grid
-		// we implement a local volatility function sigma_f = 0.5*curve*(f-f0)^2 + smile*(f-f0) + sigma
+		// we implement a local volatility function sigma_f = curve*|f-f0| + smile*(f-f0) + sigma
 		MatA                       sigma_;  // volatility
 		MatA                       slope_;  // skew
 		MatA                       curve_;  // smile
@@ -222,7 +222,8 @@ namespace QuantLib {
 			PassiveType eps = 1.0e-4;  // 1bp lower cutoff for volatility
 			for (size_t k = 0; k < d_; ++k) {
 				ActiveType df = forwardRate(t, t + delta_[k], s) - f0_[k];
-				res[k] = sigma(k, t) + slope(k, t)*df + 0.5*curve(k, t)*df*df;
+				//res[k] = sigma(k, t) + slope(k, t)*df + 0.5*curve(k, t)*df*df;
+				res[k] = sigma(k, t) + slope(k, t)*df + curve(k, t)*((df<0.0)?(-df):(df));
 				if (res[k] < eps) res[k] = eps;
 				if (res[k] > 10.0*sigma(k, t)) res[k] = 10.0*sigma(k, t); // cap local volatility to avoid exploding states
 			}
@@ -300,10 +301,16 @@ namespace QuantLib {
 		inline void update(const MatA &                sigma,   // volatility
 			               const MatA &                slope,   // skew
 			               const VecA &                eta) {   // vol-of-vol
-			sigma_ = sigma;
-			slope_ = slope;
-			eta_ = eta;
+			sigma_ = sigma, slope_ = slope, eta_ = eta;
 		}
+
+        // unsafe update with curve
+		inline void update(const MatA &                sigma,   // volatility
+			               const MatA &                slope,   // skew
+			               const MatA &                curve) { // curve
+			sigma_ = sigma, slope_ = slope, curve_ = curve;
+		}
+
 
 		// clone the model
 		virtual boost::shared_ptr<QuasiGaussianModel2T> clone() { return boost::shared_ptr<QuasiGaussianModel2T>(new QuasiGaussianModel2T(*this)); }
@@ -376,7 +383,8 @@ namespace QuantLib {
 			VecA res(d_);
 			for (size_t k = 0; k < d_; ++k) {
 				ActiveType df = forwardRate(t, t + delta_[k], x, y) - f0_[k];
-				res[k] = sigma(k, t) + slope(k, t)*df + 0.5*curve(k, t)*df*df;
+				//res[k] = sigma(k, t) + slope(k, t)*df + 0.5*curve(k, t)*df*df;
+				res[k] = sigma(k, t) + slope(k, t)*df + curve(k, t)*((df<0.0) ? (-df) : (df));
 				if (res[k] < 0.0) res[k] = 0.0;
 				if (res[k] > 10.0*sigma(k, t)) res[k] = 10.0*sigma(k, t); // cap local volatility to avoid exploding states
 			}

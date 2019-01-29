@@ -708,6 +708,7 @@
     <ClInclude Include="ql\experimental\models\squarerootclvmodel.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\auxilliaries\choleskyfactorisationT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hullwhite\g2ppT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgaverageswapratemodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qglocalvolmodel.hpp" />
@@ -2124,6 +2125,7 @@
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Lexer.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglocalvolmodel.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.cpp" />
