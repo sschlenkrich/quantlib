@@ -18,6 +18,8 @@
 */
 
 #include <ql/experimental/termstructures/localcorrtermstructure.hpp>
+#include <ql/quotes/simplequote.hpp>
+#include <boost/make_shared.hpp>
 
 namespace QuantLib {
 
@@ -26,7 +28,21 @@ namespace QuantLib {
     : CorrelationTermStructureStrike(processes[0]->blackVolatility()->referenceDate(), 
 		processes[0]->blackVolatility()->calendar(), 
 		processes[0]->blackVolatility()->businessDayConvention(), 
-		processes[0]->blackVolatility()->dayCounter()), processes_(processes), processToCal_(processToCal){}
+		processes[0]->blackVolatility()->dayCounter()), processToCal_(processToCal){
+	
+		processes_ = std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>(processes.size());
+		
+		for (size_t i = 0; i < processes_.size(); i++)
+		{
+			processes_[i] = boost::shared_ptr<QuantLib::HestonSLVProcess >( new QuantLib::HestonSLVProcess(
+				boost::shared_ptr<QuantLib::HestonProcess >(new QuantLib::HestonProcess(
+						processes[i]->riskFreeRate(), processes[i]->dividendYield(), 
+						Handle<Quote>(boost::make_shared<SimpleQuote>(processes[i]->x0())),1.0,
+						0.0,0.0,0.0,0.0))
+				, boost::shared_ptr<LocalVolTermStructure>(processes[i]->localVolatility().currentLink())));
+		}
+	
+	}
 
     void LocalCorrTermStructure::localCorr(RealStochasticProcess::MatA& corrMatrix, 
 											   const Date& d,
@@ -81,28 +97,28 @@ namespace QuantLib {
     }
 
 	const Date& LocalCorrTermStructure::referenceDate() const {
-		return processes_[0]->blackVolatility()->referenceDate();
+		return processes_[0]->leverageFct()->referenceDate();
 	}
 
 	DayCounter LocalCorrTermStructure::dayCounter() const {
-		return processes_[0]->blackVolatility()->dayCounter();
+		return processes_[0]->leverageFct()->dayCounter();
 	}
 
 	Date LocalCorrTermStructure::maxDate() const {
-		Date minMaxDate = processes_[0]->blackVolatility()->maxDate();
+		Date minMaxDate = processes_[0]->leverageFct()->maxDate();
 		for (size_t i = 0; i < processes_.size(); i++)
 		{
-			if (minMaxDate < processes_[i]->blackVolatility()->maxDate()) minMaxDate = processes_[i]->blackVolatility()->maxDate();
+			if (minMaxDate < processes_[i]->leverageFct()->maxDate()) minMaxDate = processes_[i]->leverageFct()->maxDate();
 		}
 		return minMaxDate;
 	}
 
 	Real LocalCorrTermStructure::minStrike(Natural ulId) const {
-		return processes_[ulId]->blackVolatility()->minStrike();
+		return processes_[ulId]->leverageFct()->minStrike();
 	}
 
 	Real LocalCorrTermStructure::maxStrike(Natural ulId) const {
-		return processes_[ulId]->blackVolatility()->maxStrike();
+		return processes_[ulId]->leverageFct()->maxStrike();
 	}
 
 }

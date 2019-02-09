@@ -1,7 +1,7 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2017, Sebastian Schlenkrich
+ Copyright (C) 2019, Cord Harms
 
 */
 
@@ -19,7 +19,7 @@ namespace QuantLib {
 		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes,
 		const RealStochasticProcess::MatA&                                              correlations)
 	: termStructure_(termStructure), processes_(processes) {
-		QL_REQUIRE(processes_.size() > 0, "No BS processes supplied");
+		QL_REQUIRE(processes_.size() > 0, "No SLV processes supplied");
 		QL_REQUIRE(processes_.size() == aliases.size(), "Number of processes doesn't match aliases");
 		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k;
 		QL_REQUIRE(2*processes_.size() == correlations.size(), "Number of processes*2 doesn't match correlation");
@@ -59,7 +59,7 @@ namespace QuantLib {
 		const std::vector<std::string>&                                                 aliases,
 		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes)
 		: termStructure_(termStructure), processes_(processes) {
-		QL_REQUIRE(processes_.size() > 0, "No BS processes supplied");
+		QL_REQUIRE(processes_.size() > 0, "No SLV processes supplied");
 		//no correlation matrix means, we simply assume independence
 		RealStochasticProcess::MatA corrM = RealStochasticProcess::MatA(2 * processes.size());
 		for (size_t k = 0; k<corrM.size(); ++k) corrM[k].resize(2 * processes.size());
@@ -82,7 +82,7 @@ namespace QuantLib {
 		RealStochasticProcess::VecP init =  RealStochasticProcess::VecP(size(), 0.0);
 		for (size_t i = 0; i < processes_.size(); i++)
 		{
-			init[i] = processes_[i]->s0()->value();
+			init[i] = 0;
 			init[i+ processes_.size()] = processes_[i]->v0();
 		}
 		return init;
@@ -130,6 +130,7 @@ namespace QuantLib {
 		QuantLib::Array tmp0(2);
 		QuantLib::Array tmp1(2);
 		QuantLib::Real s0;
+		size_t amtDW;
 
 		for (Size i = 0; i < processes_.size(); ++i) {
 			
@@ -137,12 +138,15 @@ namespace QuantLib {
 			
 			X1[i] = 0.0;
 			X1[i + amtProcesses] = 0.0;
-			for (Size j = 0; j < dW.size(); ++j)
+
+			amtDW = processes_[i]->isLocalVolProcess() ?  processes_.size() : dW.size();
+
+			for (Size j = 0; j < amtDW; ++j)
 			{
 				X1[i] += DT_[i][j] * dW[j];
-				X1[i + amtProcesses] += DT_[i + amtProcesses][j] * dW[j];
+				if(!processes_[i]->isLocalVolProcess()) X1[i + amtProcesses] += DT_[i + amtProcesses][j] * dW[j];
 			}
-			tmp0[0] = X0[i];
+			tmp0[0] = s0*std::exp(X0[i]);
 			tmp0[1] = X0[i + amtProcesses];
 			if (tmp0[1] < 0) tmp0[1] = 0.00001; // may happen due to richardson extrapolation that vola becomes negative
 
@@ -150,12 +154,12 @@ namespace QuantLib {
 			tmp1[1] = X1[i + amtProcesses];
 
 			//calculate an artificial random number with correlation rho for the 1dim Heston model
-			tmp1[1] = (tmp1[1] - tmp1[0] * processes_[i]->rho()) / std::sqrt(1 - processes_[i]->rho()*processes_[i]->rho());
+			if (!processes_[i]->isLocalVolProcess()) tmp1[1] = (tmp1[1] - tmp1[0] * processes_[i]->rho()) / std::sqrt(1 - processes_[i]->rho()*processes_[i]->rho());
 			
 			tmp1 = processes_[i]->evolve(t0,tmp0,dt,tmp1);
 			//transfer (S,v) to (log(S/S0),v)
 			
-			X1[i] = tmp1[0];
+			X1[i] = std::log(tmp1[0]/s0);
 
 			X1[i + amtProcesses] = tmp1[1];
 		}

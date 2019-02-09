@@ -23,7 +23,7 @@
 
 #include <ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp>
 #include <ql\termstructures\yield\flatforward.hpp>
-#include <ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.hpp>
+#include <ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.hpp>
 #include <ql\experimental\templatemodels\montecarlo\montecarlomodells.hpp>
 #include <ql\experimental\templatemodels\montecarlo\mcpayoffT.hpp>
 #include <ql/math/interpolations/linearinterpolation.hpp>
@@ -46,7 +46,7 @@ namespace QuantLib {
 			QL_REQUIRE(false, "Kernel not supported. Supported is: QuarticKernel");
 		}
 
-		std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>> processes = surface->getProcesses();
+		std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>> processes = surface->getProcesses();
 		boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>			    processToCal= surface->getProcessToCal();
 
 		//build assetModel for simulation
@@ -56,7 +56,7 @@ namespace QuantLib {
 		aliases[0] = "fx1";
 		aliases[1] = "fx2";
 		Handle<LocalCorrTermStructure> surfaceGen(surface.currentLink());
-		boost::shared_ptr<LocalCorrelationBSModel> assetModel(new LocalCorrelationBSModel(yldH,aliases,processes, surfaceGen));
+		boost::shared_ptr<LocalCorrelationSLVModel> assetModel(new LocalCorrelationSLVModel(yldH,aliases,processes, surfaceGen));
 
 		std::vector<Time>& times = surface->getTimes();
 		std::vector<std::vector<Real>>& strikes = surface->getStrikes();
@@ -127,8 +127,8 @@ namespace QuantLib {
 			for (size_t k = 0; k < numberOfPaths; k++)
 			{
 				state = simulation.state(k, times[i]);
-				assets[0] = processes[0]->x0() * std::exp(state[0]);
-				assets[1] = processes[1]->x0() * std::exp(state[1]);
+				assets[0] = processes[0]->s0()->value() * std::exp(state[0]);
+				assets[1] = processes[1]->s0()->value() * std::exp(state[1]);
 				crossFX[k] = getCrossFX(assets[0] , assets[1]);
 			}
 
@@ -139,7 +139,7 @@ namespace QuantLib {
 
 			strikeStep = (strikes[i][strikes[i].size() - 1] - strikes[i][0]) / (numberStrikes-1);
 
-			bandwidth = ParticleMethodUtils::bandwidth(times[i], getCrossFX(processes[0]->x0(),processes[1]->x0()), kappa, sigmaAVR, tMin, numberOfPaths, exponentN);
+			bandwidth = ParticleMethodUtils::bandwidth(times[i], getCrossFX(processes[0]->s0()->value(),processes[1]->s0()->value()), kappa, sigmaAVR, tMin, numberOfPaths, exponentN);
 
 			for (size_t j = 1; j < strikes[i].size()-1; j++)
 			{
@@ -165,11 +165,11 @@ namespace QuantLib {
 			{
 				state = simulation.state(k, times[i]);
 
-				assets[0] = processes[0]->x0() * std::exp(state[0]);
-				assets[1] = processes[1]->x0() * std::exp(state[1]);
+				assets[0] = processes[0]->s0()->value() * std::exp(state[0]);
+				assets[1] = processes[1]->s0()->value() * std::exp(state[1]);
 
-				vol1 = processes[0]->localVolatility()->localVol(times[i], assets[0], true);
-				vol2 = processes[1]->localVolatility()->localVol(times[i], assets[1], true);
+				vol1 = processes[0]->leverageFct()->localVol(times[i], assets[0], true);
+				vol2 = processes[1]->leverageFct()->localVol(times[i], assets[1], true);
 
 				a = surface->localA(times[i], assets, true);
 				b = surface->localB(times[i], assets, true);

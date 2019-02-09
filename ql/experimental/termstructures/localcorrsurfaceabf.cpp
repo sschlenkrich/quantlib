@@ -48,13 +48,13 @@ namespace QuantLib {
 		{
 			for (size_t i = 0; i < assetTemp_.size(); i++)
 			{
-				assetTemp_[i] = processes_[i]->x0()*std::exp(X0[i]);
+				assetTemp_[i] = processes_[i]->s0()->value()*std::exp(X0[i]);
 			}
 			lambda = (localF(t, X0, extrapolate) - localA(t, assetTemp_, extrapolate)) / localB(t, assetTemp_, extrapolate);
 		}
-		for (size_t i = 0; i < corrMatrix.size(); i++)
+		for (size_t i = 0; i < corr0_.size(); i++) //corr0 because corrMatrix may have bigger size (i.e. Heston has volvol correlation)
 		{
-			for (size_t j = i; j < corrMatrix[i].size(); j++)
+			for (size_t j = i; j < corr0_[i].size(); j++)
 			{
 				corrMatrix[i][j] = (1 - lambda)*corr0_[i][j] + lambda  *corr1_[i][j];
 				QL_REQUIRE(corrMatrix[i][j] != 1 || i==j, "correlation is not allowed wo be 1 for i!=j");

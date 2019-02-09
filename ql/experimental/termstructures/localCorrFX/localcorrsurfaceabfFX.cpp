@@ -46,9 +46,9 @@ namespace QuantLib {
     }
 
 	QuantLib::Real LocalCorrSurfaceABFFX::localFStrike(Time t, const RealStochasticProcess::VecA& X0) {
-		QL_REQUIRE(X0.size() == 2, "Local Correlation for FX only works for two dimensional FX model.");
+		QL_REQUIRE(X0.size() == 4 || X0.size() == 2, "Local Correlation for FX only works for two dimensional FX model.");//=4 due to heston
 
-		return ParticleMethodUtils::getCrossFX(processes_[0]->x0() * std::exp(X0[0]) , (processes_[1]->x0() * std::exp(X0[1])));
+		return ParticleMethodUtils::getCrossFX(processes_[0]->s0()->value() * std::exp(X0[0]) , (processes_[1]->s0()->value() * std::exp(X0[1])));
 		
 	}
 	
@@ -66,10 +66,10 @@ namespace QuantLib {
 		//smiled surface will through an error, therefore assume one minute ahead
 		t = 1.0 / (365 * 24 * 60);
 		
-		Real s1 = processes_[0]->x0() * std::exp(X0[0]);
-		Real s2 = processes_[1]->x0() * std::exp(X0[1]);
-		Real vol1 = processes_[0]->localVolatility()->localVol(t, s1, extrapolate);
-		Real vol2 = processes_[1]->localVolatility()->localVol(t, s2, extrapolate);
+		Real s1 = processes_[0]->s0()->value() * std::exp(X0[0]);
+		Real s2 = processes_[1]->s0()->value() * std::exp(X0[1]);
+		Real vol1 = processes_[0]->leverageFct()->localVol(t, s1, extrapolate);
+		Real vol2 = processes_[1]->leverageFct()->localVol(t, s2, extrapolate);
 		Real vol3 = processToCal_->localVolatility()->localVol(t, ParticleMethodUtils::getCrossFX(s1 , s2), extrapolate);
 
 		return (vol1*vol1 + vol2*vol2 - vol3*vol3) / (2 * vol1*vol2);
@@ -87,8 +87,8 @@ namespace QuantLib {
 		{
 			for (size_t j = 0; j < assetGrid2.size(); j++)
 			{
-				x0[0] = log(assetGrid1[i] / processes_[0]->x0());
-				x0[1] = log(assetGrid2[j] / processes_[1]->x0());
+				x0[0] = log(assetGrid1[i] / processes_[0]->s0()->value());
+				x0[1] = log(assetGrid2[j] / processes_[1]->s0()->value());
 
 				localCorr(corrM, t, x0, true);
 				result[i][j] = corrM[0][1];

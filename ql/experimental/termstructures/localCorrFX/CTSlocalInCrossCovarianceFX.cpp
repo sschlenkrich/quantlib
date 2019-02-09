@@ -38,7 +38,7 @@ namespace QuantLib {
 
 	QuantLib::Real CTSlocalInCrossCovarianceFX::localB(Time t, const RealStochasticProcess::VecA& assets,
 		bool extrapolate) const {
-		return processes_[0]->localVolatility()->localVol(t, assets[0], true) * processes_[1]->localVolatility()->localVol(t, assets[1], true);
+		return processes_[0]->leverageFct()->localVol(t, assets[0], true) * processes_[1]->leverageFct()->localVol(t, assets[1], true);
 	}
 	void CTSlocalInCrossCovarianceFX::accept(AcyclicVisitor& v) {
 		Visitor<CTSlocalInCrossCovarianceFX>* v1 =

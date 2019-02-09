@@ -4332,6 +4332,7 @@
     <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.hpp" />
     <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6924,6 +6925,7 @@
     <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.cpp" />
     <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">

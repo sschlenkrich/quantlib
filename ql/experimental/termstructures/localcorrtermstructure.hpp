@@ -27,6 +27,7 @@
 #include <ql/experimental/termstructures/corrtermstructureStrike.hpp>
 #include <ql/patterns/visitor.hpp>
 #include <ql/experimental/templatemodels/stochasticprocessT.hpp>
+#include <ql/experimental/processes/hestonslvprocess.hpp>
 #include <ql/processes/blackscholesprocess.hpp>
 
 namespace QuantLib {
@@ -80,8 +81,8 @@ namespace QuantLib {
 		Real maxStrike(Natural ulId) const;
 
 
-		std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& getProcesses() { return processes_; };
-		boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    getProcessToCal() { return processToCal_; };
+		std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>& getProcesses() { return processes_; };
+		boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>& getProcessToCal() { return processToCal_; };
 
       protected:
         /*! \name Calculations
@@ -96,7 +97,7 @@ namespace QuantLib {
         virtual void localCorrImpl(RealStochasticProcess::MatA& corrMatrix, Time t, const RealStochasticProcess::VecA& X0,
 			bool extrapolate = false) = 0;
         //@}
-		std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>> processes_;
+		std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>				processes_;
 		boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>			    processToCal_;
     };
 

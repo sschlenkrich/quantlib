@@ -623,6 +623,7 @@
     <ClInclude Include="ql\experimental\models\hestonslvfdmmodel.hpp" />
     <ClInclude Include="ql\experimental\models\hestonslvmcmodel.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.hpp" />
     <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.hpp" />
     <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.hpp" />
     <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCovarianceFX.hpp" />
@@ -1978,6 +1979,7 @@
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\fixedratebondoption.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.cpp" />
     <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.cpp" />
     <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.cpp" />
     <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCovarianceFX.cpp" />

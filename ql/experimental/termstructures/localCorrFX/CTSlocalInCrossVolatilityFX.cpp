@@ -33,15 +33,15 @@ namespace QuantLib {
 
 	QuantLib::Real CTSlocalInCrossVolatilityFX::localA(Time t, const RealStochasticProcess::VecA& assets,
 		bool extrapolate) const {
-		double v1 = processes_[0]->localVolatility()->localVol(t, assets[0], true);
-		double v2 = processes_[1]->localVolatility()->localVol(t, assets[1], true);
+		double v1 = processes_[0]->leverageFct()->localVol(t, assets[0], true);
+		double v2 = processes_[1]->leverageFct()->localVol(t, assets[1], true);
 		return v1*v1+v2*v2;
 	}
 
 	QuantLib::Real CTSlocalInCrossVolatilityFX::localB(Time t, const RealStochasticProcess::VecA& assets,
 		bool extrapolate) const {
-		double v1 = processes_[0]->localVolatility()->localVol(t, assets[0], true);
-		double v2 = processes_[1]->localVolatility()->localVol(t, assets[1], true);
+		double v1 = processes_[0]->leverageFct()->localVol(t, assets[0], true);
+		double v2 = processes_[1]->leverageFct()->localVol(t, assets[1], true);
 		return  -2*v1*v2 ;
 	}
 	void CTSlocalInCrossVolatilityFX::accept(AcyclicVisitor& v) {

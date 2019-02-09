@@ -1,7 +1,7 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2017, Sebastian Schlenkrich
+ Copyright (C) 2019, Cord Harms
 
 */
 
@@ -55,7 +55,7 @@ namespace QuantLib {
 		inline virtual QuantLib::Real zeroBond(const QuantLib::Time t, const QuantLib::Time T, const VecA& X) { return termStructure_->discount(T) / termStructure_->discount(t); }
 
 		// default implementation for single-asset models
-		inline virtual QuantLib::Real asset(const QuantLib::Time t, const VecA& X, const std::string& alias) { return X[index_.at(alias)]; }
+		inline virtual QuantLib::Real asset(const QuantLib::Time t, const VecA& X, const std::string& alias) { return processes_[index_.at(alias)]->s0()->value()*std::exp(X[index_.at(alias)]); }
 
 		// default implementation for single-asset models
 		inline virtual QuantLib::Array assetAndVol(const QuantLib::Time t, const VecA& X, const std::string& alias) { 
