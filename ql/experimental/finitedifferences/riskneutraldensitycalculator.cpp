@@ -45,21 +45,29 @@ namespace QuantLib {
 
     Real RiskNeutralDensityCalculator::InvCDFHelper::inverseCDF(Real p, Time t)
     const {
-        const Real guessCDF = calculator_->cdf(guess_, t);
+        //const Real guessCDF = calculator_->cdf(guess_, t); AG
+		Real guessCDF = calculator_->cdf(guess_, t);
 
         Size evaluations = maxEvaluations_;
         Real upper = guess_, lower = guess_;
 
+		double myval; // CH
+
         if (guessCDF < p)
             while (calculator_->cdf(upper*=1.5, t) < p && evaluations > 0) {
+				myval = calculator_->cdf(upper, t); //AG
                 --evaluations;
             }
         else
             while (calculator_->cdf(lower*=0.75, t) > p && evaluations > 0) {
+				myval = calculator_->cdf(lower, t); //AG
                 --evaluations;
             }
 
-        QL_REQUIRE(evaluations, "could not calculate interval");
+        // AG: QL_REQUIRE(evaluations, "could not calculate interval");
+
+		if (!evaluations) //AG
+			 QL_REQUIRE(evaluations, "could not calculate interval"); //AG
 
         const boost::function<Real(Real)> cdf
             = boost::bind(&RiskNeutralDensityCalculator::cdf,

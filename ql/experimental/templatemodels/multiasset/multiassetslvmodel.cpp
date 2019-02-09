@@ -1,0 +1,167 @@
+/* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
+/*
+ Copyright (C) 2017, Sebastian Schlenkrich
+
+*/
+
+
+#include <ql/experimental/templatemodels/auxilliaries/svdT.hpp>
+
+#include <ql/experimental/templatemodels/multiasset/multiassetslvmodel.hpp>
+
+
+namespace QuantLib {
+
+	MultiAssetSLVModel::MultiAssetSLVModel(
+		const Handle<YieldTermStructure>&                                               termStructure,
+		const std::vector<std::string>&                                                 aliases,
+		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes,
+		const RealStochasticProcess::MatA&                                              correlations)
+	: termStructure_(termStructure), processes_(processes) {
+		QL_REQUIRE(processes_.size() > 0, "No BS processes supplied");
+		QL_REQUIRE(processes_.size() == aliases.size(), "Number of processes doesn't match aliases");
+		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k;
+		QL_REQUIRE(2*processes_.size() == correlations.size(), "Number of processes*2 doesn't match correlation");
+		for (size_t k=0; k< correlations.size(); ++k)
+		    QL_REQUIRE(processes_.size()*2 == correlations[k].size(), "Number of processes*2 doesn't match correlation");
+		//check whether it is a diagonal matrix
+		bool isDiagonal = true;
+		for (size_t k = 0; k < correlations.size(); ++k) {
+			for (size_t l = k + 1; l < correlations.size(); ++l) {
+				if (correlations[k][l] != 0) isDiagonal = false;
+			}
+		}
+		
+		
+		DT_ = RealStochasticProcess::MatA(2*processes.size());
+		for (size_t k = 0; k<DT_.size(); ++k) DT_[k].resize(2*processes.size());
+
+		for (size_t i = 0; i < 2 * processes.size(); i++)
+		{
+			for (size_t j = i; j < 2 * processes.size(); j++)
+			{
+				DT_[i][j] = correlations[i][j];
+				DT_[j][i] = correlations[i][j];
+			}
+		}
+		
+		if (! isDiagonal) {
+			TemplateAuxilliaries::performCholesky(DT_, DT_.size());
+			//DT_ = TemplateAuxilliaries::svdSqrt(correlations);
+		}
+		else {
+			//due to ones on diagonal simply copy the matrix.
+		}
+	}
+	MultiAssetSLVModel::MultiAssetSLVModel(
+		const Handle<YieldTermStructure>&                                               termStructure,
+		const std::vector<std::string>&                                                 aliases,
+		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes)
+		: termStructure_(termStructure), processes_(processes) {
+		QL_REQUIRE(processes_.size() > 0, "No BS processes supplied");
+		//no correlation matrix means, we simply assume independence
+		RealStochasticProcess::MatA corrM = RealStochasticProcess::MatA(2 * processes.size());
+		for (size_t k = 0; k<corrM.size(); ++k) corrM[k].resize(2 * processes.size());
+
+		for (size_t i = 0; i < 2 * processes.size(); i++)
+		{
+			for (size_t j = 0; j < 2 * processes.size(); j++)
+			{
+				if (i == j) {
+					corrM[i][j] = 1;
+				}
+				else corrM[i][j] = 0;
+			}
+		}
+		MultiAssetSLVModel(termStructure, aliases, processes, corrM);
+		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k; // not transferable from other constructor.
+	}
+	// initial values for simulation
+	inline RealStochasticProcess::VecP MultiAssetSLVModel::initialValues() {
+		RealStochasticProcess::VecP init =  RealStochasticProcess::VecP(size(), 0.0);
+		for (size_t i = 0; i < processes_.size(); i++)
+		{
+			init[i] = processes_[i]->s0()->value();
+			init[i+ processes_.size()] = processes_[i]->v0();
+		}
+		return init;
+	}
+	// a[t,X(t)]
+	inline RealStochasticProcess::VecA MultiAssetSLVModel::drift(const QuantLib::Time t, const VecA& X) {
+		RealStochasticProcess::VecA nu(processes_.size());
+		// todo: make sure all processes use same domestic/riskfree rate...
+		// remember: X=[x1,x2,....,v1, v2,....]
+		// remeber: heston process evolves S and not log(S/S0)
+		size_t amtProcesses = processes_.size();
+
+
+		for (Size k = 0; k < processes_.size(); ++k) {
+			QuantLib::Array tmp(2);
+			tmp[0] = X[k];
+			tmp[1] = X[k+ amtProcesses];
+			tmp = processes_[k]->drift(t,tmp);
+			nu[k] = tmp[0];
+			nu[k+amtProcesses] = tmp[1];
+		}
+		return nu;
+	}	
+	// b[t,X(t)]
+	inline RealStochasticProcess::MatA MultiAssetSLVModel::diffusion(const QuantLib::Time t, const VecA& X) {
+		RealStochasticProcess::MatA b(DT_);
+		size_t amtProcesses = processes_.size();
+		for (Size i = 0; i < processes_.size(); ++i) {
+			QuantLib::Array tmp(2);
+			tmp[0] = X[i];
+			tmp[1] = X[i + amtProcesses];
+			QuantLib::Matrix sigma = processes_[i]->diffusion(t, tmp);
+			for (Size j = 0; j < factors(); ++j) {
+				b[i][j] *= sigma[0][0];
+				b[i + amtProcesses][j] *= sigma[1][0];
+				b[i + amtProcesses][j + amtProcesses] *= sigma[1][1];
+			}
+		}
+		return b;
+	}
+
+	inline void MultiAssetSLVModel::evolve(const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const VecD& dW, VecA& X1) {
+		
+		size_t amtProcesses = processes_.size();
+		QuantLib::Array tmp0(2);
+		QuantLib::Array tmp1(2);
+		QuantLib::Real s0;
+
+		for (Size i = 0; i < processes_.size(); ++i) {
+			
+			s0 = processes_[i]->s0()->value();
+			
+			X1[i] = 0.0;
+			X1[i + amtProcesses] = 0.0;
+			for (Size j = 0; j < dW.size(); ++j)
+			{
+				X1[i] += DT_[i][j] * dW[j];
+				X1[i + amtProcesses] += DT_[i + amtProcesses][j] * dW[j];
+			}
+			tmp0[0] = X0[i];
+			tmp0[1] = X0[i + amtProcesses];
+			if (tmp0[1] < 0) tmp0[1] = 0.00001; // may happen due to richardson extrapolation that vola becomes negative
+
+			tmp1[0] = X1[i];
+			tmp1[1] = X1[i + amtProcesses];
+
+			//calculate an artificial random number with correlation rho for the 1dim Heston model
+			tmp1[1] = (tmp1[1] - tmp1[0] * processes_[i]->rho()) / std::sqrt(1 - processes_[i]->rho()*processes_[i]->rho());
+			
+			tmp1 = processes_[i]->evolve(t0,tmp0,dt,tmp1);
+			//transfer (S,v) to (log(S/S0),v)
+			
+			X1[i] = tmp1[0];
+
+			X1[i + amtProcesses] = tmp1[1];
+		}
+	}
+
+}
+
+
+

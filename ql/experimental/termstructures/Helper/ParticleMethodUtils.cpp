@@ -81,7 +81,7 @@ namespace QuantLib {
 		}
 
 
-		RealMCSimulation simulation(assetModel, timesSim, times, numberOfPaths,1,false,true,false);
+		RealMCSimulation simulation(assetModel, times, times, numberOfPaths,1,true,true,false);
 
 		//start to create strike grid. 
 		//the strike grid depends on simulation results (min and max quantile)

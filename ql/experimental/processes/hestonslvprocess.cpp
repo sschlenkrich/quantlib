@@ -49,9 +49,9 @@ namespace QuantLib {
     Disposable<Array> HestonSLVProcess::drift(Time t, const Array& x) const {
         Array tmp(2);
 
-        const Real s = std::exp(x[0]);
+        const Real s = std::exp(x[0]); //x[0]=lnSt
         const Volatility vol
-            = std::sqrt(x[1])*leverageFct_->localVol(t, s, true);
+            = std::sqrt(x[1])*leverageFct_->localVol(t, s, true);  //x[1] = vt
 
         tmp[0] = riskFreeRate()->forwardRate(t, t, Continuous)
                - dividendYield()->forwardRate(t, t, Continuous)
@@ -104,6 +104,8 @@ namespace QuantLib {
 
             retVal[1] = ((u <= p) ? 0.0 : std::log((1-p)/(1-u))/beta);
         }
+
+		if (retVal[1] < 0) retVal[1] = 1e-8;
 
         const Real mu = riskFreeRate()->forwardRate(t0, t0+dt, Continuous)
              - dividendYield()->forwardRate(t0, t0+dt, Continuous);

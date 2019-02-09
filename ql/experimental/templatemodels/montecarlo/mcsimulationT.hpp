@@ -362,7 +362,7 @@ namespace QuantLib {
 
 			size_t crntSimTimePath = crntSimTime_;
 
-			for (size_t i = 0; i < X_.size(); i++)
+			for (size_t i = 0; i < X_.size(); i++) //paths
 			{
 
 				crntSimTime_ = crntSimTimePath;
