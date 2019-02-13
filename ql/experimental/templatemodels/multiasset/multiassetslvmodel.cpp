@@ -47,7 +47,7 @@ namespace QuantLib {
 		}
 		
 		if (! isDiagonal) {
-			TemplateAuxilliaries::performCholesky(DT_, DT_.size());
+			TemplateAuxilliaries::performCholesky(DT_, DT_.size(),true);
 			//DT_ = TemplateAuxilliaries::svdSqrt(correlations);
 		}
 		else {
@@ -60,21 +60,9 @@ namespace QuantLib {
 		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes)
 		: termStructure_(termStructure), processes_(processes) {
 		QL_REQUIRE(processes_.size() > 0, "No SLV processes supplied");
-		//no correlation matrix means, we simply assume independence
-		RealStochasticProcess::MatA corrM = RealStochasticProcess::MatA(2 * processes.size());
-		for (size_t k = 0; k<corrM.size(); ++k) corrM[k].resize(2 * processes.size());
-
-		for (size_t i = 0; i < 2 * processes.size(); i++)
-		{
-			for (size_t j = 0; j < 2 * processes.size(); j++)
-			{
-				if (i == j) {
-					corrM[i][j] = 1;
-				}
-				else corrM[i][j] = 0;
-			}
-		}
-		MultiAssetSLVModel(termStructure, aliases, processes, corrM);
+		//no correlation matrix means, we simply assume independence and asset-volvol-correlation from heston
+		RealStochasticProcess::MatA corrM = getPureHestonImpliedCorrelationMatrix();
+		DT_ = RealStochasticProcess::MatA(MultiAssetSLVModel(termStructure, aliases, processes, corrM).DT_);
 		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k; // not transferable from other constructor.
 	}
 	// initial values for simulation
@@ -161,10 +149,40 @@ namespace QuantLib {
 			
 			X1[i] = std::log(tmp1[0]/s0);
 
+
+			if (tmp1[0] == 0 || tmp1[0] != tmp1[0]) {
+				tmp1[0] = 2;
+			}
+
 			X1[i + amtProcesses] = tmp1[1];
 		}
 	}
 
+	RealStochasticProcess::MatA MultiAssetSLVModel::getPureHestonImpliedCorrelationMatrix()
+	{
+		RealStochasticProcess::MatA corrM = RealStochasticProcess::MatA(2 * processes_.size());
+
+		for (size_t k = 0; k<corrM.size(); ++k) corrM[k].resize(2 * processes_.size());
+
+		for (size_t i = 0; i < 2 * processes_.size(); i++)
+		{
+			for (size_t j = 0; j < 2 * processes_.size(); j++)
+			{
+				if (i == j) {
+					corrM[i][j] = 1;
+				}
+				else if (i == j + processes_.size() || i + processes_.size() == j) {
+					int assetIndex = std::min(i, j);
+					corrM[i][j] = processes_[assetIndex]->rho();
+				}
+				else {
+					corrM[i][j] = 0;
+				}
+			}
+		}
+
+		return corrM;
+	}
 }
 
 

@@ -44,6 +44,13 @@ namespace QuantLib {
 	
 	}
 
+	LocalCorrTermStructure::LocalCorrTermStructure(const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>& processes,
+		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			   processToCal) 
+		: CorrelationTermStructureStrike(processes[0]->leverageFct()->referenceDate(),
+			processes[0]->leverageFct()->calendar(),
+			processes[0]->leverageFct()->businessDayConvention(),
+			processes[0]->leverageFct()->dayCounter()), processToCal_(processToCal), processes_(processes) {}
+
     void LocalCorrTermStructure::localCorr(RealStochasticProcess::MatA& corrMatrix, 
 											   const Date& d,
 											   const RealStochasticProcess::VecA& X0,
@@ -75,13 +82,8 @@ namespace QuantLib {
 		{
 			for (size_t j = i+1; j < corrMatrix.size(); j++)
 			{
-				if (corrMatrix[i][j] > 1) {
-					corrMatrix[i][j] = 0.999;
-					corrMatrix[j][i] = 0.999;
-				}
-				if (corrMatrix[i][j] < -1) {
-					corrMatrix[i][j] = -0.999;
-					corrMatrix[j][i] = -0.999;
+				if (corrMatrix[i][j] > 1 || corrMatrix[i][j] < -1) {
+					QL_FAIL("Correlation values have to be checked and corrected by checkLambdaValue function.");
 				}
 			}
 		}

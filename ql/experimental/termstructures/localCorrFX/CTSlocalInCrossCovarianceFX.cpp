@@ -31,6 +31,15 @@ namespace QuantLib {
 		//setInterpolation<Linear>();
 	}
 
+	CTSlocalInCrossCovarianceFX::CTSlocalInCrossCovarianceFX(
+		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes,
+		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    processToCal,
+		const RealStochasticProcess::MatA											    correlation)
+		: LocalCorrSurfaceABFFX(processes, processToCal,correlation) {
+		//initializeF();
+		//setInterpolation<Linear>();
+	}
+
 	QuantLib::Real CTSlocalInCrossCovarianceFX::localA(Time t, const RealStochasticProcess::VecA& assets,
 		bool extrapolate) const {
 		return 0;

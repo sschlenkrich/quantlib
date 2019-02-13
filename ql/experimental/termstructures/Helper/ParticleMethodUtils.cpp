@@ -56,7 +56,7 @@ namespace QuantLib {
 		aliases[0] = "fx1";
 		aliases[1] = "fx2";
 		Handle<LocalCorrTermStructure> surfaceGen(surface.currentLink());
-		boost::shared_ptr<LocalCorrelationSLVModel> assetModel(new LocalCorrelationSLVModel(yldH,aliases,processes, surfaceGen));
+		boost::shared_ptr<LocalCorrelationSLVModel> assetModel = boost::shared_ptr<LocalCorrelationSLVModel>((new LocalCorrelationSLVModel(yldH, aliases, processes, surfaceGen)));
 
 		std::vector<Time>& times = surface->getTimes();
 		std::vector<std::vector<Real>>& strikes = surface->getStrikes();
@@ -168,8 +168,11 @@ namespace QuantLib {
 				assets[0] = processes[0]->s0()->value() * std::exp(state[0]);
 				assets[1] = processes[1]->s0()->value() * std::exp(state[1]);
 
-				vol1 = processes[0]->leverageFct()->localVol(times[i], assets[0], true);
-				vol2 = processes[1]->leverageFct()->localVol(times[i], assets[1], true);
+				state[2] = state[2] < 0 ? 0.001 : state[2];//heston vol might become negative (dep. on feller constant)
+				state[3] = state[3] < 0 ? 0.001 : state[3];
+
+				vol1 = processes[0]->leverageFct()->localVol(times[i], assets[0], true)*std::sqrt(state[2]); //*ai from Heston
+				vol2 = processes[1]->leverageFct()->localVol(times[i], assets[1], true)*std::sqrt(state[3]);
 
 				a = surface->localA(times[i], assets, true);
 				b = surface->localB(times[i], assets, true);
@@ -200,7 +203,8 @@ namespace QuantLib {
 				QL_REQUIRE(eScale[j] != 0, std::string("ParticleMethodUtils::calibrateFX: resulting bandwidth is too small for calibration (support: < ") + std::to_string(maxNegBw)
 					+ std::string(" and > ") + std::to_string(minPosBw)
 					+ std::string("). Either decrease number of MC paths or increase exponentN or kappa."));
-
+				if (eNum[j] != eNum[j] || vol3 != vol3 || eScale[j] != eScale[j] || eDen[j] != eDen[j] || eDen[j] == 0)
+					QL_FAIL("surface not well defined.");
 				surfaceF[i][j] = (eNum[j] - vol3[j] * vol3[j]* eScale[j]) / (2 * eDen[j]);
 			}
 			//set interpolation on new dimension:

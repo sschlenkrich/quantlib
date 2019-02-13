@@ -33,6 +33,7 @@ namespace QuantLib {
 
     //!  
     /*! 
+	J. Guyon, A new Class of local correlation models
 	*/
     class ParticleMethodUtils {
       public:

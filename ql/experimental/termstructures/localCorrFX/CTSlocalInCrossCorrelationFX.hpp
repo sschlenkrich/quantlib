@@ -37,6 +37,10 @@ namespace QuantLib {
       public:
 		  CTSlocalInCrossCorrelationFX(const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
 								  const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&					processToCal);
+		  CTSlocalInCrossCorrelationFX(const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>& processes,
+			  const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&						processToCal,
+			  const RealStochasticProcess::MatA											    correlation);
+
 		  //@}
 		  //! \name Visitability
 		  //@{

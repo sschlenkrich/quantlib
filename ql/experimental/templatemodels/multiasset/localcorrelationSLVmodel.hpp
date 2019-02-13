@@ -25,11 +25,11 @@ namespace QuantLib {
 		RealStochasticProcess::MatA corrMatrix_;
 		Handle<LocalCorrTermStructure> localCorrTermStructure_;
 	public:
-		LocalCorrelationSLVModel(const Handle<YieldTermStructure>&                                         termStructure,
+		LocalCorrelationSLVModel(const Handle<YieldTermStructure>&                                        termStructure,
 			              const std::vector<std::string>&                                                 aliases,
 			  			  const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				  processes,
-						  const Handle<LocalCorrTermStructure>&											  localCorrTermStructure);
-
+						  const Handle<LocalCorrTermStructure>&											  localCorrTermStructureAsset);
+		
 		inline virtual void evolve(const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const VecD& dW, VecA& X1);
 	};
 

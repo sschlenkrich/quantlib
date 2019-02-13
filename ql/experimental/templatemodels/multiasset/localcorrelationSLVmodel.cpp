@@ -16,21 +16,28 @@ namespace QuantLib {
 	LocalCorrelationSLVModel::LocalCorrelationSLVModel(
 		const Handle<YieldTermStructure>&                                               termStructure,
 		const std::vector<std::string>&                                                 aliases,
-		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>& processes,
-		const Handle<LocalCorrTermStructure>& localCorrTermStructure)
-	: MultiAssetSLVModel(termStructure,aliases,processes), 
+		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes,
+		const Handle<LocalCorrTermStructure>&											localCorrTermStructure)
+		: MultiAssetSLVModel(termStructure, aliases, processes),
 		localCorrTermStructure_(localCorrTermStructure) {
-		corrMatrix_ = RealStochasticProcess::MatA(processes.size());
-
-		for (size_t k = 0; k<processes.size(); ++k) corrMatrix_[k].resize(processes.size());
+		corrMatrix_ = getPureHestonImpliedCorrelationMatrix(); //init corrMatrix, it is overwritten by term structure later.
 	}
 
 	inline void LocalCorrelationSLVModel::evolve(const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const VecD& dW, VecA& X1) {
 		// we merely need to calculate the correlation matrix
 		localCorrTermStructure_->localCorr(corrMatrix_, t0, X0 , true); //true because first X0 are always 0 in simulation.
 		//DT_ = TemplateAuxilliaries::svdSqrt(corrMatrix_);
-		TemplateAuxilliaries::performCholesky(corrMatrix_, corrMatrix_.size());
-		DT_ = corrMatrix_;
+		for (size_t i = 0; i < corrMatrix_.size(); i++)
+		{
+			for (size_t j = i; j < corrMatrix_.size(); j++)
+			{
+				DT_[i][j] = corrMatrix_[i][j];
+				DT_[j][i] = corrMatrix_[j][i];
+			}
+		}
+		
+		TemplateAuxilliaries::performCholesky(DT_, corrMatrix_.size(),true);
+		
 		//now we call the function of multiassetmodel
 		MultiAssetSLVModel::evolve(t0, X0, dt, dW, X1);
 	}

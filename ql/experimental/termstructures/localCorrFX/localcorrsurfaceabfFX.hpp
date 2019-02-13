@@ -18,7 +18,8 @@
 */
 
 /*! \file localcorrsurface.hpp
-    \brief Local Correlation surface derived ....
+    \brief Local Correlation surface derived.
+	J. Guyon, A new Class of local correlation models
 */
 
 #ifndef quantlib_localcorrsurfaceabffx_hpp
@@ -37,6 +38,10 @@ namespace QuantLib {
       public:
         LocalCorrSurfaceABFFX(const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
 							  const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			  processToCal);
+		LocalCorrSurfaceABFFX(const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>& processes,
+			const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			  processToCal,
+			const RealStochasticProcess::MatA											  correlations);
+
 		//@}
 		//! \name Visitability
 		//@{
@@ -51,10 +56,10 @@ namespace QuantLib {
 		Matrix getLocalCorrelationSurface(Time t, std::vector<Real> assetGrid1, std::vector<Real> assetGrid2);
       protected:
 		  virtual QuantLib::Real localFStrike(Time t, const RealStochasticProcess::VecA& X0);
-		  
+		  virtual QuantLib::Real checkLambdaValue(QuantLib::Real lambda);
 	  private:
+		  RealStochasticProcess::MatA getPureHestonImpliedCorrelationMatrix();
     };
-
 }
 
 #endif

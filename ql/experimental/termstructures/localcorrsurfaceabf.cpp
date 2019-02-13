@@ -28,6 +28,13 @@ namespace QuantLib {
 		assetTemp_ = std::vector<QuantLib::Real>(processes_.size());
     }
 
+	LocalCorrSurfaceABF::LocalCorrSurfaceABF(
+		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>& processes,
+		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    processToCal)
+		: LocalCorrTermStructure(processes, processToCal) {
+		assetTemp_ = std::vector<QuantLib::Real>(processes_.size());
+	}
+
     void LocalCorrSurfaceABF::accept(AcyclicVisitor& v) {
         Visitor<LocalCorrSurfaceABF>* v1 =
             dynamic_cast<Visitor<LocalCorrSurfaceABF>*>(&v);
@@ -52,12 +59,15 @@ namespace QuantLib {
 			}
 			lambda = (localF(t, X0, extrapolate) - localA(t, assetTemp_, extrapolate)) / localB(t, assetTemp_, extrapolate);
 		}
+
+		lambda = checkLambdaValue(lambda);
+
 		for (size_t i = 0; i < corr0_.size(); i++) //corr0 because corrMatrix may have bigger size (i.e. Heston has volvol correlation)
 		{
 			for (size_t j = i; j < corr0_[i].size(); j++)
 			{
 				corrMatrix[i][j] = (1 - lambda)*corr0_[i][j] + lambda  *corr1_[i][j];
-				QL_REQUIRE(corrMatrix[i][j] != 1 || i==j, "correlation is not allowed wo be 1 for i!=j");
+				//QL_REQUIRE(corrMatrix[i][j] != 1 || i==j, "correlation is not allowed wo be 1 for i!=j");
 				corrMatrix[j][i] = corrMatrix[i][j];
 			}
 		}
@@ -68,6 +78,7 @@ namespace QuantLib {
 		
 		double strike = localFStrike(t, X0);
 		double strikeIn;
+		double res;
 
 		//first interpolate strike dimension, function F merely called after t1 (before local corr independent of a,b,F)
 		for (size_t i = 1; i < times_.size(); i++)
@@ -87,7 +98,10 @@ namespace QuantLib {
 		}
 		interpolatorTimesF_.update();
 		//second interpolate time dimension 
-		return interpolatorTimesF_(t, extrapolate);
+		res = interpolatorTimesF_(t, extrapolate);
+		if (res != res)
+			QL_FAIL("Interpolation on correlation surface failed. Erroneous surface.");
+		return res;
 	}
 }
 

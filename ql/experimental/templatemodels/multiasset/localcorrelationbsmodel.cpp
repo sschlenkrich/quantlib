@@ -29,7 +29,7 @@ namespace QuantLib {
 		// we merely need to calculate the correlation matrix
 		localCorrTermStructure_->localCorr(corrMatrix_, t0, X0 , true); //true because first X0 are always 0 in simulation.
 		//DT_ = TemplateAuxilliaries::svdSqrt(corrMatrix_);
-		TemplateAuxilliaries::performCholesky(corrMatrix_, corrMatrix_.size());
+		TemplateAuxilliaries::performCholesky(corrMatrix_, corrMatrix_.size(),true);
 		DT_ = corrMatrix_;
 		//now we call the function of multiassetmodel
 		MultiAssetBSModel::evolve(t0, X0, dt, dW, X1);

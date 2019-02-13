@@ -33,10 +33,14 @@ namespace QuantLib {
     /*! For details about this implementation refer to
         
         \bug this class is untested, probably unreliable.
+
+		J. Guyon, A new Class of local correlation models
     */
 	class LocalCorrSurfaceABF : public LocalCorrTermStructure {
 	public:
 		LocalCorrSurfaceABF(const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
+			const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&		  	    processToCal);
+		LocalCorrSurfaceABF(const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>& processes,
 			const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&		  	    processToCal);
 
 
@@ -94,6 +98,7 @@ namespace QuantLib {
 		  QuantLib::Real localF(Time t, const RealStochasticProcess::VecA& X0,
 			  bool extrapolate = false);
 		  virtual QuantLib::Real localFStrike(Time t, const RealStochasticProcess::VecA& X0) = 0;
+		  virtual QuantLib::Real checkLambdaValue(QuantLib::Real lambda) = 0;
 
 		  RealStochasticProcess::MatA corr0_;
 		  RealStochasticProcess::MatA corr1_;

@@ -47,7 +47,7 @@ namespace QuantLib {
 		}
 		
 		if (! isDiagonal) {
-			TemplateAuxilliaries::performCholesky(DT_, DT_.size());
+			TemplateAuxilliaries::performCholesky(DT_, DT_.size(),true);
 			//DT_ = TemplateAuxilliaries::svdSqrt(correlations);
 		}
 		else {

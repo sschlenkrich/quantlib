@@ -51,7 +51,10 @@ namespace QuantLib {
         */
         LocalCorrTermStructure(const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
 							   const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			   processToCal );
-        //! initialize with a fixed reference date
+		LocalCorrTermStructure(const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>& processes,
+			const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			   processToCal);
+
+		//! initialize with a fixed reference date
         //@}
         virtual ~LocalCorrTermStructure() {}
         //! \name Local correlation

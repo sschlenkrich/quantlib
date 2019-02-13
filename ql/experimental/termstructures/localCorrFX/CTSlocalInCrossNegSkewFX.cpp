@@ -32,6 +32,15 @@ namespace QuantLib {
 		//setInterpolation<Linear>();
 	}
 
+	CTSlocalInCrossNegSkewFX::CTSlocalInCrossNegSkewFX(
+		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes,
+		const boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>&			    processToCal, double beta,
+		const RealStochasticProcess::MatA											    correlation)
+		: LocalCorrSurfaceABFFX(processes, processToCal,correlation), beta_(beta) {
+		//initializeF();
+		//setInterpolation<Linear>();
+	}
+
 	QuantLib::Real CTSlocalInCrossNegSkewFX::localA(Time t, const RealStochasticProcess::VecA& assets,
 		bool extrapolate) const {
 		return pow(assets[0]*assets[1],beta_);

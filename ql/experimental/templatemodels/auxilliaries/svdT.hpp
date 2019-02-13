@@ -329,7 +329,7 @@ namespace TemplateAuxilliaries {
 	}
 	
 	template<class T>
-	void performCholesky(std::vector< std::vector<T> >& matrix, size_t dimIn) {
+	void performCholesky(std::vector< std::vector<T> >& matrix, size_t dimIn, bool flexible) {
 		size_t dim = dimIn;
 		
 		for (size_t i = 0; i < dim; i++)
@@ -346,11 +346,11 @@ namespace TemplateAuxilliaries {
 
 		//First step:
 		matrix[0][0] = sqrt(matrix[0][0]);
-		if (abs(matrix[0][0]) < QL_EPSILON)
-			QL_FAIL("No Correlation Matrix because rank is not full.");
+		if (abs(matrix[0][0]) < QL_EPSILON && ! flexible)
+			QL_FAIL("No positive definite Correlation Matrix because rank is not full.");
 		for (size_t i = 1; i < dim; i++)
 		{
-			matrix[i][0] = matrix[i][0] / matrix[0][0];
+			matrix[i][0] = abs(matrix[0][0]) < QL_EPSILON ? 0.0 : matrix[i][0] / matrix[0][0];
 		}
 
 
@@ -363,10 +363,14 @@ namespace TemplateAuxilliaries {
 			}
 
 			matrix[i][i] = sqrt(matrix[i][i]);
-			if (abs(matrix[i][i]) < QL_EPSILON)
-				QL_FAIL(std::string("No Correlation Matrix because rank is not full."));
-			if (matrix[i][i] != matrix[i][i])
-				QL_FAIL(std::string("No Correlation Matrix as diagonal square entry is negative."));
+			if (abs(matrix[i][i]) < QL_EPSILON && ! flexible)
+				QL_FAIL(std::string("No positive definite Correlation Matrix because rank is not full."));
+			if (matrix[i][i] != matrix[i][i] && !flexible) {
+				QL_FAIL(std::string("No positive definite Correlation Matrix as diagonal square entry is negative."));
+			}
+			
+			matrix[i][i] = (matrix[i][i] != matrix[i][i]) ? 0.0 : matrix[i][i];
+			
 
 			for (size_t j = 0; j < dim; j++)
 			{
@@ -376,7 +380,7 @@ namespace TemplateAuxilliaries {
 					{
 						matrix[j][i] = matrix[j][i] - matrix[i][k] * matrix[j][k];
 					}
-					matrix[j][i] = matrix[j][i] / matrix[i][i];
+					matrix[j][i] = (abs(matrix[i][i]) < QL_EPSILON || matrix[i][i] != matrix[i][i]) ? 0.0 : matrix[j][i] / matrix[i][i];
 				}
 				else if (j<i) {
 					matrix[j][i] = 0;

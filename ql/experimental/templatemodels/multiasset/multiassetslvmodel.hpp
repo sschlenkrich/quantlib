@@ -22,6 +22,7 @@ namespace QuantLib {
 
 	class MultiAssetSLVModel : public RealStochasticProcess {
 	protected:
+		RealStochasticProcess::MatA getPureHestonImpliedCorrelationMatrix();
 		Handle<YieldTermStructure>                                               termStructure_;  // domestic discounting term structure
 		std::map<std::string, size_t>                                            index_;
 		std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>				 processes_;
