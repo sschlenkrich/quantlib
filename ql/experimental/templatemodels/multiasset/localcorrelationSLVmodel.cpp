@@ -20,11 +20,11 @@ namespace QuantLib {
 		const Handle<LocalCorrTermStructure>&											localCorrTermStructure)
 		: MultiAssetSLVModel(termStructure, aliases, processes),
 		localCorrTermStructure_(localCorrTermStructure) {
-		corrMatrix_ = getPureHestonImpliedCorrelationMatrix(); //init corrMatrix, it is overwritten by term structure later.
+		corrMatrix_ = getPureHestonImpliedCorrelationMatrix(); //init corrMatrix, it is overwritten by term structure in evolve-function.
 	}
 
 	inline void LocalCorrelationSLVModel::evolve(const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const VecD& dW, VecA& X1) {
-		// we merely need to calculate the correlation matrix
+		// need to calculate the time- and state-dependent correlation matrix
 		localCorrTermStructure_->localCorr(corrMatrix_, t0, X0 , true); //true because first X0 are always 0 in simulation.
 		//DT_ = TemplateAuxilliaries::svdSqrt(corrMatrix_);
 		for (size_t i = 0; i < corrMatrix_.size(); i++)

@@ -19,9 +19,13 @@ namespace QuantLib {
 
 
 	// We model a multi-asset local volatility model by means of the normalized log-processes X_i = log[S_i/S_(0)]
+	// Basis for the model, is local volatility model with integrated Heston component for stochastic volatility: cf. class HestonSLVModel.
 
 	class MultiAssetSLVModel : public RealStochasticProcess {
 	protected:
+		/* information in list of HestonSLVProcesses is sufficient to imply a correlation matrix using asset-volvol-correlations.
+		   Caution: Remaining correlations are set to zero. Therefore, only call if no bespoke correlation matrix is provided.
+		*/
 		RealStochasticProcess::MatA getPureHestonImpliedCorrelationMatrix();
 		Handle<YieldTermStructure>                                               termStructure_;  // domestic discounting term structure
 		std::map<std::string, size_t>                                            index_;
@@ -38,13 +42,13 @@ namespace QuantLib {
 
 		// dimension of X -> [x1,x2,....,v1, v2,....]
 		inline virtual size_t size() { return processes_.size()*2; }
-		// stochastic factors of x and z (maybe distinguish if trivially eta=0)
+		// stochastic factors of x and z 
 		inline virtual size_t factors() { return processes_.size()*2; } //UL and vol
 		// initial values for simulation
 		inline virtual RealStochasticProcess::VecP initialValues();
-		// a[t,X(t)]
+		// a[t,X(t)], not tested
 		inline virtual RealStochasticProcess::VecA drift(const QuantLib::Time t, const VecA& X);
-		// b[t,X(t)]
+		// b[t,X(t)], not tested
 		inline virtual RealStochasticProcess::MatA diffusion(const QuantLib::Time t, const VecA& X);
 
 		inline virtual void evolve(const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const VecD& dW, VecA& X1);

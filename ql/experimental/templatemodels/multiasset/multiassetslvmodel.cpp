@@ -60,7 +60,8 @@ namespace QuantLib {
 		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes)
 		: termStructure_(termStructure), processes_(processes) {
 		QL_REQUIRE(processes_.size() > 0, "No SLV processes supplied");
-		//no correlation matrix means, we simply assume independence and asset-volvol-correlation from heston
+		//no correlation matrix provided, consequently we simply infer asset-volvol-correlation from heston and assume
+		//remaining correlations to be zero.
 		RealStochasticProcess::MatA corrM = getPureHestonImpliedCorrelationMatrix();
 		DT_ = RealStochasticProcess::MatA(MultiAssetSLVModel(termStructure, aliases, processes, corrM).DT_);
 		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k; // not transferable from other constructor.
@@ -80,7 +81,7 @@ namespace QuantLib {
 		RealStochasticProcess::VecA nu(processes_.size());
 		// todo: make sure all processes use same domestic/riskfree rate...
 		// remember: X=[x1,x2,....,v1, v2,....]
-		// remeber: heston process evolves S and not log(S/S0)
+		// HestonSLVProcess returns drift of d(lnSt)
 		size_t amtProcesses = processes_.size();
 
 
@@ -141,10 +142,10 @@ namespace QuantLib {
 			tmp1[0] = X1[i];
 			tmp1[1] = X1[i + amtProcesses];
 
-			//calculate an artificial random number with correlation rho for the 1dim Heston model
+			//calculate an artificial random number with a correlation rho for the 1dim Heston model
 			if (!processes_[i]->isLocalVolProcess()) tmp1[1] = (tmp1[1] - tmp1[0] * processes_[i]->rho()) / std::sqrt(1 - processes_[i]->rho()*processes_[i]->rho());
 			
-			tmp1 = processes_[i]->evolve(t0,tmp0,dt,tmp1);
+			tmp1 = processes_[i]->evolve(t0,tmp0,dt,tmp1); //evolve of HestonSLVProcess returns S instead of ln(S/S0)
 			//transfer (S,v) to (log(S/S0),v)
 			
 			X1[i] = std::log(tmp1[0]/s0);

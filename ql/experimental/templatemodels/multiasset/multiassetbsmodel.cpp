@@ -74,9 +74,43 @@ namespace QuantLib {
 				else corrM[i][j] = 0;
 			}
 		}
-		MultiAssetBSModel(termStructure, aliases, processes, corrM);
+
+		DT_ = RealStochasticProcess::MatA(MultiAssetBSModel(termStructure, aliases, processes, corrM).DT_);
 		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k; // not transferable from other constructor.
 	}
+
+	MultiAssetBSModel::MultiAssetBSModel(const Handle<YieldTermStructure>&              termStructure,
+		const std::vector<std::string>&                                                 aliases,
+		const std::vector<boost::shared_ptr<QuantLib::LocalVolSurface>>&                localVolSurfaces,
+		const RealStochasticProcess::MatA&                                              correlations)
+		: localVolSurfaces_(localVolSurfaces), termStructure_(termStructure){
+	
+		initProcessesFromSurface();
+		DT_ = RealStochasticProcess::MatA(MultiAssetBSModel(termStructure, aliases, processes_, correlations).DT_);
+		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k; 
+	}
+
+	MultiAssetBSModel::MultiAssetBSModel(const Handle<YieldTermStructure>&              termStructure,
+		const std::vector<std::string>&                                                 aliases,
+		const std::vector<boost::shared_ptr<QuantLib::LocalVolSurface>>&				localVolSurfaces)
+	{
+		RealStochasticProcess::MatA corrM = RealStochasticProcess::MatA(localVolSurfaces.size());
+		for (size_t k = 0; k<corrM.size(); ++k) corrM[k].resize(localVolSurfaces.size());
+
+		for (size_t i = 0; i < localVolSurfaces.size(); i++)
+		{
+			for (size_t j = 0; j < localVolSurfaces.size(); j++)
+			{
+				if (i == j) {
+					corrM[i][j] = 1;
+				}
+				else corrM[i][j] = 0;
+			}
+		}
+		*this = MultiAssetBSModel(termStructure, aliases, localVolSurfaces, corrM);
+	}
+
+
 	// initial values for simulation
 	inline RealStochasticProcess::VecP MultiAssetBSModel::initialValues() {
 		return RealStochasticProcess::VecP(size(), 0.0);
@@ -112,7 +146,12 @@ namespace QuantLib {
 			// sigma represents the average volatility on [t, t+dt]
 			// here we use a first very simple approximation
 			Real S = processes_[i]->x0() * std::exp(X0[i]);
-			Real sigma = processes_[i]->diffusion(t0, S);
+			Real sigma;
+			if (localVolSurfaces_.size() > 0)
+				//localVolSurfaces_ may be an InterpolatedLocalVolSurface which has better performance.
+				sigma = localVolSurfaces_[i]->localVol(t0,S,true);
+			else
+				sigma= processes_[i]->diffusion(t0, S);
 			// We may integrate the drift exactly (given the approximate volatility)
 			Real B_d = processes_[i]->riskFreeRate()->discount(t0) / processes_[i]->riskFreeRate()->discount(t0 + dt);
 			Real B_f = processes_[i]->dividendYield()->discount(t0) / processes_[i]->dividendYield()->discount(t0 + dt);
@@ -120,6 +159,21 @@ namespace QuantLib {
 		}
 	}
 
+
+	void MultiAssetBSModel::initProcessesFromSurface() {
+		if (localVolSurfaces_.size() > 0) {
+			processes_.resize(localVolSurfaces_.size());
+			for (size_t i = 0; i < localVolSurfaces_.size(); i++)
+			{
+				processes_[i] = boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>(new GeneralizedBlackScholesProcess(
+					localVolSurfaces_[i]->getUnderlying(),
+					localVolSurfaces_[i]->getDividendTS(),
+					localVolSurfaces_[i]->getInterestRateTS(),
+					localVolSurfaces_[i]->getBlackSurface()
+				));
+			}
+		}
+	}
 }
 
 

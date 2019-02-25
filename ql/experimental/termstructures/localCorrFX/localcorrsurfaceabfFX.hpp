@@ -19,7 +19,7 @@
 
 /*! \file localcorrsurface.hpp
     \brief Local Correlation surface derived.
-	J. Guyon, A new Class of local correlation models
+	J. Guyon, 2013, A new Class of local correlation models
 */
 
 #ifndef quantlib_localcorrsurfaceabffx_hpp
@@ -47,7 +47,6 @@ namespace QuantLib {
 		//@{
 		virtual void accept(AcyclicVisitor&);
         //@}
-		virtual Real localCorrImplTeq0(Time t, const RealStochasticProcess::VecA& X0, bool extrapolate = false);
 		virtual QuantLib::Real localA(Time t, const RealStochasticProcess::VecA& assets,
 			bool extrapolate = false) const = 0;
 		virtual QuantLib::Real localB(Time t, const RealStochasticProcess::VecA& assets,
@@ -55,6 +54,7 @@ namespace QuantLib {
 
 		Matrix getLocalCorrelationSurface(Time t, std::vector<Real> assetGrid1, std::vector<Real> assetGrid2);
       protected:
+		  virtual Real localCorrImplTeq0(Time t, const RealStochasticProcess::VecA& X0, bool extrapolate = false);
 		  virtual QuantLib::Real localFStrike(Time t, const RealStochasticProcess::VecA& X0);
 		  virtual QuantLib::Real checkLambdaValue(QuantLib::Real lambda);
 	  private:

@@ -83,11 +83,10 @@ namespace QuantLib {
 
 		RealMCSimulation simulation(assetModel, times, times, numberOfPaths,1,true,true,false);
 
-		//start to create strike grid. 
+		//create strike grid. 
 		//the strike grid depends on simulation results (min and max quantile)
-		//However, the simulation itself depends on local correlation
-		//which will be calibrated using this function.
-		//This is why the strike grid can merely be calculated successively during calibration
+		//the simulation itself depends on local correlation which itself is calibrated using this function.
+		//Consequence: strike grid can merely be calculated iteratively during calibration
 		
 		size_t numberStrikes;
 		Real strikeStep;
@@ -168,8 +167,8 @@ namespace QuantLib {
 				assets[0] = processes[0]->s0()->value() * std::exp(state[0]);
 				assets[1] = processes[1]->s0()->value() * std::exp(state[1]);
 
-				state[2] = state[2] < 0 ? 0.001 : state[2];//heston vol might become negative (dep. on feller constant)
-				state[3] = state[3] < 0 ? 0.001 : state[3];
+				state[2] = state[2] < 0 ? 0.0001 : state[2];//heston vol might become negative (dep. on feller constant)
+				state[3] = state[3] < 0 ? 0.0001 : state[3];
 
 				vol1 = processes[0]->leverageFct()->localVol(times[i], assets[0], true)*std::sqrt(state[2]); //*ai from Heston
 				vol2 = processes[1]->leverageFct()->localVol(times[i], assets[1], true)*std::sqrt(state[3]);
@@ -177,6 +176,8 @@ namespace QuantLib {
 				a = surface->localA(times[i], assets, true);
 				b = surface->localB(times[i], assets, true);
 
+				if (vol1 != vol1 || vol2 != vol2)
+					QL_FAIL("surface of asset1 oder asset2 not well defined");
 
 				for (size_t j = 0; j < surfaceF[i].size(); j++) //iteration over strike dimension
 				{

@@ -55,7 +55,7 @@ namespace QuantLib {
 
         tmp[0] = riskFreeRate()->forwardRate(t, t, Continuous)
                - dividendYield()->forwardRate(t, t, Continuous)
-               - 0.5*vol*vol;
+               - 0.5*vol*vol; //-> d(lnSt)
 
         tmp[1] = kappa_*(theta_ - x[1]);
 

@@ -34,7 +34,7 @@ namespace QuantLib {
         
         \bug this class is untested, probably unreliable.
 
-		J. Guyon, A new Class of local correlation models
+		J. Guyon, 2013, A new Class of local correlation models
     */
 	class LocalCorrSurfaceABF : public LocalCorrTermStructure {
 	public:
@@ -82,7 +82,6 @@ namespace QuantLib {
 			return maxDate_;
 		}
 
-		virtual Real localCorrImplTeq0(Time t, const RealStochasticProcess::VecA& X0, bool extrapolate = false) = 0;
 		virtual QuantLib::Real localA(Time t, const RealStochasticProcess::VecA& assets,
 			bool extrapolate = false) const = 0;
 		virtual QuantLib::Real localB(Time t, const RealStochasticProcess::VecA& assets,
@@ -93,6 +92,7 @@ namespace QuantLib {
 		std::vector<std::vector<Real>>& getSurfaceF() { return surfaceF_; };
 
       protected:
+		  virtual Real localCorrImplTeq0(Time t, const RealStochasticProcess::VecA& X0, bool extrapolate = false) = 0;
 		  void localCorrImpl(RealStochasticProcess::MatA& corrMatrix, Time t, const RealStochasticProcess::VecA& X0,
 			  bool extrapolate = false);
 		  QuantLib::Real localF(Time t, const RealStochasticProcess::VecA& X0,

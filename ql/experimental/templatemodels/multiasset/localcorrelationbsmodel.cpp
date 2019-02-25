@@ -25,6 +25,19 @@ namespace QuantLib {
 		for (size_t k = 0; k<processes.size(); ++k) corrMatrix_[k].resize(processes.size());
 	}
 
+	LocalCorrelationBSModel::LocalCorrelationBSModel(const Handle<YieldTermStructure>&                termStructure,
+		const std::vector<std::string>&																  aliases,
+		const std::vector<boost::shared_ptr<QuantLib::LocalVolSurface>>&				              localVolSurfaces,
+		const Handle<LocalCorrTermStructure>&											              localCorrTermStructure) 
+		: MultiAssetBSModel(termStructure, aliases, localVolSurfaces),
+		localCorrTermStructure_(localCorrTermStructure)
+	{
+		corrMatrix_ = RealStochasticProcess::MatA(processes_.size());
+
+		for (size_t k = 0; k<processes_.size(); ++k) corrMatrix_[k].resize(processes_.size());
+	}
+
+
 	inline void LocalCorrelationBSModel::evolve(const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const VecD& dW, VecA& X1) {
 		// we merely need to calculate the correlation matrix
 		localCorrTermStructure_->localCorr(corrMatrix_, t0, X0 , true); //true because first X0 are always 0 in simulation.

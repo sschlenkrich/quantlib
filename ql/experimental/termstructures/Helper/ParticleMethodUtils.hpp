@@ -30,10 +30,10 @@
 #include <string.h>
 
 namespace QuantLib {
-
-    //!  
+  
     /*! 
-	J. Guyon, A new Class of local correlation models
+			Calibration of a correlation termstructure LocalCorrSurfaceABFFX using the Particle Method (Monte Carlo calibration)
+			cf. J. Guyon, 2013, A new Class of local correlation models
 	*/
     class ParticleMethodUtils {
       public:

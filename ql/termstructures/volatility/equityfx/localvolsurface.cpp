@@ -21,6 +21,9 @@
 #include <ql/termstructures/volatility/equityfx/blackvoltermstructure.hpp>
 #include <ql/termstructures/yieldtermstructure.hpp>
 #include <ql/quotes/simplequote.hpp>
+#include <ql/math/interpolations/cubicinterpolation.hpp>
+#include <boost/make_shared.hpp>
+#include <ql/timegrid.hpp>
 
 namespace QuantLib {
 
@@ -163,10 +166,61 @@ namespace QuantLib {
                       << " and time " << t
                       << "; the black vol surface is not smooth enough ( dwdt:" << dwdt << ", w:" << w
 					  << ", y:" << y << ", dwdy:" << dwdy << ", d2wdy2:" << d2wdy2 << ")");
-
+			
             return std::sqrt(result);
         }
     }
+
+	InterpolatedLocalVolSurface::InterpolatedLocalVolSurface(
+		const Handle<BlackVolTermStructure>& blackTS,
+		const Handle<YieldTermStructure>& riskFreeTS,
+		const Handle<YieldTermStructure>& dividendTS,
+		const Handle<Quote>& underlying, Size strikeGridAmt, Size timeStepsPerYear)
+		: LocalVolSurface(blackTS,riskFreeTS,dividendTS,underlying)
+	{
+		
+		std::vector<Time> gridTimes;
+		gridTimes.push_back(blackTS->dayCounter().yearFraction(blackTS->referenceDate(), blackTS->maxDate()));
+
+		boost::shared_ptr<TimeGrid> timeGrid;
+		timeGrid = boost::make_shared<TimeGrid>(gridTimes.begin(), gridTimes.end(),
+			std::max(Size(2), Size(gridTimes.back()*timeStepsPerYear)));
+		
+		Size timeGridAmt = timeGrid->size();
+
+
+		const boost::shared_ptr<Matrix> localVolMatrix(new Matrix(strikeGridAmt, timeGridAmt));
+
+		strikes_ = std::vector<boost::shared_ptr<std::vector<Real> > >(timeGridAmt);
+
+		Real ds;
+
+		ds = (maxStrike() - minStrike()) / strikeGridAmt;
+
+		for (size_t i = 0; i < timeGridAmt; i++)
+		{
+			strikes_[i] = boost::make_shared<std::vector<Real> >(strikeGridAmt);
+			strikes_[i]->at(0) = minStrike();
+			(*localVolMatrix)[0][i] = LocalVolSurface::localVolImpl(timeGrid->at(i), strikes_[i]->at(0));
+			for (size_t j = 1; j < strikeGridAmt; j++)
+			{
+				strikes_[i]->at(j) = strikes_[i]->at(j-1) + ds;
+				(*localVolMatrix)[j][i] = LocalVolSurface::localVolImpl(timeGrid->at(i),strikes_[i]->at(j));
+			}
+		}
+
+		gridTimes_ = std::vector<Time>(timeGrid->begin(), timeGrid->end());
+		
+		surface_ = boost::make_shared<FixedLocalVolSurface>(blackTS->referenceDate(), 
+			gridTimes_, strikes_, localVolMatrix, blackTS->dayCounter());
+		surface_->setInterpolation<Cubic>(); //Extrapolation will still be constant in strike, see localVolImpl
+	}
+
+	Volatility InterpolatedLocalVolSurface::localVolImpl(Time t, Real strike) const {
+		if (strike > maxStrike())strike = maxStrike();
+		else if (strike < minStrike()) strike = minStrike();
+		return surface_->localVol(t, strike,true);
+	}
 
 }
 

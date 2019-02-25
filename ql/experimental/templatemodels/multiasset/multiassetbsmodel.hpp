@@ -14,18 +14,22 @@
 #include <ql/experimental/templatemodels/stochasticprocessT.hpp>
 
 #include <ql/processes/blackscholesprocess.hpp>
+#include <ql/termstructures/volatility/equityfx/localvolsurface.hpp>
 
 namespace QuantLib {
 
 
-	// We model a multi-asset local volatility model by means of the normalized log-processes X_i = log[S_i/S_(0)]
+	// We model a multi-asset local stochastic volatility model by means of the normalized log-processes X_i = log[S_i/S_(0)]
 
 	class MultiAssetBSModel : public RealStochasticProcess {
 	protected:
 		Handle<YieldTermStructure>                                               termStructure_;  // domestic discounting term structure
 		std::map<std::string, size_t>                                            index_;
 		std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>> processes_;
+		std::vector<boost::shared_ptr<QuantLib::LocalVolSurface>>				 localVolSurfaces_;
 		RealStochasticProcess::MatA                                              DT_;  // D^T D = Correlations
+
+		void initProcessesFromSurface();
 	public:
 		MultiAssetBSModel(const Handle<YieldTermStructure>&                                               termStructure,
 			              const std::vector<std::string>&                                                 aliases,
@@ -34,6 +38,15 @@ namespace QuantLib {
 		MultiAssetBSModel(const Handle<YieldTermStructure>&                                               termStructure,
 			const std::vector<std::string>&                                                 aliases,
 			const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes);
+		
+		//This constructor enables to directly pass a term structure, i.e. an InterpolatedLocalVolSurface
+		MultiAssetBSModel(const Handle<YieldTermStructure>&                                 termStructure,
+			const std::vector<std::string>&                                                 aliases,
+			const std::vector<boost::shared_ptr<QuantLib::LocalVolSurface>>&				localVolSurfaces,
+			const RealStochasticProcess::MatA&                                              correlations);
+		MultiAssetBSModel(const Handle<YieldTermStructure>&                                 termStructure,
+			const std::vector<std::string>&                                                 aliases,
+			const std::vector<boost::shared_ptr<QuantLib::LocalVolSurface>>&				localVolSurfaces);
 
 		// dimension of X
 		inline virtual size_t size() { return processes_.size(); }
@@ -66,7 +79,7 @@ namespace QuantLib {
 		// calculate the local volatility of the log-process of the asset
 		// this is required continuous barrier estimation via Brownian Bridge
 		inline virtual QuantLib::Real assetVolatility(const QuantLib::Time t, const VecA& X, const std::string& alias) { return processes_[index_.at(alias)]->diffusion(t, asset(t, X, alias)); }
-
+		
 	};
 
 }
