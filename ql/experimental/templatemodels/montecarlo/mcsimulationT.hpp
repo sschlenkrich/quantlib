@@ -432,7 +432,7 @@ namespace QuantLib {
 				while (crntSimTime_< simTimes_.size() && simTimes_[crntSimTime_] < obsTimes_[crntObsTime_])
 				{
 
-					MatD dWt = getBrownianIncrements(i);
+					MatD dWt = getNextBrownianIncrements();
 
 					//VecA X1(X0.size()), X12(X0.size());
 					//VecD dW(process_->factors());
