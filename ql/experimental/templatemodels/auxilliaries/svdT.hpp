@@ -360,69 +360,6 @@ namespace TemplateAuxilliaries {
 	
 	}
 	
-	template<class T>
-	void performCholesky(std::vector< std::vector<T> >& matrix, size_t dimIn, bool flexible) {
-		size_t dim = dimIn;
-		
-		for (size_t i = 0; i < dim; i++)
-		{
-			for (size_t j = i; j < dim; j++)
-			{
-				if (abs(matrix[i][j] - matrix[j][i])>QL_EPSILON)
-					QL_FAIL(std::string("A symmetrix matrix is necessary to apply Cholesky Decomposition"));
-			}
-		}
-
-		//Perform Decomposition as described in script of Trottenberg (S. 47):
-		//Because script delivers Upper right matrix, we interchange indizes in order to end up with lower left matrix.
-
-		//First step:
-		matrix[0][0] = sqrt(matrix[0][0]);
-		if (abs(matrix[0][0]) < QL_EPSILON && ! flexible)
-			QL_FAIL("No positive definite Correlation Matrix because rank is not full.");
-		for (size_t i = 1; i < dim; i++)
-		{
-			matrix[i][0] = abs(matrix[0][0]) < QL_EPSILON ? 0.0 : matrix[i][0] / matrix[0][0];
-		}
-
-
-		//Now iterate:
-		for (size_t i = 1; i < dim; i++)
-		{
-			for (size_t k = 0; k < i; k++)
-			{
-				matrix[i][i] = matrix[i][i] - matrix[i][k] * matrix[i][k];
-			}
-
-			matrix[i][i] = sqrt(matrix[i][i]);
-			if (abs(matrix[i][i]) < QL_EPSILON && ! flexible)
-				QL_FAIL(std::string("No positive definite Correlation Matrix because rank is not full."));
-			if (matrix[i][i] != matrix[i][i] && !flexible) {
-				QL_FAIL(std::string("No positive definite Correlation Matrix as diagonal square entry is negative."));
-			}
-			
-			matrix[i][i] = (matrix[i][i] != matrix[i][i]) ? 0.0 : matrix[i][i];
-			
-
-			for (size_t j = 0; j < dim; j++)
-			{
-				if (j >= i + 1)
-				{
-					for (size_t k = 0; k < i; k++)
-					{
-						matrix[j][i] = matrix[j][i] - matrix[i][k] * matrix[j][k];
-					}
-					matrix[j][i] = (abs(matrix[i][i]) < QL_EPSILON || matrix[i][i] != matrix[i][i]) ? 0.0 : matrix[j][i] / matrix[i][i];
-				}
-				else if (j<i) {
-					matrix[j][i] = 0;
-				}
-				else {
-					//Nothing because diagonale.
-				}
-			}
-		}
-	}
 
 
 } // namespace TemplateAuxilliaries

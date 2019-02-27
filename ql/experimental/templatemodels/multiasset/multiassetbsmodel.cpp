@@ -6,7 +6,8 @@
 */
 
 
-#include <ql/experimental/templatemodels/auxilliaries/svdT.hpp>
+#include <vector>
+#include <ql\errors.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/choleskyfactorisationT.hpp>
 
 #include <ql/experimental/templatemodels/multiasset/multiassetbsmodel.hpp>
@@ -33,9 +34,7 @@ namespace QuantLib {
 			for (size_t l = k + 1; l < correlations.size(); ++l) {
 				if (correlations[k][l] != 0) isDiagonal = false;
 			}
-		}
-		
-		
+		}		
 		DT_ = RealStochasticProcess::MatA(processes.size());
 		for (size_t k = 0; k<DT_.size(); ++k) DT_[k].resize(processes.size());
 

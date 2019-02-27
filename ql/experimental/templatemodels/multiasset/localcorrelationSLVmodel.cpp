@@ -6,7 +6,9 @@
 */
 
 
-#include <ql/experimental/templatemodels/auxilliaries/svdT.hpp>
+#include <vector>
+#include <ql\errors.hpp>
+#include <ql/experimental/templatemodels/auxilliaries/choleskyfactorisationT.hpp>
 
 #include <ql/experimental/templatemodels/multiasset/localCorrelationslvmodel.hpp>
 
