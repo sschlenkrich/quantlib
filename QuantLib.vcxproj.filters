@@ -379,6 +379,12 @@
     <Filter Include="experimental\vanillalocalvolmodel">
       <UniqueIdentifier>{93e35b6d-2d1a-474a-86c3-875bdbd11b54}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\termstructures\slvhelpers">
+      <UniqueIdentifier>{4e525e35-205e-47ca-948a-29b008a23654}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experimental\termstructures\localCorrFX">
+      <UniqueIdentifier>{68aba14d-73f0-47e3-a1be-a105bee6796b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -4497,6 +4503,45 @@
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.hpp">
       <Filter>experimental\templatemodels\qgaussian2</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\corrtermstructureStrike.hpp">
+      <Filter>experimental\termstructures</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localcorrsurfaceabf.hpp">
+      <Filter>experimental\termstructures</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localcorrtermstructure.hpp">
+      <Filter>experimental\termstructures</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\Helper\KernelInterface.hpp">
+      <Filter>experimental\termstructures\slvhelpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp">
+      <Filter>experimental\termstructures\slvhelpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.hpp">
+      <Filter>experimental\termstructures\localCorrFX</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCovarianceFX.hpp">
+      <Filter>experimental\termstructures\localCorrFX</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.hpp">
+      <Filter>experimental\termstructures\localCorrFX</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.hpp">
+      <Filter>experimental\termstructures\localCorrFX</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.hpp">
+      <Filter>experimental\termstructures\localCorrFX</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.hpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.hpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.hpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -7171,6 +7216,42 @@
     <ClCompile Include="ql\buildinfo.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.cpp">
       <Filter>experimental\templatemodels\qgaussian2</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\corrtermstructureStrike.cpp">
+      <Filter>experimental\termstructures</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\localcorrsurfaceabf.cpp">
+      <Filter>experimental\termstructures</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\localcorrtermstructure.cpp">
+      <Filter>experimental\termstructures</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.cpp">
+      <Filter>experimental\termstructures\slvhelpers</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.cpp">
+      <Filter>experimental\termstructures\localCorrFX</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCovarianceFX.cpp">
+      <Filter>experimental\termstructures\localCorrFX</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.cpp">
+      <Filter>experimental\termstructures\localCorrFX</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.cpp">
+      <Filter>experimental\termstructures\localCorrFX</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.cpp">
+      <Filter>experimental\termstructures\localCorrFX</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.cpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.cpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.cpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
