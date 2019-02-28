@@ -402,7 +402,7 @@ namespace QuantLib {
 
 
 		inline void simulate2() {  
-			for (size_t k = 0; k<obsTimes_.size()-1; ++k) simulate(i,false);
+			for (size_t k = 0; k<obsTimes_.size()-1; ++k) simulate(k,false);
 		}
 
 		//inline void simulateObsTimeStep() {
