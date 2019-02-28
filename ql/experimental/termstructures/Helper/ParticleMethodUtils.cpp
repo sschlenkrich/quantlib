@@ -74,6 +74,8 @@ namespace QuantLib {
 
 		RealMCSimulation simulation(assetModel, times, times, numberOfPaths,1,true,true,false);
 		simulation.prepareSimulation();
+		simulation.simulate(0, false);
+
 		//create strike grid. 
 		//the strike grid depends on simulation results (min and max quantile)
 		//the simulation itself depends on local correlation which itself is calibrated using this function.
