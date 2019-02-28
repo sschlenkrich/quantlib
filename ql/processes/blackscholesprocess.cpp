@@ -64,7 +64,6 @@ namespace QuantLib {
         registerWith(riskFreeRate_);
         registerWith(dividendYield_);
         registerWith(blackVolatility_);
-		directlyLinkedToLocalVol_ = false;
     }
 
 	GeneralizedBlackScholesProcess::GeneralizedBlackScholesProcess(
@@ -82,7 +81,6 @@ namespace QuantLib {
 		registerWith(localVolTS->getBlackSurface());
 		registerWith(localVolTS);
 		localVolatility_.linkTo(localVolTS.currentLink());
-		directlyLinkedToLocalVol_ = true;
 	}
 
     Real GeneralizedBlackScholesProcess::x0() const {
@@ -229,9 +227,8 @@ namespace QuantLib {
             }
 
             // ok, so it's strike-dependent. Never mind.
-			if (!directlyLinkedToLocalVol_)
-				localVolatility_.linkTo(
-					boost::make_shared<LocalVolSurface>(blackVolatility_, riskFreeRate_,
+			localVolatility_.linkTo(
+				boost::make_shared<LocalVolSurface>(blackVolatility_, riskFreeRate_,
                                                     dividendYield_, x0_->value()));
             updated_ = true;
             isStrikeIndependent_ = false;

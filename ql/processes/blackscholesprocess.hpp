@@ -115,7 +115,6 @@ namespace QuantLib {
         bool hasExternalLocalVol_;
         mutable RelinkableHandle<LocalVolTermStructure> localVolatility_;
         mutable bool updated_, isStrikeIndependent_;
-		bool directlyLinkedToLocalVol_;
     };
 
     //! Black-Scholes (1973) stochastic process

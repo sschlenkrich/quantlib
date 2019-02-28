@@ -401,9 +401,9 @@ namespace QuantLib {
 
 
 
-		//inline void simulate2() {  
-		//	for (size_t k = 0; k<obsTimes_.size()-1; ++k) simulateObsTimeStep();
-		//}
+		inline void simulate2() {  
+			for (size_t k = 0; k<obsTimes_.size()-1; ++k) simulate(i,false);
+		}
 
 		//inline void simulateObsTimeStep() {
 		//	QL_REQUIRE(crntSimTime_ < simTimes_.size(), "simulateObsTimeStep: end of simTimes reached.");
