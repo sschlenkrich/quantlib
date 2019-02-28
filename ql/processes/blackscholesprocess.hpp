@@ -111,7 +111,6 @@ namespace QuantLib {
         Handle<Quote> x0_;
         Handle<YieldTermStructure> riskFreeRate_, dividendYield_;
         Handle<BlackVolTermStructure> blackVolatility_;
-        Handle<LocalVolTermStructure> externalLocalVolTS_;
         bool forceDiscretization_;
         bool hasExternalLocalVol_;
         mutable RelinkableHandle<LocalVolTermStructure> localVolatility_;

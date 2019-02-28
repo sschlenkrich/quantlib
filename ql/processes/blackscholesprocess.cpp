@@ -40,13 +40,13 @@ namespace QuantLib {
     : StochasticProcess1D(ext::make_shared<EulerDiscretization>()),
       x0_(x0), riskFreeRate_(riskFreeTS),
       dividendYield_(dividendTS), blackVolatility_(blackVolTS),
-      externalLocalVolTS_(localVolTS),
+		localVolatility_(localVolTS.currentLink()),
       forceDiscretization_(false), hasExternalLocalVol_(true), updated_(false) {
         registerWith(x0_);
         registerWith(riskFreeRate_);
         registerWith(dividendYield_);
         registerWith(blackVolatility_);
-        registerWith(externalLocalVolTS_);
+        registerWith(localVolatility_);
     }
 
     GeneralizedBlackScholesProcess::GeneralizedBlackScholesProcess(
@@ -197,7 +197,7 @@ namespace QuantLib {
     const Handle<LocalVolTermStructure>&
     GeneralizedBlackScholesProcess::localVolatility() const {
         if (hasExternalLocalVol_)
-            return externalLocalVolTS_;
+            return localVolatility_;
 
         if (!updated_) {
             isStrikeIndependent_=true;

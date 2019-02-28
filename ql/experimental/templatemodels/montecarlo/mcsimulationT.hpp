@@ -103,14 +103,6 @@ namespace QuantLib {
 		// dummy
 		PassiveType tmp_;
 
-		//simulate Time Step:
-		size_t crntSimTime_;
-		size_t crntObsTime_;
-		VecA X0T_;
-		VecA X1T_;
-		VecA X12T_;
-		VecD dWT_;
-
 		// initialisation
 
 		inline void reallocateMemory(size_t nPaths) {
@@ -158,7 +150,7 @@ namespace QuantLib {
 
 		// return the Brownian motion path increments from from cache or random sequence generator
 		inline const std::vector< std::vector<QuantLib::Real> >& getBrownianIncrements(const size_t path) {
-			QL_REQUIRE(storeBrownians_, "TemplateMCSimulation: storeBrownians required.");
+			//QL_REQUIRE(storeBrownians_, "TemplateMCSimulation: storeBrownians required.");
 			QL_REQUIRE(path<dW_.size(), "TemplateMCSimulation: path index out of bounds.");
 			return dW_[path];
 		}
@@ -345,13 +337,6 @@ namespace QuantLib {
 			applyZcbAdjuster_       = false;  // default
 			applyAssetAdjuster_     = false;  // default
 			
-			crntSimTime_ = 0;
-			crntObsTime_ = 1;
-
-			X0T_ = process_->initialValues();
-			X1T_ = VecA((X0T_.size()));
-			X12T_ = VecA((X0T_.size()));
-			dWT_ = VecD((process_->factors()));
 		}
 
 		inline void simulate() {  // the procedure Initialise/PreEvBrownians/Simulate needs to be re-factorised
@@ -387,88 +372,110 @@ namespace QuantLib {
 				return;
 			}
 			Real dt = obsTimes_[idx] - obsTimes_[idx - 1];
-			for (size_t path = 0; path < X_.size(); ++path) {
-				process_->evolve(obsTimes_[idx-1], X_[path][idx-1], dt, getBrownianIncrements(path)[idx-1], X_[path][idx]);
-			}
-		}
-
-
-
-		inline void simulate2() {  
-			for (size_t k = 0; k<obsTimes_.size()-1; ++k) simulateObsTimeStep();
-		}
-
-		inline void simulateObsTimeStep() {
-			QL_REQUIRE(crntSimTime_ < simTimes_.size(), "simulateObsTimeStep: end of simTimes reached.");
-			//QL_REQUIRE(obsTimes_.size() == simTimes_.size(), "simulateObsTimeStep: obsTimes have to equal simTimes.");
 			
-			DateType dt;
-			size_t sim_idx;
-
-			if (crntSimTime_ == 0) {
-				initialiseRSG();
-				preEvaluateBrownians();
-				if (simTimes_[0] == 0) {
-					obsTimes_[0] = simTimes_[0];
-				}
-			}
-
-			size_t crntSimTimePath = crntSimTime_;
-
-			for (size_t i = 0; i < X_.size(); i++) //paths
-			{
-
-				crntSimTime_ = crntSimTimePath;
-
-				// initialisation
-				if (crntSimTime_ == 0) {
-					X0T_ = process_->initialValues();
-					X_[i][0] = X0T_;
-				}
-				else {
-					X0T_ = X_[i][crntObsTime_ - 1];
-				}
-
-				while (crntSimTime_< simTimes_.size() && simTimes_[crntSimTime_] < obsTimes_[crntObsTime_])
-				{
-
+			if (richardsonExtrapolation_) {
+				VecA X0T = process_->initialValues();
+				VecA X1T = VecA((X0T.size()));
+				VecA X12T = VecA((X0T.size()));
+				VecD dWT = VecD((process_->factors()));
+				for (size_t path = 0; path < X_.size(); ++path) {
 					MatD dWt = getNextBrownianIncrements();
-
-					//VecA X1(X0.size()), X12(X0.size());
-					//VecD dW(process_->factors());
-
-					dt = simTimes_[crntSimTime_ + 1] - simTimes_[crntSimTime_];
-					sim_idx = crntSimTime_ + 1;
-
-					if (richardsonExtrapolation_) {
-						// full Euler step
-						for (size_t k = 0; k < dWT_.size(); ++k) dWT_[k] = (dWt[2 * (sim_idx - 1)][k] + dWt[2 * (sim_idx - 1) + 1][k]) / sqrt(2.0);
-						//X1T_ = evolve(simTimes_[sim_idx-1],X0,dt,dW);
-						process_->evolve(simTimes_[sim_idx - 1], X0T_, dt, dWT_, X1T_);
-						// two half size Euler steps
-						//VecA X1T_2 = evolve(simTimes_[sim_idx-1],X0,dt/2.0, dWt[2*(sim_idx-1)]);
-						//X0 = evolve(simTimes_[sim_idx-1]+dt/2.0,X12,dt/2.0,dWt[2*(sim_idx-1)+1]);
-						process_->evolve(simTimes_[sim_idx - 1], X0T_, dt / 2.0, dWt[2 * (sim_idx - 1)], X12T_);
-						process_->evolve(simTimes_[sim_idx - 1] + dt / 2.0, X12T_, dt / 2.0, dWt[2 * (sim_idx - 1) + 1], X0T_);
-						// extrapolation
-						for (size_t k = 0; k < X1T_.size(); ++k) X1T_[k] = 2 * X0T_[k] - X1T_[k];
-						// extrapolation may lead to ill-defined states
-						process_->truncate(simTimes_[sim_idx], X1T_);
-					}
-					else { // only full Euler step
-						process_->evolve(simTimes_[sim_idx - 1], X0T_, dt, dWt[sim_idx - 1], X1T_);
-					}
-					if ((crntObsTime_ < obsTimes_.size()) && abs(simTimes_[sim_idx] - obsTimes_[crntObsTime_])<QL_EPSILON) {
-						X_[i][crntObsTime_] = X1T_;
-					}
-					X0T_ = X1T_;
-					crntSimTime_++;
+					// full Euler step
+					for (size_t k = 0; k < dWT.size(); ++k) dWT[k] = (dWt[2 * (idx - 1)][k] + dWt[2 * (idx - 1) + 1][k]) / sqrt(2.0);
+					process_->evolve(obsTimes_[idx - 1], X_[path][idx - 1], dt, dWT, X1T);
+					// two half size Euler steps
+					process_->evolve(obsTimes_[idx - 1], X_[path][idx - 1], dt / 2.0, dWt[2 * (idx - 1)], X12T);
+					process_->evolve(obsTimes_[idx - 1] + dt / 2.0, X12T, dt / 2.0, dWt[2 * (idx - 1) + 1], X0T);
+					// extrapolation
+					for (size_t k = 0; k < X1T.size(); ++k) X1T[k] = 2 * X0T[k] - X1T[k];
+					// extrapolation may lead to ill-defined states
+					process_->truncate(simTimes_[idx], X1T);
 				}
 			}
-			
-			//if (simTimes_[sim_idx] == obsTimes_[crntObsTime_]) crntObsTime_++;
-			crntObsTime_++;
+			else { // only full Euler step
+				for (size_t path = 0; path < X_.size(); ++path) {
+					process_->evolve(obsTimes_[idx - 1], X_[path][idx - 1], dt, getBrownianIncrements(path)[idx - 1], X_[path][idx]);
+				}
+			}
 		}
+
+
+
+		//inline void simulate2() {  
+		//	for (size_t k = 0; k<obsTimes_.size()-1; ++k) simulateObsTimeStep();
+		//}
+
+		//inline void simulateObsTimeStep() {
+		//	QL_REQUIRE(crntSimTime_ < simTimes_.size(), "simulateObsTimeStep: end of simTimes reached.");
+		//	//QL_REQUIRE(obsTimes_.size() == simTimes_.size(), "simulateObsTimeStep: obsTimes have to equal simTimes.");
+		//	
+		//	DateType dt;
+		//	size_t sim_idx;
+
+		//	if (crntSimTime_ == 0) {
+		//		initialiseRSG();
+		//		preEvaluateBrownians();
+		//		if (simTimes_[0] == 0) {
+		//			obsTimes_[0] = simTimes_[0];
+		//		}
+		//	}
+
+		//	size_t crntSimTimePath = crntSimTime_;
+
+		//	for (size_t i = 0; i < X_.size(); i++) //paths
+		//	{
+
+		//		crntSimTime_ = crntSimTimePath;
+
+		//		// initialisation
+		//		if (crntSimTime_ == 0) {
+		//			X0T_ = process_->initialValues();
+		//			X_[i][0] = X0T_;
+		//		}
+		//		else {
+		//			X0T_ = X_[i][crntObsTime_ - 1];
+		//		}
+
+		//		while (crntSimTime_< simTimes_.size() && simTimes_[crntSimTime_] < obsTimes_[crntObsTime_])
+		//		{
+
+		//			MatD dWt = getNextBrownianIncrements();
+
+		//			//VecA X1(X0.size()), X12(X0.size());
+		//			//VecD dW(process_->factors());
+
+		//			dt = simTimes_[crntSimTime_ + 1] - simTimes_[crntSimTime_];
+		//			sim_idx = crntSimTime_ + 1;
+
+		//			if (richardsonExtrapolation_) {
+		//				// full Euler step
+		//				for (size_t k = 0; k < dWT_.size(); ++k) dWT_[k] = (dWt[2 * (sim_idx - 1)][k] + dWt[2 * (sim_idx - 1) + 1][k]) / sqrt(2.0);
+		//				//X1T_ = evolve(simTimes_[sim_idx-1],X0,dt,dW);
+		//				process_->evolve(simTimes_[sim_idx - 1], X0T_, dt, dWT_, X1T_);
+		//				// two half size Euler steps
+		//				//VecA X1T_2 = evolve(simTimes_[sim_idx-1],X0,dt/2.0, dWt[2*(sim_idx-1)]);
+		//				//X0 = evolve(simTimes_[sim_idx-1]+dt/2.0,X12,dt/2.0,dWt[2*(sim_idx-1)+1]);
+		//				process_->evolve(simTimes_[sim_idx - 1], X0T_, dt / 2.0, dWt[2 * (sim_idx - 1)], X12T_);
+		//				process_->evolve(simTimes_[sim_idx - 1] + dt / 2.0, X12T_, dt / 2.0, dWt[2 * (sim_idx - 1) + 1], X0T_);
+		//				// extrapolation
+		//				for (size_t k = 0; k < X1T_.size(); ++k) X1T_[k] = 2 * X0T_[k] - X1T_[k];
+		//				// extrapolation may lead to ill-defined states
+		//				process_->truncate(simTimes_[sim_idx], X1T_);
+		//			}
+		//			else { // only full Euler step
+		//				process_->evolve(simTimes_[sim_idx - 1], X0T_, dt, dWt[sim_idx - 1], X1T_);
+		//			}
+		//			if ((crntObsTime_ < obsTimes_.size()) && abs(simTimes_[sim_idx] - obsTimes_[crntObsTime_])<QL_EPSILON) {
+		//				X_[i][crntObsTime_] = X1T_;
+		//			}
+		//			X0T_ = X1T_;
+		//			crntSimTime_++;
+		//		}
+		//	}
+		//	
+		//	//if (simTimes_[sim_idx] == obsTimes_[crntObsTime_]) crntObsTime_++;
+		//	crntObsTime_++;
+		//}
 
 		// inspectors
 
