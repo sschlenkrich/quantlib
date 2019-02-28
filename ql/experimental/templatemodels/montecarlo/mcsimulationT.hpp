@@ -350,8 +350,8 @@ namespace QuantLib {
 		// the following two routines are for sliced simulation
 
 		inline void prepareSimulation() {  // this routine checks constraints and prepares for below simulate(idx) calls
-			QL_REQUIRE(storeBrownians_ == true, "TemplateMCSimulation: storeBrownians required");
-			QL_REQUIRE(richardsonExtrapolation_==false, "TemplateMCSimulation: Richardson extrapolation not supported");
+			//QL_REQUIRE(storeBrownians_ == true, "TemplateMCSimulation: storeBrownians required");
+			//QL_REQUIRE(richardsonExtrapolation_==false, "TemplateMCSimulation: Richardson extrapolation not supported");
 			QL_REQUIRE(simTimes_.size() == obsTimes_.size(), "TemplateMCSimulation: simTimes_ == obsTimes required");
             for (size_t k=0; k<simTimes_.size(); ++k)
 				QL_REQUIRE(simTimes_[k] == obsTimes_[k], "TemplateMCSimulation: simTimes_ == obsTimes required");
