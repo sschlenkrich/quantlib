@@ -389,7 +389,8 @@ namespace QuantLib {
 					// extrapolation
 					for (size_t k = 0; k < X1T.size(); ++k) X1T[k] = 2 * X0T[k] - X1T[k];
 					// extrapolation may lead to ill-defined states
-					process_->truncate(simTimes_[idx], X1T);
+					process_->truncate(obsTimes_[idx], X1T);
+					for (size_t k = 0; k < X1T.size(); ++k) X_[path][idx][k] = X1T[k];
 				}
 			}
 			else { // only full Euler step
@@ -402,6 +403,7 @@ namespace QuantLib {
 
 
 		inline void simulate2() {  
+			prepareSimulation();
 			for (size_t k = 0; k<obsTimes_.size()-1; ++k) simulate(k,false);
 		}
 
