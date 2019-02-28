@@ -150,8 +150,8 @@ namespace QuantLib {
 
 		// return the Brownian motion path increments from from cache or random sequence generator
 		inline const std::vector< std::vector<QuantLib::Real> >& getBrownianIncrements(const size_t path) {
-			//QL_REQUIRE(storeBrownians_, "TemplateMCSimulation: storeBrownians required.");
-			QL_REQUIRE(path<X_.size(), "TemplateMCSimulation: path index out of bounds.");
+			QL_REQUIRE(storeBrownians_, "TemplateMCSimulation: storeBrownians required.");
+			QL_REQUIRE(path<dW_.size(), "TemplateMCSimulation: path index out of bounds.");
 			return dW_[path];
 		}
 
@@ -404,7 +404,7 @@ namespace QuantLib {
 
 		inline void simulate2() {  
 			prepareSimulation();
-			for (size_t k = 0; k<obsTimes_.size()-1; ++k) simulate(k,false);
+			for (size_t k = 0; k<obsTimes_.size(); ++k) simulate(k,false);
 		}
 
 		//inline void simulateObsTimeStep() {
