@@ -73,7 +73,7 @@ namespace QuantLib {
 		surface->setInterpolationTime<Linear>();
 
 		RealMCSimulation simulation(assetModel, times, times, numberOfPaths,1,true,true,false);
-		simulation.prepareSimulation();
+		simulation.prepareForSlicedSimulation();
 		simulation.simulate(0, false);
 
 		//create strike grid. 

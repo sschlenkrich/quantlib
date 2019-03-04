@@ -417,7 +417,7 @@ namespace QuantLib {
 		}
 		mcSimulation_ = boost::shared_ptr<MCSimulation>(new MCSimulation(model_,
 			simulationTimes, simulationTimes, monteCarloPaths, 1234, false, true, true));  // we need to allow time interpolation
-		mcSimulation_->prepareSimulation();  // we need this for sliced simulation later on
+		mcSimulation_->prepareForSlicedSimulation();  // we need this for sliced simulation later on
 		mcSimulation_->simulate(0);  // we want to initialise the initial states
 
 		// now we can do the bootstrapping

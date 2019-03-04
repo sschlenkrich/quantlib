@@ -265,7 +265,7 @@ namespace QuantLib {
 
 		// initialise MC simulation
 		model->simulation_ = boost::shared_ptr<MCSimulation>(new MCSimulation(model, model->times(), model->times(), model->nPaths_, model->seed_, false, true, true));
-		model->simulation_->prepareSimulation();
+		model->simulation_->prepareForSlicedSimulation();
 		model->simulation_->simulate(0);
 		QL_REQUIRE(model->simulation_->simTimes().size() == model->times().size() + 1, "simulation_->simTimes().size()==times().size()+1 required.");
 
