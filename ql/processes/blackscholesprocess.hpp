@@ -32,7 +32,6 @@
 #include <ql/termstructures/yieldtermstructure.hpp>
 #include <ql/termstructures/volatility/equityfx/blackvoltermstructure.hpp>
 #include <ql/termstructures/volatility/equityfx/localvoltermstructure.hpp>
-#include <ql/termstructures/volatility/equityfx/localvolsurface.hpp>
 #include <ql/quote.hpp>
 
 namespace QuantLib {
@@ -70,13 +69,6 @@ namespace QuantLib {
             const Handle<BlackVolTermStructure>& blackVolTS,
             const Handle<LocalVolTermStructure>& localVolTS);
 
-		GeneralizedBlackScholesProcess(
-			const Handle<Quote>& x0,
-			const Handle<YieldTermStructure>& dividendTS,
-			const Handle<YieldTermStructure>& riskFreeTS,
-			const Handle<InterpolatedLocalVolSurface>& localVolTS,
-			const boost::shared_ptr<discretization>& d =
-			boost::shared_ptr<discretization>(new EulerDiscretization));
         //! \name StochasticProcess1D interface
         //@{
         Real x0() const;
@@ -111,6 +103,7 @@ namespace QuantLib {
         Handle<Quote> x0_;
         Handle<YieldTermStructure> riskFreeRate_, dividendYield_;
         Handle<BlackVolTermStructure> blackVolatility_;
+        Handle<LocalVolTermStructure> externalLocalVolTS_;
         bool forceDiscretization_;
         bool hasExternalLocalVol_;
         mutable RelinkableHandle<LocalVolTermStructure> localVolatility_;

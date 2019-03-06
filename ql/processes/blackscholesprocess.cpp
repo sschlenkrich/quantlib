@@ -40,13 +40,13 @@ namespace QuantLib {
     : StochasticProcess1D(ext::make_shared<EulerDiscretization>()),
       x0_(x0), riskFreeRate_(riskFreeTS),
       dividendYield_(dividendTS), blackVolatility_(blackVolTS),
-		localVolatility_(localVolTS.currentLink()),
+      externalLocalVolTS_(localVolTS),
       forceDiscretization_(false), hasExternalLocalVol_(true), updated_(false) {
         registerWith(x0_);
         registerWith(riskFreeRate_);
         registerWith(dividendYield_);
         registerWith(blackVolatility_);
-        registerWith(localVolatility_);
+        registerWith(externalLocalVolTS_);
     }
 
     GeneralizedBlackScholesProcess::GeneralizedBlackScholesProcess(
@@ -65,23 +65,6 @@ namespace QuantLib {
         registerWith(dividendYield_);
         registerWith(blackVolatility_);
     }
-
-	GeneralizedBlackScholesProcess::GeneralizedBlackScholesProcess(
-		const Handle<Quote>& x0,
-		const Handle<YieldTermStructure>& dividendTS,
-		const Handle<YieldTermStructure>& riskFreeTS,
-		const Handle<InterpolatedLocalVolSurface>& localVolTS,
-		const boost::shared_ptr<discretization>& disc)
-		: StochasticProcess1D(disc), x0_(x0), riskFreeRate_(riskFreeTS),
-		dividendYield_(dividendTS), blackVolatility_(localVolTS->getBlackSurface()),
-		updated_(false) {
-		registerWith(x0_);
-		registerWith(riskFreeRate_);
-		registerWith(dividendYield_);
-		registerWith(localVolTS->getBlackSurface());
-		registerWith(localVolTS);
-		localVolatility_.linkTo(localVolTS.currentLink());
-	}
 
     Real GeneralizedBlackScholesProcess::x0() const {
         return x0_->value();
@@ -195,7 +178,7 @@ namespace QuantLib {
     const Handle<LocalVolTermStructure>&
     GeneralizedBlackScholesProcess::localVolatility() const {
         if (hasExternalLocalVol_)
-            return localVolatility_;
+            return externalLocalVolTS_;
 
         if (!updated_) {
             isStrikeIndependent_=true;
@@ -227,8 +210,8 @@ namespace QuantLib {
             }
 
             // ok, so it's strike-dependent. Never mind.
-			localVolatility_.linkTo(
-				boost::make_shared<LocalVolSurface>(blackVolatility_, riskFreeRate_,
+            localVolatility_.linkTo(
+                ext::make_shared<LocalVolSurface>(blackVolatility_, riskFreeRate_,
                                                     dividendYield_, x0_->value()));
             updated_ = true;
             isStrikeIndependent_ = false;
