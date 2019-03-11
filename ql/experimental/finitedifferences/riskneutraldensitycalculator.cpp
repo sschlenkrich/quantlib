@@ -20,8 +20,19 @@
 
 #include <ql/math/functional.hpp>
 #include <ql/math/solvers1d/brent.hpp>
+
 #include <ql/experimental/finitedifferences/riskneutraldensitycalculator.hpp>
-#include <ql/functional.hpp>
+
+#if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#endif
+#include <boost/bind.hpp>
+#if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
+#pragma GCC diagnostic pop
+#endif
+
+#include <boost/function.hpp>
 
 namespace QuantLib {
     RiskNeutralDensityCalculator::InvCDFHelper::InvCDFHelper(
@@ -34,31 +45,37 @@ namespace QuantLib {
 
     Real RiskNeutralDensityCalculator::InvCDFHelper::inverseCDF(Real p, Time t)
     const {
-        using namespace ext::placeholders;
-
-        const Real guessCDF = calculator_->cdf(guess_, t);
+        //const Real guessCDF = calculator_->cdf(guess_, t); AG
+		Real guessCDF = calculator_->cdf(guess_, t);
 
         Size evaluations = maxEvaluations_;
         Real upper = guess_, lower = guess_;
 
+		double myval; // CH
+
         if (guessCDF < p)
             while (calculator_->cdf(upper*=1.5, t) < p && evaluations > 0) {
+				myval = calculator_->cdf(upper, t); //AG
                 --evaluations;
             }
         else
             while (calculator_->cdf(lower*=0.75, t) > p && evaluations > 0) {
+				myval = calculator_->cdf(lower, t); //AG
                 --evaluations;
             }
 
-        QL_REQUIRE(evaluations, "could not calculate interval");
+        // AG: QL_REQUIRE(evaluations, "could not calculate interval");
 
-        const ext::function<Real(Real)> cdf
-            = ext::bind(&RiskNeutralDensityCalculator::cdf,
+		if (!evaluations) //AG
+			 QL_REQUIRE(evaluations, "could not calculate interval"); //AG
+
+        const boost::function<Real(Real)> cdf
+            = boost::bind(&RiskNeutralDensityCalculator::cdf,
                           calculator_, _1, t);
 
         Brent solver;
         solver.setMaxEvaluations(evaluations);
-        return solver.solve(compose(subtract<Real>(p), cdf),
+        return solver.solve(compose(std::bind2nd(std::minus<Real>(), p), cdf),
                             accuracy_, 0.5*(lower + upper), lower, upper);
     }
 }

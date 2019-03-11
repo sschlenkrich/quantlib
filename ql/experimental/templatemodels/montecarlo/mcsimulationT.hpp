@@ -112,11 +112,15 @@ namespace QuantLib {
 			// dW_
 			if (storeBrownians_) {
 				dW_.resize(nPaths);
-				size_t ndWt = ((richardsonExtrapolation_) ? 2 : 1) * (simTimes_.size()-1);
-                for (size_t i=0; i<nPaths; ++i) {
-					dW_[i].resize(ndWt);
-					for (size_t j=0; j<ndWt; ++j) dW_[i][j].resize(process_->factors());
-				}
+			//  this does not help because it is overwritten in getNextBrownianIncrements
+			//	size_t ndWt = ((richardsonExtrapolation_) ? 2 : 1) * (simTimes_.size()-1);
+            //    for (size_t i=0; i<nPaths; ++i) {
+			//		dW_[i].resize(ndWt);
+			//		for (size_t j=0; j<ndWt; ++j) dW_[i][j].resize(process_->factors());
+			//	}
+			}
+			else {
+				dW_.resize(1); // we only save the most recent path
 			}
 			// X_
 			X_.resize(nPaths);
@@ -127,7 +131,7 @@ namespace QuantLib {
 			return;
 		}
 
-		inline void initialiseRSG() {
+		inline void initialiseRSG() { // this is applied for path-wise simulation
 			size_t ndWt = ((richardsonExtrapolation_) ? 2 : 1) * (simTimes_.size()-1);
 			rsg_ = boost::shared_ptr<PseudoRandom::rsg_type>(new PseudoRandom::rsg_type(PseudoRandom::make_sequence_generator(ndWt * process_->factors(), seed_)));
 		}
@@ -149,23 +153,22 @@ namespace QuantLib {
 		}
 
 		// return the Brownian motion path increments from from cache or random sequence generator
-		inline const std::vector< std::vector<QuantLib::Real> >& getBrownianIncrements(const size_t path) {
-			QL_REQUIRE(storeBrownians_, "TemplateMCSimulation: storeBrownians required.");
-			QL_REQUIRE(path<dW_.size(), "TemplateMCSimulation: path index out of bounds.");
-			return dW_[path];
+		inline const std::vector< std::vector<QuantLib::Real> >& getBrownianIncrementsByPath(const size_t path) {
+		    if (storeBrownians_) {  // in this case we can avoid data copy
+				QL_REQUIRE(path<dW_.size(), "TemplateMCSimulation: path index out of bounds.");
+				return dW_[path];
+				}
+			else {
+                dW_[0] = getNextBrownianIncrements();
+				return dW_[0];
+			}
 		}
 
-		// cache Brownian motion path increments
-		inline void preEvaluateBrownians() {
-			if (!storeBrownians_) return; 
-			for (size_t k=0; k<dW_.size(); ++k) dW_[k] = getNextBrownianIncrements();
-			return;
-		}
 
 		// simulate a single path X_[path]
 		inline void simulatePath(const size_t path) {
 			QL_REQUIRE(path<X_.size(),"TemplateMCSimulation: path index out of bounds.");			
-			const MatD& dWt = getBrownianIncrements(path);
+			const MatD& dWt = getBrownianIncrementsByPath(path);
 			// initialisation
 			VecA X0 = process_->initialValues();
 			VecA X1(X0.size()), X12(X0.size());
@@ -336,26 +339,34 @@ namespace QuantLib {
 			applyNumeraireAdjuster_ = false;  // defauls
 			applyZcbAdjuster_       = false;  // default
 			applyAssetAdjuster_     = false;  // default
+			
 		}
 
 		inline void simulate() {  // the procedure Initialise/PreEvBrownians/Simulate needs to be re-factorised
 			addObsTimes_.clear();  // reset interpolated states
 			Y_.clear();
 			initialiseRSG();
-			preEvaluateBrownians();
+			if (storeBrownians_)  // That's not really ok. If storeBrownians we want to avoid repeated calculation...
+				for (size_t k=0; k<dW_.size(); ++k) dW_[k] = getNextBrownianIncrements();
 			for (size_t k=0; k<X_.size(); ++k) simulatePath(k);
 		}
 
 		// the following two routines are for sliced simulation
 
-		inline void prepareSimulation() {  // this routine checks constraints and prepares for below simulate(idx) calls
-			QL_REQUIRE(storeBrownians_ == true, "TemplateMCSimulation: storeBrownians required");
-			QL_REQUIRE(richardsonExtrapolation_==false, "TemplateMCSimulation: Richardson extrapolation not supported");
+		inline void prepareForSlicedSimulation() {  // this routine checks constraints and prepares for below simulate(idx) calls
+			//QL_REQUIRE(storeBrownians_ == true, "TemplateMCSimulation: storeBrownians required");
+			//QL_REQUIRE(richardsonExtrapolation_==false, "TemplateMCSimulation: Richardson extrapolation not supported");
 			QL_REQUIRE(simTimes_.size() == obsTimes_.size(), "TemplateMCSimulation: simTimes_ == obsTimes required");
             for (size_t k=0; k<simTimes_.size(); ++k)
 				QL_REQUIRE(simTimes_[k] == obsTimes_[k], "TemplateMCSimulation: simTimes_ == obsTimes required");
-			initialiseRSG();
-			preEvaluateBrownians();
+			if (storeBrownians_) {
+				initialiseRSG();
+				for (size_t k = 0; k < dW_.size(); ++k) dW_[k] = getNextBrownianIncrements();
+			}
+			else { // in this case we need to set up the random sequence generator differently
+				rsg_ = boost::shared_ptr<PseudoRandom::rsg_type>(new PseudoRandom::rsg_type(PseudoRandom::make_sequence_generator(process_->factors(), seed_)));
+				dW_[0].resize(2); // for Richardson extrapolation we need two slices ob BM's
+			}
 			// better set a flag that indicates that all is ready for simulation
 		}
 
@@ -371,12 +382,51 @@ namespace QuantLib {
 				return;
 			}
 			Real dt = obsTimes_[idx] - obsTimes_[idx - 1];
-			for (size_t path = 0; path < X_.size(); ++path) {
-				process_->evolve(obsTimes_[idx-1], X_[path][idx-1], dt, getBrownianIncrements(path)[idx-1], X_[path][idx]);
+			
+			if (richardsonExtrapolation_) {
+				VecA X0T = process_->initialValues();
+				VecA X1T = VecA((X0T.size()));
+				VecA X12T = VecA((X0T.size()));
+				VecD *dW1, *dW2;  // we need these pointers to handle storeBrownians==false
+				VecD dWT = VecD((process_->factors()));
+				for (size_t path = 0; path < X_.size(); ++path) {
+					if (storeBrownians_) {
+						dW1 = &dW_[path][2 * (idx - 1)];
+						dW2 = &dW_[path][2 * (idx - 1) + 1];
+					}
+					else {
+						dW_[0][0] = rsg_->nextSequence().value;
+						dW_[0][1] = rsg_->nextSequence().value;
+						dW1 = &dW_[0][0];
+						dW2 = &dW_[0][1];
+					}
+					// full Euler step
+					for (size_t k = 0; k < dWT.size(); ++k) dWT[k] = ((*dW1)[k] + (*dW2)[k]) / sqrt(2.0);
+					process_->evolve(obsTimes_[idx - 1], X_[path][idx - 1], dt, dWT, X1T);
+					// two half size Euler steps
+					process_->evolve(obsTimes_[idx - 1], X_[path][idx - 1], dt / 2.0, *dW1, X12T);
+					process_->evolve(obsTimes_[idx - 1] + dt / 2.0, X12T, dt / 2.0, *dW2, X0T);
+					// extrapolation
+					for (size_t k = 0; k < X1T.size(); ++k) X1T[k] = 2 * X0T[k] - X1T[k];
+					// extrapolation may lead to ill-defined states
+					process_->truncate(obsTimes_[idx], X1T);
+					for (size_t k = 0; k < X1T.size(); ++k) X_[path][idx][k] = X1T[k];
+				}
+			}
+			else { // only full Euler step
+				for (size_t path = 0; path < X_.size(); ++path) {
+					VecD *dW;  // we need these pointer to handle storeBrownians==false
+					if (storeBrownians_) {
+						dW = &dW_[path][idx - 1];
+					}
+					else {
+						dW_[0][0] = rsg_->nextSequence().value;
+						dW = &dW_[0][0];
+					}
+					process_->evolve(obsTimes_[idx - 1], X_[path][idx - 1], dt, *dW, X_[path][idx]);
+				}
 			}
 		}
-
-
 
 		// inspectors
 
