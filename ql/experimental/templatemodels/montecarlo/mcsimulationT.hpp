@@ -346,7 +346,7 @@ namespace QuantLib {
 			addObsTimes_.clear();  // reset interpolated states
 			Y_.clear();
 			initialiseRSG();
-			if (storeBrownians_)
+			if (storeBrownians_)  // That's not really ok. If storeBrownians we want to avoid repeated calculation...
 				for (size_t k=0; k<dW_.size(); ++k) dW_[k] = getNextBrownianIncrements();
 			for (size_t k=0; k<X_.size(); ++k) simulatePath(k);
 		}
@@ -427,86 +427,6 @@ namespace QuantLib {
 				}
 			}
 		}
-
-
-		// this method should be obsolete; we leave it for now for compatibility reasons
-		inline void simulate2() {
-			simulate();
-			//prepareSimulation();
-			//for (size_t k = 0; k<obsTimes_.size(); ++k) simulate(k,false);
-		}
-
-		//inline void simulateObsTimeStep() {
-		//	QL_REQUIRE(crntSimTime_ < simTimes_.size(), "simulateObsTimeStep: end of simTimes reached.");
-		//	//QL_REQUIRE(obsTimes_.size() == simTimes_.size(), "simulateObsTimeStep: obsTimes have to equal simTimes.");
-		//	
-		//	DateType dt;
-		//	size_t sim_idx;
-
-		//	if (crntSimTime_ == 0) {
-		//		initialiseRSG();
-		//		preEvaluateBrownians();
-		//		if (simTimes_[0] == 0) {
-		//			obsTimes_[0] = simTimes_[0];
-		//		}
-		//	}
-
-		//	size_t crntSimTimePath = crntSimTime_;
-
-		//	for (size_t i = 0; i < X_.size(); i++) //paths
-		//	{
-
-		//		crntSimTime_ = crntSimTimePath;
-
-		//		// initialisation
-		//		if (crntSimTime_ == 0) {
-		//			X0T_ = process_->initialValues();
-		//			X_[i][0] = X0T_;
-		//		}
-		//		else {
-		//			X0T_ = X_[i][crntObsTime_ - 1];
-		//		}
-
-		//		while (crntSimTime_< simTimes_.size() && simTimes_[crntSimTime_] < obsTimes_[crntObsTime_])
-		//		{
-
-		//			MatD dWt = getNextBrownianIncrements();
-
-		//			//VecA X1(X0.size()), X12(X0.size());
-		//			//VecD dW(process_->factors());
-
-		//			dt = simTimes_[crntSimTime_ + 1] - simTimes_[crntSimTime_];
-		//			sim_idx = crntSimTime_ + 1;
-
-		//			if (richardsonExtrapolation_) {
-		//				// full Euler step
-		//				for (size_t k = 0; k < dWT_.size(); ++k) dWT_[k] = (dWt[2 * (sim_idx - 1)][k] + dWt[2 * (sim_idx - 1) + 1][k]) / sqrt(2.0);
-		//				//X1T_ = evolve(simTimes_[sim_idx-1],X0,dt,dW);
-		//				process_->evolve(simTimes_[sim_idx - 1], X0T_, dt, dWT_, X1T_);
-		//				// two half size Euler steps
-		//				//VecA X1T_2 = evolve(simTimes_[sim_idx-1],X0,dt/2.0, dWt[2*(sim_idx-1)]);
-		//				//X0 = evolve(simTimes_[sim_idx-1]+dt/2.0,X12,dt/2.0,dWt[2*(sim_idx-1)+1]);
-		//				process_->evolve(simTimes_[sim_idx - 1], X0T_, dt / 2.0, dWt[2 * (sim_idx - 1)], X12T_);
-		//				process_->evolve(simTimes_[sim_idx - 1] + dt / 2.0, X12T_, dt / 2.0, dWt[2 * (sim_idx - 1) + 1], X0T_);
-		//				// extrapolation
-		//				for (size_t k = 0; k < X1T_.size(); ++k) X1T_[k] = 2 * X0T_[k] - X1T_[k];
-		//				// extrapolation may lead to ill-defined states
-		//				process_->truncate(simTimes_[sim_idx], X1T_);
-		//			}
-		//			else { // only full Euler step
-		//				process_->evolve(simTimes_[sim_idx - 1], X0T_, dt, dWt[sim_idx - 1], X1T_);
-		//			}
-		//			if ((crntObsTime_ < obsTimes_.size()) && abs(simTimes_[sim_idx] - obsTimes_[crntObsTime_])<QL_EPSILON) {
-		//				X_[i][crntObsTime_] = X1T_;
-		//			}
-		//			X0T_ = X1T_;
-		//			crntSimTime_++;
-		//		}
-		//	}
-		//	
-		//	//if (simTimes_[sim_idx] == obsTimes_[crntObsTime_]) crntObsTime_++;
-		//	crntObsTime_++;
-		//}
 
 		// inspectors
 
