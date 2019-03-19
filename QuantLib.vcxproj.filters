@@ -4542,6 +4542,7 @@
     <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.hpp">
       <Filter>experimental\templatemodels\multiasset</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\basismodels\all.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -7099,9 +7100,6 @@
     <ClCompile Include="ql\termstructures\volatility\equityfx\hestonblackvolsurface.cpp">
       <Filter>termstructures\volatility\equityfx</Filter>
     </ClCompile>
-    <ClCompile Include="ql\patterns\observable.cpp">
-      <Filter>patterns</Filter>
-    </ClCompile>
     <ClCompile Include="ql\experimental\math\fireflyalgorithm.cpp">
       <Filter>experimental\math</Filter>
     </ClCompile>
@@ -7252,6 +7250,9 @@
     </ClCompile>
     <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.cpp">
       <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\patterns\observable.cpp">
+      <Filter>patterns</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
