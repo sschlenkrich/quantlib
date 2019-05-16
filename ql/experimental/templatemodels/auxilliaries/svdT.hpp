@@ -9,7 +9,7 @@
 #include <vector>
 #include <cassert>
 #include <cstring>
-#include <ql\errors.hpp>
+#include <ql/errors.hpp>
 //#include <cmath>
 
 #ifndef quantlib_templatesvd_hpp

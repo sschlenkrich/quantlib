@@ -478,6 +478,7 @@ AC_CONFIG_FILES([
     ql/experimental/templatemodels/auxilliaries/Makefile
     ql/experimental/templatemodels/stochvol/Makefile
     ql/experimental/templatemodels/montecarlo/Makefile
+    ql/experimental/templatemodels/montecarlo/scripting/Makefile
     ql/experimental/templatemodels/multiasset/Makefile
     ql/experimental/templatemodels/qgaussian2/Makefile
     ql/experimental/termstructures/Makefile
