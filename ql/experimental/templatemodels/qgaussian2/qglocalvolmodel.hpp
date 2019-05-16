@@ -35,6 +35,7 @@ namespace QuantLib {
 	    typedef QGSwaprateModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> QGSwaprateModel;
 	    typedef MCSimulationT<QuantLib::Time,QuantLib::Real,QuantLib::Real> MCSimulation;    
 		typedef MCPayoffT<QuantLib::Time, QuantLib::Real, QuantLib::Real> MCPayoff;
+		typedef BasePayoffT<QuantLib::Time, QuantLib::Real, QuantLib::Real> MCBase;
 		typedef RatesPayoffT<QuantLib::Time, QuantLib::Real, QuantLib::Real>::Annuity MCAnnuity;
 		typedef RatesPayoffT<QuantLib::Time, QuantLib::Real, QuantLib::Real>::GeneralSwaption MCSwaption;
 
@@ -193,8 +194,7 @@ namespace QuantLib {
 		// do the actual calculation
 		virtual void simulateAndCalibrate() = 0;
 
-		inline virtual std::vector< std::vector<Real> >
-		sigma_xT(const Real t, const State& s);
+		virtual std::vector< std::vector<Real> > sigma_xT(const Real t, const State& s);
 
 		// inspectors
 		inline const boost::shared_ptr<MCSimulation> simulation() { return simulation_; }

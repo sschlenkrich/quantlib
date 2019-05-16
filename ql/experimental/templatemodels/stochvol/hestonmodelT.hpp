@@ -18,7 +18,7 @@
 #include <ql/experimental/templatemodels/auxilliaries/gausslobattoT.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/complexT.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/solver1dT.hpp>
-#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
+//#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
 
 
 

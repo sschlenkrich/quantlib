@@ -230,8 +230,8 @@ namespace QuantLib {
 					std::vector<Real> swapRateSample(nPaths, 0.0);
 					boost::shared_ptr<QGMonteCarloCalibrator::MCPayoff> mcFloatLeg(new MCAnnuity(expiryTime, calibSwaptions_[i][j]->floatTimes(), calibSwaptions_[i][j]->floatWeights()));
 					boost::shared_ptr<QGMonteCarloCalibrator::MCPayoff> mcFixedLeg(new MCAnnuity(expiryTime, calibSwaptions_[i][j]->fixedTimes(), calibSwaptions_[i][j]->annuityWeights()));
-					boost::shared_ptr<QGMonteCarloCalibrator::MCPayoff> one(new QGMonteCarloCalibrator::MCPayoff::FixedAmount(1.0));
-					boost::shared_ptr<QGMonteCarloCalibrator::MCPayoff> oneAtT(new QGMonteCarloCalibrator::MCPayoff::Pay(one, expiryTime));
+					boost::shared_ptr<QGMonteCarloCalibrator::MCPayoff> one(new QGMonteCarloCalibrator::MCBase::FixedAmount(1.0));
+					boost::shared_ptr<QGMonteCarloCalibrator::MCPayoff> oneAtT(new QGMonteCarloCalibrator::MCBase::Pay(one, expiryTime));
 					for (size_t k = 0; k < nPaths; ++k) {
 						boost::shared_ptr<MCSimulation::Path> p = calibrator_->mcSimulation_->path(k);
 						oneOverBSample[k] = oneAtT->discountedAt(p);

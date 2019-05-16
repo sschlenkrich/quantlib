@@ -6,10 +6,11 @@
 */
 
 #include <vector>
-#include <ql\errors.hpp>
+#include <ql/errors.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/choleskyfactorisationT.hpp>
 
-#include <ql/experimental/templatemodels/multiasset/localCorrelationbsmodel.hpp>
+#include <ql/experimental/templatemodels/multiasset/localcorrelationbsmodel.hpp>
+
 
 
 namespace QuantLib {

@@ -38,15 +38,15 @@ namespace QuantLib {
 		// with dX = a[t,X(t)] dt + b[t,X(t)] dW
 
 		// dimension of X
-		inline virtual size_t size() = 0;
+		virtual size_t size() = 0;
 		// stochastic factors (underlying, volatilities and spreads)
-		inline virtual size_t factors() = 0;
+		virtual size_t factors() = 0;
 		// initial values for simulation
-		inline virtual VecP initialValues() = 0;
+		virtual VecP initialValues() = 0;
 		// a[t,X(t)]
-		inline virtual VecA drift( const DateType t, const VecA& X) = 0;
+		virtual VecA drift( const DateType t, const VecA& X) = 0;
 		// b[t,X(t)]
-		inline virtual MatA diffusion( const DateType t, const VecA& X) =0;
+		virtual MatA diffusion( const DateType t, const VecA& X) = 0;
 
 		// truncate process to its well-defined domain and return true (truncated) or false (not truncated)
 		inline virtual bool truncate( const DateType t, VecA& X ) { return false; } // default do nothing

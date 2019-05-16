@@ -34,6 +34,8 @@ namespace QuantLib {
 
 	typedef MCPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCPayoff;
 
+	typedef BasePayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCBase;
+
 	typedef RatesPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCRates;
 
 	typedef CommodityPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCCommodity;

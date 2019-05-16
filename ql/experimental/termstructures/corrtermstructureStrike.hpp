@@ -25,7 +25,7 @@
 #define quantlib_corr_term_structure_hpp
 
 #include <ql/termstructure.hpp>
-#include <ql\termstructures\volatility\volatilitytype.hpp>
+#include <ql/termstructures/volatility/volatilitytype.hpp>
 #include <ql/patterns/visitor.hpp>
 
 namespace QuantLib {
