@@ -18,13 +18,13 @@
 */
 
 #include <vector>
-#include <ql\errors.hpp>
+#include <ql/errors.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/choleskyfactorisationT.hpp>
-#include <ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.hpp>
-#include <ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp>
-#include <ql\math\matrixutilities\pseudosqrt.hpp>
+#include <ql/experimental/termstructures/localCorrFX/localcorrsurfaceabfFX.hpp>
+#include <ql/experimental/termstructures/Helper/ParticleMethodUtils.hpp>
+#include <ql/math/matrixutilities/pseudosqrt.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/svdT.hpp>
-#include <ql/math/matrixutilities/SymmetricSchurDecomposition.hpp>
+#include <ql/math/matrixutilities/symmetricschurdecomposition.hpp>
 
 namespace QuantLib {
 
@@ -100,7 +100,7 @@ namespace QuantLib {
 				err = normInf(X - Xp) / normInf(X);
 			}
 			//check
-			TemplateAuxilliaries::performCholesky(RealStochasticProcess::MatA(Y), Y.size(),true);
+			TemplateAuxilliaries::performCholesky(Y, Y.size(),true);
 		}
 		
 	}

@@ -24,9 +24,9 @@
 #ifndef quantlib_particleMethodUtils_hpp
 #define quantlib_particleMethodUtils_hpp
 
-#include <ql\experimental\termstructures\Helper\KernelInterface.hpp>
+#include <ql/experimental/termstructures/Helper/KernelInterface.hpp>
 #include <ql/experimental/termstructures/localCorrFX/localcorrsurfaceabfFX.hpp>
-#include <ql\handle.hpp>
+#include <ql/handle.hpp>
 #include <string.h>
 
 namespace QuantLib {

@@ -37,7 +37,7 @@ namespace QuantLib {
 			  			  const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				  processes,
 						  const Handle<LocalCorrTermStructure>&											  localCorrTermStructureAsset);
 		
-		inline virtual void evolve(const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const VecD& dW, VecA& X1);
+		virtual void evolve(const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const VecD& dW, VecA& X1);
 	};
 
 }

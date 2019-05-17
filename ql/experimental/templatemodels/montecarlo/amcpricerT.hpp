@@ -28,9 +28,9 @@ namespace QuantLib {
 		// easy use of templated types
 		typedef MCSimulationT<DateType, PassiveType, ActiveType>                          SimulationType;
 		typedef typename MCSimulationT<DateType, PassiveType, ActiveType>::Path           PathType;
-		typedef typename MCPayoffT<DateType, PassiveType, ActiveType>                     PayoffType;
+		typedef MCPayoffT<DateType, PassiveType, ActiveType>                              PayoffType;
 		typedef typename RatesPayoffT<DateType, PassiveType, ActiveType>::CancellableNote NoteType;
-		typedef typename TemplateAuxilliaries::Regression<PassiveType>                    RegressionType;
+		typedef TemplateAuxilliaries::Regression<PassiveType>                             RegressionType;
 
 
 		// container class definitions
@@ -281,7 +281,7 @@ namespace QuantLib {
 					MatA Z(simulation_->nPaths(), VecA(z_.size(), (ActiveType)0.0));
 					for (size_t k = 0; k < simulation_->nPaths(); ++k) {
 						boost::shared_ptr<PathType> p = simulation_->path(k); // this p shadows input p
-						ActiveType numeraire = p->numeraire(observationTime());
+						ActiveType numeraire = p->numeraire(PayoffType::observationTime());
 						for (size_t i = 0; i < x_.size(); ++i) T[k] += x_[i]->discountedAt(p);
 						for (size_t i = 0; i < y_.size(); ++i) T[k] -= y_[i]->discountedAt(p);
 						T[k] *= numeraire;
@@ -293,7 +293,7 @@ namespace QuantLib {
 				ActiveType x = 0.0;
 				ActiveType y = 0.0;
 				VecA       z(z_.size(), (ActiveType)0.0);
-				ActiveType numeraire = p->numeraire(observationTime());
+				ActiveType numeraire = p->numeraire(PayoffType::observationTime());
 				for (size_t i = 0; i < x_.size(); ++i) x += x_[i]->discountedAt(p);
 				x *= numeraire;
 				for (size_t i = 0; i < y_.size(); ++i) y += y_[i]->discountedAt(p);
