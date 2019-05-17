@@ -4,14 +4,24 @@ AM_CPPFLAGS = -I${top_builddir} -I${top_srcdir}
 this_includedir=${includedir}/${subdir}
 this_include_HEADERS = \
     all.hpp \
+    basisswapengine.hpp \
+    basisswap.hpp \
+    basisswapratehelpers.hpp \
+    fxfwdratehelper.hpp \
+    spreadyieldtermstructure.hpp \
     swaptioncfs.hpp \
     tenoroptionletvts.hpp \
     tenorswaptionvts.hpp
 
 cpp_files = \
+    basisswap.cpp \
+    basisswapengine.cpp \
+    basisswapratehelpers.cpp \
+    fxfwdratehelper.cpp \
     swaptioncfs.cpp \
     tenoroptionletvts.cpp \
     tenorswaptionvts.cpp
+
 
 if UNITY_BUILD
 

@@ -38,7 +38,7 @@ endif
 
 libTermstructures_la_LIBADD = \
     Helper/libHelpers.la \
-    localCorrFX/liblocalCorrFX.la
+    localCorrFX/libLocalCorrFX.la
 
 noinst_LTLIBRARIES = libTermstructures.la
 

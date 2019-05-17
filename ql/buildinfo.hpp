@@ -28,7 +28,7 @@
 #include <string>
 
 // use this flag to control external build info use
-#define QL_USE_BUILD_INFO
+// #define QL_USE_BUILD_INFO
 #ifdef QL_USE_BUILD_INFO
     #include <buildinfo.hpp>  // this file is auto-generated
 #endif

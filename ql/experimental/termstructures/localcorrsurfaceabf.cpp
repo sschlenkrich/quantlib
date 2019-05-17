@@ -17,7 +17,7 @@
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
-#include <ql\experimental\termstructures\localcorrsurfaceabf.hpp>
+#include <ql/experimental/termstructures/localcorrsurfaceabf.hpp>
 
 namespace QuantLib {
 

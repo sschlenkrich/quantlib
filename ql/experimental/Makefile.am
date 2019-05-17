@@ -38,7 +38,8 @@ libExperimental_la_LIBADD = \
     risk/libRisk.la \
     shortrate/libShortRate.la \
     swaptions/libSwaptions.la \
-    templatemodels/libTemplatemodels.la
+    templatemodels/libTemplatemodels.la \
+    termstructures/libTermstructures.la \
     vanillalocalvolmodel/libVanillaLocalVolModels.la \
     variancegamma/libVarianceGamma.la \
     varianceoption/libVarianceOption.la \

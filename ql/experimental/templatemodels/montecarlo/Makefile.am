@@ -5,12 +5,13 @@ AM_CPPFLAGS = -I${top_builddir} -I${top_srcdir}
 this_includedir=${includedir}/${subdir}
 this_include_HEADERS = \
     all.hpp \
+    commoditypayoffT.hpp \
     amcpricerT.hpp \
-	mcscriptT.hpp \
-	montecarlomodells.hpp \
+    mcscriptT.hpp \
+    montecarlomodells.hpp \
     mcpayoffT.hpp \
-	mcsimulationT.hpp \
-	ratespayoffT.hpp
+    mcsimulationT.hpp \
+    ratespayoffT.hpp
 
 cpp_files = 
 
