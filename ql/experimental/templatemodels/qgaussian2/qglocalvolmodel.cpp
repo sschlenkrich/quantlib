@@ -115,25 +115,25 @@ namespace QuantLib {
 
 	// we cache the float leg and fixed leg valuation to speed-up MC simulation
 	QGLocalvolModel::SwaptionFactory::SwaptionFactory(const Time obsTime, const SwapCashFlows& scf)
-		: floatLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Cache(
+		: floatLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Cache(
 			boost::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.floatTimes(), scf.floatWeights()))))),
-		annuityLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Cache(
+		annuityLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Cache(
 			boost::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.fixedTimes(), scf.annuityWeights())))))
 	{}
 
 	boost::shared_ptr<QGLocalvolModel::MCPayoff> QGLocalvolModel::SwaptionFactory::swaption(const Real strike, const Real callOrPut) {
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedRate(new QGLocalvolModel::MCPayoff::FixedAmount(strike));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedLeg(new QGLocalvolModel::MCPayoff::Mult(fixedRate, annuityLeg_));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedRate(new QGLocalvolModel::MCBase::FixedAmount(strike));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedLeg(new QGLocalvolModel::MCBase::Mult(fixedRate, annuityLeg_));
 		boost::shared_ptr<QGLocalvolModel::MCPayoff> swap;
 		if (callOrPut == 1.0) {
-			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Axpy(-1.0, fixedLeg, floatLeg_));
+			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Axpy(-1.0, fixedLeg, floatLeg_));
 		}
 		else {
-			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Axpy(-1.0, floatLeg_, fixedLeg));
+			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Axpy(-1.0, floatLeg_, fixedLeg));
 		}
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> zero(new QGLocalvolModel::MCPayoff::FixedAmount(0.0));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> swpt(new QGLocalvolModel::MCPayoff::Max(swap, zero));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> pay(new QGLocalvolModel::MCPayoff::Pay(swpt, floatLeg_->observationTime()));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> zero(new QGLocalvolModel::MCBase::FixedAmount(0.0));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> swpt(new QGLocalvolModel::MCBase::Max(swap, zero));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> pay(new QGLocalvolModel::MCBase::Pay(swpt, floatLeg_->observationTime()));
 		return pay;
 	}
 
@@ -303,8 +303,8 @@ namespace QuantLib {
 		avgCalcStrikes_(0.0) {
 		boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFloatLeg(new MCAnnuity(obsTime, scf.floatTimes(), scf.floatWeights()));
 		boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFixedLeg(new MCAnnuity(obsTime, scf.fixedTimes(), scf.annuityWeights()));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCPayoff::FixedAmount(1.0));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCPayoff::Pay(one, obsTime));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCBase::FixedAmount(1.0));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCBase::Pay(one, obsTime));
 		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) {
 			boost::shared_ptr<MCSimulation::Path> p = model->simulation_->path(k);
 			oneOverBSample_[k] = oneAtT->discountedAt(p);

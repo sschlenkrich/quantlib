@@ -17,9 +17,9 @@
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
-#include <ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.hpp>
+#include <ql/experimental/termstructures/localCorrFX/CTSlocalInCrossCorrelationFX.hpp>
 
-#include <ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp>
+#include <ql/experimental/termstructures/Helper/ParticleMethodUtils.hpp>
 
 namespace QuantLib {
 

@@ -74,8 +74,8 @@ namespace QuantLib {
 			std::vector<Real> stochVarianceSample(simulation_->nPaths(), 0.0);
 			boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFloatLeg(new MCAnnuity(times()[idx - 1], swapRate.scf().floatTimes(), swapRate.scf().floatWeights()));
 			boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFixedLeg(new MCAnnuity(times()[idx - 1], swapRate.scf().fixedTimes(), swapRate.scf().annuityWeights()));
-			boost::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCPayoff::FixedAmount(1.0));
-			boost::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCPayoff::Pay(one, times()[idx - 1]));
+			boost::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCBase::FixedAmount(1.0));
+			boost::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCBase::Pay(one, times()[idx - 1]));
 			for (size_t k = 0; k < simulation_->nPaths(); ++k) {
 				boost::shared_ptr<MCSimulation::Path> p = simulation_->path(k);
 				oneOverBSample[k] = oneAtT->discountedAt(p);

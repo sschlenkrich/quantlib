@@ -33,6 +33,7 @@ namespace QuantLib {
 		typedef QuasiGaussianModel2T<QuantLib::Time, QuantLib::Real, QuantLib::Real> QuasiGaussianModel;
 		typedef MCSimulationT<QuantLib::Time, QuantLib::Real, QuantLib::Real> MCSimulation;
 		typedef MCPayoffT<QuantLib::Time, QuantLib::Real, QuantLib::Real> MCPayoff;
+		typedef BasePayoffT<QuantLib::Time, QuantLib::Real, QuantLib::Real> MCBase;
 		typedef RatesPayoffT<QuantLib::Time, QuantLib::Real, QuantLib::Real>::Annuity MCAnnuity;
 		typedef RatesPayoffT<QuantLib::Time, QuantLib::Real, QuantLib::Real>::GeneralSwaption MCSwaption;
 

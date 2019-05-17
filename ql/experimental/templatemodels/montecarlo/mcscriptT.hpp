@@ -17,6 +17,9 @@
 
 
 #include <ql/experimental/templatemodels/montecarlo/mcpayoffT.hpp>
+
+
+
 #include <ql/experimental/templatemodels/montecarlo/scripting/flexbisondriver.hpp>
 #include <ql/experimental/templatemodels/montecarlo/scripting/expression.hpp>
 
@@ -30,19 +33,26 @@ namespace QuantLib {
 
 	template <class DateType, class PassiveType, class ActiveType>
 	class MCScriptT : public MCPayoffT<DateType, PassiveType, ActiveType> {
+	protected:
+		// easy use of templated types
+		typedef MCSimulationT<DateType, PassiveType, ActiveType>        SimulationType;
+		typedef MCPayoffT<DateType, PassiveType, ActiveType>            PayoffType;
+		typedef BasePayoffT<DateType, PassiveType, ActiveType>          MCBase;
+		typedef typename MCSimulationT<DateType, PassiveType, ActiveType>::Path  PathType;
+
 	private:
-		std::map<std::string, boost::shared_ptr<MCPayoffT>>  payoffs_;      // the actual payoffs which may be accessed
+		std::map<std::string, boost::shared_ptr<PayoffType>>  payoffs_;      // the actual payoffs which may be accessed
 		std::vector<std::string>                             expressions_;  // resulting expressions after parsing the script but before syntactic analysis
 		std::vector<std::string>                             scriptLog_;    // log messages when parsing the script
-		boost::shared_ptr<MCPayoffT>                         result_;       // result payoff for MCPayoff interface implementation
+		boost::shared_ptr<PayoffType>                         result_;       // result payoff for MCPayoff interface implementation
 	public:
 		MCScriptT(const std::vector<std::string>&                    keys,
-			      const std::vector <boost::shared_ptr<MCPayoffT>>&  payoffs,
+			      const std::vector <boost::shared_ptr<PayoffType>>&  payoffs,
 			      const std::vector<std::string>&                    script,
 			      const bool                                         overwrite=true) : MCPayoffT<DateType, PassiveType, ActiveType>(0.0) {
 			QL_REQUIRE(keys.size()==payoffs.size(), "MCScript error: key vs. value size missmatch");
 			for (Size k = 0; k < keys.size(); ++k) { // initialize map
-				std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(keys[k]);
+				typename std::map< std::string, boost::shared_ptr<PayoffType> >::iterator it = payoffs_.find(keys[k]);
 				if (it == payoffs_.end()) { // insert a new element
 					payoffs_.insert( std::make_pair(keys[k], payoffs[k]) );
 				} else { // potentially overwrite existing element
@@ -51,7 +61,7 @@ namespace QuantLib {
 				}
 			}
 			if ((script.size() > 0) && (script[0].compare("NonRecursive") == 0)) {
-				parseScript(script, overwrite);           // deprecated and for debugging purpose
+				//parseScript(script, overwrite);           // deprecated and for debugging purpose
 			} else {
 				parseFlexBisonScript(script, overwrite);  // for briefty we delegate parsing to separate method
 			}
@@ -59,10 +69,10 @@ namespace QuantLib {
 			result_ = payoffs_.rbegin()->second; // pick the last element as fall back
 
 			// we need to find a 'result' payoff
-			std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find("payoff");
+			typename std::map< std::string, boost::shared_ptr<PayoffType> >::iterator it = payoffs_.find("payoff");
             if (it != payoffs_.end()) result_ = it->second;
 			else result_ = payoffs_.rbegin()->second; // pick the last element as fall back
-			observationTime_ = result_->observationTime();
+			PayoffType::observationTime_ = result_->observationTime();
 		}
 
 		inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
@@ -70,24 +80,24 @@ namespace QuantLib {
 		}
 
 		// inspector
-		inline const std::map<std::string, boost::shared_ptr<MCPayoffT>>& payoffs()     { return payoffs_;   }
+		inline const std::map<std::string, boost::shared_ptr<PayoffType>>& payoffs()     { return payoffs_;   }
 		inline const std::vector<std::string>&                            expressions() { return expressions_; }
 		inline const std::vector<std::string>&                            scriptLog()   { return scriptLog_; }
 
 		std::vector<DateType> observationTimes(const std::vector<std::string>& keys) {
-			std::vector<boost::shared_ptr<MCPayoffT>> payoffs = findPayoffs(keys);
+			std::vector<boost::shared_ptr<PayoffType>> payoffs = findPayoffs(keys);
 			std::set<DateType> s;
-			for (size_t k = 0; k < payoffs.size(); ++k) s = MCPayoffT::unionTimes(s, payoffs[k]->observationTimes());
+			for (size_t k = 0; k < payoffs.size(); ++k) s = PayoffType::unionTimes(s, payoffs[k]->observationTimes());
 			return std::vector<DateType>(s.begin(), s.end());
 		}
 
 		// MC valuation
 		inline std::vector<ActiveType> NPV(const boost::shared_ptr<SimulationType>&  simulation,
 			                               const std::vector<std::string>&           keys) {
-			std::vector<boost::shared_ptr<MCPayoffT>> payoffs = findPayoffs(keys);
+			std::vector<boost::shared_ptr<PayoffType>> payoffs = findPayoffs(keys);
 			std::vector<ActiveType> npv(payoffs.size(), (ActiveType)0.0);
 			for (Size n = 0; n < simulation->nPaths(); ++n) {
-				const boost::shared_ptr<MCPayoffT::PathType> p(simulation->path(n));
+				const boost::shared_ptr<PathType> p(simulation->path(n));
 				for (Size k = 0; k < payoffs.size(); ++k) {
 					npv[k] += payoffs[k]->discountedAt(p);
 				}
@@ -175,10 +185,10 @@ namespace QuantLib {
 		}
 
 		// check if a list of payoffs exists before doing some computationally expensive stuff with them
-		std::vector< boost::shared_ptr<MCPayoffT> > findPayoffs(const std::vector<std::string>& keys, bool throwException = true) {
-			std::vector<boost::shared_ptr<MCPayoffT>> payoffs;
+		std::vector< boost::shared_ptr<PayoffType> > findPayoffs(const std::vector<std::string>& keys, bool throwException = true) {
+			std::vector<boost::shared_ptr<PayoffType>> payoffs;
 			for (Size k = 0; k < keys.size(); ++k) {
-				std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(keys[k]);
+				typename std::map<std::string, boost::shared_ptr<PayoffType> >::iterator it = payoffs_.find(keys[k]);
 				if (it != payoffs_.end()) {
 					payoffs.push_back(it->second);
 					continue; // all done for this key
@@ -190,7 +200,7 @@ namespace QuantLib {
 
 		// convert an abstract expression tree into a payoff
 		// this function does the actual work...
-		boost::shared_ptr<MCPayoffT> payoff(const boost::shared_ptr<Scripting::Expression> tree, Size k) {
+		boost::shared_ptr<PayoffType> payoff(const boost::shared_ptr<Scripting::Expression> tree, Size k) {
 			// make sure we can actually do something with the tree
 			if (!tree) {
 				scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": Empty expression tree."));
@@ -204,7 +214,7 @@ namespace QuantLib {
 				if (!hasLeafs(tree, 1, k)) 	QL_FAIL("Cannot interprete payoff");
 				ActiveType number;
 				if (to_Number(tree->leafs()[0], number)) {
-					return boost::shared_ptr<MCPayoffT>(new MCPayoffT::FixedAmount(number));
+					return boost::shared_ptr<PayoffType>(new typename MCBase::FixedAmount(number));
 				}
 				scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
 				QL_FAIL("Cannot interprete payoff");
@@ -213,7 +223,7 @@ namespace QuantLib {
 				if (!hasChilds(tree, 0, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 1, k))  QL_FAIL("Cannot interprete payoff");
 				// check for existing payoff in map
-				std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(tree->leafs()[0]);
+				typename std::map<std::string, boost::shared_ptr<PayoffType>>::iterator it = payoffs_.find(tree->leafs()[0]);
 				if (it != payoffs_.end()) {
 					scriptLog_.push_back(std::string("Payoff line " + std::to_string(k) + ": '" + tree->leafs()[0] + "' is in map"));
 					return it->second;
@@ -231,47 +241,47 @@ namespace QuantLib {
 			case Scripting::Expression::UNARYMINUS: {
 				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(-1.0, payoff(tree->childs()[0], k), 0));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Axpy(-1.0, payoff(tree->childs()[0], k), 0));
 			}
 			case Scripting::Expression::PLUS: {
 				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(1.0, payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Axpy(1.0, payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::MINUS: {
 				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(-1.0, payoff(tree->childs()[1], k), payoff(tree->childs()[0], k)));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Axpy(-1.0, payoff(tree->childs()[1], k), payoff(tree->childs()[0], k)));
 			}
 			case Scripting::Expression::MULT: {
 				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Mult(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Mult(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::DIVISION: {
 				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Division(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Division(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::IFTHENELSE: {
 				if (!hasChilds(tree, 3, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::IfThenElse(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k), payoff(tree->childs()[2], k)));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::IfThenElse(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k), payoff(tree->childs()[2], k)));
 			}
 			case Scripting::Expression::MIN: {
 				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Min(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Min(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::MAX: {
 				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Max(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Max(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
 			case Scripting::Expression::LOGICAL: {
 				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 1, k))  QL_FAIL("Cannot interprete payoff");
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Logical(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k), tree->leafs()[0]));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Logical(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k), tree->leafs()[0]));
 			}
 			case Scripting::Expression::PAY: {
 				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
@@ -281,7 +291,7 @@ namespace QuantLib {
 					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
 					QL_FAIL("Cannot interprete payoff");
 				}
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Pay(payoff(tree->childs()[0], k), number));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Pay(payoff(tree->childs()[0], k), number));
 			}
 			case Scripting::Expression::PAY_WITHDATE: {
 				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
@@ -291,12 +301,12 @@ namespace QuantLib {
 					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
 					QL_FAIL("Cannot interprete payoff");
 				}
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Pay(payoff(tree->childs()[0], k), number));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Pay(payoff(tree->childs()[0], k), number));
 			}
 			case Scripting::Expression::CACHE: {
 				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Cache(payoff(tree->childs()[0], k)));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Cache(payoff(tree->childs()[0], k)));
 			}
 			case Scripting::Expression::PAYOFFAT: {
 				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
@@ -306,7 +316,7 @@ namespace QuantLib {
 					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
 					QL_FAIL("Cannot interprete payoff");
 				}
-				boost::shared_ptr<MCPayoffT> p = payoff(tree->childs()[0], k);
+				boost::shared_ptr<PayoffType> p = payoff(tree->childs()[0], k);
 				if (p) return p->at(number);
 				QL_FAIL("Cannot interprete payoff");
 			}
@@ -318,11 +328,11 @@ namespace QuantLib {
 					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
 					QL_FAIL("Cannot interprete payoff");
 				}
-				boost::shared_ptr<MCPayoffT> p = payoff(tree->childs()[0], k);
+				boost::shared_ptr<PayoffType> p = payoff(tree->childs()[0], k);
 				if (p) return p->at(number);
 				QL_FAIL("Cannot interprete payoff");
-			}
-												  // we don't need a default because we returned in each of the previous cases
+			}	
+			// we don't need a default because we returned in each of the previous cases
 			} // finished all switch types
 			// if we end up here there is an expression which we didn't interprete 
 			scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": unknown expression type."));
@@ -349,7 +359,7 @@ namespace QuantLib {
 					if (!hasChilds(driver.expressionTree(), 1, k)) continue;
 					if (!hasLeafs(driver.expressionTree(), 1, k)) continue;
 					// interprete right side of assignment
-					boost::shared_ptr<MCPayoffT> p;
+					boost::shared_ptr<PayoffType> p;
 					try {
 						p = payoff(driver.expressionTree()->childs()[0], k);
 					}
@@ -368,7 +378,7 @@ namespace QuantLib {
 						continue;
 					}
 					// now we have a payoff which we may store in the map
-					std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(var);
+					typename std::map<std::string, boost::shared_ptr<PayoffType> >::iterator it = payoffs_.find(var);
 					if (it == payoffs_.end()) { // insert a new element
 						payoffs_.insert(std::make_pair(var, p));
 						scriptLog_.push_back(std::string("Insert line " + std::to_string(k) + ": '" + script[k] + "'"));
@@ -427,7 +437,7 @@ namespace QuantLib {
 				}
 				std::string var(what[1]), expr(what[3]);
 
-				boost::shared_ptr<MCPayoffT> p;
+				boost::shared_ptr<PayoffType> p;
 
 				if (boost::regex_match(expr, what, boost::regex("(\\+|-)(.+)"))) {
 					p = operator1(std::string(what[1]), std::string(what[2]), k);
@@ -452,7 +462,7 @@ namespace QuantLib {
 				}
 
 				// now we have a payoff which we may store in the map
-				std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(var);
+				typename std::map<std::string, boost::shared_ptr<PayoffType> >::iterator it = payoffs_.find(var);
 				if (it == payoffs_.end()) { // insert a new element
 					payoffs_.insert(std::make_pair(var, p));
 					scriptLog_.push_back(std::string("Insert line " + std::to_string(k) + ": '" + line + "'"));
@@ -493,14 +503,14 @@ namespace QuantLib {
 
 
 		// compile fixed cash flow or lookup in map
-		inline boost::shared_ptr<MCPayoffT> payoff(const std::string expr, const Size lineNr) {
+		inline boost::shared_ptr<PayoffType> payoff(const std::string expr, const Size lineNr) {
 			ActiveType amount;
 			bool isFixed = to_Number(expr, amount);
 			if (isFixed) {
 				scriptLog_.push_back(std::string("Payoff line " + std::to_string(lineNr) + ": '" + boost::lexical_cast<std::string>(amount) + "' is fixed amount"));
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::FixedAmount(amount));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::FixedAmount(amount));
 			}
-			std::map<std::string, boost::shared_ptr<MCPayoffT>>::iterator it = payoffs_.find(expr);
+			typename std::map<std::string, boost::shared_ptr<PayoffType> >::iterator it = payoffs_.find(expr);
 			if (it != payoffs_.end()) {
 				scriptLog_.push_back(std::string("Payoff line " + std::to_string(lineNr) + ": '" + expr + "' is in map"));
 				return it->second;
@@ -511,41 +521,41 @@ namespace QuantLib {
 		}
 
 		// compile single operand function
-		inline boost::shared_ptr<MCPayoffT> function1(const std::string fname, const std::string operand, const Size lineNr) {
-			boost::shared_ptr<MCPayoffT> p = payoff(operand, lineNr);
+		inline boost::shared_ptr<PayoffType> function1(const std::string fname, const std::string operand, const Size lineNr) {
+			boost::shared_ptr<PayoffType> p = payoff(operand, lineNr);
 			if (!p) {
 				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + operand + "' is no valid operand"));
 				return 0;
 			}
 			boost::smatch what;
 			if (boost::regex_match(fname, what, boost::regex("Cache")))
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Cache(p));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Cache(p));
 			// if we end up here the function name is not valid
 			scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + fname + "' is no valid unary function name"));
 			return 0;
 		}
 
 		// compile dual operand function
-		inline boost::shared_ptr<MCPayoffT> function2(const std::string fname, const std::string oper1, const std::string oper2, const Size lineNr) {
-			boost::shared_ptr<MCPayoffT> p1 = payoff(oper1, lineNr);
+		inline boost::shared_ptr<PayoffType> function2(const std::string fname, const std::string oper1, const std::string oper2, const Size lineNr) {
+			boost::shared_ptr<PayoffType> p1 = payoff(oper1, lineNr);
 			if (!p1) {
 				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + oper1 + "' is no valid operand"));
 				return 0;
 			}
-			boost::shared_ptr<MCPayoffT> p2 = payoff(oper2, lineNr);
+			boost::shared_ptr<PayoffType> p2 = payoff(oper2, lineNr);
 			if (!p2) {
 				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + oper2 + "' is no valid operand"));
 				return 0;
 			}
 			boost::smatch what;
 			if (boost::regex_match(fname, what, boost::regex("Min")))
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Min(p1, p2));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Min(p1, p2));
 			if (boost::regex_match(fname, what, boost::regex("Max")))
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Max(p1, p2));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Max(p1, p2));
 			if (boost::regex_match(fname, what, boost::regex("Pay"))) {
 				DateType t;
-				if (to_Number(oper2, t)) return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Pay(p1, t)); // usual application
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Pay(p1, p2->observationTime())); // fall back
+				if (to_Number(oper2, t)) return boost::shared_ptr<PayoffType>(new typename MCBase::Pay(p1, t)); // usual application
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Pay(p1, p2->observationTime())); // fall back
 			}
 			// if we end up here the function name is not valid
 			scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + fname + "' is no valid binary function name"));
@@ -553,66 +563,66 @@ namespace QuantLib {
 		}
 
 		// compile three operand function
-		inline boost::shared_ptr<MCPayoffT> function3(const std::string fname, const std::string oper1, const std::string oper2, const std::string oper3, const Size lineNr) {
-			boost::shared_ptr<MCPayoffT> p1 = payoff(oper1, lineNr);
+		inline boost::shared_ptr<PayoffType> function3(const std::string fname, const std::string oper1, const std::string oper2, const std::string oper3, const Size lineNr) {
+			boost::shared_ptr<PayoffType> p1 = payoff(oper1, lineNr);
 			if (!p1) {
 				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + oper1 + "' is no valid operand"));
 				return 0;
 			}
-			boost::shared_ptr<MCPayoffT> p2 = payoff(oper2, lineNr);
+			boost::shared_ptr<PayoffType> p2 = payoff(oper2, lineNr);
 			if (!p2) {
 				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + oper2 + "' is no valid operand"));
 				return 0;
 			}
-			boost::shared_ptr<MCPayoffT> p3 = payoff(oper3, lineNr);
+			boost::shared_ptr<PayoffType> p3 = payoff(oper3, lineNr);
 			if (!p3) {
 				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + oper3 + "' is no valid operand"));
 				return 0;
 			}
 			boost::smatch what;
 			if (boost::regex_match(fname, what, boost::regex("IfThenElse")))
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::IfThenElse(p1, p2, p3));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::IfThenElse(p1, p2, p3));
 			// if we end up here the function name is not valid
 			scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + fname + "' is no valid function name"));
 			return 0;
 		}
 
 		// compile unary operators
-		inline boost::shared_ptr<MCPayoffT> operator1(const std::string opname, const std::string operand, const Size lineNr) {
-			boost::shared_ptr<MCPayoffT> p = payoff(operand, lineNr);
+		inline boost::shared_ptr<PayoffType> operator1(const std::string opname, const std::string operand, const Size lineNr) {
+			boost::shared_ptr<PayoffType> p = payoff(operand, lineNr);
 			if (!p) {
 				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + operand + "' is no valid operand"));
 				return 0;
 			}
 			boost::smatch what;
 			if (boost::regex_match(opname, what, boost::regex("\\+"))) return p;
-			if (boost::regex_match(opname, what, boost::regex("-"))) return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(-1.0, p, 0));
+			if (boost::regex_match(opname, what, boost::regex("-"))) return boost::shared_ptr<PayoffType>(new typename MCBase::Axpy(-1.0, p, 0));
 			// if we end up here the function name is not valid
 			scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + opname + "' is no valid unary operator name"));
 			return 0;
 		}
 
 		// compile binary operators
-		inline boost::shared_ptr<MCPayoffT> operator2(const std::string opname, const std::string oper1, const std::string oper2, const Size lineNr) {
-			boost::shared_ptr<MCPayoffT> p1 = payoff(oper1, lineNr);
+		inline boost::shared_ptr<PayoffType> operator2(const std::string opname, const std::string oper1, const std::string oper2, const Size lineNr) {
+			boost::shared_ptr<PayoffType> p1 = payoff(oper1, lineNr);
 			if (!p1) {
 				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + oper1 + "' is no valid operand"));
 				return 0;
 			}
-			boost::shared_ptr<MCPayoffT> p2 = payoff(oper2, lineNr);
+			boost::shared_ptr<PayoffType> p2 = payoff(oper2, lineNr);
 			if (!p2) {
 				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + oper2 + "' is no valid operand"));
 				return 0;
 			}
 			boost::smatch what;
 			if (boost::regex_match(opname, what, boost::regex("\\+")))
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(1.0, p1, p2));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Axpy(1.0, p1, p2));
 			if (boost::regex_match(opname, what, boost::regex("-")))
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Axpy(-1.0, p2, p1));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Axpy(-1.0, p2, p1));
 			if (boost::regex_match(opname, what, boost::regex("\\*")))
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Mult(p1, p2));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Mult(p1, p2));
 			if (boost::regex_match(opname, what, boost::regex("==|!=|<|<=|>|>=|&&|\\|\\|")))
-				return boost::shared_ptr<MCPayoffT>(new MCPayoffT::Logical(p1, p2, opname));
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Logical(p1, p2, opname));
 			// if we end up here the function name is not valid
 			scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": '" + opname + "' is no valid binary operator name"));
 			return 0;

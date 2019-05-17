@@ -13,7 +13,7 @@
 
 #include <ql/experimental/templatemodels/stochasticprocessT.hpp>
 
-#include <ql/experimental/processes/HestonSLVProcess.hpp>
+#include <ql/experimental/processes/hestonslvprocess.hpp>
 
 namespace QuantLib {
 
@@ -41,15 +41,15 @@ namespace QuantLib {
 			const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes);
 
 		// dimension of X -> [x1,x2,....,v1, v2,....]
-		inline virtual size_t size() { return processes_.size()*2; }
+		virtual size_t size() { return processes_.size()*2; }
 		// stochastic factors of x and z 
-		inline virtual size_t factors() { return processes_.size()*2; } //UL and vol
+		virtual size_t factors() { return processes_.size()*2; } //UL and vol
 		// initial values for simulation
-		inline virtual RealStochasticProcess::VecP initialValues();
+		virtual RealStochasticProcess::VecP initialValues();
 		// a[t,X(t)], not tested
-		inline virtual RealStochasticProcess::VecA drift(const QuantLib::Time t, const VecA& X);
+		virtual RealStochasticProcess::VecA drift(const QuantLib::Time t, const VecA& X);
 		// b[t,X(t)], not tested
-		inline virtual RealStochasticProcess::MatA diffusion(const QuantLib::Time t, const VecA& X);
+		virtual RealStochasticProcess::MatA diffusion(const QuantLib::Time t, const VecA& X);
 
 		inline virtual void evolve(const QuantLib::Time t0, const VecA& X0, const QuantLib::Time dt, const VecD& dW, VecA& X1);
 

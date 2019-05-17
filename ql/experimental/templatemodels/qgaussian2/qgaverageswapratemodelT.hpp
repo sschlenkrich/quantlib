@@ -43,7 +43,7 @@ namespace QuantLib {
 		ActiveType S0_;
 		ActiveType shift_;
 
-		inline ActiveType slopeOverSigma(const DateType t) { return QGSwaprateModelT::slope(t) / QGSwaprateModelT::sigma(t); }
+		inline ActiveType slopeOverSigma(const DateType t) { return QGSwaprateModelT<DateType,PassiveType,ActiveType>::slope(t) / QGSwaprateModelT<DateType,PassiveType,ActiveType>::sigma(t); }
 
 		// helper functions for vol averaging, Piterbarg, 10.2.4
 		inline static ActiveType A_CIR(ActiveType c1, ActiveType c2, ActiveType z0, ActiveType theta, ActiveType eta, DateType dt) {
@@ -90,8 +90,8 @@ namespace QuantLib {
 
 		// constructor
 		QGAverageSwaprateModelT(
-			const boost::shared_ptr< QGSwaprateModelT<DateType,PassiveType,ActiveType> >&   model
-			) : QGSwaprateModelT(*model) {
+			const boost::shared_ptr< QGSwaprateModelT<DateType,PassiveType,ActiveType> >&   model)
+			: QGSwaprateModelT<DateType,PassiveType,ActiveType>(*model) {
 			// set up averaging
 			eta_ = averageEta();
 			QL_REQUIRE(eta_>=0.0, "QGAverageSwaprateModelT: eta >= 0 required.");
@@ -109,36 +109,36 @@ namespace QuantLib {
 				else                 type_ = Heston;
 			}
 			QL_REQUIRE(type_ != StochVolNormal, "QGAverageSwaprateModelT: StochVolNormal not implemented.");
-			S0_ = QGSwaprateModelT::S0();
+			S0_ = QGSwaprateModelT<DateType,PassiveType,ActiveType>::S0();
 			if ((type_ == ShiftedLogNormal) || (type_ == Heston)) shift_ = sigma_ / slope_ - S0_;
 			if (type_ == Heston) {
 				hestonModel_ = boost::shared_ptr< HestonModelT<DateType, PassiveType, ActiveType> >(
 					new HestonModelT<DateType, PassiveType, ActiveType>(
 						// state transformations ~S(t) = S(t) + shift, v(t) = z(t) slope^2
-						theta(),               // kappa
-						z0()*slope_*slope_,    // theta
-						eta_*slope_,           // sigma
-						rho(),                 // rho
-						z0()*slope_*slope_     // v0
+						QGSwaprateModelT<DateType,PassiveType,ActiveType>::theta(),               // kappa
+						QGSwaprateModelT<DateType,PassiveType,ActiveType>::z0()*slope_*slope_,    // theta
+						eta_*slope_,                                                              // sigma
+						QGSwaprateModelT<DateType,PassiveType,ActiveType>::rho(),                 // rho
+						QGSwaprateModelT<DateType,PassiveType,ActiveType>::z0()*slope_*slope_     // v0
 						));
 			}
 		}
 
 		inline ActiveType averageEta() {
-			std::vector<DateType> times(modelTimes());
+			std::vector<DateType> times(QGSwaprateModelT<DateType,PassiveType,ActiveType>::modelTimes());
 			std::vector<ActiveType> f(times.size());
 			std::vector<ActiveType> w(times.size() - 1);
 			f[f.size() - 1] = 0.0;
 			for (size_t k = f.size() - 1; k>0; --k) {
-				ActiveType sigma = QGSwaprateModelT::sigma((times[k - 1] + times[k]) / 2.0);
-				ActiveType tmp = exp(-QGSwaprateModelT::theta()*(times[k] - times[k - 1]));
-				f[k - 1] = sigma*sigma / QGSwaprateModelT::theta()*(1.0 - tmp) + tmp*f[k];
+				ActiveType sigma = QGSwaprateModelT<DateType,PassiveType,ActiveType>::sigma((times[k - 1] + times[k]) / 2.0);
+				ActiveType tmp = exp(-QGSwaprateModelT<DateType,PassiveType,ActiveType>::theta()*(times[k] - times[k - 1]));
+				f[k - 1] = sigma*sigma / QGSwaprateModelT<DateType,PassiveType,ActiveType>::theta()*(1.0 - tmp) + tmp*f[k];
 			}
 			ActiveType sum = 0.0;
 			for (size_t k = 0; k<w.size(); ++k) {
-				ActiveType sigma = QGSwaprateModelT::sigma((times[k] + times[k + 1]) / 2.0);
+				ActiveType sigma = QGSwaprateModelT<DateType,PassiveType,ActiveType>::sigma((times[k] + times[k + 1]) / 2.0);
 				ActiveType sigma2 = sigma*sigma;
-				ActiveType theta = QGSwaprateModelT::theta();
+				ActiveType theta = QGSwaprateModelT<DateType,PassiveType,ActiveType>::theta();
 				ActiveType theta2 = theta*theta;
 				w[k] = (f[k + 1] * f[k + 1] - f[k] * f[k]) / 2.0 / theta +
 					(f[k + 1] - f[k])*sigma2 / theta2 +
@@ -148,7 +148,7 @@ namespace QuantLib {
 			}
 			ActiveType eta2 = 0.0;
 			for (size_t k = 0; k<w.size(); ++k) {
-				ActiveType eta = QGSwaprateModelT::eta((times[k] + times[k + 1]) / 2.0);
+				ActiveType eta = QGSwaprateModelT<DateType,PassiveType,ActiveType>::eta((times[k] + times[k + 1]) / 2.0);
 				eta2 += w[k] * eta * eta;
 			}
 			eta2 = eta2 / sum;
@@ -156,18 +156,18 @@ namespace QuantLib {
 		}
 
 		ActiveType averageSlopeOverSigma() {
-			std::vector<DateType> times(modelTimes());
+			std::vector<DateType> times(QGSwaprateModelT<DateType,PassiveType,ActiveType>::modelTimes());
 			std::vector<ActiveType> w(times.size() - 1);
-			ActiveType theta = QGSwaprateModelT::theta();
-			ActiveType z0 = QGSwaprateModelT::z0();
+			ActiveType theta = QGSwaprateModelT<DateType,PassiveType,ActiveType>::theta();
+			ActiveType z0 = QGSwaprateModelT<DateType,PassiveType,ActiveType>::z0();
 			ActiveType sumSigma2dT = 0.0;
 			ActiveType S1 = 0.0, S2 = 0.0, S3 = 0.0;
 			ActiveType sum = 0.0;
 			for (size_t k = 0; k<w.size(); ++k) {
 				// v1
-				ActiveType sigma = QGSwaprateModelT::sigma((times[k] + times[k + 1]) / 2.0);
+				ActiveType sigma = QGSwaprateModelT<DateType,PassiveType,ActiveType>::sigma((times[k] + times[k + 1]) / 2.0);
 				ActiveType sigma2 = sigma*sigma;
-				ActiveType eta = QGSwaprateModelT::eta((times[k] + times[k + 1]) / 2.0);
+				ActiveType eta = QGSwaprateModelT<DateType,PassiveType,ActiveType>::eta((times[k] + times[k + 1]) / 2.0);
 				ActiveType sigma2dT = sigma2*(times[k + 1] - times[k]);
 				ActiveType v1 = z0*z0*(times[k + 1] - times[k])*(sigma2dT / 2.0 + sumSigma2dT);
 				sumSigma2dT += sigma2dT;
@@ -199,15 +199,15 @@ namespace QuantLib {
 		ActiveType averageSigma(ActiveType eta, ActiveType b) {
 			// ActiveType b = averageSlopeOverSigma(T);  // better avoid calculation twice
 			// ActiveType eta = averageEta(T);           // 
-			std::vector<DateType> times(modelTimes());
+			std::vector<DateType> times(QGSwaprateModelT<DateType,PassiveType,ActiveType>::modelTimes());
 			// c = h''(zeta) / h'(zeta)
 			ActiveType zeta = 0.0;
 			for (size_t k = 0; k<times.size() - 1; ++k) {
-				ActiveType sigma = QGSwaprateModelT::sigma((times[k] + times[k + 1]) / 2.0);
+				ActiveType sigma = QGSwaprateModelT<DateType,PassiveType,ActiveType>::sigma((times[k] + times[k + 1]) / 2.0);
 				zeta += sigma*sigma*(times[k + 1] - times[k]);
 			}
 			ActiveType avSigma2 = zeta / (times[times.size() - 1] - times[0]);
-			zeta *= QGSwaprateModelT::z0();
+			zeta *= QGSwaprateModelT<DateType,PassiveType,ActiveType>::z0();
 			// if there is no skew or no stoch vol we are save to use average sigma
 			if ((b == 0.0)||(eta==0.0)) return sqrt(avSigma2);  // maybe define a sutable threshold
 			ActiveType c = -(b*b / 4.0 + 1.0 / zeta) / 2.0; 
@@ -216,12 +216,12 @@ namespace QuantLib {
 			for (size_t k = times.size() - 1; k>0; --k) {
 				DateType  t = (times[k] + times[k - 1]) / 2.0;
 				DateType dt = (times[k] - times[k - 1]);
-				ActiveType sigma = QGSwaprateModelT::sigma(t);
-				A = A + A_CIR(B, -c*sigma*sigma, QGSwaprateModelT::z0(), QGSwaprateModelT::theta(), eta, dt);
-				B = B_CIR(B, -c*sigma*sigma, QGSwaprateModelT::z0(), QGSwaprateModelT::theta(), eta, dt);
+				ActiveType sigma = QGSwaprateModelT<DateType,PassiveType,ActiveType>::sigma(t);
+				A = A + A_CIR(B, -c*sigma*sigma, QGSwaprateModelT<DateType,PassiveType,ActiveType>::z0(), QGSwaprateModelT<DateType,PassiveType,ActiveType>::theta(), eta, dt);
+				B = B_CIR(B, -c*sigma*sigma, QGSwaprateModelT<DateType,PassiveType,ActiveType>::z0(), QGSwaprateModelT<DateType,PassiveType,ActiveType>::theta(), eta, dt);
 			}
-			ActiveType target = A - B*QGSwaprateModelT::z0();
-			AverageLambdaObjective f(QGSwaprateModelT::z0(), QGSwaprateModelT::theta(), eta, times[times.size() - 1] - times[0], target);
+			ActiveType target = A - B*QGSwaprateModelT<DateType,PassiveType,ActiveType>::z0();
+			AverageLambdaObjective f(QGSwaprateModelT<DateType,PassiveType,ActiveType>::z0(), QGSwaprateModelT<DateType,PassiveType,ActiveType>::theta(), eta, times[times.size() - 1] - times[0], target);
 			ActiveType avSigma2c = avSigma2 * c;
 			avSigma2c = TemplateAuxilliaries::solve1d<ActiveType>(f, 1.0e-8, avSigma2c, avSigma2c, 10);
 			ActiveType avSigma = sqrt(avSigma2c / c);
@@ -245,7 +245,8 @@ namespace QuantLib {
 
 		// undiscounted expectation of vanilla payoff
 		inline ActiveType vanillaOption(const PassiveType strikePrice, const int callOrPut, const PassiveType accuracy = 1.0-6, const size_t maxEvaluations = 1000) {
-			DateType term = modelTimes()[modelTimes().size() - 1] - modelTimes()[0];
+			const std::vector<DateType>& times = QGSwaprateModelT<DateType,PassiveType,ActiveType>::modelTimes();
+			DateType term = times[times.size() - 1] - times[0];
 			if (type_ == Heston)
 				return hestonModel_->vanillaOption(S0_ + shift_, strikePrice + shift_, term, callOrPut, accuracy, maxEvaluations);
 			if (type_ == ShiftedLogNormal)

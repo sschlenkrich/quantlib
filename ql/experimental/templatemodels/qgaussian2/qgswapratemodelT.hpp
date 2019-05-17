@@ -443,7 +443,7 @@ namespace QuantLib {
 		inline const VecD& fixedTimes()    { return swap_.fixedTimes;   }
 		inline const VecD& fixedWeights()  { return swap_.fixedWeights; }
 		inline const VecD& modelTimes()    { return times_;             }
-		inline const bool  useExpectedXY() { return }
+		inline const bool  useExpectedXY() { return useExpectedXY_;     }
 
 
 
