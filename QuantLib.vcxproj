@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug (sr, light)|Win32">
-      <Configuration>Debug (sr, light)</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug (sr, light)|x64">
-      <Configuration>Debug (sr, light)</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug (static runtime)|Win32">
       <Configuration>Debug (static runtime)</Configuration>
       <Platform>Win32</Platform>
@@ -54,17 +46,7 @@
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <UseOfMfc>false</UseOfMfc>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <UseOfMfc>false</UseOfMfc>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
@@ -107,15 +89,7 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Microsoft.Cpp.Win32.Boost.props" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\Microsoft.Cpp.Win32.Boost.props" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\Microsoft.Cpp.Win32.Boost.props" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Microsoft.Cpp.Win32.Boost.props" />
   </ImportGroup>
@@ -159,17 +133,11 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|Win32'">.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|x64'">.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'">.\lib\</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">.\lib\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|x64'">.\lib\</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|x64'">.\lib\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'">.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</IntDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|x64'">.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</IntDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|x64'">.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'">QuantLib-$(qlCompilerTag)-mt-sgd</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">QuantLib-$(qlCompilerTag)-mt-sgd</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|x64'">QuantLib-$(qlCompilerTag)-x64-mt-sgd</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|x64'">QuantLib-$(qlCompilerTag)-x64-mt-sgd</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">QuantLib-$(qlCompilerTag)-mt-gd</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">QuantLib-$(qlCompilerTag)-x64-mt-gd</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|Win32'">QuantLib-$(qlCompilerTag)-mt-s</TargetName>
@@ -187,9 +155,6 @@
     <CustomBuildBeforeTargets>PreBuildEvent</CustomBuildBeforeTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'">
-    <CustomBuildBeforeTargets>PreBuildEvent</CustomBuildBeforeTargets>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">
     <CustomBuildBeforeTargets>PreBuildEvent</CustomBuildBeforeTargets>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -518,54 +483,6 @@
       </Inputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">
-    <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <IntrinsicFunctions>false</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;WIN32;_LIB;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <DisableLanguageExtensions>false</DisableLanguageExtensions>
-      <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <PrecompiledHeaderOutputFile>.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\QuantLib.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</AssemblerListingLocation>
-      <ObjectFileName>.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</ObjectFileName>
-      <ProgramDataBaseFileName>.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</ProgramDataBaseFileName>
-      <BrowseInformation>
-      </BrowseInformation>
-      <BrowseInformationFile>.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</BrowseInformationFile>
-      <WarningLevel>Level3</WarningLevel>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <CompileAs>Default</CompileAs>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-    </ClCompile>
-    <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <Culture>0x0409</Culture>
-    </ResourceCompile>
-    <PreLinkEvent>
-      <Message>Make build directory</Message>
-      <Command>if not exist lib mkdir lib</Command>
-    </PreLinkEvent>
-    <Lib>
-      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-    </Lib>
-    <Bscmake>
-      <SuppressStartupBanner>false</SuppressStartupBanner>
-    </Bscmake>
-    <CustomBuildStep>
-      <Command>python.exe buildinfo.py</Command>
-      <Outputs>buildinfo.hpp;runalways.txt;%(Outputs)</Outputs>
-      <Inputs>
-      </Inputs>
-    </CustomBuildStep>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -608,50 +525,7 @@
       <SuppressStartupBanner>false</SuppressStartupBanner>
     </Bscmake>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|x64'">
-    <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <IntrinsicFunctions>false</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;WIN32;_LIB;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <DisableLanguageExtensions>false</DisableLanguageExtensions>
-      <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <PrecompiledHeaderOutputFile>.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\QuantLib.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</AssemblerListingLocation>
-      <ObjectFileName>.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</ObjectFileName>
-      <ProgramDataBaseFileName>.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</ProgramDataBaseFileName>
-      <BrowseInformation>
-      </BrowseInformation>
-      <BrowseInformationFile>.\build\$(qlCompilerTag)\$(Platform)\$(Configuration)\</BrowseInformationFile>
-      <WarningLevel>Level3</WarningLevel>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <CompileAs>Default</CompileAs>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-    </ClCompile>
-    <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <Culture>0x0409</Culture>
-    </ResourceCompile>
-    <PreLinkEvent>
-      <Message>Make build directory</Message>
-      <Command>if not exist lib mkdir lib</Command>
-    </PreLinkEvent>
-    <Lib>
-      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-    </Lib>
-    <Bscmake>
-      <SuppressStartupBanner>false</SuppressStartupBanner>
-    </Bscmake>
-  </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ql\buildinfo.hpp" />
     <ClInclude Include="ql\cashflows\all.hpp" />
     <ClInclude Include="ql\cashflows\averagebmacoupon.hpp" />
     <ClInclude Include="ql\cashflows\capflooredcoupon.hpp" />
@@ -713,86 +587,143 @@
     <ClInclude Include="ql\experimental\barrieroption\vannavolgadoublebarrierengine.hpp" />
     <ClInclude Include="ql\experimental\barrieroption\vannavolgainterpolation.hpp" />
     <ClInclude Include="ql\experimental\barrieroption\wulinyongdoublebarrierengine.hpp" />
-    <ClInclude Include="ql\experimental\basismodels\swaptioncfs.hpp" />
-    <ClInclude Include="ql\experimental\basismodels\tenoroptionletvts.hpp" />
-    <ClInclude Include="ql\experimental\basismodels\tenorswaptionvts.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\choleskyfactorisationT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\hullwhite\g2ppT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgaverageswapratemodelT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qglocalvolmodel.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgswapratemodelT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\quasigaussianmodel2T.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\stochvol\quadraticlvsvmodelT.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\corrtermstructureStrike.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\Helper\KernelInterface.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCovarianceFX.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\localcorrsurfaceabf.hpp" />
-    <ClInclude Include="ql\experimental\termstructures\localcorrtermstructure.hpp" />
-    <ClInclude Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolmodel.hpp" />
-    <ClInclude Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolsmilesection.hpp" />
-    <ClInclude Include="ql\experimental\vanillalocalvolmodel\vanillalocalvoltermstructures.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcscriptT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\expression.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\location.hh" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\position.hh" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\stack.hh" />
-    <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolmodels.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolmodelT.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\all.hpp" />
     <ClInclude Include="ql\experimental\basismodels\basisswap.hpp" />
     <ClInclude Include="ql\experimental\basismodels\basisswapengine.hpp" />
     <ClInclude Include="ql\experimental\basismodels\basisswapratehelpers.hpp" />
     <ClInclude Include="ql\experimental\basismodels\fxfwdratehelper.hpp" />
     <ClInclude Include="ql\experimental\basismodels\spreadyieldtermstructure.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\auxilliariesT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\complexT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\gausslobattoT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\integratorsT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\minimADVariable2T.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\qrfactorisationT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\regressionT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\solver1dT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\svdT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\commodity\commoditymodels.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\commodity\indextermstructure.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\commodity\twofactorlognormalmodelT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\commodity\twofactormeanreversionmodelT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\commodity\twofactornormalmodelT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\hullwhite\bondoptionengine.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\hullwhite\fixedratebondoption.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\hullwhite\hullwhitemodelT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\amcpricerT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\commoditypayoffT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcpayoffT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcsimulationT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\montecarlomodells.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\montecarlo\ratespayoffT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian\qgswaptionmodelT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodelabcdT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodels.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodelT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\stochasticprocessT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\stochvol\hestonmodelT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\stochvol\shiftedsabrmodelT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\stochvol\stochvolcalibrator.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\stochvol\stochvolmodels.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\stochvol\tdstochvolmodelT.hpp" />
-    <ClInclude Include="ql\experimental\volatility\smiledsurface.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\swaptioncfs.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\tenoroptionletvts.hpp" />
+    <ClInclude Include="ql\experimental\basismodels\tenorswaptionvts.hpp" />
+    <ClInclude Include="ql\experimental\callablebonds\all.hpp" />
+    <ClInclude Include="ql\experimental\callablebonds\blackcallablebondengine.hpp" />
+    <ClInclude Include="ql\experimental\callablebonds\callablebond.hpp" />
+    <ClInclude Include="ql\experimental\callablebonds\callablebondconstantvol.hpp" />
+    <ClInclude Include="ql\experimental\callablebonds\callablebondvolstructure.hpp" />
+    <ClInclude Include="ql\experimental\callablebonds\discretizedcallablefixedratebond.hpp" />
+    <ClInclude Include="ql\experimental\callablebonds\treecallablebondengine.hpp" />
+    <ClInclude Include="ql\experimental\catbonds\all.hpp" />
+    <ClInclude Include="ql\experimental\catbonds\catbond.hpp" />
+    <ClInclude Include="ql\experimental\catbonds\catrisk.hpp" />
+    <ClInclude Include="ql\experimental\catbonds\montecarlocatbondengine.hpp" />
+    <ClInclude Include="ql\experimental\catbonds\riskynotional.hpp" />
+    <ClInclude Include="ql\experimental\commodities\all.hpp" />
+    <ClInclude Include="ql\experimental\commodities\commodity.hpp" />
+    <ClInclude Include="ql\experimental\commodities\commoditycashflow.hpp" />
+    <ClInclude Include="ql\experimental\commodities\commoditycurve.hpp" />
+    <ClInclude Include="ql\experimental\commodities\commodityindex.hpp" />
+    <ClInclude Include="ql\experimental\commodities\commoditypricinghelpers.hpp" />
+    <ClInclude Include="ql\experimental\commodities\commoditysettings.hpp" />
+    <ClInclude Include="ql\experimental\commodities\commoditytype.hpp" />
+    <ClInclude Include="ql\experimental\commodities\commodityunitcost.hpp" />
+    <ClInclude Include="ql\experimental\commodities\dateinterval.hpp" />
+    <ClInclude Include="ql\experimental\commodities\energybasisswap.hpp" />
+    <ClInclude Include="ql\experimental\commodities\energycommodity.hpp" />
+    <ClInclude Include="ql\experimental\commodities\energyfuture.hpp" />
+    <ClInclude Include="ql\experimental\commodities\energyswap.hpp" />
+    <ClInclude Include="ql\experimental\commodities\energyvanillaswap.hpp" />
+    <ClInclude Include="ql\experimental\commodities\exchangecontract.hpp" />
+    <ClInclude Include="ql\experimental\commodities\paymentterm.hpp" />
+    <ClInclude Include="ql\experimental\commodities\petroleumunitsofmeasure.hpp" />
+    <ClInclude Include="ql\experimental\commodities\pricingperiod.hpp" />
+    <ClInclude Include="ql\experimental\commodities\quantity.hpp" />
+    <ClInclude Include="ql\experimental\commodities\unitofmeasure.hpp" />
+    <ClInclude Include="ql\experimental\commodities\unitofmeasureconversion.hpp" />
+    <ClInclude Include="ql\experimental\commodities\unitofmeasureconversionmanager.hpp" />
+    <ClInclude Include="ql\experimental\convertiblebonds\all.hpp" />
+    <ClInclude Include="ql\experimental\convertiblebonds\binomialconvertibleengine.hpp" />
+    <ClInclude Include="ql\experimental\convertiblebonds\convertiblebond.hpp" />
+    <ClInclude Include="ql\experimental\convertiblebonds\discretizedconvertible.hpp" />
+    <ClInclude Include="ql\experimental\convertiblebonds\tflattice.hpp" />
+    <ClInclude Include="ql\experimental\coupons\all.hpp" />
+    <ClInclude Include="ql\experimental\coupons\cmsspreadcoupon.hpp" />
+    <ClInclude Include="ql\experimental\coupons\digitalcmsspreadcoupon.hpp" />
+    <ClInclude Include="ql\experimental\coupons\lognormalcmsspreadpricer.hpp" />
+    <ClInclude Include="ql\experimental\coupons\proxyibor.hpp" />
+    <ClInclude Include="ql\experimental\coupons\quantocouponpricer.hpp" />
+    <ClInclude Include="ql\experimental\coupons\strippedcapflooredcoupon.hpp" />
+    <ClInclude Include="ql\experimental\coupons\subperiodcoupons.hpp" />
+    <ClInclude Include="ql\experimental\coupons\swapspreadindex.hpp" />
+    <ClInclude Include="ql\experimental\credit\all.hpp" />
+    <ClInclude Include="ql\experimental\credit\basecorrelationlossmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\basecorrelationstructure.hpp" />
+    <ClInclude Include="ql\experimental\credit\basket.hpp" />
+    <ClInclude Include="ql\experimental\credit\binomiallossmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\blackcdsoptionengine.hpp" />
+    <ClInclude Include="ql\experimental\credit\cdo.hpp" />
+    <ClInclude Include="ql\experimental\credit\cdsoption.hpp" />
+    <ClInclude Include="ql\experimental\credit\constantlosslatentmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\correlationstructure.hpp" />
+    <ClInclude Include="ql\experimental\credit\defaultevent.hpp" />
+    <ClInclude Include="ql\experimental\credit\defaultlossmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\defaultprobabilitykey.hpp" />
+    <ClInclude Include="ql\experimental\credit\defaultprobabilitylatentmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\defaulttype.hpp" />
+    <ClInclude Include="ql\experimental\credit\distribution.hpp" />
+    <ClInclude Include="ql\experimental\credit\factorspreadedhazardratecurve.hpp" />
+    <ClInclude Include="ql\experimental\credit\gaussianlhplossmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\homogeneouspooldef.hpp" />
+    <ClInclude Include="ql\experimental\credit\inhomogeneouspooldef.hpp" />
+    <ClInclude Include="ql\experimental\credit\integralcdoengine.hpp" />
+    <ClInclude Include="ql\experimental\credit\integralntdengine.hpp" />
+    <ClInclude Include="ql\experimental\credit\interpolatedaffinehazardratecurve.hpp" />
+    <ClInclude Include="ql\experimental\credit\issuer.hpp" />
+    <ClInclude Include="ql\experimental\credit\loss.hpp" />
+    <ClInclude Include="ql\experimental\credit\lossdistribution.hpp" />
+    <ClInclude Include="ql\experimental\credit\midpointcdoengine.hpp" />
+    <ClInclude Include="ql\experimental\credit\nthtodefault.hpp" />
+    <ClInclude Include="ql\experimental\credit\onefactoraffinesurvival.hpp" />
+    <ClInclude Include="ql\experimental\credit\onefactorcopula.hpp" />
+    <ClInclude Include="ql\experimental\credit\onefactorgaussiancopula.hpp" />
+    <ClInclude Include="ql\experimental\credit\onefactorstudentcopula.hpp" />
+    <ClInclude Include="ql\experimental\credit\pool.hpp" />
+    <ClInclude Include="ql\experimental\credit\randomdefaultlatentmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\randomdefaultmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\randomlosslatentmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\recoveryratemodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\recoveryratequote.hpp" />
+    <ClInclude Include="ql\experimental\credit\recursivelossmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\riskyassetswap.hpp" />
+    <ClInclude Include="ql\experimental\credit\riskyassetswapoption.hpp" />
+    <ClInclude Include="ql\experimental\credit\riskybond.hpp" />
+    <ClInclude Include="ql\experimental\credit\saddlepointlossmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\spotlosslatentmodel.hpp" />
+    <ClInclude Include="ql\experimental\credit\spreadedhazardratecurve.hpp" />
+    <ClInclude Include="ql\experimental\credit\syntheticcdo.hpp" />
+    <ClInclude Include="ql\experimental\exercise\all.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\all.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\analyticamericanmargrabeengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\analyticcomplexchooserengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\analyticcompoundoptionengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\analyticeuropeanmargrabeengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\analyticholderextensibleoptionengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\analyticpartialtimebarrieroptionengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\analyticpdfhestonengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\analyticsimplechooserengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\analytictwoassetbarrierengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\analytictwoassetcorrelationengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\analyticwriterextensibleoptionengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\complexchooseroption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\compoundoption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\continuousarithmeticasianlevyengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\continuousarithmeticasianvecerengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\everestoption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\himalayaoption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\holderextensibleoption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\kirkspreadoptionengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\margrabeoption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\mceverestengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\mchimalayaengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\mcpagodaengine.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\pagodaoption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\partialtimebarrieroption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\simplechooseroption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\spreadoption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\twoassetbarrieroption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\twoassetcorrelationoption.hpp" />
+    <ClInclude Include="ql\experimental\exoticoptions\writerextensibleoption.hpp" />
+    <ClInclude Include="ql\experimental\finitedifferences\all.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\dynprogvppintrinsicvalueengine.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdextoujumpvanillaengine.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdhestondoublebarrierengine.hpp" />
@@ -805,6 +736,7 @@
     <ClInclude Include="ql\experimental\finitedifferences\fdmextoujumpop.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdmextoujumpsolver.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdmhestonfwdop.hpp" />
+    <ClInclude Include="ql\experimental\finitedifferences\fdmhestongreensfct.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdmklugeextouop.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdmklugeextousolver.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdmsimple2dextousolver.hpp" />
@@ -815,6 +747,7 @@
     <ClInclude Include="ql\experimental\finitedifferences\fdmvppstepcondition.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdmvppstepconditionfactory.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdmzabrop.hpp" />
+    <ClInclude Include="ql\experimental\finitedifferences\fdornsteinuhlenbeckvanillaengine.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdsimpleextoujumpswingengine.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdsimpleextoustorageengine.hpp" />
     <ClInclude Include="ql\experimental\finitedifferences\fdsimpleklugeextouvppengine.hpp" />
@@ -846,13 +779,20 @@
     <ClInclude Include="ql\experimental\math\convolvedstudentt.hpp" />
     <ClInclude Include="ql\experimental\math\expm.hpp" />
     <ClInclude Include="ql\experimental\math\farliegumbelmorgensterncopularng.hpp" />
+    <ClInclude Include="ql\experimental\math\fireflyalgorithm.hpp" />
     <ClInclude Include="ql\experimental\math\frankcopularng.hpp" />
     <ClInclude Include="ql\experimental\math\gaussiancopulapolicy.hpp" />
+    <ClInclude Include="ql\experimental\math\gaussiannoncentralchisquaredpolynomial.hpp" />
+    <ClInclude Include="ql\experimental\math\hybridsimulatedannealing.hpp" />
+    <ClInclude Include="ql\experimental\math\hybridsimulatedannealingfunctors.hpp" />
+    <ClInclude Include="ql\experimental\math\isotropicrandomwalk.hpp" />
     <ClInclude Include="ql\experimental\math\laplaceinterpolation.hpp" />
     <ClInclude Include="ql\experimental\math\latentmodel.hpp" />
+    <ClInclude Include="ql\experimental\math\levyflightdistribution.hpp" />
     <ClInclude Include="ql\experimental\math\moorepenroseinverse.hpp" />
     <ClInclude Include="ql\experimental\math\multidimintegrator.hpp" />
     <ClInclude Include="ql\experimental\math\multidimquadrature.hpp" />
+    <ClInclude Include="ql\experimental\math\particleswarmoptimization.hpp" />
     <ClInclude Include="ql\experimental\math\piecewisefunction.hpp" />
     <ClInclude Include="ql\experimental\math\piecewiseintegral.hpp" />
     <ClInclude Include="ql\experimental\math\polarstudenttrng.hpp" />
@@ -866,16 +806,23 @@
     <ClInclude Include="ql\experimental\mcbasket\mcpathbasketengine.hpp" />
     <ClInclude Include="ql\experimental\mcbasket\pathmultiassetoption.hpp" />
     <ClInclude Include="ql\experimental\mcbasket\pathpayoff.hpp" />
+    <ClInclude Include="ql\experimental\models\all.hpp" />
+    <ClInclude Include="ql\experimental\models\hestonslvfdmmodel.hpp" />
+    <ClInclude Include="ql\experimental\models\hestonslvmcmodel.hpp" />
+    <ClInclude Include="ql\experimental\models\normalclvmodel.hpp" />
+    <ClInclude Include="ql\experimental\models\squarerootclvmodel.hpp" />
     <ClInclude Include="ql\experimental\processes\all.hpp" />
     <ClInclude Include="ql\experimental\processes\extendedblackscholesprocess.hpp" />
     <ClInclude Include="ql\experimental\processes\extendedornsteinuhlenbeckprocess.hpp" />
     <ClInclude Include="ql\experimental\processes\extouwithjumpsprocess.hpp" />
     <ClInclude Include="ql\experimental\processes\gemanroncoroniprocess.hpp" />
+    <ClInclude Include="ql\experimental\processes\hestonslvprocess.hpp" />
     <ClInclude Include="ql\experimental\processes\klugeextouprocess.hpp" />
     <ClInclude Include="ql\experimental\processes\vegastressedblackscholesprocess.hpp" />
     <ClInclude Include="ql\experimental\risk\all.hpp" />
     <ClInclude Include="ql\experimental\risk\creditriskplus.hpp" />
     <ClInclude Include="ql\experimental\risk\sensitivityanalysis.hpp" />
+    <ClInclude Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.hpp" />
     <ClInclude Include="ql\experimental\shortrate\all.hpp" />
     <ClInclude Include="ql\experimental\shortrate\generalizedhullwhite.hpp" />
     <ClInclude Include="ql\experimental\shortrate\generalizedornsteinuhlenbeckprocess.hpp" />
@@ -883,8 +830,79 @@
     <ClInclude Include="ql\experimental\swaptions\haganirregularswaptionengine.hpp" />
     <ClInclude Include="ql\experimental\swaptions\irregularswap.hpp" />
     <ClInclude Include="ql\experimental\swaptions\irregularswaption.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\auxilliariesT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\choleskyfactorisationT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\complexT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\gausslobattoT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\integratorsT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\minimADVariable2T.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\qrfactorisationT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\regressionT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\solver1dT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\auxilliaries\svdT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\commodity\commoditymodels.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\commodity\indextermstructure.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\commodity\twofactorlognormalmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\commodity\twofactormeanreversionmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\commodity\twofactornormalmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\hullwhite\bondoptionengine.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\hullwhite\fixedratebondoption.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\hullwhite\g2ppT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\hullwhite\hullwhitemodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\amcpricerT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\commoditypayoffT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcpayoffT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcscriptT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcsimulationT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\montecarlomodells.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\ratespayoffT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\expression.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\location.hh" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\position.hh" />
+    <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\stack.hh" />
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian\qgswaptionmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodelabcdT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodels.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgaverageswapratemodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qglocalvolmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qgswapratemodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\quasigaussianmodel2T.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\stochasticprocessT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\stochvol\hestonmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\stochvol\quadraticlvsvmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\stochvol\shiftedsabrmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\stochvol\stochvolcalibrator.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\stochvol\stochvolmodels.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\stochvol\tdstochvolmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolmodels.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolmodelT.hpp" />
     <ClInclude Include="ql\experimental\termstructures\all.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\corrtermstructureStrike.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\Helper\KernelInterface.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCovarianceFX.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\localcorrsurfaceabf.hpp" />
+    <ClInclude Include="ql\experimental\termstructures\localcorrtermstructure.hpp" />
     <ClInclude Include="ql\experimental\termstructures\multicurvesensitivities.hpp" />
+    <ClInclude Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolmodel.hpp" />
+    <ClInclude Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolsmilesection.hpp" />
+    <ClInclude Include="ql\experimental\vanillalocalvolmodel\vanillalocalvoltermstructures.hpp" />
     <ClInclude Include="ql\experimental\variancegamma\all.hpp" />
     <ClInclude Include="ql\experimental\variancegamma\analyticvariancegammaengine.hpp" />
     <ClInclude Include="ql\experimental\variancegamma\fftengine.hpp" />
@@ -908,6 +926,8 @@
     <ClInclude Include="ql\experimental\volatility\noarbsabrinterpolation.hpp" />
     <ClInclude Include="ql\experimental\volatility\noarbsabrsmilesection.hpp" />
     <ClInclude Include="ql\experimental\volatility\sabrvolsurface.hpp" />
+    <ClInclude Include="ql\experimental\volatility\sabrvoltermstructure.hpp" />
+    <ClInclude Include="ql\experimental\volatility\smiledsurface.hpp" />
     <ClInclude Include="ql\experimental\volatility\sviinterpolatedsmilesection.hpp" />
     <ClInclude Include="ql\experimental\volatility\sviinterpolation.hpp" />
     <ClInclude Include="ql\experimental\volatility\svismilesection.hpp" />
@@ -917,7 +937,6 @@
     <ClInclude Include="ql\experimental\volatility\zabrinterpolatedsmilesection.hpp" />
     <ClInclude Include="ql\experimental\volatility\zabrinterpolation.hpp" />
     <ClInclude Include="ql\experimental\volatility\zabrsmilesection.hpp" />
-    <ClInclude Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.hpp" />
     <ClInclude Include="ql\indexes\all.hpp" />
     <ClInclude Include="ql\indexes\bmaindex.hpp" />
     <ClInclude Include="ql\indexes\ibor\all.hpp" />
@@ -985,6 +1004,7 @@
     <ClInclude Include="ql\instruments\bonds\all.hpp" />
     <ClInclude Include="ql\instruments\bonds\btp.hpp" />
     <ClInclude Include="ql\instruments\bonds\cmsratebond.hpp" />
+    <ClInclude Include="ql\instruments\bonds\cpibond.hpp" />
     <ClInclude Include="ql\instruments\bonds\fixedratebond.hpp" />
     <ClInclude Include="ql\instruments\bonds\floatingratebond.hpp" />
     <ClInclude Include="ql\instruments\bonds\zerocouponbond.hpp" />
@@ -993,7 +1013,10 @@
     <ClInclude Include="ql\instruments\claim.hpp" />
     <ClInclude Include="ql\instruments\cliquetoption.hpp" />
     <ClInclude Include="ql\instruments\compositeinstrument.hpp" />
+    <ClInclude Include="ql\instruments\cpicapfloor.hpp" />
+    <ClInclude Include="ql\instruments\cpiswap.hpp" />
     <ClInclude Include="ql\instruments\creditdefaultswap.hpp" />
+    <ClInclude Include="ql\instruments\dividendbarrieroption.hpp" />
     <ClInclude Include="ql\instruments\dividendschedule.hpp" />
     <ClInclude Include="ql\instruments\dividendvanillaoption.hpp" />
     <ClInclude Include="ql\instruments\europeanoption.hpp" />
@@ -1003,6 +1026,7 @@
     <ClInclude Include="ql\instruments\forward.hpp" />
     <ClInclude Include="ql\instruments\forwardrateagreement.hpp" />
     <ClInclude Include="ql\instruments\forwardvanillaoption.hpp" />
+    <ClInclude Include="ql\instruments\futures.hpp" />
     <ClInclude Include="ql\instruments\impliedvolatility.hpp" />
     <ClInclude Include="ql\instruments\inflationcapfloor.hpp" />
     <ClInclude Include="ql\instruments\lookbackoption.hpp" />
@@ -1027,7 +1051,9 @@
     <ClInclude Include="ql\instruments\swap.hpp" />
     <ClInclude Include="ql\instruments\swaption.hpp" />
     <ClInclude Include="ql\instruments\vanillaoption.hpp" />
+    <ClInclude Include="ql\instruments\vanillastorageoption.hpp" />
     <ClInclude Include="ql\instruments\vanillaswap.hpp" />
+    <ClInclude Include="ql\instruments\vanillaswingoption.hpp" />
     <ClInclude Include="ql\instruments\varianceswap.hpp" />
     <ClInclude Include="ql\instruments\yearonyearinflationswap.hpp" />
     <ClInclude Include="ql\instruments\zerocouponinflationswap.hpp" />
@@ -1121,6 +1147,10 @@
     <ClInclude Include="ql\math\interpolations\multicubicspline.hpp" />
     <ClInclude Include="ql\math\interpolations\sabrinterpolation.hpp" />
     <ClInclude Include="ql\math\interpolations\xabrinterpolation.hpp" />
+    <ClInclude Include="ql\math\kernelfunctions.hpp" />
+    <ClInclude Include="ql\math\lexicographicalview.hpp" />
+    <ClInclude Include="ql\math\linearleastsquaresregression.hpp" />
+    <ClInclude Include="ql\math\matrix.hpp" />
     <ClInclude Include="ql\math\matrixutilities\all.hpp" />
     <ClInclude Include="ql\math\matrixutilities\basisincompleteordered.hpp" />
     <ClInclude Include="ql\math\matrixutilities\bicgstab.hpp" />
@@ -1136,6 +1166,7 @@
     <ClInclude Include="ql\math\matrixutilities\symmetricschurdecomposition.hpp" />
     <ClInclude Include="ql\math\matrixutilities\tapcorrelations.hpp" />
     <ClInclude Include="ql\math\matrixutilities\tqreigendecomposition.hpp" />
+    <ClInclude Include="ql\math\modifiedbessel.hpp" />
     <ClInclude Include="ql\math\ode\adaptiverungekutta.hpp" />
     <ClInclude Include="ql\math\ode\all.hpp" />
     <ClInclude Include="ql\math\optimization\all.hpp" />
@@ -1163,6 +1194,8 @@
     <ClInclude Include="ql\math\optimization\steepestdescent.hpp" />
     <ClInclude Include="ql\math\pascaltriangle.hpp" />
     <ClInclude Include="ql\math\polynomialmathfunction.hpp" />
+    <ClInclude Include="ql\math\primenumbers.hpp" />
+    <ClInclude Include="ql\math\quadratic.hpp" />
     <ClInclude Include="ql\math\randomnumbers\all.hpp" />
     <ClInclude Include="ql\math\randomnumbers\boxmullergaussianrng.hpp" />
     <ClInclude Include="ql\math\randomnumbers\centrallimitgaussianrng.hpp" />
@@ -1184,6 +1217,10 @@
     <ClInclude Include="ql\math\randomnumbers\sobolbrownianbridgersg.hpp" />
     <ClInclude Include="ql\math\randomnumbers\sobolrsg.hpp" />
     <ClInclude Include="ql\math\randomnumbers\stochasticcollocationinvcdf.hpp" />
+    <ClInclude Include="ql\math\richardsonextrapolation.hpp" />
+    <ClInclude Include="ql\math\rounding.hpp" />
+    <ClInclude Include="ql\math\sampledcurve.hpp" />
+    <ClInclude Include="ql\math\solver1d.hpp" />
     <ClInclude Include="ql\math\solvers1d\all.hpp" />
     <ClInclude Include="ql\math\solvers1d\bisection.hpp" />
     <ClInclude Include="ql\math\solvers1d\brent.hpp" />
@@ -1203,19 +1240,149 @@
     <ClInclude Include="ql\math\statistics\riskstatistics.hpp" />
     <ClInclude Include="ql\math\statistics\sequencestatistics.hpp" />
     <ClInclude Include="ql\math\statistics\statistics.hpp" />
+    <ClInclude Include="ql\math\transformedgrid.hpp" />
+    <ClInclude Include="ql\methods\all.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\all.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\americancondition.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\boundarycondition.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\bsmoperator.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\bsmtermoperator.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\cranknicolson.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\dminus.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\dplus.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\dplusdminus.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\dzero.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\expliciteuler.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\fdtypedefs.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\finitedifferencemodel.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\impliciteuler.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\all.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\concentrating1dmesher.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\exponentialjump1dmesher.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\fdm1dmesher.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\fdmblackscholesmesher.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\fdmblackscholesmultistrikemesher.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\meshers\fdmcev1dmesher.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\fdmhestonvariancemesher.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\fdmmesher.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\fdmmeshercomposite.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\fdmsimpleprocess1dmesher.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\predefined1dmesher.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\uniform1dmesher.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\meshers\uniformgridmesher.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\mixedscheme.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\onefactoroperator.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operatorfactory.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\all.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\fdm2dblackscholesop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\fdmbatesop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\fdmblackscholesop.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\operators\fdmcevop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\fdmg2op.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\fdmhestonhullwhiteop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\fdmhestonop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\fdmhullwhiteop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\fdmlinearop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\fdmlinearopcomposite.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\fdmlinearopiterator.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\fdmlinearoplayout.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\operators\fdmlocalvolfwdop.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\operators\fdmornsteinuhlenbeckop.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\operators\fdmsabrop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\firstderivativeop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\ninepointlinearop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\nthorderderivativeop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\numericaldifferentiation.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\secondderivativeop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\secondordermixedderivativeop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operators\triplebandlinearop.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\operatortraits.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\parallelevolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\pde.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\pdebsm.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\pdeshortrate.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\schemes\all.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\schemes\boundaryconditionschemehelper.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\schemes\craigsneydscheme.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\schemes\douglasscheme.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\schemes\expliciteulerscheme.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\schemes\hundsdorferscheme.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\schemes\impliciteulerscheme.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\schemes\methodoflinesscheme.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\schemes\modifiedcraigsneydscheme.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\schemes\trbdf2scheme.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\shoutcondition.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\all.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdm1dimsolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdm2dblackscholessolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdm2dimsolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdm3dimsolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdmbackwardsolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdmbatessolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdmblackscholessolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdmg2solver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdmhestonhullwhitesolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdmhestonsolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdmhullwhitesolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdmndimsolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdmsimple2dbssolver.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\solvers\fdmsolverdesc.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\stepcondition.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\stepconditions\all.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\stepconditions\fdmamericanstepcondition.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\stepconditions\fdmarithmeticaveragecondition.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\stepconditions\fdmbermudanstepcondition.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\stepconditions\fdmsimplestoragecondition.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\stepconditions\fdmsimpleswingcondition.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\stepconditions\fdmsnapshotcondition.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\stepconditions\fdmstepconditioncomposite.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\trbdf2.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\tridiagonaloperator.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\utilities\all.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\utilities\bsmrndcalculator.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\utilities\cevrndcalculator.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\utilities\fdmaffinemodelswapinnervalue.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\utilities\fdmaffinemodeltermstructure.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\utilities\fdmboundaryconditionset.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\utilities\fdmdirichletboundary.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\utilities\fdmdiscountdirichletboundary.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\utilities\fdmdividendhandler.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\utilities\fdmindicesonboundary.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\utilities\fdminnervaluecalculator.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\utilities\fdmmesherintegral.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\utilities\fdmquantohelper.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\utilities\fdmtimedepdirichletboundary.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\utilities\gbsmrndcalculator.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\utilities\hestonrndcalculator.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\utilities\localvolrndcalculator.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\utilities\riskneutraldensitycalculator.hpp" />
     <ClInclude Include="ql\methods\finitedifferences\utilities\squarerootprocessrndcalculator.hpp" />
+    <ClInclude Include="ql\methods\finitedifferences\zerocondition.hpp" />
+    <ClInclude Include="ql\methods\lattices\all.hpp" />
+    <ClInclude Include="ql\methods\lattices\binomialtree.hpp" />
+    <ClInclude Include="ql\methods\lattices\bsmlattice.hpp" />
+    <ClInclude Include="ql\methods\lattices\lattice.hpp" />
+    <ClInclude Include="ql\methods\lattices\lattice1d.hpp" />
+    <ClInclude Include="ql\methods\lattices\lattice2d.hpp" />
+    <ClInclude Include="ql\methods\lattices\tree.hpp" />
+    <ClInclude Include="ql\methods\lattices\trinomialtree.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\all.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\brownianbridge.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\earlyexercisepathpricer.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\exercisestrategy.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\genericlsregression.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\longstaffschwartzpathpricer.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\lsmbasissystem.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\mctraits.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\montecarlomodel.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\multipath.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\multipathgenerator.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\nodedata.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\parametricexercise.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\path.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\pathgenerator.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\pathpricer.hpp" />
+    <ClInclude Include="ql\methods\montecarlo\sample.hpp" />
     <ClInclude Include="ql\models\all.hpp" />
     <ClInclude Include="ql\models\calibrationhelper.hpp" />
     <ClInclude Include="ql\models\equity\all.hpp" />
@@ -1739,6 +1906,7 @@
     <ClInclude Include="ql\utilities\vectors.hpp" />
     <ClInclude Include="ql\auto_link.hpp" />
     <ClInclude Include="ql\auto_ptr.hpp" />
+    <ClInclude Include="ql\buildinfo.hpp" />
     <ClInclude Include="ql\cashflow.hpp" />
     <ClInclude Include="ql\compounding.hpp" />
     <ClInclude Include="ql\config.ansi.hpp" />
@@ -1782,7 +1950,6 @@
     <ClInclude Include="ql\volatilitymodel.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ql\buildinfo.cpp" />
     <ClCompile Include="ql\cashflows\averagebmacoupon.cpp" />
     <ClCompile Include="ql\cashflows\capflooredcoupon.cpp" />
     <ClCompile Include="ql\cashflows\capflooredinflationcoupon.cpp" />
@@ -1835,6 +2002,10 @@
     <ClCompile Include="ql\experimental\barrieroption\quantodoublebarrieroption.cpp" />
     <ClCompile Include="ql\experimental\barrieroption\vannavolgabarrierengine.cpp" />
     <ClCompile Include="ql\experimental\barrieroption\wulinyongdoublebarrierengine.cpp" />
+    <ClCompile Include="ql\experimental\basismodels\basisswap.cpp" />
+    <ClCompile Include="ql\experimental\basismodels\basisswapengine.cpp" />
+    <ClCompile Include="ql\experimental\basismodels\basisswapratehelpers.cpp" />
+    <ClCompile Include="ql\experimental\basismodels\fxfwdratehelper.cpp" />
     <ClCompile Include="ql\experimental\basismodels\swaptioncfs.cpp" />
     <ClCompile Include="ql\experimental\basismodels\tenoroptionletvts.cpp" />
     <ClCompile Include="ql\experimental\basismodels\tenorswaptionvts.cpp" />
@@ -1934,53 +2105,6 @@
     <ClCompile Include="ql\experimental\exoticoptions\twoassetbarrieroption.cpp" />
     <ClCompile Include="ql\experimental\exoticoptions\twoassetcorrelationoption.cpp" />
     <ClCompile Include="ql\experimental\exoticoptions\writerextensibleoption.cpp" />
-    <ClCompile Include="ql\experimental\basismodels\basisswap.cpp" />
-    <ClCompile Include="ql\experimental\basismodels\basisswapengine.cpp" />
-    <ClCompile Include="ql\experimental\basismodels\basisswapratehelpers.cpp" />
-    <ClCompile Include="ql\experimental\basismodels\fxfwdratehelper.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\hullwhite\bondoptionengine.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\hullwhite\fixedratebondoption.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\expression.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\ExpressionParser.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Lexer.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglocalvolmodel.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.cpp" />
-    <ClCompile Include="ql\experimental\templatemodels\stochvol\stochvolcalibrator.cpp" />
-    <ClCompile Include="ql\experimental\termstructures\corrtermstructureStrike.cpp" />
-    <ClCompile Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.cpp" />
-    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.cpp" />
-    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCovarianceFX.cpp" />
-    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.cpp" />
-    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.cpp" />
-    <ClCompile Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.cpp" />
-    <ClCompile Include="ql\experimental\termstructures\localcorrsurfaceabf.cpp" />
-    <ClCompile Include="ql\experimental\termstructures\localcorrtermstructure.cpp" />
-    <ClCompile Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolmodel.cpp" />
-    <ClCompile Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolsmilesection.cpp" />
-    <ClCompile Include="ql\experimental\vanillalocalvolmodel\vanillalocalvoltermstructures.cpp" />
-    <ClCompile Include="ql\experimental\volatility\smiledsurface.cpp" />
-    <ClInclude Include="ql\experimental\finitedifferences\all.hpp" />
     <ClCompile Include="ql\experimental\finitedifferences\dynprogvppintrinsicvalueengine.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdextoujumpvanillaengine.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdhestondoublebarrierengine.cpp" />
@@ -1991,12 +2115,14 @@
     <ClCompile Include="ql\experimental\finitedifferences\fdmextoujumpop.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdmextoujumpsolver.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdmhestonfwdop.cpp" />
+    <ClCompile Include="ql\experimental\finitedifferences\fdmhestongreensfct.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdmklugeextouop.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdmsquarerootfwdop.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdmvppstartlimitstepcondition.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdmvppstepcondition.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdmvppstepconditionfactory.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdmzabrop.cpp" />
+    <ClCompile Include="ql\experimental\finitedifferences\fdornsteinuhlenbeckvanillaengine.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdsimpleextoujumpswingengine.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdsimpleextoustorageengine.cpp" />
     <ClCompile Include="ql\experimental\finitedifferences\fdsimpleklugeextouvppengine.cpp" />
@@ -2013,9 +2139,12 @@
     <ClCompile Include="ql\experimental\lattices\extendedbinomialtree.cpp" />
     <ClCompile Include="ql\experimental\math\convolvedstudentt.cpp" />
     <ClCompile Include="ql\experimental\math\expm.cpp" />
+    <ClCompile Include="ql\experimental\math\fireflyalgorithm.cpp" />
     <ClCompile Include="ql\experimental\math\gaussiancopulapolicy.cpp" />
+    <ClCompile Include="ql\experimental\math\gaussiannoncentralchisquaredpolynomial.cpp" />
     <ClCompile Include="ql\experimental\math\multidimintegrator.cpp" />
     <ClCompile Include="ql\experimental\math\multidimquadrature.cpp" />
+    <ClCompile Include="ql\experimental\math\particleswarmoptimization.cpp" />
     <ClCompile Include="ql\experimental\math\piecewiseintegral.cpp" />
     <ClCompile Include="ql\experimental\math\tcopulapolicy.cpp" />
     <ClCompile Include="ql\experimental\math\zigguratrng.cpp" />
@@ -2023,19 +2152,54 @@
     <ClCompile Include="ql\experimental\mcbasket\longstaffschwartzmultipathpricer.cpp" />
     <ClCompile Include="ql\experimental\mcbasket\mcpathbasketengine.cpp" />
     <ClCompile Include="ql\experimental\mcbasket\pathmultiassetoption.cpp" />
+    <ClCompile Include="ql\experimental\models\hestonslvfdmmodel.cpp" />
+    <ClCompile Include="ql\experimental\models\hestonslvmcmodel.cpp" />
+    <ClCompile Include="ql\experimental\models\normalclvmodel.cpp" />
+    <ClCompile Include="ql\experimental\models\squarerootclvmodel.cpp" />
     <ClCompile Include="ql\experimental\processes\extendedblackscholesprocess.cpp" />
     <ClCompile Include="ql\experimental\processes\extendedornsteinuhlenbeckprocess.cpp" />
     <ClCompile Include="ql\experimental\processes\extouwithjumpsprocess.cpp" />
     <ClCompile Include="ql\experimental\processes\gemanroncoroniprocess.cpp" />
+    <ClCompile Include="ql\experimental\processes\hestonslvprocess.cpp" />
     <ClCompile Include="ql\experimental\processes\klugeextouprocess.cpp" />
     <ClCompile Include="ql\experimental\processes\vegastressedblackscholesprocess.cpp" />
     <ClCompile Include="ql\experimental\risk\creditriskplus.cpp" />
     <ClCompile Include="ql\experimental\risk\sensitivityanalysis.cpp" />
+    <ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp" />
     <ClCompile Include="ql\experimental\shortrate\generalizedhullwhite.cpp" />
     <ClCompile Include="ql\experimental\shortrate\generalizedornsteinuhlenbeckprocess.cpp" />
     <ClCompile Include="ql\experimental\swaptions\haganirregularswaptionengine.cpp" />
     <ClCompile Include="ql\experimental\swaptions\irregularswap.cpp" />
     <ClCompile Include="ql\experimental\swaptions\irregularswaption.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\hullwhite\bondoptionengine.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\hullwhite\fixedratebondoption.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\expression.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Lexer.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglocalvolmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\stochvol\stochvolcalibrator.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\corrtermstructureStrike.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\Helper\ParticleMethodUtils.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCorrelationFX.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossCovarianceFX.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossNegSkewFX.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\CTSlocalInCrossVolatilityFX.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localCorrFX\localcorrsurfaceabfFX.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localcorrsurfaceabf.cpp" />
+    <ClCompile Include="ql\experimental\termstructures\localcorrtermstructure.cpp" />
+    <ClCompile Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolmodel.cpp" />
+    <ClCompile Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolsmilesection.cpp" />
+    <ClCompile Include="ql\experimental\vanillalocalvolmodel\vanillalocalvoltermstructures.cpp" />
     <ClCompile Include="ql\experimental\variancegamma\analyticvariancegammaengine.cpp" />
     <ClCompile Include="ql\experimental\variancegamma\fftengine.cpp" />
     <ClCompile Include="ql\experimental\variancegamma\fftvanillaengine.cpp" />
@@ -2056,11 +2220,11 @@
     <ClCompile Include="ql\experimental\volatility\noarbsabrinterpolatedsmilesection.cpp" />
     <ClCompile Include="ql\experimental\volatility\noarbsabrsmilesection.cpp" />
     <ClCompile Include="ql\experimental\volatility\sabrvolsurface.cpp" />
+    <ClCompile Include="ql\experimental\volatility\smiledsurface.cpp" />
     <ClCompile Include="ql\experimental\volatility\sviinterpolatedsmilesection.cpp" />
     <ClCompile Include="ql\experimental\volatility\svismilesection.cpp" />
     <ClCompile Include="ql\experimental\volatility\volcube.cpp" />
     <ClCompile Include="ql\experimental\volatility\zabr.cpp" />
-    <ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp" />
     <ClCompile Include="ql\indexes\bmaindex.cpp" />
     <ClCompile Include="ql\indexes\ibor\bibor.cpp" />
     <ClCompile Include="ql\indexes\ibor\eonia.cpp" />
@@ -2093,6 +2257,7 @@
     <ClCompile Include="ql\instruments\bond.cpp" />
     <ClCompile Include="ql\instruments\bonds\btp.cpp" />
     <ClCompile Include="ql\instruments\bonds\cmsratebond.cpp" />
+    <ClCompile Include="ql\instruments\bonds\cpibond.cpp" />
     <ClCompile Include="ql\instruments\bonds\fixedratebond.cpp" />
     <ClCompile Include="ql\instruments\bonds\floatingratebond.cpp" />
     <ClCompile Include="ql\instruments\bonds\zerocouponbond.cpp" />
@@ -2100,7 +2265,10 @@
     <ClCompile Include="ql\instruments\claim.cpp" />
     <ClCompile Include="ql\instruments\cliquetoption.cpp" />
     <ClCompile Include="ql\instruments\compositeinstrument.cpp" />
+    <ClCompile Include="ql\instruments\cpicapfloor.cpp" />
+    <ClCompile Include="ql\instruments\cpiswap.cpp" />
     <ClCompile Include="ql\instruments\creditdefaultswap.cpp" />
+    <ClCompile Include="ql\instruments\dividendbarrieroption.cpp" />
     <ClCompile Include="ql\instruments\dividendvanillaoption.cpp" />
     <ClCompile Include="ql\instruments\europeanoption.cpp" />
     <ClCompile Include="ql\instruments\fixedratebondforward.cpp" />
@@ -2109,6 +2277,7 @@
     <ClCompile Include="ql\instruments\forward.cpp" />
     <ClCompile Include="ql\instruments\forwardrateagreement.cpp" />
     <ClCompile Include="ql\instruments\forwardvanillaoption.cpp" />
+    <ClCompile Include="ql\instruments\futures.cpp" />
     <ClCompile Include="ql\instruments\impliedvolatility.cpp" />
     <ClCompile Include="ql\instruments\inflationcapfloor.cpp" />
     <ClCompile Include="ql\instruments\lookbackoption.cpp" />
@@ -2134,6 +2303,7 @@
     <ClCompile Include="ql\instruments\swaption.cpp" />
     <ClCompile Include="ql\instruments\vanillaoption.cpp" />
     <ClCompile Include="ql\instruments\vanillaswap.cpp" />
+    <ClCompile Include="ql\instruments\vanillaswingoption.cpp" />
     <ClCompile Include="ql\instruments\varianceswap.cpp" />
     <ClCompile Include="ql\instruments\yearonyearinflationswap.cpp" />
     <ClCompile Include="ql\instruments\zerocouponinflationswap.cpp" />
@@ -2173,6 +2343,9 @@
     <ClCompile Include="ql\math\distributions\gammadistribution.cpp" />
     <ClCompile Include="ql\math\distributions\normaldistribution.cpp" />
     <ClCompile Include="ql\math\distributions\studenttdistribution.cpp" />
+    <ClCompile Include="ql\math\errorfunction.cpp" />
+    <ClCompile Include="ql\math\factorial.cpp" />
+    <ClCompile Include="ql\math\incompletegamma.cpp" />
     <ClCompile Include="ql\math\integrals\discreteintegrals.cpp" />
     <ClCompile Include="ql\math\integrals\filonintegral.cpp" />
     <ClCompile Include="ql\math\integrals\gaussianorthogonalpolynomial.cpp" />
@@ -2181,6 +2354,7 @@
     <ClCompile Include="ql\math\integrals\integral.cpp" />
     <ClCompile Include="ql\math\integrals\kronrodintegral.cpp" />
     <ClCompile Include="ql\math\integrals\segmentintegral.cpp" />
+    <ClCompile Include="ql\math\matrix.cpp" />
     <ClCompile Include="ql\math\matrixutilities\basisincompleteordered.cpp" />
     <ClCompile Include="ql\math\matrixutilities\bicgstab.cpp" />
     <ClCompile Include="ql\math\matrixutilities\choleskydecomposition.cpp" />
@@ -2194,6 +2368,7 @@
     <ClCompile Include="ql\math\matrixutilities\symmetricschurdecomposition.cpp" />
     <ClCompile Include="ql\math\matrixutilities\tapcorrelations.cpp" />
     <ClCompile Include="ql\math\matrixutilities\tqreigendecomposition.cpp" />
+    <ClCompile Include="ql\math\modifiedbessel.cpp" />
     <ClCompile Include="ql\math\optimization\armijo.cpp" />
     <ClCompile Include="ql\math\optimization\bfgs.cpp" />
     <ClCompile Include="ql\math\optimization\conjugategradient.cpp" />
@@ -2213,6 +2388,8 @@
     <ClCompile Include="ql\math\optimization\steepestdescent.cpp" />
     <ClCompile Include="ql\math\pascaltriangle.cpp" />
     <ClCompile Include="ql\math\polynomialmathfunction.cpp" />
+    <ClCompile Include="ql\math\primenumbers.cpp" />
+    <ClCompile Include="ql\math\quadratic.cpp" />
     <ClCompile Include="ql\math\randomnumbers\faurersg.cpp" />
     <ClCompile Include="ql\math\randomnumbers\haltonrsg.cpp" />
     <ClCompile Include="ql\math\randomnumbers\knuthuniformrng.cpp" />
@@ -2225,19 +2402,93 @@
     <ClCompile Include="ql\math\randomnumbers\sobolbrownianbridgersg.cpp" />
     <ClCompile Include="ql\math\randomnumbers\sobolrsg.cpp" />
     <ClCompile Include="ql\math\randomnumbers\stochasticcollocationinvcdf.cpp" />
+    <ClCompile Include="ql\math\richardsonextrapolation.cpp" />
+    <ClCompile Include="ql\math\rounding.cpp" />
+    <ClCompile Include="ql\math\sampledcurve.cpp" />
+    <ClCompile Include="ql\math\statistics\discrepancystatistics.cpp" />
+    <ClCompile Include="ql\math\statistics\generalstatistics.cpp" />
+    <ClCompile Include="ql\math\statistics\histogram.cpp" />
+    <ClCompile Include="ql\math\statistics\incrementalstatistics.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\boundarycondition.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\bsmoperator.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\meshers\concentrating1dmesher.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\meshers\exponentialjump1dmesher.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\meshers\fdmblackscholesmesher.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\meshers\fdmblackscholesmultistrikemesher.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\meshers\fdmcev1dmesher.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\meshers\fdmhestonvariancemesher.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\meshers\fdmmeshercomposite.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\meshers\fdmsimpleprocess1dmesher.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\meshers\uniformgridmesher.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\fdm2dblackscholesop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\fdmbatesop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\fdmblackscholesop.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\operators\fdmcevop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\fdmg2op.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\fdmhestonhullwhiteop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\fdmhestonop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\fdmhullwhiteop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\fdmlinearoplayout.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\operators\fdmlocalvolfwdop.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\operators\fdmornsteinuhlenbeckop.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\operators\fdmsabrop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\firstderivativeop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\ninepointlinearop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\nthorderderivativeop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\numericaldifferentiation.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\secondderivativeop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\secondordermixedderivativeop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\operators\triplebandlinearop.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\schemes\craigsneydscheme.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\schemes\douglasscheme.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\schemes\expliciteulerscheme.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\schemes\hundsdorferscheme.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\schemes\impliciteulerscheme.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\schemes\methodoflinesscheme.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\schemes\modifiedcraigsneydscheme.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdm1dimsolver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdm2dblackscholessolver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdm2dimsolver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdm3dimsolver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdmbackwardsolver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdmbatessolver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdmblackscholessolver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdmg2solver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdmhestonhullwhitesolver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdmhestonsolver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdmhullwhitesolver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\solvers\fdmsimple2dbssolver.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\stepconditions\fdmamericanstepcondition.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\stepconditions\fdmarithmeticaveragecondition.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\stepconditions\fdmbermudanstepcondition.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\stepconditions\fdmsimplestoragecondition.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\stepconditions\fdmsimpleswingcondition.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\stepconditions\fdmsnapshotcondition.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\stepconditions\fdmstepconditioncomposite.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\tridiagonaloperator.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\utilities\bsmrndcalculator.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\utilities\cevrndcalculator.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\utilities\fdmaffinemodelswapinnervalue.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\utilities\fdmaffinemodeltermstructure.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\utilities\fdmdirichletboundary.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\utilities\fdmdiscountdirichletboundary.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\utilities\fdmdividendhandler.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\utilities\fdmindicesonboundary.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\utilities\fdminnervaluecalculator.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\utilities\fdmmesherintegral.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\utilities\fdmquantohelper.cpp" />
+    <ClCompile Include="ql\methods\finitedifferences\utilities\fdmtimedepdirichletboundary.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\utilities\gbsmrndcalculator.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\utilities\hestonrndcalculator.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\utilities\localvolrndcalculator.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\utilities\riskneutraldensitycalculator.cpp" />
     <ClCompile Include="ql\methods\finitedifferences\utilities\squarerootprocessrndcalculator.cpp" />
+    <ClCompile Include="ql\methods\lattices\binomialtree.cpp" />
+    <ClCompile Include="ql\methods\lattices\trinomialtree.cpp" />
+    <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp" />
+    <ClCompile Include="ql\methods\montecarlo\genericlsregression.cpp" />
+    <ClCompile Include="ql\methods\montecarlo\lsmbasissystem.cpp" />
+    <ClCompile Include="ql\methods\montecarlo\parametricexercise.cpp" />
     <ClCompile Include="ql\models\calibrationhelper.cpp" />
     <ClCompile Include="ql\models\equity\batesmodel.cpp" />
     <ClCompile Include="ql\models\equity\gjrgarchmodel.cpp" />
@@ -2606,6 +2857,7 @@
     <ClCompile Include="ql\utilities\dataformatters.cpp" />
     <ClCompile Include="ql\utilities\dataparsers.cpp" />
     <ClCompile Include="ql\utilities\tracing.cpp" />
+    <ClCompile Include="ql\buildinfo.cpp" />
     <ClCompile Include="ql\cashflow.cpp" />
     <ClCompile Include="ql\currency.cpp" />
     <ClCompile Include="ql\discretizedasset.cpp" />
@@ -2627,12 +2879,10 @@
   <ItemGroup>
     <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|x64'">true</ExcludedFromBuild>
@@ -2641,12 +2891,10 @@
   <ItemGroup>
     <Bison Include="ql\experimental\templatemodels\montecarlo\scripting\parser.y">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (sr, light)|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (static runtime)|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (static runtime)|x64'">true</ExcludedFromBuild>
