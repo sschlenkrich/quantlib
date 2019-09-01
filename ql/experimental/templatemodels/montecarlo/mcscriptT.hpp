@@ -278,6 +278,21 @@ namespace QuantLib {
 				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
 				return boost::shared_ptr<PayoffType>(new typename MCBase::Max(payoff(tree->childs()[0], k), payoff(tree->childs()[1], k)));
 			}
+			case Scripting::Expression::EXPONENTIAL: {
+				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Exponential(payoff(tree->childs()[0], k)));
+			}
+			case Scripting::Expression::LOGARITHM: {
+				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Logarithm(payoff(tree->childs()[0], k)));
+			}
+			case Scripting::Expression::SQUAREROOT: {
+				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafs(tree, 0, k))  QL_FAIL("Cannot interprete payoff");
+				return boost::shared_ptr<PayoffType>(new typename MCBase::Squareroot(payoff(tree->childs()[0], k)));
+			}
 			case Scripting::Expression::LOGICAL: {
 				if (!hasChilds(tree, 2, k)) QL_FAIL("Cannot interprete payoff");
 				if (!hasLeafs(tree, 1, k))  QL_FAIL("Cannot interprete payoff");

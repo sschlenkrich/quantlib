@@ -311,6 +311,45 @@ namespace QuantLib {
 			inline virtual std::set<DateType> observationTimes() { return PayoffType::unionTimes(x_->observationTimes(), y_->observationTimes()); }
 		};
 
+		// Exponential function
+		class Exponential : public MCPayoffT<DateType, PassiveType, ActiveType> {
+		protected:
+			boost::shared_ptr<PayoffType> x_;
+		public:
+			Exponential(const boost::shared_ptr<PayoffType>&   x) : PayoffType(0.0), x_(x) {}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				return exp(x_->at(p));
+			}
+			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Exponential(x_->at(t))); }
+			inline virtual std::set<DateType> observationTimes() { return x_->observationTimes(); }
+		};
+
+		// Natural logarithm function
+		class Logarithm : public MCPayoffT<DateType, PassiveType, ActiveType> {
+		protected:
+			boost::shared_ptr<PayoffType> x_;
+		public:
+			Logarithm(const boost::shared_ptr<PayoffType>&   x) : PayoffType(0.0), x_(x) {}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				return log(x_->at(p));
+			}
+			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Logarithm(x_->at(t))); }
+			inline virtual std::set<DateType> observationTimes() { return x_->observationTimes(); }
+		};
+
+		// Sqareroot function
+		class Squareroot : public MCPayoffT<DateType, PassiveType, ActiveType> {
+		protected:
+			boost::shared_ptr<PayoffType> x_;
+		public:
+			Squareroot(const boost::shared_ptr<PayoffType>&   x) : PayoffType(0.0), x_(x) {}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				return sqrt(x_->at(p));
+			}
+			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Squareroot(x_->at(t))); }
+			inline virtual std::set<DateType> observationTimes() { return x_->observationTimes(); }
+		};
+
 		// logical operators
 		class Logical : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
