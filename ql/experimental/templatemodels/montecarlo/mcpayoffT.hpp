@@ -18,6 +18,7 @@
 #include <ql/experimental/templatemodels/montecarlo/mcsimulationT.hpp>
 #include <algorithm>
 #include <vector>
+#include <utility>      // std::pair
 
 
 
@@ -169,11 +170,50 @@ namespace QuantLib {
 		// 1 unit of modelled asset
 		class Asset : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
-			std::string alias_;
+			std::string alias_;  // we need to identify the asset in the model
+			std::vector< std::pair<DateType, PassiveType> > history_;  // past assets are known and we want to clone the payoff
+			PassiveType fixedAssetValue_;  // we cash the relevant fixed value to avoid repeated search for value 
 		public:
 			Asset(DateType obsTime, const std::string alias) : PayoffType(obsTime), alias_(alias) { }
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) { return p->asset(PayoffType::observationTime(), alias_); }
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Asset(t, alias_)); }
+			Asset(DateType obsTime, const std::string alias, const std::vector< std::pair<DateType, PassiveType> >& fixings) :
+				PayoffType(obsTime), alias_(alias) {
+				addFixings(fixings);
+			}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				if ((PayoffType::observationTime() < 0.0) && (history_.size() > 0) && (history_[0].first <= PayoffType::observationTime()))
+					return fixedAssetValue_;  // past values are fixed
+				// we ask the model if we don't have a history
+				else return p->asset(PayoffType::observationTime(), alias_); // this is the default behaviour
+			}
+			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Asset(t, alias_, history_)); }
+
+			// synchronise past fixings and set a fixed asset value
+			void addFixings(const std::vector< std::pair<DateType, PassiveType> >& fixings) {
+				if (fixings.size()==0) return; // nothing to do
+				history_.insert(history_.end(), fixings.begin(), fixings.end());
+				std::sort(history_.begin(), history_.end());
+				for (size_t k = history_.size() - 1; k > 0; --k) { // check for double keys, maybe delete rather than throw an exception
+					QL_REQUIRE(history_[k - 1].first < history_[k].first, "history_[k-1].first<history_[k].first required.");
+				}
+				// we may need to find a new fixed asset value based on the given fixings
+				if (PayoffType::observationTime() >= 0.0)        return; // nothing to do
+				if (history_.size() == 0)                        return; // this should not happen, but anyway nothing to do
+				if (history_[0].first > PayoffType::observationTime()) return; // nothing to do either
+				if (history_.size() == 1) { // that is easy, we take what we have
+					fixedAssetValue_ = history_[0].second;
+					return;
+				}
+				for (size_t k = history_.size() - 1; k > 0; --k) {
+					if (history_[k - 1].first <= PayoffType::observationTime()) {
+						fixedAssetValue_ = history_[k - 1].second;
+						return;
+					}
+				}
+				// this should never be reached
+				QL_REQUIRE(false, "BasePayoffT::Asset: Error in fixing times.");
+				return;
+			}
+
 		};
 
 		// return the continuous barrier no-hit probability

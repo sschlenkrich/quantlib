@@ -106,6 +106,33 @@ namespace QuantLib {
 			return npv;
 		}
 
+		// some helper functions to simplify Asset payoff handling
+		inline static bool add_FixingTimes_to_Asset(
+			boost::shared_ptr<PayoffType>      payoff,
+			const std::vector<DateType>&       fixingTimes,
+			const std::vector<PassiveType>&    fixingValues) {
+			boost::shared_ptr< MCBase::Asset >  assetPayoff =
+				boost::dynamic_pointer_cast< MCBase::Asset >(payoff);
+			QL_REQUIRE(assetPayoff, "Payoff is no Asset");
+			QL_REQUIRE(fixingTimes.size() == fixingValues.size(), "fixingTimes.size()==fixingValues.size() required");
+			std::vector< std::pair<DateType, PassiveType> > history;
+			for (size_t k = 0; k < fixingTimes.size(); ++k)
+				history.push_back(std::make_pair(fixingTimes[k], fixingValues[k]));
+			assetPayoff->addFixings(history);
+			return true;
+		}
+
+		inline static bool add_FixingDates_to_Asset(
+			boost::shared_ptr<PayoffType>      payoff,
+			const std::vector<Date>&           fixingDates,
+			const std::vector<PassiveType>&    fixingValues) {
+			std::vector<DateType> fixingTimes(fixingDates.size());
+			Date today = Settings::instance().evaluationDate();
+			for (size_t k = 0; k < fixingDates.size(); ++k)
+				fixingTimes[k] = (DateType)(((fixingDates[k].serialNumber() - today.serialNumber()) / 365.0));			
+			return add_FixingTimes_to_Asset(payoff, fixingTimes, fixingValues);
+		}
+
 	private:
 
 		// convert string to number
@@ -120,6 +147,13 @@ namespace QuantLib {
 			}
 			number = res;
 			return true;
+		}
+
+		// convert a Date to number
+		inline static DateType date_to_Number(const Date& d) {
+			Date today = Settings::instance().evaluationDate();
+			DateType number = (DateType)(((d.serialNumber() - today.serialNumber()) / 365.0));
+			return number;
 		}
 
 		// convert date string with format ddmmmyyyy to number
@@ -171,6 +205,21 @@ namespace QuantLib {
 		}
 
 		// we define that helper function to simplify code in forthcoming expression parsing
+		inline bool hasChildsInRange(const boost::shared_ptr<Scripting::Expression> tree, Size nArgsMin, Size nArgsMax, Size lineNr) {
+			// make sure we can actually do something with the tree
+			if (!tree) {
+				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": Empty expression tree."));
+				return false;
+			}
+			if ((tree->childs().size() < nArgsMin)||(tree->childs().size() > nArgsMax)) {
+				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": [" + std::to_string(nArgsMin) + ", " + std::to_string(nArgsMax) +
+			        "] child expressions expected, but " + std::to_string(tree->childs().size()) + " found."));
+				return false;
+			}
+			return true;
+		}
+
+		// we define that helper function to simplify code in forthcoming expression parsing
 		inline bool hasLeafs(const boost::shared_ptr<Scripting::Expression> tree, Size nArgs, Size lineNr) {
 			// make sure we can actually do something with the tree
 			if (!tree) {
@@ -178,7 +227,22 @@ namespace QuantLib {
 				return false;
 			}
 			if (tree->leafs().size() != nArgs) {
-				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": " + std::to_string(nArgs) + " leafs expected, but " + std::to_string(tree->childs().size()) + " found."));
+				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": " + std::to_string(nArgs) + " leafs expected, but " + std::to_string(tree->leafs().size()) + " found."));
+				return false;
+			}
+			return true;
+		}
+
+		// we define that helper function to simplify code in forthcoming expression parsing
+		inline bool hasLeafsInRange(const boost::shared_ptr<Scripting::Expression> tree, Size nArgsMin, Size nArgsMax, Size lineNr) {
+			// make sure we can actually do something with the tree
+			if (!tree) {
+				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": Empty expression tree."));
+				return false;
+			}
+			if ((tree->leafs().size()<nArgsMin)|| (tree->leafs().size()>nArgsMax)) {
+				scriptLog_.push_back(std::string("Error line " + std::to_string(lineNr) + ": [" + std::to_string(nArgsMin) + ", " + std::to_string(nArgsMax) +
+					"] leafs expected, but " + std::to_string(tree->leafs().size()) + " found."));
 				return false;
 			}
 			return true;
@@ -325,14 +389,22 @@ namespace QuantLib {
 			}
 			case Scripting::Expression::PAYOFFAT: {
 				if (!hasChilds(tree, 1, k)) QL_FAIL("Cannot interprete payoff");
-				if (!hasLeafs(tree, 1, k))  QL_FAIL("Cannot interprete payoff");
+				if (!hasLeafsInRange(tree, 1, 2, k)) QL_FAIL("Cannot interprete payoff");
 				ActiveType number;
 				if (!to_Number(tree->leafs()[0], number)) {
 					scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[0] + " to number."));
 					QL_FAIL("Cannot interprete payoff");
 				}
+				ActiveType sign = 1.0;
+				if (tree->leafs().size()>1) { // we expect a negative number
+					if (tree->leafs()[1].compare("-") != 0) {
+						scriptLog_.push_back(std::string("Error line " + std::to_string(k) + ": cannot convert " + tree->leafs()[1] + tree->leafs()[0] + " to negative number."));
+						QL_FAIL("Cannot interprete payoff");
+					}
+					sign = -1.0;
+				}
 				boost::shared_ptr<PayoffType> p = payoff(tree->childs()[0], k);
-				if (p) return p->at(number);
+				if (p) return p->at(sign*number);
 				QL_FAIL("Cannot interprete payoff");
 			}
 			case Scripting::Expression::PAYOFFAT_WITHDATE: {
