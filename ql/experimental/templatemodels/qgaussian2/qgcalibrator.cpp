@@ -288,7 +288,7 @@ namespace QuantLib {
 		const Real                                            etaWeight,
 		const Real                                            penaltySigma,
 		const Real                                            penaltySlope,
-		const boost::shared_ptr<EndCriteria>&                 endCriteria )
+		const EndCriteria&                                    endCriteria )
 		: model_(model), volTS_(volTS), swapIndices_(swapIndices), modelTimesStepSize_(modelTimesStepSize), 
 		  useExpectedXY_(useExpectedXY),
 		  sigmaMin_(0.0), sigmaMax_(sigmaMax), slopeMin_(0.0), slopeMax_(slopeMax), etaMin_(0.0), etaMax_(etaMax),
@@ -337,10 +337,10 @@ namespace QuantLib {
 		Objective obj(this, isInput, isOutput);
 		Array x = obj.initialise();
 		Problem problem(obj, constraint, x);
-		LevenbergMarquardt optimizationMethod(epsfcn, endCriteria_->rootEpsilon(), endCriteria_->gradientNormEpsilon());  // (epsfcn, xtol, gtol)
+		LevenbergMarquardt optimizationMethod(epsfcn, endCriteria_.rootEpsilon(), endCriteria_.gradientNormEpsilon());  // (epsfcn, xtol, gtol)
 		// EndCriteria endCriteria(maxfev, 100 /* unused */, 0 /* unused */, ftol, 0 /* unused */);
 		// calibrate
-		optimizationMethod.minimize(problem,*endCriteria_);  // here we use maxfev and ftol
+		optimizationMethod.minimize(problem,endCriteria_);  // here we use maxfev and ftol
 		calibratedModel_ = obj.model(problem.currentValue());
 		return optimizationMethod.getInfo();
 	}

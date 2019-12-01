@@ -84,6 +84,24 @@ namespace QuantLib {
 		inline const std::vector<std::string>&                            expressions() { return expressions_; }
 		inline const std::vector<std::string>&                            scriptLog()   { return scriptLog_; }
 
+		// return all keys
+		std::vector<std::string> payoffsKeys() {
+			std::vector<std::string> keyVector;
+			for (std::map<std::string, boost::shared_ptr<PayoffType>>::iterator it = payoffs_.begin(); it != payoffs_.end(); ++it) {
+				keyVector.push_back(it->first);
+			}
+			return keyVector;
+		}
+
+		// return all payoffs (values in map)
+		std::vector < boost::shared_ptr<PayoffType> > payoffValues() {
+			std::vector < boost::shared_ptr<PayoffType> > payoffVector;
+			for (std::map<std::string, boost::shared_ptr<PayoffType> >::iterator it = payoffs_.begin(); it != payoffs_.end(); ++it) {
+				payoffVector.push_back(it->second);
+			}
+			return payoffVector;
+		}
+
 		std::vector<DateType> observationTimes(const std::vector<std::string>& keys) {
 			std::vector<boost::shared_ptr<PayoffType>> payoffs = findPayoffs(keys);
 			std::set<DateType> s;

@@ -394,7 +394,7 @@ namespace QuantLib {
 		const Real                                            penaltySigma,
 		const Real                                            penaltySlope,
 		const Real                                            penaltyCurve,
-		const boost::shared_ptr<EndCriteria>&                 endCriteria )
+		const EndCriteria&                                    endCriteria )
 		: model_(model->clone()), volTS_(volTS), swapIndices_(swapIndices),  // we clone the model to be able to work on it directly
 		  sigmaMin_(0.0), sigmaMax_(sigmaMax), slopeMin_(0.0), slopeMax_(slopeMax), curveMin_(0.0), curveMax_(curveMax),
 		  sigmaWeight_(sigmaWeight), slopeWeight_(slopeWeight), curveWeight_(curveWeight),
@@ -465,10 +465,10 @@ namespace QuantLib {
 		Objective obj(this, isInput, isOutput);
 		Array x = obj.initialise();
 		Problem problem(obj, constraint, x);
-		LevenbergMarquardt optimizationMethod(epsfcn, endCriteria_->rootEpsilon(), endCriteria_->gradientNormEpsilon());  // (epsfcn, xtol, gtol)
+		LevenbergMarquardt optimizationMethod(epsfcn, endCriteria_.rootEpsilon(), endCriteria_.gradientNormEpsilon());  // (epsfcn, xtol, gtol)
 		// EndCriteria endCriteria(maxfev, 100 /* unused */, 0 /* unused */, ftol, 0 /* unused */);
 		// calibrate
-		optimizationMethod.minimize(problem,*endCriteria_);  // here we use maxfev and ftol
+		optimizationMethod.minimize(problem,endCriteria_);  // here we use maxfev and ftol
 		calibratedModel_ = obj.model(problem.currentValue());
 		return optimizationMethod.getInfo();
 	}

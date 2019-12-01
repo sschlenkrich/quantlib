@@ -74,7 +74,7 @@ namespace QuantLib {
 		}
 
 		// we need to know when to stop iterating
-		boost::shared_ptr<EndCriteria> endCriteria_;
+		EndCriteria endCriteria_;
 
 		// we do some logging for degugging purposes
 		std::vector< std::string > debugLog_;
@@ -188,7 +188,7 @@ namespace QuantLib {
 			          const Real                                            penaltySigma,
 			          const Real                                            penaltySlope,
 			          const Real                                            penaltyCurve,
-			          const boost::shared_ptr<EndCriteria>&                 endCriteria );
+			          const EndCriteria&                                    endCriteria );
 
 
 		// a single optimisation run

@@ -72,7 +72,7 @@ namespace QuantLib {
 		}
 
 		// we need to know when to stop iterating
-		boost::shared_ptr<EndCriteria> endCriteria_;
+		EndCriteria endCriteria_;
 
 		// parameters for quasi-Gaussian swaption model
 		Real   modelTimesStepSize_;  // in year fractions
@@ -176,7 +176,7 @@ namespace QuantLib {
                       const Real                                            etaWeight,
 			          const Real                                            penaltySigma,
 			          const Real                                            penaltySlope,
-			          const boost::shared_ptr<EndCriteria>&                 endCriteria );
+			          const EndCriteria&                                    endCriteria );
 
 
 		// a single optimisation run

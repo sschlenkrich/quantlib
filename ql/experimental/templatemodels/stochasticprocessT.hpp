@@ -14,6 +14,8 @@
 #ifndef quantlib_templatestochasticprocess_hpp
 #define quantlib_templatestochasticprocess_hpp
 
+#include <vector>
+
 #include <boost/enable_shared_from_this.hpp>
 
 #include <ql/types.hpp>
