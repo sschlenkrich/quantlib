@@ -850,6 +850,9 @@
     <ClInclude Include="ql\experimental\templatemodels\hullwhite\g2ppT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hullwhite\hullwhitemodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\assetmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodels.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\amcpricerT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\commoditypayoffT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcpayoffT.hpp" />
@@ -2174,6 +2177,7 @@
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\bondoptionengine.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\fixedratebondoption.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\hybrid\hybridmodels.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\expression.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Lexer.cpp" />

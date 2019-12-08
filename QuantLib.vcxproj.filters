@@ -385,6 +385,9 @@
     <Filter Include="experimental\termstructures\localCorrFX">
       <UniqueIdentifier>{68aba14d-73f0-47e3-a1be-a105bee6796b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\templatemodels\hybrid">
+      <UniqueIdentifier>{a1161ee9-3934-4e50-995a-637ef45f6a43}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -4567,6 +4570,15 @@
     <ClInclude Include="ql\time\calendars\france.hpp">
       <Filter>time\calendars</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\assetmodelT.hpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodels.hpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodelT.hpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -7301,6 +7313,9 @@
     </ClCompile>
     <ClCompile Include="ql\time\calendars\france.cpp">
       <Filter>time\calendars</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\hybrid\hybridmodels.cpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

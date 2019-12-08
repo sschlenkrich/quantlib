@@ -78,6 +78,9 @@ namespace QuantLib {
 		// a domestic currency zero coupon bond
 		inline virtual ActiveType zeroBond(const DateType t, const DateType T, const VecA& X)      { QL_FAIL("StochasticProcessT: zeroBond not implemented"); return 0; }
 
+		// a foreign currency zero coupon bond
+		inline virtual ActiveType zeroBond(const DateType t, const DateType T, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: zeroBond with alias not implemented"); return 0; }
+
 		// an asset with (individual) drift and volatility
 		inline virtual ActiveType asset(const DateType t, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: (multi) asset not implemented"); return 0; }
 

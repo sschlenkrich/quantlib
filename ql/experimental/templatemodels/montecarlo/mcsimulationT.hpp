@@ -233,6 +233,11 @@ namespace QuantLib {
 					   process_->zeroBond(obsTime, payTime, sim_->state(idx_,obsTime) );
 			}
 
+			inline ActiveType zeroBond(DateType obsTime, DateType payTime, const std::string& alias) {
+				return sim_->zcbAdjuster(obsTime, payTime, alias) *
+					process_->zeroBond(obsTime, payTime, sim_->state(idx_, obsTime), alias);
+			}
+
 			inline ActiveType asset(DateType obsTime, const std::string& alias) {
 					return sim_->assetAdjuster(obsTime,alias) + 
 						process_->asset(obsTime, sim_->state(idx_, obsTime), alias);
@@ -591,6 +596,10 @@ namespace QuantLib {
 				           zcbAdjuster_[obsIdx-1][offIdx  ] * (1.0-rhoObs) * (rhoOff)     +
 				           zcbAdjuster_[obsIdx  ][offIdx  ] * (rhoObs)     * (rhoOff)     ;
 			return exp(-z*(T-t));
+		}
+
+		inline ActiveType zcbAdjuster(const DateType t, const DateType T, const std::string& alias) {
+			return 1.0;  // tbd. This needs to be implemented
 		}
 
 		// asset adjuster

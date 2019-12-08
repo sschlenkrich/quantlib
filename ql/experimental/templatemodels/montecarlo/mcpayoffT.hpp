@@ -167,6 +167,21 @@ namespace QuantLib {
 
 		};
 
+		// zero coupon bond payoff
+		class ZeroBond : public MCPayoffT<DateType, PassiveType, ActiveType> {
+		protected:
+			DateType payTime_;
+			std::string alias_;  // we capture domestic and foreign zcb's
+		public:
+			ZeroBond(DateType obsTime, DateType payTime, const std::string alias)
+				: PayoffType(obsTime), payTime_(payTime), alias_(alias) { }
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				//if (payTime_<=observationTime()) return (ActiveType)1.0;
+				return p->zeroBond(PayoffType::observationTime(), payTime_, alias_);  // catch any exception in path, simulation or model
+			}
+			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new ZeroBond(t, payTime_, alias_)); }
+		};
+
 		// 1 unit of modelled asset
 		class Asset : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
