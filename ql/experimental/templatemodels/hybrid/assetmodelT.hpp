@@ -96,7 +96,7 @@ namespace QuantLib {
 
 		// simple Euler step
 		inline void evolve(const DateType t0, const VecA& Y0, const DateType dt, const VecD& dW, VecA& Y1) {
-			Y1[0] = (Y0[1] - 0.5*sigma_*sigma_)*dt + sigma_*dW[0]*std::sqrt(dt);
+			Y1[0] = Y0[0] + (Y0[1] - 0.5*sigma_*sigma_)*dt + sigma_*dW[0]*std::sqrt(dt);
 		}
 
 		// asset calculation is the main purpose of this model

@@ -187,12 +187,12 @@ namespace QuantLib {
                 // we need the starting point states for evolution
 				VecA y0(X0.begin() + modelsStartIdx_[2 * k], X0.begin() + modelsStartIdx_[2 * k] + forAssetModels_[k]->size());
 				VecA x0(X0.begin() + modelsStartIdx_[2 * k + 1], X0.begin() + modelsStartIdx_[2 * k + 1] + forRatesModels_[k]->size());
-				// quanto adjustment
+				// quanto adjustment; Note: this only applies to random factors for x (not z), ASSUMES d+1 random factors in qG model
 				VecA qAdj(correlations_[corrStartIdx].begin() + corrStartIdx + forAssetModels_[k]->factors(),
-					      correlations_[corrStartIdx].begin() + corrStartIdx + forAssetModels_[k]->factors() + forRatesModels_[k]->factors());
+					      correlations_[corrStartIdx].begin() + corrStartIdx + forAssetModels_[k]->factors() + forRatesModels_[k]->factors() - 1);  // last random factor is for dz in qG model!
 				ActiveType assetVol = forAssetModels_[k]->volatility(t0, y0);
 				for (size_t i = 0; i < qAdj.size(); ++i) qAdj[i] *= (assetVol*std::sqrt(dt));
-				for (size_t i = 0; i < qAdj.size(); ++i) dw_rates[i] -= qAdj[i];
+				for (size_t i = 0; i < qAdj.size(); ++i) dw_rates[i] -= qAdj[i];  // only adjust d factors for x!
 				// evolve foreign rates
 				VecA x1(forRatesModels_[k]->size(),0.0);
 				forRatesModels_[k]->evolve(t0, x0, dt, dw_rates, x1);
@@ -218,6 +218,12 @@ namespace QuantLib {
 				corrStartIdx += (forAssetModels_[k]->factors() + forRatesModels_[k]->factors());
 			}
 			//QL_FAIL("HybridModel: evolve not yet implemented.");
+		}
+
+		// the numeraire in the domestic currency used for discounting future payoffs
+		inline virtual ActiveType numeraire(const DateType t, const VecA& X) {
+			VecA x(X.begin(), X.begin() + domRatesModel_->size());
+			return domRatesModel_->numeraire(t, x);  // it's a bit dangerous, but we also could pass X directly
 		}
 
 		// asset calculation is the main purpose of this model
