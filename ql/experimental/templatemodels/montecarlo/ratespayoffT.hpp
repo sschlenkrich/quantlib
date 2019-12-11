@@ -143,10 +143,10 @@ namespace QuantLib {
 
 		// Libor rate based on index
         class LiborRate : public MCPayoffT<DateType, PassiveType, ActiveType> {
+		protected:
 			// we save this to be able to clone the Libor rate
 			boost::shared_ptr<IborIndex>   iborIndex_;
 			Handle<YieldTermStructure>     discYTS_;
-		protected:
 			DateType    fixingTime_, startTime_, endTime_;
 			PassiveType oneOverDaycount_;
 			PassiveType D_; // tenor basis
@@ -191,6 +191,27 @@ namespace QuantLib {
 				QL_FAIL("Can not clone Libor rate");
 			}
 	    };
+
+		// Libor rate based for hybrid models
+		class LiborRateCcy : public LiborRate {
+		private:
+			std::string alias_;
+		public:
+			LiborRateCcy(const DateType                        fixingTime,
+				         const boost::shared_ptr<IborIndex>&   iborIndex,
+				         const Handle<YieldTermStructure>&     discYTS,
+				         const std::string                     alias)
+			: LiborRate(fixingTime, iborIndex, discYTS), alias_(alias) {}
+			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				return (p->zeroBond(fixingTime_, startTime_, alias_) / p->zeroBond(fixingTime_, endTime_, alias_) * D_ - 1.0) * oneOverDaycount_;
+			}
+			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) {
+				if ((iborIndex_ != 0) && (!discYTS_.empty())) return boost::shared_ptr<PayoffType>(new LiborRateCcy(t, iborIndex_, discYTS_, alias_));
+				QL_FAIL("Can not clone Libor rate");
+			}
+
+		};
+
 
 		//class SwapRate : public MCPayoffT<DateType, PassiveType, ActiveType> {
 		//protected:
