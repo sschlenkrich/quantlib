@@ -4579,6 +4579,9 @@
     <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodelT.hpp">
       <Filter>experimental\templatemodels\hybrid</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\credithybridmodelT.hpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">

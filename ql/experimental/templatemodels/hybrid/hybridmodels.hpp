@@ -14,8 +14,8 @@
 #define quantlib_hybridmodels_hpp
 
 #include <ql/experimental/templatemodels/hybrid/assetmodelT.hpp>
-
 #include <ql/experimental/templatemodels/hybrid/hybridmodelT.hpp>
+#include <ql/experimental/templatemodels/hybrid/credithybridmodelT.hpp>
 
 
 namespace QuantLib {
@@ -24,6 +24,7 @@ namespace QuantLib {
 
 	typedef HybridModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> HybridModel;
 
+	typedef CreditHybridModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> CreditHybridModel;
 
 }
 

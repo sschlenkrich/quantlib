@@ -499,7 +499,7 @@ namespace QuantLib {
 			numeraireObservTimes_ = numeraireObservTimes;
 			// check time grids
 			QL_REQUIRE(numeraireObservTimes_.size()>1, "TemplateMCSimulation: at least two numeraireObservTimes_ required");
-			QL_REQUIRE(numeraireObservTimes_[0] >= 0, "TemplateMCSimulation: numeraireObservTimes_[0]>=0 required");
+			QL_REQUIRE(numeraireObservTimes_[0] > 0, "TemplateMCSimulation: numeraireObservTimes_[0]>0 required");
 			for (size_t k = 1; k<numeraireObservTimes_.size(); ++k) QL_REQUIRE(numeraireObservTimes_[k - 1]<numeraireObservTimes_[k], "TemplateMCSimulation: numeraireObservTimes_ in ascending order required");
             // initialise adjuster
 			numeraireAdjuster_ = VecA(numeraireObservTimes_.size(), 0.0);
@@ -543,10 +543,10 @@ namespace QuantLib {
 			zcbOffsetTimes_ = zcbOffsetTimes;
 			// check time grids
 			QL_REQUIRE(zcbObservTimes_.size()>1,"TemplateMCSimulation: at least two zcbObservTimes_ required");
-			QL_REQUIRE(zcbObservTimes_[0]>=0,"TemplateMCSimulation: zcbObservTimes_[0]>=0 required");
+			QL_REQUIRE(zcbObservTimes_[0]>0,"TemplateMCSimulation: zcbObservTimes_[0]>0 required");
 			for (size_t k=1; k<zcbObservTimes_.size(); ++k) QL_REQUIRE(zcbObservTimes_[k-1]<zcbObservTimes_[k],"TemplateMCSimulation: zcbObservTimes_ in ascending order required");
 			QL_REQUIRE(zcbOffsetTimes_.size()>1,"TemplateMCSimulation: at least two zcbOffsetTimes_ required");
-			QL_REQUIRE(zcbOffsetTimes_[0]>=0,"TemplateMCSimulation: zcbOffsetTimes_[0]>=0 required");
+			QL_REQUIRE(zcbOffsetTimes_[0]>0,"TemplateMCSimulation: zcbOffsetTimes_[0]>0 required");
 			for (size_t k=1; k<zcbOffsetTimes_.size(); ++k) QL_REQUIRE(zcbOffsetTimes_[k-1]<zcbOffsetTimes_[k],"TemplateMCSimulation: zcbOffsetTimes_ in ascending order required");
 			// initialise zero adjuster matrix
 			zcbAdjuster_ = MatA(zcbObservTimes_.size(),VecA(zcbOffsetTimes_.size(),0.0));

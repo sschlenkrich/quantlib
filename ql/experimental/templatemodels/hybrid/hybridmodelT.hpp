@@ -71,11 +71,11 @@ namespace QuantLib {
 			         const MatA&                                           correlations)
 			: domAlias_(domAlias), domRatesModel_(domRatesModel), forAliases_(forAliases),
 			  forAssetModels_(forAssetModels), forRatesModels_(forRatesModels), correlations_(correlations),
-			  modelsStartIdx_(2*forAliases.size()) {
+			  L_(0), modelsStartIdx_(2*forAliases.size()) {
 			// we perform a couple of consistency checks
 			QL_REQUIRE(domAlias_.compare("") != 0, "HybridModel: Domestic alias required.");
 			QL_REQUIRE(domRatesModel_, "HybridModel: Domestic rates model required.");
-			QL_REQUIRE(forAliases_.size()>0, "HybridModel: forAliases.size()>0 required.");
+			// QL_REQUIRE(forAliases_.size()>0, "HybridModel: forAliases.size()>0 required.");
 			QL_REQUIRE(forAliases_.size()==forAssetModels_.size(), "HybridModel: forAliases.size()==forAssetModels.size() required.");
 			QL_REQUIRE(forAliases_.size()==forRatesModels_.size(), "HybridModel: forAliases.size()==forRatesModels.size() required.");
 			for (size_t k = 0; k < forAliases_.size(); ++k) index_[forAliases_[k]] = k;
@@ -97,18 +97,20 @@ namespace QuantLib {
 				lastModelIdx += (forAssetModels_[k]->size() + forRatesModels_[k]->size());
 			}
 			// we need to check and factor the hybrid correlation matrix
-			QL_REQUIRE(correlations_.size()==factors(), "HybridModel: correlations_.size()==factors() required.");
-			for (size_t k = 0; k < correlations_.size(); ++k) {
-				QL_REQUIRE(correlations_[k].size() == factors(), "HybridModel: correlations_[k].size()==factors() required.");
-				QL_REQUIRE(correlations_[k][k] == 1.0, "HybridModel: correlations_[k][K] == 1.0 required.");
+			if (correlations_.size() > 0) {  // an empty correlation matrix represents the identity matrix
+				QL_REQUIRE(correlations_.size() == factors(), "HybridModel: correlations_.size()==factors() required.");
+				for (size_t k = 0; k < correlations_.size(); ++k) {
+					QL_REQUIRE(correlations_[k].size() == factors(), "HybridModel: correlations_[k].size()==factors() required.");
+					QL_REQUIRE(correlations_[k][k] == 1.0, "HybridModel: correlations_[k][K] == 1.0 required.");
+				}
+				for (size_t k = 0; k < correlations_.size(); ++k) {
+					for (size_t j = k + 1; j < correlations_.size(); ++j)
+						QL_REQUIRE(correlations_[k][j] == correlations_[j][k], "HybridModel: correlations_[k][j] == correlations_[j][k] required.");
+				}
+				// We should also ensure that rates model correlations are identity here.
+				// Rates model correlations are incorporated via individual rates models.
+				L_ = TemplateAuxilliaries::cholesky(correlations_);
 			}
-			for (size_t k = 0; k < correlations_.size(); ++k) {
-				for (size_t j = k+1; j < correlations_.size(); ++j)
-					QL_REQUIRE(correlations_[k][j] == correlations_[j][k], "HybridModel: correlations_[k][j] == correlations_[j][k] required.");
-			}
-			// We should also ensure that rates model correlations are identity here.
-			// Rates model correlations are incorporated via individual rates models.
-			L_ = TemplateAuxilliaries::cholesky(correlations_);
 		}
 
 		// inspectors
@@ -124,11 +126,11 @@ namespace QuantLib {
 
         // stochastic process interface
 		// dimension of combined state variable
-		inline size_t size()    { return size_; }
+		inline virtual size_t size()    { return size_; }
 		// stochastic factors
-		inline size_t factors() { return factors_; }
+		inline virtual size_t factors() { return factors_; }
 		// initial values for simulation
-		inline VecP initialValues() {
+		inline virtual VecP initialValues() {
 			VecP X(size(),0.0);
 			// domestic model
 			VecP x(domRatesModel_->initialValues());
@@ -143,7 +145,7 @@ namespace QuantLib {
 		}
 
 		// a[t,X(t)]
-		inline VecA drift( const DateType t, const VecA& X) {
+		inline virtual VecA drift( const DateType t, const VecA& X) {
 			VecA a(size(),0.0);
 			QL_FAIL("HybridModel: drift not implemented. Use evolve.");
 			// finished
@@ -151,7 +153,7 @@ namespace QuantLib {
 		}
 
 		// b[t,X(t)]
-		inline MatA diffusion( const DateType t, const VecA& X) {
+		inline virtual MatA diffusion( const DateType t, const VecA& X) {
 			MatA b(size(), VecA(factors(),0.0));
 			QL_FAIL("HybridModel: diffusion not implemented. Use evolve.");
 			// finished
@@ -159,11 +161,20 @@ namespace QuantLib {
 		}
 
 		// simple Euler step
-		inline void evolve(const DateType t0, const VecA& X0, const DateType dt, const VecD& dW, VecA& X1) {
+		inline virtual void evolve(const DateType t0, const VecA& X0, const DateType dt, const VecD& dW, VecA& X1) {
 			// correlate Brownian increments
 			VecD dZ(dW.size(),0.0);
-			for (size_t i = 0; i < dW.size(); ++i) // exploit lower triangular structure
-				for (size_t j = 0; j <= i; ++j) dZ[i] += L_[i][j] * dW[j];
+			if (L_.size() > 0) {
+				for (size_t i = 0; i < dW.size(); ++i) // exploit lower triangular structure
+					for (size_t j = 0; j <= i; ++j) dZ[i] += L_[i][j] * dW[j];
+			}
+			else {
+				dZ = dW;  // we would rather avoid copying here...
+			}
+			if (forAliases_.size() == 0) { // we may take a short cut
+				domRatesModel_->evolve(t0, X0, dt, dZ, X1);
+				return;
+			}
 			// evolve domestic rates
 			VecD dw(dZ.begin(), dZ.begin() + domRatesModel_->factors());
 			VecA x0(X0.begin(), X0.begin() + domRatesModel_->size());
@@ -174,9 +185,9 @@ namespace QuantLib {
 			PassiveType B_d = domRatesModel_->termStructure()->discount(t0) / domRatesModel_->termStructure()->discount(t0 + dt);
 			// we also need the stochastic drift part for r_d
 			ActiveType x_av_d = 0.0;
-			// NOTE: only add first (#factors) components of MC state x which represent state variable 'x'
+			// NOTE: only add first (#factors-1) components of MC state x which represent state variable 'x'
 			// This is a bit dangerous, we use structure of internal quasiGaussian model state here
-			for (size_t i = 0; i < domRatesModel_->factors(); ++i) x_av_d += 0.5 * (x0[i] + x1[i]);
+			for (size_t i = 0; i < domRatesModel_->factors() - 1; ++i) x_av_d += 0.5 * (x0[i] + x1[i]);
 			// foreign models...
 			size_t corrStartIdx = domRatesModel_->factors();
 			for (size_t k = 0; k < forAliases_.size(); ++k) {
@@ -201,7 +212,7 @@ namespace QuantLib {
 				ActiveType mu = std::log(B_d / B_f) / dt;  // deterministic part; better cache to avoid repeated discount call for each path
 				// stochastic drift part for r_f
 				ActiveType x_av_f = 0.0;  // Note comments for x_av_d above
-				for (size_t i = 0; i < forRatesModels_[k]->factors(); ++i) x_av_f += 0.5 * (x0[i] + x1[i]);
+				for (size_t i = 0; i < forRatesModels_[k]->factors() - 1; ++i) x_av_f += 0.5 * (x0[i] + x1[i]);
 				// now we can calculate drift mu = r_d - r_f
 				mu += (x_av_d - x_av_f);
 				// ... and plug it into the drift component of asset MC state variable
@@ -223,7 +234,7 @@ namespace QuantLib {
 		// the numeraire in the domestic currency used for discounting future payoffs
 		inline virtual ActiveType numeraire(const DateType t, const VecA& X) {
 			VecA x(X.begin(), X.begin() + domRatesModel_->size());
-			return domRatesModel_->numeraire(t, x);  // it's a bit dangerous, but we also could pass X directly
+			return domRatesModel_->numeraire(t, x); 
 		}
 
 		// asset calculation is the main purpose of this model
