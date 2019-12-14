@@ -4579,7 +4579,7 @@
     <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodelT.hpp">
       <Filter>experimental\templatemodels\hybrid</Filter>
     </ClInclude>
-    <ClInclude Include="ql\experimental\templatemodels\hybrid\credithybridmodelT.hpp">
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\spreadmodelT.hpp">
       <Filter>experimental\templatemodels\hybrid</Filter>
     </ClInclude>
   </ItemGroup>

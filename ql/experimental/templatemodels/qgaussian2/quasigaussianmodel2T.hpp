@@ -574,8 +574,39 @@ namespace QuantLib {
 			return ZeroBond(t, T, state);
 		}
 
-	};
+		inline ActiveType zeroBond(const DateType t, const DateType T, const VecA& X, const std::string& alias) { 
+			// we might want to introduce a domestic alias and check for consistency
+			return zeroBond(t, T, X);  // delegate to model zcb
+		}
 
+		// the short rate over an integration time period
+		// this is required for drift calculation in multi-asset and hybrid models
+		inline ActiveType shortRate(const DateType t0, const DateType dt, const VecA& X0, const VecA& X1) {
+			PassiveType B_d = termStructure_->discount(t0,true) / termStructure_->discount(t0 + dt);  // deterministic drift part for r_d
+			State s0(X0, d_), s1(X1, d_);
+			ActiveType x_av(0.0);
+			for (size_t k = 0; k < d_; ++k) x_av += (s0.x(k) + s1.x(k)); // don't forget to divide by 2
+			return std::log(B_d) / dt + 0.5 * x_av;
+		}
+
+		virtual std::vector< std::string > stateAliases() {
+			std::vector< std::string > aliases(size());
+			for (size_t i = 0; i < d_; ++i) aliases[i] = "x_" + std::to_string(i);
+			for (size_t i = 0; i < d_; ++i)
+				for (size_t j = 0; j < d_; ++j) aliases[d_ + (i*d_) + j] = "y_" + std::to_string(i)+ "_" + std::to_string(j);
+			aliases[size() - 2] = "z";
+			aliases[size() - 1] = "s";
+			return aliases;
+		}
+
+		virtual std::vector< std::string > factorAliases() {
+			std::vector< std::string > aliases(factors());
+			for (size_t i = 0; i < d_; ++i) aliases[i] = "x_" + std::to_string(i);
+			aliases[factors() - 1] = "z";
+			return aliases;
+		}
+
+	};
 }
 
 #endif  /* ifndef quantlib_templatequasigaussian2_hpp */

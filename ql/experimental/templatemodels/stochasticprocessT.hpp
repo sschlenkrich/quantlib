@@ -75,14 +75,18 @@ namespace QuantLib {
 		// the numeraire in the domestic currency used for discounting future payoffs
 		inline virtual ActiveType numeraire(const DateType t, const VecA& X)                       { QL_FAIL("StochasticProcessT: numeraire not implemented"); return 0; }
 
-		// a domestic currency zero coupon bond
+		// a zero coupon bond for the model
 		inline virtual ActiveType zeroBond(const DateType t, const DateType T, const VecA& X)      { QL_FAIL("StochasticProcessT: zeroBond not implemented"); return 0; }
 
-		// a foreign currency zero coupon bond
+		// a domestic/foreign currency zero coupon bond
 		inline virtual ActiveType zeroBond(const DateType t, const DateType T, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: zeroBond with alias not implemented"); return 0; }
 
 		// an asset with (individual) drift and volatility
 		inline virtual ActiveType asset(const DateType t, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: (multi) asset not implemented"); return 0; }
+
+		// the short rate over an integration period
+		// this is required for drift calculation in multi-asset and hybrid models
+		inline virtual ActiveType shortRate(const DateType t0, const DateType dt, const VecA& X0, const VecA& X1) { QL_FAIL("StochasticProcessT: shortRate not implemented"); return 0; }
 
 		// the expectation E^T in the domestic currency terminal meassure
 		// this is required to calculate asset adjusters without knowing the implementation of the model
@@ -95,6 +99,11 @@ namespace QuantLib {
 		// the expectation E^Q in the domestic currency risk-neutral meassure
 		// this is currently used for commodity payoffs
 		inline virtual ActiveType futureAsset(const DateType t, const DateType T, const VecA& X, const std::string& alias) { QL_FAIL("StochasticProcessT: (multi) asset not implemented"); return 0; }
+
+		// we want to keep track of the model details
+		virtual std::vector< std::string > stateAliases() { QL_FAIL("StochasticProcessT: stateAliases not implemented"); return std::vector< std::string >(0); }
+
+		virtual std::vector< std::string > factorAliases() { QL_FAIL("StochasticProcessT: factorAliases not implemented"); return std::vector< std::string >(0); }
 
 		// options for integration
 	    enum VolEvolv {

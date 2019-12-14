@@ -15,7 +15,7 @@
 
 #include <ql/experimental/templatemodels/hybrid/assetmodelT.hpp>
 #include <ql/experimental/templatemodels/hybrid/hybridmodelT.hpp>
-#include <ql/experimental/templatemodels/hybrid/credithybridmodelT.hpp>
+#include <ql/experimental/templatemodels/hybrid/spreadmodelT.hpp>
 
 
 namespace QuantLib {
@@ -24,7 +24,7 @@ namespace QuantLib {
 
 	typedef HybridModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> HybridModel;
 
-	typedef CreditHybridModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> CreditHybridModel;
+	typedef SpreadModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> SpreadModel;
 
 }
 

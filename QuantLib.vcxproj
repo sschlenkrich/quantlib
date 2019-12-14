@@ -851,9 +851,9 @@
     <ClInclude Include="ql\experimental\templatemodels\hullwhite\hullwhitemodels.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hullwhite\hullwhitemodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hybrid\assetmodelT.hpp" />
-    <ClInclude Include="ql\experimental\templatemodels\hybrid\credithybridmodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodels.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\spreadmodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\amcpricerT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\commoditypayoffT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\mcpayoffT.hpp" />

@@ -40,7 +40,7 @@ namespace QuantLib {
 		typedef std::vector< std::vector<ActiveType> >     MatA;
 
 		typedef AssetModelT<DateType, PassiveType, ActiveType>          AssetModelType;
-		typedef QuasiGaussianModel2T<DateType, PassiveType, ActiveType> RatesModelType;
+		typedef StochasticProcessT<DateType, PassiveType, ActiveType>   RatesModelType;
 
 		// class members
 		std::string                      domAlias_;
@@ -181,13 +181,8 @@ namespace QuantLib {
 			VecA x1(domRatesModel_->size(),0.0);
 			domRatesModel_->evolve(t0, x0, dt, dw, x1);
 			for (size_t i = 0; i < domRatesModel_->size(); ++i) X1[i] = x1[i];
-			// we will need the deterministic drift part for r_d
-			PassiveType B_d = domRatesModel_->termStructure()->discount(t0) / domRatesModel_->termStructure()->discount(t0 + dt);
-			// we also need the stochastic drift part for r_d
-			ActiveType x_av_d = 0.0;
-			// NOTE: only add first (#factors-1) components of MC state x which represent state variable 'x'
-			// This is a bit dangerous, we use structure of internal quasiGaussian model state here
-			for (size_t i = 0; i < domRatesModel_->factors() - 1; ++i) x_av_d += 0.5 * (x0[i] + x1[i]);
+			// we need the domestic drift r_d
+			ActiveType r_d = domRatesModel_->shortRate(t0, dt, x0, x1);
 			// foreign models...
 			size_t corrStartIdx = domRatesModel_->factors();
 			for (size_t k = 0; k < forAliases_.size(); ++k) {
@@ -198,9 +193,12 @@ namespace QuantLib {
                 // we need the starting point states for evolution
 				VecA y0(X0.begin() + modelsStartIdx_[2 * k], X0.begin() + modelsStartIdx_[2 * k] + forAssetModels_[k]->size());
 				VecA x0(X0.begin() + modelsStartIdx_[2 * k + 1], X0.begin() + modelsStartIdx_[2 * k + 1] + forRatesModels_[k]->size());
-				// quanto adjustment; Note: this only applies to random factors for x (not z), ASSUMES d+1 random factors in qG model
+				// Quanto adjustment
+			    // NOTE: this should only apply to random factors for x (not z); this has to be ensured by user via correlation
+				// implementation ASSUMES correlation between FX and stoch vol is zero
+				// we use the model-independent implementation to allow for credit hybrid components 
 				VecA qAdj(correlations_[corrStartIdx].begin() + corrStartIdx + forAssetModels_[k]->factors(),
-					      correlations_[corrStartIdx].begin() + corrStartIdx + forAssetModels_[k]->factors() + forRatesModels_[k]->factors() - 1);  // last random factor is for dz in qG model!
+					      correlations_[corrStartIdx].begin() + corrStartIdx + forAssetModels_[k]->factors() + forRatesModels_[k]->factors());  // keep in mind: last random factor in qG model is for dz!
 				ActiveType assetVol = forAssetModels_[k]->volatility(t0, y0);
 				for (size_t i = 0; i < qAdj.size(); ++i) qAdj[i] *= (assetVol*std::sqrt(dt));
 				for (size_t i = 0; i < qAdj.size(); ++i) dw_rates[i] -= qAdj[i];  // only adjust d factors for x!
@@ -208,15 +206,8 @@ namespace QuantLib {
 				VecA x1(forRatesModels_[k]->size(),0.0);
 				forRatesModels_[k]->evolve(t0, x0, dt, dw_rates, x1);
 				// calculate FX drift
-				PassiveType B_f = forRatesModels_[k]->termStructure()->discount(t0) / forRatesModels_[k]->termStructure()->discount(t0 + dt);
-				ActiveType mu = std::log(B_d / B_f) / dt;  // deterministic part; better cache to avoid repeated discount call for each path
-				// stochastic drift part for r_f
-				ActiveType x_av_f = 0.0;  // Note comments for x_av_d above
-				for (size_t i = 0; i < forRatesModels_[k]->factors() - 1; ++i) x_av_f += 0.5 * (x0[i] + x1[i]);
-				// now we can calculate drift mu = r_d - r_f
-				mu += (x_av_d - x_av_f);
-				// ... and plug it into the drift component of asset MC state variable
-				y0[1] = mu;  // NOTE: this uses knowledge of the structure of asset model mc state!
+				ActiveType r_f = forRatesModels_[k]->shortRate(t0, dt, x0, x1);
+				y0[1] = r_d - r_f;  // NOTE: this uses knowledge of the structure of asset model mc state!
 				// finally we can evolve FX
 				VecA y1(forAssetModels_[k]->size(),0.0);
 				forAssetModels_[k]->evolve(t0, y0, dt, dw_asset, y1);
@@ -256,6 +247,38 @@ namespace QuantLib {
 			size_t k = index_.at(alias);  // this should throw an exception if alias is unknown
 			VecA x(X.begin() + modelsStartIdx_[2 * k + 1], X.begin() + modelsStartIdx_[2 * k + 1] + forRatesModels_[k]->size());
 			return forRatesModels_[k]->zeroBond(t, T, x);
+		}
+
+		virtual std::vector< std::string > stateAliases() {
+			std::vector< std::string > aliases(size());
+			std::vector< std::string > domAliases = domRatesModel_->stateAliases();
+			for (size_t i = 0; i < domAliases.size(); ++i) aliases[i] = domAlias_ + "_" + domAliases[i];
+			size_t startIdx = domRatesModel_->size();
+			for (size_t k = 0; k < forAliases_.size(); ++k) {
+				std::vector< std::string > forAssetAliases = forAssetModels_[k]->stateAliases();
+				for (size_t i = 0; i < forAssetAliases.size(); ++i) aliases[startIdx + i] = forAliases_[k] + "_" + forAssetAliases[i];
+				startIdx += forAssetModels_[k]->size();
+				std::vector< std::string > forRatesAliases = forRatesModels_[k]->stateAliases();
+				for (size_t i = 0; i < forRatesAliases.size(); ++i) aliases[startIdx + i] = forAliases_[k] + "_" + forRatesAliases[i];
+				startIdx += forRatesModels_[k]->size();
+			}
+			return aliases;
+		}
+
+		virtual std::vector< std::string > factorAliases() {
+			std::vector< std::string > aliases(factors());
+			std::vector< std::string > domAliases = domRatesModel_->factorAliases();
+			for (size_t i = 0; i < domAliases.size(); ++i) aliases[i] = domAlias_ + "_" + domAliases[i];
+			size_t startIdx = domRatesModel_->factors();
+			for (size_t k = 0; k < forAliases_.size(); ++k) {
+				std::vector< std::string > forAssetAliases = forAssetModels_[k]->factorAliases();
+				for (size_t i = 0; i < forAssetAliases.size(); ++i) aliases[startIdx + i] = forAliases_[k] + "_" + forAssetAliases[i];
+				startIdx += forAssetModels_[k]->factors();
+				std::vector< std::string > forRatesAliases = forRatesModels_[k]->factorAliases();
+				for (size_t i = 0; i < forRatesAliases.size(); ++i) aliases[startIdx + i] = forAliases_[k] + "_" + forRatesAliases[i];
+				startIdx += forRatesModels_[k]->factors();
+			}
+			return aliases;
 		}
 
 

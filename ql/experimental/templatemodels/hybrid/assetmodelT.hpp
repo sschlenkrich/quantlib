@@ -104,6 +104,19 @@ namespace QuantLib {
 		    return X0_ * exp(Y[0]);
 		}
 
+		virtual std::vector< std::string > stateAliases() {
+			std::vector< std::string > aliases(size());
+			aliases[0] = "logS";
+			aliases[1] = "mu";
+			return aliases;
+		}
+
+		virtual std::vector< std::string > factorAliases() {
+			std::vector< std::string > aliases(factors());
+			aliases[0] = "logS";
+			return aliases;
+		}
+
 	};
 
 }
