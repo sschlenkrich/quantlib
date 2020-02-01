@@ -237,9 +237,10 @@ namespace QuantLib {
 			for (size_t i=0; i<model_->factors()-1; ++i) {
 				v[i] = 0.0;
 				for (size_t j=0; j<model_->factors()-1; ++j) v[i] += sig_xT[i][j]*u[j];
-				// E^A[y(s)]*1 + v  | s=(t+T)/2
+				// E^A[y(s)]*1 - v = -v + E^A[y(s)]*1  | s=(t+T)/2
+				v[i] *= -1.0;
 				for (size_t j=0; j<model_->factors()-1; ++j) v[i] += barYtT[i][j];
-				// H(T)H(s)^-1 E^A[y(s)]*1 + v  | s=(t+T)/2
+				// H(T)H(s)^-1 (v - E^A[y(s)]*1)   | s=(t+T)/2
 				v[i] *= exp( -model_->chi()[i] * (T-t)/2.0 );
 				// mid-point rule
 				barXT[i] += v[i] * (T - t);
@@ -262,12 +263,13 @@ namespace QuantLib {
 			MatA sig_xT = model_->sigma_xT((t+T)/2.0,x0_,y0_);
 			for (size_t i=0; i<model_->factors()-1; ++i) {
        			for (size_t j=0; j<model_->factors()-1; ++j) {
-					// integrand at (t+T)/s
-                    ActiveType tmp = 0.0;
+                    ActiveType tmp = 0.0;  // sigma^2
 					for (size_t k=0; k<model_->factors()-1; ++k) tmp += sig_xT[i][k] * sig_xT[j][k];
-                    tmp *= exp( -(model_->chi()[i] + model_->chi()[j]) * (T-t)/2.0 );
+					tmp *= (1.0 - exp(-(model_->chi()[i] + model_->chi()[j]) * (T - t))) / (model_->chi()[i] + model_->chi()[j]);
+					barYT[i][j] += tmp;
+					//tmp *= exp( -(model_->chi()[i] + model_->chi()[j]) * (T-t)/2.0 );
 					// mid-point rule
-					barYT[i][j] += tmp * (T - t);
+					//barYT[i][j] += tmp * (T - t);
 				}
 			}
 			return barYT;
