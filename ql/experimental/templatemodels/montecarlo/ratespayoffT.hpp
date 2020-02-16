@@ -203,10 +203,13 @@ namespace QuantLib {
 				         const std::string                     alias)
 			: LiborRate(fixingTime, iborIndex, discYTS), alias_(alias) {}
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
-				return (p->zeroBond(fixingTime_, startTime_, alias_) / p->zeroBond(fixingTime_, endTime_, alias_) * D_ - 1.0) * oneOverDaycount_;
+				return (p->zeroBond(LiborRate::fixingTime_, LiborRate::startTime_, alias_) / 
+                        p->zeroBond(LiborRate::fixingTime_, LiborRate::endTime_, alias_) * LiborRate::D_ - 1.0) * 
+                       LiborRate::oneOverDaycount_;
 			}
 			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) {
-				if ((iborIndex_ != 0) && (!discYTS_.empty())) return boost::shared_ptr<PayoffType>(new LiborRateCcy(t, iborIndex_, discYTS_, alias_));
+				if ((LiborRate::iborIndex_ != 0) && (!LiborRate::discYTS_.empty()))
+                    return boost::shared_ptr<PayoffType>(new LiborRateCcy(t, LiborRate::iborIndex_, LiborRate::discYTS_, alias_));
 				QL_FAIL("Can not clone Libor rate");
 			}
 

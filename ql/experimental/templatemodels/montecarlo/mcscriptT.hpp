@@ -87,7 +87,7 @@ namespace QuantLib {
 		// return all keys
 		std::vector<std::string> payoffsKeys() {
 			std::vector<std::string> keyVector;
-			for (std::map<std::string, boost::shared_ptr<PayoffType>>::iterator it = payoffs_.begin(); it != payoffs_.end(); ++it) {
+			for (typename std::map<std::string, boost::shared_ptr<PayoffType>>::iterator it = payoffs_.begin(); it != payoffs_.end(); ++it) {
 				keyVector.push_back(it->first);
 			}
 			return keyVector;
@@ -96,7 +96,7 @@ namespace QuantLib {
 		// return all payoffs (values in map)
 		std::vector < boost::shared_ptr<PayoffType> > payoffValues() {
 			std::vector < boost::shared_ptr<PayoffType> > payoffVector;
-			for (std::map<std::string, boost::shared_ptr<PayoffType> >::iterator it = payoffs_.begin(); it != payoffs_.end(); ++it) {
+			for (typename std::map<std::string, boost::shared_ptr<PayoffType> >::iterator it = payoffs_.begin(); it != payoffs_.end(); ++it) {
 				payoffVector.push_back(it->second);
 			}
 			return payoffVector;
@@ -129,8 +129,8 @@ namespace QuantLib {
 			boost::shared_ptr<PayoffType>      payoff,
 			const std::vector<DateType>&       fixingTimes,
 			const std::vector<PassiveType>&    fixingValues) {
-			boost::shared_ptr< MCBase::Asset >  assetPayoff =
-				boost::dynamic_pointer_cast< MCBase::Asset >(payoff);
+			boost::shared_ptr<typename MCBase::Asset>  assetPayoff =
+				boost::dynamic_pointer_cast<typename MCBase::Asset>(payoff);
 			QL_REQUIRE(assetPayoff, "Payoff is no Asset");
 			QL_REQUIRE(fixingTimes.size() == fixingValues.size(), "fixingTimes.size()==fixingValues.size() required");
 			std::vector< std::pair<DateType, PassiveType> > history;

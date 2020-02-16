@@ -476,11 +476,12 @@ AC_CONFIG_FILES([
     ql/experimental/swaptions/Makefile
     ql/experimental/templatemodels/Makefile
     ql/experimental/templatemodels/auxilliaries/Makefile
-    ql/experimental/templatemodels/stochvol/Makefile
+    ql/experimental/templatemodels/hybrid/Makefile
     ql/experimental/templatemodels/montecarlo/Makefile
     ql/experimental/templatemodels/montecarlo/scripting/Makefile
     ql/experimental/templatemodels/multiasset/Makefile
     ql/experimental/templatemodels/qgaussian2/Makefile
+    ql/experimental/templatemodels/stochvol/Makefile
     ql/experimental/termstructures/Makefile
     ql/experimental/termstructures/Helper/Makefile
     ql/experimental/termstructures/localCorrFX/Makefile

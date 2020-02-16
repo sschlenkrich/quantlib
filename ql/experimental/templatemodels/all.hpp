@@ -4,6 +4,7 @@
 #include <ql/experimental/templatemodels/stochasticprocessT.hpp>
 
 #include <ql/experimental/templatemodels/auxilliaries/all.hpp>
+#include <ql/experimental/templatemodels/hybrid/all.hpp>
 #include <ql/experimental/templatemodels/stochvol/all.hpp>
 #include <ql/experimental/templatemodels/montecarlo/all.hpp>
 #include <ql/experimental/templatemodels/multiasset/all.hpp>
