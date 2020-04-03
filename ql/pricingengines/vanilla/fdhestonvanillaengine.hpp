@@ -51,7 +51,7 @@ namespace QuantLib {
                                     DividendVanillaOption::results> {
       public:
         // Constructor
-        FdHestonVanillaEngine(
+        explicit FdHestonVanillaEngine(
             const ext::shared_ptr<HestonModel>& model,
             Size tGrid = 100, Size xGrid = 100, 
             Size vGrid = 50, Size dampingSteps = 0,
@@ -89,6 +89,35 @@ namespace QuantLib {
                                                             cachedArgs2results_;
     };
 
+    class MakeFdHestonVanillaEngine {
+      public:
+        explicit MakeFdHestonVanillaEngine(
+            const ext::shared_ptr<HestonModel>& hestonModel);
+
+        MakeFdHestonVanillaEngine& withQuantoHelper(
+            const ext::shared_ptr<FdmQuantoHelper>& quantoHelper);
+
+        MakeFdHestonVanillaEngine& withTGrid(Size tGrid);
+        MakeFdHestonVanillaEngine& withXGrid(Size xGrid);
+        MakeFdHestonVanillaEngine& withVGrid(Size vGrid);
+        MakeFdHestonVanillaEngine& withDampingSteps(
+            Size dampingSteps);
+
+        MakeFdHestonVanillaEngine& withFdmSchemeDesc(
+            const FdmSchemeDesc& schemeDesc);
+
+        MakeFdHestonVanillaEngine& withLeverageFunction(
+            ext::shared_ptr<LocalVolTermStructure>& leverageFct);
+
+        operator ext::shared_ptr<PricingEngine>() const;
+
+      private:
+        ext::shared_ptr<HestonModel> hestonModel_;
+        Size tGrid_, xGrid_, vGrid_, dampingSteps_;
+        ext::shared_ptr<FdmSchemeDesc> schemeDesc_;
+        ext::shared_ptr<LocalVolTermStructure> leverageFct_;
+        ext::shared_ptr<FdmQuantoHelper> quantoHelper_;
+    };
 }
 
 #endif

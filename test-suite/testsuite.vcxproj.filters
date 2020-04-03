@@ -92,6 +92,9 @@
     <ClCompile Include="commodityunitofmeasure.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="compiledboostversion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="compoundoption.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -462,6 +465,9 @@
     <ClCompile Include="fdsabr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fittedbonddiscountcurve.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="americanoption.hpp">
@@ -543,6 +549,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="commodityunitofmeasure.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compiledboostversion.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="compoundoption.hpp">
@@ -921,6 +930,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="fdsabr.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fittedbonddiscountcurve.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
