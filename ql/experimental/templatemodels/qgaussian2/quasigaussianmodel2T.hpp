@@ -200,6 +200,17 @@ namespace QuantLib {
 			return f;
 		}
 
+		// f - f0 for local volatility calculation
+		inline ActiveType deltaForwardRate(const DateType t, const DateType T, const State& s) {
+			ActiveType df = 0.0;
+			for (size_t i = 0; i<d_; ++i) {
+				ActiveType tmp = s.x(i);
+				for (size_t j = 0; j<d_; ++j) tmp += s.y(i, j) * G(j, t, T);
+				df += exp(-chi_[i] * (T - t)) * tmp;
+			}
+			return df;
+		}
+
 		inline ActiveType ZeroBond(const DateType t, const DateType T, const State& s) {
 			QL_REQUIRE(t <= T, "QuasiGaussianModel ZeroBond t <= T required");
 			if (t == T) return (ActiveType)1.0;
@@ -221,7 +232,7 @@ namespace QuantLib {
 			VecA res(d_);
 			PassiveType eps = 1.0e-4;  // 1bp lower cutoff for volatility
 			for (size_t k = 0; k < d_; ++k) {
-				ActiveType df = forwardRate(t, t + delta_[k], s) - f0_[k];
+				ActiveType df = deltaForwardRate(t, t + delta_[k], s);
 				//res[k] = sigma(k, t) + slope(k, t)*df + 0.5*curve(k, t)*df*df;
 				res[k] = sigma(k, t) + slope(k, t)*df + curve(k, t)*((df<0.0)?(-df):(df));
 				if (res[k] < eps) res[k] = eps;
@@ -360,6 +371,17 @@ namespace QuantLib {
 			return f;
 		}
 
+		inline  // f - f0 for local volatility calculation
+		ActiveType deltaForwardRate( const DateType t, const DateType T, const VecA& x, const MatA&  y) {
+			ActiveType df = 0.0;
+			for (size_t i=0; i<d_; ++i) {
+				ActiveType tmp = x[i];
+				for (size_t j=0; j<d_; ++j) tmp += y[i][j]*G(j,t,T);
+				df += exp(-chi_[i]*(T-t)) * tmp;
+			}
+			return df;
+		}
+
 		inline
 		ActiveType ZeroBond( const DateType t, const DateType T, const VecA& x, const MatA&  y) {
 			QL_REQUIRE(t<=T,"QuasiGaussianModel ZeroBond t <= T required");
@@ -381,11 +403,12 @@ namespace QuantLib {
 		inline  // diagonal vector
 		VecA sigma_f( const DateType t, const VecA& x, const MatA&  y) {
 			VecA res(d_);
+			PassiveType eps = 1.0e-4;  // 1bp lower cutoff for volatility
 			for (size_t k = 0; k < d_; ++k) {
-				ActiveType df = forwardRate(t, t + delta_[k], x, y) - f0_[k];
+				ActiveType df = deltaForwardRate(t, t + delta_[k], x, y);
 				//res[k] = sigma(k, t) + slope(k, t)*df + 0.5*curve(k, t)*df*df;
 				res[k] = sigma(k, t) + slope(k, t)*df + curve(k, t)*((df<0.0) ? (-df) : (df));
-				if (res[k] < 0.0) res[k] = 0.0;
+				if (res[k] < eps) res[k] = eps;
 				if (res[k] > 10.0*sigma(k, t)) res[k] = 10.0*sigma(k, t); // cap local volatility to avoid exploding states
 			}
 			return res;
