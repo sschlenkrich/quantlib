@@ -10,13 +10,14 @@
 	           
 			   X(t) = X0 * exp{x(t)}
 
-            We use extended state variables Y = [ x, mu, (z) ]
+            We use extended state variables Y = [ x, (z), mu, volAdj ],
 			
 			   dx(t)     = [mu - 0.5*sigma^2]dt + sigma dW   
 			   dr_d(t)   = 0 dt (domestic rates)
 			   dr_f(t)   = 0 dt (foreign rates)
 			   dz(t)     = 0 dt (stochastic volatility, currently not implemented)
 			   mu        = r_d - r_f (rates differential, provided exogenously)
+			   sigma     = sigmaLV + volAdj (hybrid volatility adjuster, provided exogenously)
 			   
 		   All methods are template based to allow incorporation of Automatic Differentiation
 		   tools
@@ -63,7 +64,7 @@ namespace QuantLib {
 		// with dX = a[t,X(t)] dt + b[t,X(t)] dW
 
 		// dimension of Y
-		inline size_t size()    { return 2; }
+		inline size_t size()    { return 1; }
 		// stochastic factors of x (and z)
 		inline size_t factors() { return 1; }
 		// initial values for simulation
@@ -75,15 +76,16 @@ namespace QuantLib {
 		// a[t,X(t)]
 		inline VecA drift( const DateType t, const VecA& Y) {
 			VecA a(size(),0.0);
-            a[0] = Y[1] - 0.5*sigma_*sigma_;
-			// finished
+            //a[0] = Y[1] - 0.5*sigma_*sigma_;
+			QL_FAIL("AssetModel: drift not implemented. Use evolve.");
 			return a;
 		}
 
 		// b[t,X(t)]
 		inline MatA diffusion( const DateType t, const VecA& Y) {
 			MatA b(size(), VecA(factors(),0.0));
-            b[0][0] = sigma_;
+            //b[0][0] = sigma_;
+			QL_FAIL("AssetModel: diffusion not implemented. Use evolve.");
 			// finished
 			return b;
 		}
@@ -91,12 +93,17 @@ namespace QuantLib {
 		// for quanto adjustment we also need volatility
 		inline virtual ActiveType volatility(const DateType t, const VecA& Y) { 
 		    // this is trivial for lognormal model, but it can be more subtile for LV or SLV model
-		    return sigma_;
+			QL_REQUIRE(Y.size()==3, "AssetModel: Y.size()==3 required");
+			return sigma_ + Y[2];
 		}
 
 		// simple Euler step
-		inline void evolve(const DateType t0, const VecA& Y0, const DateType dt, const VecD& dW, VecA& Y1) {
-			Y1[0] = Y0[0] + (Y0[1] - 0.5*sigma_*sigma_)*dt + sigma_*dW[0]*std::sqrt(dt);
+		inline virtual void evolve(const DateType t0, const VecA& Y0, const DateType dt, const VecD& dW, VecA& Y1) {
+			// input state Y0 also carries additional parameters, Y0 = [ x0, mu, volAdj ]
+			// output state Y1 only requires x1
+			QL_REQUIRE(Y0.size()==3, "AssetModel: Y0.size()==3 required");
+			ActiveType sigma = volatility(t0,Y0);
+			Y1[0] = Y0[0] + (Y0[1] - 0.5*sigma*sigma)*dt + sigma*dW[0]*std::sqrt(dt);
 		}
 
 		// asset calculation is the main purpose of this model
@@ -107,7 +114,7 @@ namespace QuantLib {
 		virtual std::vector< std::string > stateAliases() {
 			std::vector< std::string > aliases(size());
 			aliases[0] = "logS";
-			aliases[1] = "mu";
+			// aliases[1] = "mu";
 			return aliases;
 		}
 

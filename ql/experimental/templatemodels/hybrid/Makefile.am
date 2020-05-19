@@ -5,6 +5,7 @@ this_includedir=${includedir}/${subdir}
 this_include_HEADERS = \
     all.hpp \
     assetmodelT.hpp \
+	localvolassetmodel.hpp \
     hybridmodels.hpp \
     hybridmodelT.hpp \
     spreadmodelT.hpp

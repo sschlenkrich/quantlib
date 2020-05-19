@@ -199,15 +199,19 @@ namespace QuantLib {
 				// we use the model-independent implementation to allow for credit hybrid components 
 				VecA qAdj(correlations_[corrStartIdx].begin() + corrStartIdx + forAssetModels_[k]->factors(),
 					      correlations_[corrStartIdx].begin() + corrStartIdx + forAssetModels_[k]->factors() + forRatesModels_[k]->factors());  // keep in mind: last random factor in qG model is for dz!
+                // we need to extend the input state for our asset mode to account for drift and adjuster
+				y0.resize(y0.size() + 2, 0.0);  // NOTE: this uses knowledge of the structure of asset model mc state!
+				// y0[y0.size() - 2] = r_d - r_f ... is set below
+				// y0[y0.size() - 1] = 0.0;      ... hybrid vol adjuster, to be implemented...
 				ActiveType assetVol = forAssetModels_[k]->volatility(t0, y0);
 				for (size_t i = 0; i < qAdj.size(); ++i) qAdj[i] *= (assetVol*std::sqrt(dt));
 				for (size_t i = 0; i < qAdj.size(); ++i) dw_rates[i] -= qAdj[i];  // only adjust d factors for x!
 				// evolve foreign rates
 				VecA x1(forRatesModels_[k]->size(),0.0);
 				forRatesModels_[k]->evolve(t0, x0, dt, dw_rates, x1);
-				// calculate FX drift
+				// calculate FX drift, volAdjuster and extend input state
 				ActiveType r_f = forRatesModels_[k]->shortRate(t0, dt, x0, x1);
-				y0[1] = r_d - r_f;  // NOTE: this uses knowledge of the structure of asset model mc state!
+				y0[y0.size()-2] = r_d - r_f;  // FX drift
 				// finally we can evolve FX
 				VecA y1(forAssetModels_[k]->size(),0.0);
 				forAssetModels_[k]->evolve(t0, y0, dt, dw_asset, y1);

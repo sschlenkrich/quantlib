@@ -869,6 +869,7 @@
     <ClInclude Include="ql\experimental\templatemodels\hybrid\assetmodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodels.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodelT.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\localvolassetmodel.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\hybrid\spreadmodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\amcpricerT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\commoditypayoffT.hpp" />

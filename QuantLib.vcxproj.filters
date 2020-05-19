@@ -4591,6 +4591,9 @@
     <ClInclude Include="ql\experimental\templatemodels\hybrid\spreadmodelT.hpp">
       <Filter>experimental\templatemodels\hybrid</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\localvolassetmodel.hpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
