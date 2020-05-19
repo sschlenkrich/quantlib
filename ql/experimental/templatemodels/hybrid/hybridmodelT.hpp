@@ -62,16 +62,26 @@ namespace QuantLib {
 		// aliases are keys
 		std::map<std::string, size_t>  index_;
 
+		// we incorporate hybrid volatility adjustments
+		VecD  hybAdjTimes_;   // [ 0=T0, T1, ..., Tn ]
+		MatA  localVol_;      // [ [ v0, ..., vn ] for k in forAliases_ ]
+		MatA  hybrdVol_;      // [ [ v0, ..., vn ] for k in forAliases_ ]
+		MatA  hybVolAdj_;     // [ [ v0, ..., vn ] for k in forAliases_ ]
+
 	public:  
 		HybridModelT(const std::string                        domAlias,
 			         const ext::shared_ptr<RatesModelType>    domRatesModel,
 			         const std::vector<std::string>&          forAliases,
 			         const std::vector< ext::shared_ptr<AssetModelType> >& forAssetModels,
 			         const std::vector< ext::shared_ptr<RatesModelType> >& forRatesModels,
-			         const MatA&                                           correlations)
+			         const MatA&                                           correlations,
+			         const VecD&                              hybAdjTimes = VecD(),
+                     const MatA&                              hybVolAdj   = MatA()
+		)
 			: domAlias_(domAlias), domRatesModel_(domRatesModel), forAliases_(forAliases),
 			  forAssetModels_(forAssetModels), forRatesModels_(forRatesModels), correlations_(correlations),
-			  L_(0), modelsStartIdx_(2*forAliases.size()) {
+			  L_(0), modelsStartIdx_(2*forAliases.size()),
+              hybAdjTimes_(hybAdjTimes), hybVolAdj_(hybVolAdj), localVol_(0), hybrdVol_(0) {
 			// we perform a couple of consistency checks
 			QL_REQUIRE(domAlias_.compare("") != 0, "HybridModel: Domestic alias required.");
 			QL_REQUIRE(domRatesModel_, "HybridModel: Domestic rates model required.");
@@ -85,6 +95,16 @@ namespace QuantLib {
 				QL_REQUIRE(forAssetModels_[k], "HybridModel: Foreign asset model required.");
 				QL_REQUIRE(forRatesModels_[k], "HybridModel: Foreign rates model required.");
 			}
+			// adjuster times be consistent
+			if (hybAdjTimes_.size()>0) QL_REQUIRE(hybAdjTimes_[0]==0.0, "HybridModel: hybAdjTimes_[0]==0.0 required.");
+			for (size_t k=1; k<hybAdjTimes_.size(); ++k)
+				QL_REQUIRE(hybAdjTimes_[k]>hybAdjTimes_[k-1], "HybridModel: hybAdjTimes_[k]>hybAdjTimes_[k-1] required.");
+			// adjuster values be consistent
+			if (hybAdjTimes_.size()>0) {
+				QL_REQUIRE(hybVolAdj_.size()==forAliases_.size(), "HybridModel: hybVolAdj_.size()==forAliases_.size() required.");
+				for (size_t k=0; k<hybVolAdj_.size(); ++k)
+					QL_REQUIRE(hybAdjTimes_.size()==hybVolAdj_[k].size(), "HybridModel: hybAdjTimes_.size()==hybVolAdj_[k].size() required.");
+            }
 			// manage model indices in state variable
 			size_ = domRatesModel_->size();
 			factors_ = domRatesModel_->factors();
@@ -122,7 +142,10 @@ namespace QuantLib {
 		const MatA& correlations()                             { return correlations_;   }
 		const MatA& L()                                        { return L_;              }
 		inline const std::vector<size_t>& modelsStartIdx()     { return modelsStartIdx_; }
-
+		const VecD& hybAdjTimes() { return hybAdjTimes_; }
+		const MatA& localVol()    { return localVol_; }
+		const MatA& hybrdVol()    { return hybrdVol_; }
+		const MatA& hybVolAdj()   { return hybVolAdj_; }
 
         // stochastic process interface
 		// dimension of combined state variable
@@ -201,8 +224,8 @@ namespace QuantLib {
 					      correlations_[corrStartIdx].begin() + corrStartIdx + forAssetModels_[k]->factors() + forRatesModels_[k]->factors());  // keep in mind: last random factor in qG model is for dz!
                 // we need to extend the input state for our asset mode to account for drift and adjuster
 				y0.resize(y0.size() + 2, 0.0);  // NOTE: this uses knowledge of the structure of asset model mc state!
-				// y0[y0.size() - 2] = r_d - r_f ... is set below
-				// y0[y0.size() - 1] = 0.0;      ... hybrid vol adjuster, to be implemented...
+                // y0[y0.size() - 2] = r_d - r_f ... is set below
+				y0[y0.size() - 1] = hybridVolAdjuster(k, t0);  // hybrid vol adjuster, to be implemented...
 				ActiveType assetVol = forAssetModels_[k]->volatility(t0, y0);
 				for (size_t i = 0; i < qAdj.size(); ++i) qAdj[i] *= (assetVol*std::sqrt(dt));
 				for (size_t i = 0; i < qAdj.size(); ++i) dw_rates[i] -= qAdj[i];  // only adjust d factors for x!
@@ -285,8 +308,120 @@ namespace QuantLib {
 			return aliases;
 		}
 
+		// incorporate hybrid volatility adjuster methodology
+		// this method is unsafe, we do not check index and time range
+		inline ActiveType hybridVolAdjuster(size_t forIdx, DateType t) {
+			if (hybAdjTimes_.size() == 0) return 0.0;  // default
+			if (t >= hybAdjTimes_.back()) return hybVolAdj_[forIdx].back();  // constant extrapolation or single adjuster time
+			// if we end up here we have at least two adjuster times; recall T0=0
+			// find index in ascending vector, evaluate n s.t. t[n-1] < t <= t[n]
+			// bisection search
+			size_t a=0, b=hybAdjTimes_.size()-1;
+			while (b-a>1) {
+				size_t s = (a + b) / 2;
+				if (t<= hybAdjTimes_[s]) b = s;
+				else                     a = s;
+			}
+			DateType rho = (t - hybAdjTimes_[b-1]) / (hybAdjTimes_[b] - hybAdjTimes_[b-1]);
+			return (1.0-rho)*hybVolAdj_[forIdx][b-1] + rho*hybVolAdj_[forIdx][b];
+		}
 
+		// this method does the actual work...
+		inline void recalculateHybridVolAdjuster(const VecD& hybAdjTimes = VecD()) {
+			if (hybAdjTimes.size() > 0) hybAdjTimes_ = hybAdjTimes;  // if we don't supply time grid we want to keep the current grid
+			if (hybAdjTimes_.size() == 0)  // patological case, do nothing
+				return;
+			// we need to check for consistent times again
+			QL_REQUIRE(hybAdjTimes_[0] == 0.0, "HybridModel: hybAdjTimes_[0]==0.0 required.");
+			for (size_t k = 1; k < hybAdjTimes_.size(); ++k)
+				QL_REQUIRE(hybAdjTimes_[k] > hybAdjTimes_[k - 1], "HybridModel: hybAdjTimes_[k]>hybAdjTimes_[k-1] required.");
+			localVol_ = MatA(forAliases_.size(), VecA(hybAdjTimes_.size(), 0.0));
+			hybrdVol_ = MatA(forAliases_.size(), VecA(hybAdjTimes_.size(), 1.0));  // 1.0 is required for p calculation
+			hybVolAdj_ = MatA(forAliases_.size(), VecA(hybAdjTimes_.size(), 0.0));
+			VecA S0(forAliases_.size());  // we need initial asset values for forwards and ATM vol
+			for (size_t i = 0; i < S0.size(); ++i) {
+				S0[i] = forAssetModels_[i]->asset(0.0, forAssetModels_[i]->initialValues(), "");
+				VecA y0 = forAssetModels_[i]->initialValues();
+				y0.resize(y0.size() + 2, 0.0);         // this is asset model-dependent
+				localVol_[i][0] = forAssetModels_[i]->volatility(0.0, y0);
+				hybrdVol_[i][0] = localVol_[i][0];  // initial condition
+				hybVolAdj_[i][0] = hybrdVol_[i][0] - localVol_[i][0];
+			}
+			if (hybAdjTimes_.size() == 1)  // nothing else to do				
+				return;
+			// now we start with the actual methodology...
+			size_t corrStartIdx = domRatesModel_->factors();
+			for (size_t i = 0; i < S0.size(); ++i) {
+				// we collect all relevant correlations
+				VecA rhoY0X1(domRatesModel_->factors());      // ASSUME vol-FX correlation is zero
+				VecA rhoX1Y1(forRatesModels_[i]->factors());  // ASSUME vol-FX correlation is zero
+				MatA rhoY0Y1(domRatesModel_->factors(), VecA(forRatesModels_[i]->factors())); // ASSUME all vol-... correlation are zero
+				for (size_t row = 0; row < rhoY0X1.size(); ++row)
+					rhoY0X1[row] = correlations_[row][corrStartIdx];
+				for (size_t col = 0; col < rhoX1Y1.size(); ++col)
+					rhoX1Y1[col] = correlations_[corrStartIdx][corrStartIdx + forAssetModels_[i]->factors() + col];
+				for (size_t row = 0; row < rhoY0X1.size(); ++row)
+					for (size_t col = 0; col < rhoX1Y1.size(); ++col)
+						rhoY0Y1[row][col] = correlations_[row][corrStartIdx + forAssetModels_[i]->factors() + col];
+				// update stochastic factor index
+				corrStartIdx += (forAssetModels_[i]->factors() + forRatesModels_[i]->factors());
+				// 
+				for (size_t k = 1; k < hybAdjTimes_.size(); ++k) {
+					// we will use current time repeatedly
+					DateType T = hybAdjTimes_[k];
+					// ATM forward and effective local volatility
+					ActiveType dfDom = domRatesModel_->zeroBond(0.0, T, domRatesModel_->initialValues());
+					ActiveType dfFor = forRatesModels_[i]->zeroBond(0.0, T, forRatesModels_[i]->initialValues());
+					ActiveType S = S0[i] * dfFor / dfDom;  // maybe it's worth to save S for debugging
+					VecA y(forAssetModels_[i]->size() + 2, 0.0);
+					y[0] = log(S / S0[i]);
+					localVol_[i][k] = forAssetModels_[i]->volatility(hybAdjTimes_[k], y);
+					VecA hPrime(k+1);
+					for (size_t j = 0; j < hPrime.size(); ++j) {
+						VecA sigmaP0      = domRatesModel_->zeroBondVolatility(hybAdjTimes_[j], T, domRatesModel_->initialValues());
+						VecA sigmaP0Prime = domRatesModel_->zeroBondVolatilityPrime(hybAdjTimes_[j], T, domRatesModel_->initialValues());
+						VecA sigmaP1      = forRatesModels_[i]->zeroBondVolatility(hybAdjTimes_[j], T, forRatesModels_[i]->initialValues());
+						VecA sigmaP1Prime = forRatesModels_[i]->zeroBondVolatilityPrime(hybAdjTimes_[j], T, forRatesModels_[i]->initialValues());
 
+						// we start with sigmaP0Prime * sigma0
+						VecA sigma0 = sigmaP0;
+						for (size_t l = 0; l < sigma0.size(); ++l)
+							for (size_t m = 0; m < sigmaP1.size(); ++m)
+								sigma0[l] -= rhoY0Y1[l][m] * sigmaP1[m];
+						for (size_t l = 0; l < sigma0.size(); ++l)
+							sigma0[l] += hybrdVol_[i][j] * rhoY0X1[l];  // bootstrapping enters here
+						ActiveType sum0 = 0.0;
+						for (size_t l = 0; l < sigma0.size(); ++l)
+							sum0 += sigmaP0Prime[l] * sigma0[l];
+
+						// now we look at sigma1 * sigmaP1Prime
+						VecA sigma1 = sigmaP1;
+						for (size_t l = 0; l < sigma1.size(); ++l)
+							for (size_t m = 0; m < sigmaP0.size(); ++m)
+								sigma1[l] -= rhoY0Y1[m][l] * sigmaP0[m];
+						for (size_t l = 0; l < sigma1.size(); ++l)
+							sigma1[l] -= hybrdVol_[i][j] * rhoX1Y1[l];  // mnus sign (!), bootstrapping enters here
+						ActiveType sum1 = 0.0;
+						for (size_t l = 0; l < sigma1.size(); ++l)
+							sum1 += sigma1[l] * sigmaP1Prime[l];
+
+						// collect terms and finish
+						hPrime[j] = 2.0*(sum0 + sum1);
+					}
+					ActiveType p = 0.5 * hPrime[k] * (hybAdjTimes_[k] - hybAdjTimes_[k - 1]);
+					ActiveType q = 0.5 * hPrime[k-1] * (hybAdjTimes_[k] - hybAdjTimes_[k - 1]);
+					for (size_t j=1; j<k; ++j)
+						q += 0.5 * (hPrime[j - 1] + hPrime[j]) * (hybAdjTimes_[j] - hybAdjTimes_[j - 1]);
+				    // let's see if this works...
+					ActiveType root2 = p*p / 4.0 - q + localVol_[i][k] * localVol_[i][k];
+					QL_REQUIRE(root2 >= 0.0, "HybridModel: root2>=0.0 required.");
+					hybrdVol_[i][k] = -p / 2.0 + sqrt(root2);
+					QL_REQUIRE(hybrdVol_[i][k]>0.0, "HybridModel: hybrdVol_[i][k]>0.0 required.");
+					// maybe we should add some more safety checks here...
+					hybVolAdj_[i][k] = hybrdVol_[i][k] - localVol_[i][k];
+				}
+			}
+		}
 	};
 
 }

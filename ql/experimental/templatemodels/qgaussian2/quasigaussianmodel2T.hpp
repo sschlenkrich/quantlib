@@ -612,6 +612,37 @@ namespace QuantLib {
 			return std::log(B_d) / dt + 0.5 * x_av;
 		}
 
+		inline virtual VecA zeroBondVolatility(const DateType t, const DateType T, const VecA& X) { 
+			// sigma_r^T = sigma_x^T sqrt(z) 
+			// sigma_P^T = G(t,T)^T sigma_x^T sqrt(z)
+			State state(X, d_);
+			MatA sigmaxT = sigma_xT(t, state); // maybe incorporate a reference t here...
+			VecA sigmaPT(sigmaxT.size(),0.0);
+			for (size_t j = 0; j < sigmaPT.size(); ++j) {
+				for (size_t i = 0; i < sigmaxT.size(); ++i)
+					sigmaPT[j] += G(i, t, T) * sigmaxT[i][j];
+				sigmaPT[j] *= sqrt(state.z());  // don't forget stoch vol scaling
+			}
+			return sigmaPT;
+		}
+
+		inline virtual VecA zeroBondVolatilityPrime(const DateType t, const DateType T, const VecA& X) {
+			// sigma_r^T = sigma_x^T sqrt(z) 
+			// sigma_P^T = G(t,T)^T sigma_x^T sqrt(z)
+			State state(X, d_);
+			MatA sigmaxT = sigma_xT(t, state); // maybe incorporate a reference t here...
+			VecA sigmaPT(sigmaxT.size(), 0.0);
+			for (size_t j = 0; j < sigmaPT.size(); ++j) {
+				for (size_t i = 0; i < sigmaxT.size(); ++i) {
+					ActiveType GPrime = exp(-chi_[i] * (T - t));
+					sigmaPT[j] += GPrime * sigmaxT[i][j];
+				}
+				sigmaPT[j] *= sqrt(state.z());  // don't forget stoch vol scaling
+			}
+			return sigmaPT;
+		}
+
+
 		virtual std::vector< std::string > stateAliases() {
 			std::vector< std::string > aliases(size());
 			for (size_t i = 0; i < d_; ++i) aliases[i] = "x_" + std::to_string(i);
