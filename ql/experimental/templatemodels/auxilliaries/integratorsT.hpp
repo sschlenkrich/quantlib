@@ -77,12 +77,12 @@ namespace TemplateAuxilliaries {
 		}
 	};
 
-	// evaluate \int_x[0]^x[n-1] v(x) f(x) dx via Gauﬂ-Tschebyschow-Integration
+	// evaluate \int_x[0]^x[n-1] v(x) f(x) dx via GauÔøΩ-Tschebyschow-Integration
 	// x[0] left boundary, x[n-1] right boundary
-	// x[1], ..., x[n-2] Gauﬂ-Tschebyschow grid points
+	// x[1], ..., x[n-2] Gauss-Tschebyschow grid points
 	// v(x) interpolated values on x-grid 
 	// f(x) scalar function as functor
-	class GauﬂTschebyschowIntegral {
+	class GaussTschebyschowIntegral {
 	public:
 		template <typename PassiveType>
 		std::vector<PassiveType> getGrid(PassiveType a, PassiveType b, size_t n) {

@@ -114,6 +114,9 @@ cmake-build-debug
 nbproject
 .cproject
 
+# auto-generated build info
+buildinfo.hpp
+
 # User customizations
 .dir-locals.el
 Build.props

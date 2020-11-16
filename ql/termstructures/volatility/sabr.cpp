@@ -47,11 +47,12 @@ namespace QuantLib {
             logM = epsilon - .5 * epsilon * epsilon ;
         }
         const Real z = (nu/alpha)*sqrtA*logM;
+        const Real zz = (nu / alpha)*logM;
         const Real B = 1.0-2.0*rho*z+z*z;
         const Real C = oneMinusBeta*oneMinusBeta*logM*logM;
         const Real tmp = (std::sqrt(B)+z-rho)/(1.0-rho);
         const Real xx = std::log(tmp);
-        const Real D = sqrtA*(1.0+C/24.0+C*C/1920.0);
+        Real D = (1.0 + C / 24.0 + C*C / 1920.0);
         const Real d = 1.0 + expiryTime *
             (oneMinusBeta*oneMinusBeta*alpha*alpha/(24.0*A)
                                 + 0.25*rho*beta*nu*alpha/sqrtA
@@ -62,9 +63,10 @@ namespace QuantLib {
         // slightly more than the precision machine (hence the m)
         static const Real m = 10;
         if (std::fabs(z*z)>QL_EPSILON * m)
-            multiplier = z/xx;
+            multiplier = zz / xx;
         else {
             multiplier = 1.0 - 0.5*rho*z - (3.0*rho*rho-2.0)*z*z/12.0;
+			D = sqrtA*D;
         }
         return (alpha/D)*multiplier*d;
     }

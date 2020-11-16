@@ -14,6 +14,7 @@
 #include <ql/experimental/volatility/noarbsabrsmilesection.hpp>
 #include <ql/experimental/volatility/sabrvolsurface.hpp>
 #include <ql/experimental/volatility/sabrvoltermstructure.hpp>
+#include <ql/experimental/volatility/smiledsurface.hpp>
 #include <ql/experimental/volatility/sviinterpolatedsmilesection.hpp>
 #include <ql/experimental/volatility/sviinterpolation.hpp>
 #include <ql/experimental/volatility/svismilesection.hpp>

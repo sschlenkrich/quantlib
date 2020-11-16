@@ -20,7 +20,7 @@ namespace QuantLib {
 		Date                                expiryDate,
 		const boost::shared_ptr<SwapIndex>& swapindex,
 		const Handle<YieldTermStructure>&   discountCurve,
-		const boost::shared_ptr<SwaptionVolatilityStructure> volTS,
+		const Handle<SwaptionVolatilityStructure> volTS,
 		bool                                contTenorSpread,
 		Real                                modelTimesStepSize )
 		: SwapCashFlows(swapindex->underlyingSwap(expiryDate),discountCurve,contTenorSpread) {
@@ -182,10 +182,10 @@ namespace QuantLib {
 					Real callATM  = swaprateModels[i][j]->vanillaOption(S0, 1, 1.0e-6, 1000);
 					Real expTime = swaprateModels[i][j]->modelTimes()[swaprateModels[i][j]->modelTimes().size() - 1];
 					sigmaATM = bachelierBlackFormulaImpliedVol(Option::Call, S0, S0, expTime, callATM);
-					Real putMinus = swaprateModels[i][j]->vanillaOption(S0 - sigmaATM*sqrt(expTime), -1, 1.0e-6, 1000);
-					Real callPlus = swaprateModels[i][j]->vanillaOption(S0 + sigmaATM*sqrt(expTime),  1, 1.0e-6, 1000);
-					Real sigmaMns = bachelierBlackFormulaImpliedVol(Option::Put, S0 - sigmaATM*sqrt(expTime), S0, expTime, putMinus);
-					Real sigmaPls = bachelierBlackFormulaImpliedVol(Option::Call, S0 + sigmaATM*sqrt(expTime), S0, expTime, callPlus);
+					Real putMinus = swaprateModels[i][j]->vanillaOption(S0 - calibSwaptions_[i][j]->sigmaATM()*sqrt(expTime), -1, 1.0e-6, 1000);
+					Real callPlus = swaprateModels[i][j]->vanillaOption(S0 + calibSwaptions_[i][j]->sigmaATM()*sqrt(expTime),  1, 1.0e-6, 1000);
+					Real sigmaMns = bachelierBlackFormulaImpliedVol(Option::Put, S0 - calibSwaptions_[i][j]->sigmaATM()*sqrt(expTime), S0, expTime, putMinus);
+					Real sigmaPls = bachelierBlackFormulaImpliedVol(Option::Call, S0 + calibSwaptions_[i][j]->sigmaATM()*sqrt(expTime), S0, expTime, callPlus);
 					skew = sigmaPls - sigmaMns;
 					smile = sigmaPls + sigmaMns - 2.0*sigmaATM;
 				}
@@ -276,7 +276,7 @@ namespace QuantLib {
 	// constructor
 	QGCalibrator::QGCalibrator(
 		const boost::shared_ptr<QuasiGaussianModel>&          model,
-		const boost::shared_ptr<SwaptionVolatilityStructure>& volTS,
+		const Handle<SwaptionVolatilityStructure>&            volTS,
 		const std::vector< boost::shared_ptr<SwapIndex> >&    swapIndices,
 		const Real                                            modelTimesStepSize,
 		const bool                                            useExpectedXY,
@@ -288,7 +288,7 @@ namespace QuantLib {
 		const Real                                            etaWeight,
 		const Real                                            penaltySigma,
 		const Real                                            penaltySlope,
-		const boost::shared_ptr<EndCriteria>&                 endCriteria )
+		const EndCriteria&                                    endCriteria )
 		: model_(model), volTS_(volTS), swapIndices_(swapIndices), modelTimesStepSize_(modelTimesStepSize), 
 		  useExpectedXY_(useExpectedXY),
 		  sigmaMin_(0.0), sigmaMax_(sigmaMax), slopeMin_(0.0), slopeMax_(slopeMax), etaMin_(0.0), etaMax_(etaMax),
@@ -337,10 +337,10 @@ namespace QuantLib {
 		Objective obj(this, isInput, isOutput);
 		Array x = obj.initialise();
 		Problem problem(obj, constraint, x);
-		LevenbergMarquardt optimizationMethod(epsfcn, endCriteria_->rootEpsilon(), endCriteria_->gradientNormEpsilon());  // (epsfcn, xtol, gtol)
+		LevenbergMarquardt optimizationMethod(epsfcn, endCriteria_.rootEpsilon(), endCriteria_.gradientNormEpsilon());  // (epsfcn, xtol, gtol)
 		// EndCriteria endCriteria(maxfev, 100 /* unused */, 0 /* unused */, ftol, 0 /* unused */);
 		// calibrate
-		optimizationMethod.minimize(problem,*endCriteria_);  // here we use maxfev and ftol
+		optimizationMethod.minimize(problem,endCriteria_);  // here we use maxfev and ftol
 		calibratedModel_ = obj.model(problem.currentValue());
 		return optimizationMethod.getInfo();
 	}

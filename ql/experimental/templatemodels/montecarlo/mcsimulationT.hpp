@@ -32,6 +32,16 @@ namespace QuantLib {
 	// Declaration of MC simulation class
 	template <class DateType, class PassiveType, class ActiveType>
 	class MCSimulationT : public TemplateSimulation {
+	private:
+		class LessByVector {
+			const std::vector<Real>& vector_;
+		public:
+			LessByVector(const std::vector<Real>& vector) : vector_(vector) {}
+			bool operator() (const size_t &a, const size_t &b) {
+				return vector_[a] < vector_[b];
+			}
+		};
+
 	protected:
 
 		typedef StochasticProcessT<DateType, PassiveType, ActiveType> ProcessType;
@@ -69,6 +79,10 @@ namespace QuantLib {
 		// paths stored X_[paths][obsTimes][size]
 		std::vector< MatA > X_;
 
+		// additional states calculated via interpolation; (*Y_[addObsTimes])[paths][size]
+		VecD addObsTimes_;
+		std::vector< boost::shared_ptr< MatA > > Y_;
+
 		// adjust numeraire by exp{adj(t)*t} to meet E{ 1/N(t) } = P(0,t)
 		bool applyNumeraireAdjuster_;
 		VecD numeraireObservTimes_;
@@ -98,11 +112,15 @@ namespace QuantLib {
 			// dW_
 			if (storeBrownians_) {
 				dW_.resize(nPaths);
-				size_t ndWt = ((richardsonExtrapolation_) ? 2 : 1) * (simTimes_.size()-1);
-                for (size_t i=0; i<nPaths; ++i) {
-					dW_[i].resize(ndWt);
-					for (size_t j=0; j<ndWt; ++j) dW_[i][j].resize(process_->factors());
-				}
+			//  this does not help because it is overwritten in getNextBrownianIncrements
+			//	size_t ndWt = ((richardsonExtrapolation_) ? 2 : 1) * (simTimes_.size()-1);
+            //    for (size_t i=0; i<nPaths; ++i) {
+			//		dW_[i].resize(ndWt);
+			//		for (size_t j=0; j<ndWt; ++j) dW_[i][j].resize(process_->factors());
+			//	}
+			}
+			else {
+				dW_.resize(1); // we only save the most recent path
 			}
 			// X_
 			X_.resize(nPaths);
@@ -113,7 +131,7 @@ namespace QuantLib {
 			return;
 		}
 
-		inline void initialiseRSG() {
+		inline void initialiseRSG() { // this is applied for path-wise simulation
 			size_t ndWt = ((richardsonExtrapolation_) ? 2 : 1) * (simTimes_.size()-1);
 			rsg_ = boost::shared_ptr<PseudoRandom::rsg_type>(new PseudoRandom::rsg_type(PseudoRandom::make_sequence_generator(ndWt * process_->factors(), seed_)));
 		}
@@ -135,25 +153,22 @@ namespace QuantLib {
 		}
 
 		// return the Brownian motion path increments from from cache or random sequence generator
-		inline const std::vector< std::vector<QuantLib::Real> > getBrownianIncrements(const size_t path) {
-			if (storeBrownians_) {
-				if (path<dW_.size()) return dW_[path];
-				QL_REQUIRE(false,"TemplateMCSimulation: path index out of bounds.");
+		inline const std::vector< std::vector<QuantLib::Real> >& getBrownianIncrementsByPath(const size_t path) {
+		    if (storeBrownians_) {  // in this case we can avoid data copy
+				QL_REQUIRE(path<dW_.size(), "TemplateMCSimulation: path index out of bounds.");
+				return dW_[path];
+				}
+			else {
+                dW_[0] = getNextBrownianIncrements();
+				return dW_[0];
 			}
-			return getNextBrownianIncrements();
 		}
 
-		// cache Brownian motion path increments
-		inline void preEvaluateBrownians() {
-			if (!storeBrownians_) return; 
-			for (size_t k=0; k<dW_.size(); ++k) dW_[k] = getNextBrownianIncrements();
-			return;
-		}
 
 		// simulate a single path X_[path]
 		inline void simulatePath(const size_t path) {
-			QL_REQUIRE(path<X_.size(),"TemplateMCSimulation: path index out of bounds.");
-			MatD dWt = getBrownianIncrements(path);
+			QL_REQUIRE(path<X_.size(),"TemplateMCSimulation: path index out of bounds.");			
+			const MatD& dWt = getBrownianIncrementsByPath(path);
 			// initialisation
 			VecA X0 = process_->initialValues();
 			VecA X1(X0.size()), X12(X0.size());
@@ -216,6 +231,11 @@ namespace QuantLib {
 			inline ActiveType zeroBond(DateType obsTime, DateType payTime) {
 				return sim_->zcbAdjuster(obsTime, payTime) *
 					   process_->zeroBond(obsTime, payTime, sim_->state(idx_,obsTime) );
+			}
+
+			inline ActiveType zeroBond(DateType obsTime, DateType payTime, const std::string& alias) {
+				return sim_->zcbAdjuster(obsTime, payTime, alias) *
+					process_->zeroBond(obsTime, payTime, sim_->state(idx_, obsTime), alias);
 			}
 
 			inline ActiveType asset(DateType obsTime, const std::string& alias) {
@@ -324,40 +344,94 @@ namespace QuantLib {
 			applyNumeraireAdjuster_ = false;  // defauls
 			applyZcbAdjuster_       = false;  // default
 			applyAssetAdjuster_     = false;  // default
+			
 		}
 
 		inline void simulate() {  // the procedure Initialise/PreEvBrownians/Simulate needs to be re-factorised
+			addObsTimes_.clear();  // reset interpolated states
+			Y_.clear();
 			initialiseRSG();
-			preEvaluateBrownians();
+			if (storeBrownians_)  // That's not really ok. If storeBrownians we want to avoid repeated calculation...
+				for (size_t k=0; k<dW_.size(); ++k) dW_[k] = getNextBrownianIncrements();
 			for (size_t k=0; k<X_.size(); ++k) simulatePath(k);
 		}
 
 		// the following two routines are for sliced simulation
 
-		inline void prepareSimulation() {  // this routine checks constraints and prepares for below simulate(idx) calls
-			QL_REQUIRE(storeBrownians_ == true, "TemplateMCSimulation: storeBrownians required");
-			QL_REQUIRE(richardsonExtrapolation_==false, "TemplateMCSimulation: Richardson extrapolation not supported");
+		inline void prepareForSlicedSimulation() {  // this routine checks constraints and prepares for below simulate(idx) calls
+			//QL_REQUIRE(storeBrownians_ == true, "TemplateMCSimulation: storeBrownians required");
+			//QL_REQUIRE(richardsonExtrapolation_==false, "TemplateMCSimulation: Richardson extrapolation not supported");
 			QL_REQUIRE(simTimes_.size() == obsTimes_.size(), "TemplateMCSimulation: simTimes_ == obsTimes required");
             for (size_t k=0; k<simTimes_.size(); ++k)
 				QL_REQUIRE(simTimes_[k] == obsTimes_[k], "TemplateMCSimulation: simTimes_ == obsTimes required");
-			initialiseRSG();
-			preEvaluateBrownians();
+			if (storeBrownians_) {
+				initialiseRSG();
+				for (size_t k = 0; k < dW_.size(); ++k) dW_[k] = getNextBrownianIncrements();
+			}
+			else { // in this case we need to set up the random sequence generator differently
+				rsg_ = boost::shared_ptr<PseudoRandom::rsg_type>(new PseudoRandom::rsg_type(PseudoRandom::make_sequence_generator(process_->factors(), seed_)));
+				dW_[0].resize(2); // for Richardson extrapolation we need two slices ob BM's
+			}
 			// better set a flag that indicates that all is ready for simulation
 		}
 
-		inline void simulate(const size_t idx) {
+		inline void simulate(const size_t idx, const bool clearInterpolation = false) {
+			// we might want to clear interpolated states, e.g. in calibration runs
+			if (clearInterpolation) {
+				addObsTimes_.clear();
+				Y_.clear();
+			}
 			QL_REQUIRE(idx < obsTimes_.size(), "idx<obsTimes_.size() required");
 			if (idx == 0) {
 				for (size_t path = 0; path < X_.size(); ++path) X_[path][0] = process_->initialValues();
 				return;
 			}
 			Real dt = obsTimes_[idx] - obsTimes_[idx - 1];
-			for (size_t path = 0; path < X_.size(); ++path) {
-				process_->evolve(obsTimes_[idx-1], X_[path][idx-1], dt, getBrownianIncrements(path)[idx-1], X_[path][idx]);
+			
+			if (richardsonExtrapolation_) {
+				VecA X0T = process_->initialValues();
+				VecA X1T = VecA((X0T.size()));
+				VecA X12T = VecA((X0T.size()));
+				VecD *dW1, *dW2;  // we need these pointers to handle storeBrownians==false
+				VecD dWT = VecD((process_->factors()));
+				for (size_t path = 0; path < X_.size(); ++path) {
+					if (storeBrownians_) {
+						dW1 = &dW_[path][2 * (idx - 1)];
+						dW2 = &dW_[path][2 * (idx - 1) + 1];
+					}
+					else {
+						dW_[0][0] = rsg_->nextSequence().value;
+						dW_[0][1] = rsg_->nextSequence().value;
+						dW1 = &dW_[0][0];
+						dW2 = &dW_[0][1];
+					}
+					// full Euler step
+					for (size_t k = 0; k < dWT.size(); ++k) dWT[k] = ((*dW1)[k] + (*dW2)[k]) / sqrt(2.0);
+					process_->evolve(obsTimes_[idx - 1], X_[path][idx - 1], dt, dWT, X1T);
+					// two half size Euler steps
+					process_->evolve(obsTimes_[idx - 1], X_[path][idx - 1], dt / 2.0, *dW1, X12T);
+					process_->evolve(obsTimes_[idx - 1] + dt / 2.0, X12T, dt / 2.0, *dW2, X0T);
+					// extrapolation
+					for (size_t k = 0; k < X1T.size(); ++k) X1T[k] = 2 * X0T[k] - X1T[k];
+					// extrapolation may lead to ill-defined states
+					process_->truncate(obsTimes_[idx], X1T);
+					for (size_t k = 0; k < X1T.size(); ++k) X_[path][idx][k] = X1T[k];
+				}
+			}
+			else { // only full Euler step
+				for (size_t path = 0; path < X_.size(); ++path) {
+					VecD *dW;  // we need these pointer to handle storeBrownians==false
+					if (storeBrownians_) {
+						dW = &dW_[path][idx - 1];
+					}
+					else {
+						dW_[0][0] = rsg_->nextSequence().value;
+						dW = &dW_[0][0];
+					}
+					process_->evolve(obsTimes_[idx - 1], X_[path][idx - 1], dt, *dW, X_[path][idx]);
+				}
 			}
 		}
-
-
 
 		// inspectors
 
@@ -379,7 +453,7 @@ namespace QuantLib {
 		// find an actual state of the model for a given observation time
 		// this method is used by a path object and the result is passed on to
 		// the stochastic process for payoff evaluation
-		inline const VecA state(const size_t idx, const DateType t) {
+		inline const VecA& state(const size_t idx, const DateType t) {
 			QL_REQUIRE(idx<X_.size(),"TemplateMCSimulation: path out of bounds.");
 			size_t t_idx = TemplateAuxilliaries::idx(obsTimes_,t);
 			if (t==obsTimes_[t_idx]) return X_[idx][t_idx];
@@ -387,11 +461,31 @@ namespace QuantLib {
 			// allow extrapolation
 			if (t<obsTimes_[0])                   return X_[idx][0];
 			if (t>obsTimes_[obsTimes_.size()-1])  return X_[idx][X_[idx].size()-1];
-			VecA X(X_[idx][t_idx-1]);
+			// first check if we already have an additional state
+			if (addObsTimes_.size() > 0) {
+				size_t t_addIdx = TemplateAuxilliaries::idx(addObsTimes_, t);
+				if (t == addObsTimes_[t_addIdx]) return (*Y_[t_addIdx])[idx];
+			}
+			// if we end up here we truely need to interpolate
+			boost::shared_ptr<MatA> y(new MatA(nPaths(), VecA(process_->size())));
 			// linear state interpolation (this is very crude) 
-			DateType rho = (t-obsTimes_[t_idx-1])/(obsTimes_[t_idx] - obsTimes_[t_idx-1]);
-			for (size_t k=0; k<X.size(); ++k) X[k] = (1.0-rho)*X[k] + rho*X_[idx][t_idx][k];
-			return X;
+			DateType rho = (t - obsTimes_[t_idx - 1]) / (obsTimes_[t_idx] - obsTimes_[t_idx - 1]);
+			for (size_t p = 0; p < nPaths(); ++p)
+				for (size_t k = 0; k < process_->size(); ++k)
+					(*y)[p][k] = (1.0 - rho)*X_[p][t_idx - 1][k] + rho*X_[p][t_idx][k];
+			// add new state to list to re-use it for later calls
+			addObsTimes_.push_back(t);
+			Y_.push_back(y);
+			// we need to make sure additional times and states are sorted for efficient searching
+			std::vector<size_t> sorted(addObsTimes_.size());
+			for (size_t k = 0; k < sorted.size(); ++k) sorted[k] = k;
+			std::sort(sorted.begin(), sorted.end(), LessByVector(addObsTimes_));
+			VecD tmpTimes(addObsTimes_);
+			for (size_t k = 0; k < addObsTimes_.size(); ++k) addObsTimes_[k] = tmpTimes[sorted[k]];
+			std::vector< boost::shared_ptr< MatA > > tmpY(Y_);
+			for (size_t k = 0; k < Y_.size(); ++k) Y_[k] = tmpY[sorted[k]];
+			// all done. now we only need to return the current interpolated state...
+			return (*y)[idx];
 		}
 
 		inline const MatA& brownian(const size_t idx) {
@@ -405,7 +499,7 @@ namespace QuantLib {
 			numeraireObservTimes_ = numeraireObservTimes;
 			// check time grids
 			QL_REQUIRE(numeraireObservTimes_.size()>1, "TemplateMCSimulation: at least two numeraireObservTimes_ required");
-			QL_REQUIRE(numeraireObservTimes_[0] >= 0, "TemplateMCSimulation: numeraireObservTimes_[0]>=0 required");
+			QL_REQUIRE(numeraireObservTimes_[0] > 0, "TemplateMCSimulation: numeraireObservTimes_[0]>0 required");
 			for (size_t k = 1; k<numeraireObservTimes_.size(); ++k) QL_REQUIRE(numeraireObservTimes_[k - 1]<numeraireObservTimes_[k], "TemplateMCSimulation: numeraireObservTimes_ in ascending order required");
             // initialise adjuster
 			numeraireAdjuster_ = VecA(numeraireObservTimes_.size(), 0.0);
@@ -449,10 +543,10 @@ namespace QuantLib {
 			zcbOffsetTimes_ = zcbOffsetTimes;
 			// check time grids
 			QL_REQUIRE(zcbObservTimes_.size()>1,"TemplateMCSimulation: at least two zcbObservTimes_ required");
-			QL_REQUIRE(zcbObservTimes_[0]>=0,"TemplateMCSimulation: zcbObservTimes_[0]>=0 required");
+			QL_REQUIRE(zcbObservTimes_[0]>0,"TemplateMCSimulation: zcbObservTimes_[0]>0 required");
 			for (size_t k=1; k<zcbObservTimes_.size(); ++k) QL_REQUIRE(zcbObservTimes_[k-1]<zcbObservTimes_[k],"TemplateMCSimulation: zcbObservTimes_ in ascending order required");
 			QL_REQUIRE(zcbOffsetTimes_.size()>1,"TemplateMCSimulation: at least two zcbOffsetTimes_ required");
-			QL_REQUIRE(zcbOffsetTimes_[0]>=0,"TemplateMCSimulation: zcbOffsetTimes_[0]>=0 required");
+			QL_REQUIRE(zcbOffsetTimes_[0]>0,"TemplateMCSimulation: zcbOffsetTimes_[0]>0 required");
 			for (size_t k=1; k<zcbOffsetTimes_.size(); ++k) QL_REQUIRE(zcbOffsetTimes_[k-1]<zcbOffsetTimes_[k],"TemplateMCSimulation: zcbOffsetTimes_ in ascending order required");
 			// initialise zero adjuster matrix
 			zcbAdjuster_ = MatA(zcbObservTimes_.size(),VecA(zcbOffsetTimes_.size(),0.0));
@@ -502,6 +596,10 @@ namespace QuantLib {
 				           zcbAdjuster_[obsIdx-1][offIdx  ] * (1.0-rhoObs) * (rhoOff)     +
 				           zcbAdjuster_[obsIdx  ][offIdx  ] * (rhoObs)     * (rhoOff)     ;
 			return exp(-z*(T-t));
+		}
+
+		inline ActiveType zcbAdjuster(const DateType t, const DateType T, const std::string& alias) {
+			return 1.0;  // tbd. This needs to be implemented
 		}
 
 		// asset adjuster

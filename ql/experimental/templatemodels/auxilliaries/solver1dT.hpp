@@ -7,8 +7,8 @@
 
 
 
-#ifndef quantlib_solver1d_hpp
-#define quantlib_solver1d_hpp
+#ifndef quantlib_templateauxilliaries_solver1d_hpp
+#define quantlib_templateauxilliaries_solver1d_hpp
 
 #include <ql/types.hpp>
 #include <boost/function.hpp>

@@ -6,7 +6,8 @@
 */
 
 
-#include <ql/experimental/templatemodels/auxilliaries/svdT.hpp>
+#include <vector>
+#include <ql/errors.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/choleskyfactorisationT.hpp>
 
 #include <ql/experimental/templatemodels/multiasset/multiassetbsmodel.hpp>
@@ -27,7 +28,90 @@ namespace QuantLib {
 		for (size_t k=0; k< correlations.size(); ++k)
 		    QL_REQUIRE(processes_.size() == correlations[k].size(), "Number of processes doesn't match correlation");
 		DT_ = TemplateAuxilliaries::cholesky(correlations);
+		//check whether it is a diagonal matrix
+		bool isDiagonal = true;
+		for (size_t k = 0; k < correlations.size(); ++k) {
+			for (size_t l = k + 1; l < correlations.size(); ++l) {
+				if (correlations[k][l] != 0) isDiagonal = false;
+			}
+		}		
+		DT_ = RealStochasticProcess::MatA(processes.size());
+		for (size_t k = 0; k<DT_.size(); ++k) DT_[k].resize(processes.size());
+
+		for (size_t i = 0; i < processes.size(); i++)
+		{
+			for (size_t j = i; j < processes.size(); j++)
+			{
+				DT_[i][j] = correlations[i][j];
+				DT_[j][i] = correlations[i][j];
+			}
+		}
+		
+		if (! isDiagonal) {
+			TemplateAuxilliaries::performCholesky(DT_, DT_.size(),true);
+			//DT_ = TemplateAuxilliaries::svdSqrt(correlations);
+		}
+		else {
+			//due to ones on diagonal simply copy the matrix.
+		}
 	}
+
+	MultiAssetBSModel::MultiAssetBSModel(
+		const Handle<YieldTermStructure>&                                               termStructure,
+		const std::vector<std::string>&                                                 aliases,
+		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes)
+		: termStructure_(termStructure), processes_(processes) {
+		QL_REQUIRE(processes_.size() > 0, "No BS processes supplied");
+		//no correlation matrix means, we simply assume independence
+		RealStochasticProcess::MatA corrM = RealStochasticProcess::MatA(processes.size());
+		for (size_t k = 0; k<corrM.size(); ++k) corrM[k].resize(processes.size());
+
+		for (size_t i = 0; i < processes.size(); i++)
+		{
+			for (size_t j = 0; j < processes.size(); j++)
+			{
+				if (i == j) {
+					corrM[i][j] = 1;
+				}
+				else corrM[i][j] = 0;
+			}
+		}
+
+		DT_ = RealStochasticProcess::MatA(MultiAssetBSModel(termStructure, aliases, processes, corrM).DT_);
+		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k; // not transferable from other constructor.
+	}
+
+	MultiAssetBSModel::MultiAssetBSModel(const Handle<YieldTermStructure>&              termStructure,
+		const std::vector<std::string>&                                                 aliases,
+		const std::vector<boost::shared_ptr<QuantLib::LocalVolSurface>>&                localVolSurfaces,
+		const RealStochasticProcess::MatA&                                              correlations)
+		: localVolSurfaces_(localVolSurfaces), termStructure_(termStructure){
+	
+		initProcessesFromSurface();
+		DT_ = RealStochasticProcess::MatA(MultiAssetBSModel(termStructure, aliases, processes_, correlations).DT_);
+		for (size_t k = 0; k < aliases.size(); ++k) index_[aliases[k]] = k; 
+	}
+
+	MultiAssetBSModel::MultiAssetBSModel(const Handle<YieldTermStructure>&              termStructure,
+		const std::vector<std::string>&                                                 aliases,
+		const std::vector<boost::shared_ptr<QuantLib::LocalVolSurface>>&				localVolSurfaces)
+	{
+		RealStochasticProcess::MatA corrM = RealStochasticProcess::MatA(localVolSurfaces.size());
+		for (size_t k = 0; k<corrM.size(); ++k) corrM[k].resize(localVolSurfaces.size());
+
+		for (size_t i = 0; i < localVolSurfaces.size(); i++)
+		{
+			for (size_t j = 0; j < localVolSurfaces.size(); j++)
+			{
+				if (i == j) {
+					corrM[i][j] = 1;
+				}
+				else corrM[i][j] = 0;
+			}
+		}
+		*this = MultiAssetBSModel(termStructure, aliases, localVolSurfaces, corrM);
+	}
+
 
 	// initial values for simulation
 	inline RealStochasticProcess::VecP MultiAssetBSModel::initialValues() {
@@ -64,7 +148,12 @@ namespace QuantLib {
 			// sigma represents the average volatility on [t, t+dt]
 			// here we use a first very simple approximation
 			Real S = processes_[i]->x0() * std::exp(X0[i]);
-			Real sigma = processes_[i]->diffusion(t0, S);
+			Real sigma;
+			if (localVolSurfaces_.size() > 0)
+				//localVolSurfaces_ may be an InterpolatedLocalVolSurface which has better performance.
+				sigma = localVolSurfaces_[i]->localVol(t0,S,true);
+			else
+				sigma= processes_[i]->diffusion(t0, S);
 			// We may integrate the drift exactly (given the approximate volatility)
 			Real B_d = processes_[i]->riskFreeRate()->discount(t0) / processes_[i]->riskFreeRate()->discount(t0 + dt);
 			Real B_f = processes_[i]->dividendYield()->discount(t0) / processes_[i]->dividendYield()->discount(t0 + dt);
@@ -72,6 +161,21 @@ namespace QuantLib {
 		}
 	}
 
+
+	void MultiAssetBSModel::initProcessesFromSurface() {
+		if (localVolSurfaces_.size() > 0) {
+			processes_.resize(localVolSurfaces_.size());
+			for (size_t i = 0; i < localVolSurfaces_.size(); i++)
+			{
+				processes_[i] = boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>(new GeneralizedBlackScholesProcess(
+					localVolSurfaces_[i]->getUnderlying(),
+					localVolSurfaces_[i]->getDividendTS(),
+					localVolSurfaces_[i]->getInterestRateTS(),
+					localVolSurfaces_[i]->getBlackSurface()
+				));
+			}
+		}
+	}
 }
 
 

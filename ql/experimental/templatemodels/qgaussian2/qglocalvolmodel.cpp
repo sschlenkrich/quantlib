@@ -16,7 +16,7 @@ namespace QuantLib {
     // model implementaion
 	QGLocalvolModel::QGLocalvolModel(
 		const Handle<YieldTermStructure>&                      termStructure,
-		const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+		const Handle<SwaptionVolatilityStructure>&             volTS,
 		const Real                                             chi,
 		const boost::shared_ptr<SwapIndex>&                    swapIndex,
 		const std::vector< Real >&                             times,
@@ -41,7 +41,7 @@ namespace QuantLib {
 
 	QGLocalvolModel::QGLocalvolModel(
 		const Handle<YieldTermStructure>&                      termStructure,
-		const boost::shared_ptr<SwaptionVolatilityStructure>&  volTS,
+		const Handle<SwaptionVolatilityStructure>&             volTS,
 		const Real                                             chi,
 		const Real                                             theta,
 		const Real                                             eta,
@@ -69,14 +69,16 @@ namespace QuantLib {
 	}
 
 	inline std::vector< std::vector<Real> >
-	QGLocalvolModel::sigma_xT(const Real t, const std::vector<Real>& x, const std::vector< std::vector<Real> >&  y) {
-		if (sigmaMode_ == Parent) return QuasiGaussianModel::sigma_xT(t, x, y);  // this is more like a fall back if volatility is irrelevant
+	QGLocalvolModel::sigma_xT(const Real t, const State& s) {
+		if (sigmaMode_ == Parent) return QuasiGaussianModel::sigma_xT(t, s);  // this is more like a fall back if volatility is irrelevant
 		if (sigmaMode_ == Calibration) {
 			// the current implementation is intended only for calibration phase
 			// we rely on the swap rate model beeing initialised and updated properly before this function is called
 			// this will most likely not work if model is used with external MC simulation
 			QL_REQUIRE(swapRateModel_ != 0, "swapRateModel_!=0 required");
 			Real observationTime = swapRateModel_->modelTimes().back();  // this should be times()[idx] from calibrateAndSimulate()
+			std::vector<Real> x(1, s.x(0));
+			std::vector< std::vector<Real> > y(1, std::vector<Real>(1, s.y(0, 0)));
 			Real swapRate = swapRateModel_->swapRate(observationTime, x, y);
 			Real swapGradient = (swapRateModel_->swapGradient(observationTime, x, y))[0];
 			Real lvol;
@@ -113,25 +115,25 @@ namespace QuantLib {
 
 	// we cache the float leg and fixed leg valuation to speed-up MC simulation
 	QGLocalvolModel::SwaptionFactory::SwaptionFactory(const Time obsTime, const SwapCashFlows& scf)
-		: floatLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Cache(
+		: floatLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Cache(
 			boost::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.floatTimes(), scf.floatWeights()))))),
-		annuityLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Cache(
+		annuityLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Cache(
 			boost::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.fixedTimes(), scf.annuityWeights())))))
 	{}
 
 	boost::shared_ptr<QGLocalvolModel::MCPayoff> QGLocalvolModel::SwaptionFactory::swaption(const Real strike, const Real callOrPut) {
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedRate(new QGLocalvolModel::MCPayoff::FixedAmount(strike));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedLeg(new QGLocalvolModel::MCPayoff::Mult(fixedRate, annuityLeg_));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedRate(new QGLocalvolModel::MCBase::FixedAmount(strike));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedLeg(new QGLocalvolModel::MCBase::Mult(fixedRate, annuityLeg_));
 		boost::shared_ptr<QGLocalvolModel::MCPayoff> swap;
 		if (callOrPut == 1.0) {
-			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Axpy(-1.0, fixedLeg, floatLeg_));
+			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Axpy(-1.0, fixedLeg, floatLeg_));
 		}
 		else {
-			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCPayoff::Axpy(-1.0, floatLeg_, fixedLeg));
+			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Axpy(-1.0, floatLeg_, fixedLeg));
 		}
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> zero(new QGLocalvolModel::MCPayoff::FixedAmount(0.0));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> swpt(new QGLocalvolModel::MCPayoff::Max(swap, zero));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> pay(new QGLocalvolModel::MCPayoff::Pay(swpt, floatLeg_->observationTime()));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> zero(new QGLocalvolModel::MCBase::FixedAmount(0.0));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> swpt(new QGLocalvolModel::MCBase::Max(swap, zero));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> pay(new QGLocalvolModel::MCBase::Pay(swpt, floatLeg_->observationTime()));
 		return pay;
 	}
 
@@ -263,7 +265,7 @@ namespace QuantLib {
 
 		// initialise MC simulation
 		model->simulation_ = boost::shared_ptr<MCSimulation>(new MCSimulation(model, model->times(), model->times(), model->nPaths_, model->seed_, false, true, true));
-		model->simulation_->prepareSimulation();
+		model->simulation_->prepareForSlicedSimulation();
 		model->simulation_->simulate(0);
 		QL_REQUIRE(model->simulation_->simTimes().size() == model->times().size() + 1, "simulation_->simTimes().size()==times().size()+1 required.");
 
@@ -301,8 +303,8 @@ namespace QuantLib {
 		avgCalcStrikes_(0.0) {
 		boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFloatLeg(new MCAnnuity(obsTime, scf.floatTimes(), scf.floatWeights()));
 		boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFixedLeg(new MCAnnuity(obsTime, scf.fixedTimes(), scf.annuityWeights()));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCPayoff::FixedAmount(1.0));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCPayoff::Pay(one, obsTime));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCBase::FixedAmount(1.0));
+		boost::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCBase::Pay(one, obsTime));
 		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) {
 			boost::shared_ptr<MCSimulation::Path> p = model->simulation_->path(k);
 			oneOverBSample_[k] = oneAtT->discountedAt(p);
@@ -528,7 +530,7 @@ namespace QuantLib {
 			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
 			if (calcStochVolAdjustment_) {
 				StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);				
-				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];  // finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
+				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / sqrt(expZ.expectationZCondS()[j]);  // finally adjust sigma_SV = sigma_LV / sqrt(E^A[ z(T) | S(T) = K ])
 			}
 
 			// set up interpolation
@@ -621,7 +623,7 @@ namespace QuantLib {
 			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
 			if (calcStochVolAdjustment_) {
 				StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);
-				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];  // finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
+				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / sqrt(expZ.expectationZCondS()[j]);  // finally adjust sigma_SV = sigma_LV / sqrt(E^A[ z(T) | S(T) = K ])
 			}
 
 			// set up interpolation
@@ -823,7 +825,7 @@ namespace QuantLib {
 			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
 			if (calcStochVolAdjustment_) {
 				StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);
-				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];  // finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
+				for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / sqrt(expZ.expectationZCondS()[j]);  // finally adjust sigma_SV = sigma_LV / sqrt(E^A[ z(T) | S(T) = K ])
 			}
 
 			// set up interpolation
@@ -922,7 +924,7 @@ namespace QuantLib {
 			// calculate E^A[ z(T) | S(T) = K ] and adjust local vol
 			StochvolExpectation expZ(this, idx, 1.0 / kernelWidth_ / stdDev, swapRate.annuity(), mcCalc, strikeGrid, &kernel);
 			// finally adjust sigma_SV = sigma_LV / E^A[ z(T) | S(T) = K ]
-			for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / expZ.expectationZCondS()[j];
+			for (size_t j = 0; j < strikeGrid.size(); ++j) localVol[j] = localVol[j] / sqrt(expZ.expectationZCondS()[j]);
 
 			// set up interpolation
 			strikeGrid_.push_back(strikeGrid);

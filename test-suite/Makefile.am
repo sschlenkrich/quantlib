@@ -150,6 +150,7 @@ QL_TEST_SRCS = \
 	twoassetcorrelationoption.cpp \
 	ultimateforwardtermstructure.cpp \
 	utilities.cpp \
+	vanillalocalvolmodels.cpp
 	variancegamma.cpp \
 	varianceoption.cpp \
 	varianceswaps.cpp \
@@ -309,6 +310,7 @@ QL_TEST_HDRS = \
 	twoassetcorrelationoption.hpp \
 	ultimateforwardtermstructure.hpp \
 	utilities.hpp \
+	vanillalocalvolmodels.hpp \
 	variancegamma.hpp \
 	varianceoption.hpp \
 	varianceswaps.hpp \

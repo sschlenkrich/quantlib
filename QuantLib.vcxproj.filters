@@ -373,6 +373,9 @@
     <Filter Include="experimental\templatemodels\qgaussian2">
       <UniqueIdentifier>{7f4a74b0-c742-4243-b1a9-65c79ab22ccb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\vanillalocalvolmodel">
+      <UniqueIdentifier>{e4548260-cb9c-4d51-97cd-c64d2cdcd980}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -4539,12 +4542,6 @@
     <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolmodelT.hpp">
       <Filter>experimental\templatemodels\vanillalocalvol</Filter>
     </ClInclude>
-    <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolsmilesection.hpp">
-      <Filter>experimental\templatemodels\vanillalocalvol</Filter>
-    </ClInclude>
-    <ClInclude Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvoltermstructures.hpp">
-      <Filter>experimental\templatemodels\vanillalocalvol</Filter>
-    </ClInclude>
     <ClInclude Include="ql\experimental\templatemodels\hullwhite\g2ppT.hpp">
       <Filter>experimental\templatemodels\hullwhite</Filter>
     </ClInclude>
@@ -4572,7 +4569,18 @@
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.hpp">
       <Filter>experimental\templatemodels\qgaussian2</Filter>
     </ClInclude>
-    <ClInclude Include="ql\methods\finitedifferences\operatorfactory.hpp" />
+    <ClInclude Include="ql\experimental\vanillalocalvolmodel\all.hpp">
+      <Filter>experimental\vanillalocalvolmodel</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolmodel.hpp">
+      <Filter>experimental\vanillalocalvolmodel</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolsmilesection.hpp">
+      <Filter>experimental\vanillalocalvolmodel</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\vanillalocalvolmodel\vanillalocalvoltermstructures.hpp">
+      <Filter>experimental\vanillalocalvolmodel</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -7302,12 +7310,6 @@
     <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.cpp">
       <Filter>experimental\templatemodels\multiasset</Filter>
     </ClCompile>
-    <ClCompile Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolsmilesection.cpp">
-      <Filter>experimental\templatemodels\vanillalocalvol</Filter>
-    </ClCompile>
-    <ClCompile Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvoltermstructures.cpp">
-      <Filter>experimental\templatemodels\vanillalocalvol</Filter>
-    </ClCompile>
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.cpp">
       <Filter>experimental\templatemodels\qgaussian2</Filter>
     </ClCompile>
@@ -7316,6 +7318,15 @@
     </ClCompile>
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.cpp">
       <Filter>experimental\templatemodels\qgaussian2</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolmodel.cpp">
+      <Filter>experimental\vanillalocalvolmodel</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\vanillalocalvolmodel\vanillalocalvolsmilesection.cpp">
+      <Filter>experimental\vanillalocalvolmodel</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\vanillalocalvolmodel\vanillalocalvoltermstructures.cpp">
+      <Filter>experimental\vanillalocalvolmodel</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

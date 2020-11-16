@@ -9,6 +9,7 @@
 #include <vector>
 #include <cassert>
 #include <cstring>
+#include <ql/errors.hpp>
 //#include <cmath>
 
 #ifndef quantlib_templatesvd_hpp
@@ -26,7 +27,7 @@ namespace TemplateAuxilliaries {
 		T c=a/r;
 		T s=-b/r;
 
-#pragma omp parallel for
+//#pragma omp parallel for
 		for(size_t i=0;i<dim[1];i++){
 			T S0=S(m+0,i);
 			T S1=S(m+1,i);
@@ -44,7 +45,7 @@ namespace TemplateAuxilliaries {
 		T c=a/r;
 		T s=-b/r;
 
-#pragma omp parallel for
+//#pragma omp parallel for
 		for(size_t i=0;i<dim[0];i++){
 			T S0=S(i,m+0);
 			T S1=S(i,m+1);
@@ -86,7 +87,7 @@ namespace TemplateAuxilliaries {
 						house_vec[j]=-house_vec[j];
 					}
 				}
-#pragma omp parallel for
+//#pragma omp parallel for
 				for(size_t k=i;k<dim[1];k++){
 					T dot_prod=0;
 					for(size_t j=i;j<dim[0];j++){
@@ -96,7 +97,7 @@ namespace TemplateAuxilliaries {
 						S(j,k)-=dot_prod*house_vec[j];
 					}
 				}
-#pragma omp parallel for
+//#pragma omp parallel for
 				for(size_t k=0;k<dim[0];k++){
 					T dot_prod=0;
 					for(size_t j=i;j<dim[0];j++){
@@ -130,7 +131,7 @@ namespace TemplateAuxilliaries {
 						house_vec[j]=-house_vec[j];
 					}
 				}
-#pragma omp parallel for
+//#pragma omp parallel for
 				for(size_t k=i;k<dim[0];k++){
 					T dot_prod=0;
 					for(size_t j=i+1;j<dim[1];j++){
@@ -140,7 +141,7 @@ namespace TemplateAuxilliaries {
 						S(k,j)-=dot_prod*house_vec[j];
 					}
 				}
-#pragma omp parallel for
+//#pragma omp parallel for
 				for(size_t k=0;k<dim[1];k++){
 					T dot_prod=0;
 					for(size_t j=i+1;j<dim[1];j++){
@@ -356,8 +357,10 @@ namespace TemplateAuxilliaries {
 			}
 		}
 		return DT;
+	
 	}
 	
+
 
 } // namespace TemplateAuxilliaries
 

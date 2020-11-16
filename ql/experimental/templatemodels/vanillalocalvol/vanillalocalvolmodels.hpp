@@ -12,12 +12,12 @@
 
 #include <ql/types.hpp>
 
-// #include <ql/experimental/templatemodels/stochasticprocessT.hpp>
+//#include <ql/experimental/templatemodels/stochasticprocessT.hpp>
 #include <ql/experimental/templatemodels/vanillalocalvol/vanillalocalvolmodelT.hpp>
 
 namespace QuantLib {
 
-	typedef VanillaLocalVolModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> VanillaLocalVolModel;
+	typedef VanillaLocalVolModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> VanillaLocalVolModelDev;
 
 }
 

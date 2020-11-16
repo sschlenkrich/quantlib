@@ -74,8 +74,8 @@ namespace QuantLib {
 			std::vector<Real> stochVarianceSample(simulation_->nPaths(), 0.0);
 			boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFloatLeg(new MCAnnuity(times()[idx - 1], swapRate.scf().floatTimes(), swapRate.scf().floatWeights()));
 			boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFixedLeg(new MCAnnuity(times()[idx - 1], swapRate.scf().fixedTimes(), swapRate.scf().annuityWeights()));
-			boost::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCPayoff::FixedAmount(1.0));
-			boost::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCPayoff::Pay(one, times()[idx - 1]));
+			boost::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCBase::FixedAmount(1.0));
+			boost::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCBase::Pay(one, times()[idx - 1]));
 			for (size_t k = 0; k < simulation_->nPaths(); ++k) {
 				boost::shared_ptr<MCSimulation::Path> p = simulation_->path(k);
 				oneOverBSample[k] = oneAtT->discountedAt(p);
@@ -124,7 +124,7 @@ namespace QuantLib {
 			for (size_t k=strikes.size(); k>0; --k) {
 				if (k < strikes.size()) mcCall[k - 1] = mcCall[k] + sumOfRNDerivative*(strikes[k] - strikes[k - 1]);
 				if (k < strikes.size()) mcProb[k - 1] = mcProb[k];
-				else mcProb[k - 1] = simulation_->nPaths();
+				else mcProb[k - 1] = (Real)simulation_->nPaths();
 				size_t upIdx = (k==strikes.size()) ? (simulation_->nPaths()) : (strikeIdx[k]);
 				for (size_t j=upIdx; j>strikeIdx[k-1]; --j) {
 					Real radonNikodymDerivative = annuitySample[sorted[j - 1]] * oneOverBSample[sorted[j - 1]] / swapRate.annuity();
@@ -212,7 +212,7 @@ namespace QuantLib {
 			compTime["SvAdj"] += std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count();
 
 			// adjust local volatility
-			for (size_t k = 0; k < strikes.size(); ++k) localVol[k] /= expectationZCondS[k];
+			for (size_t k = 0; k < strikes.size(); ++k) localVol[k] /= sqrt(expectationZCondS[k]);
 
 			// set up interpolation
 			strikeGrid_.push_back(strikes);

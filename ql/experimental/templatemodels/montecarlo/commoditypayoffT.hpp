@@ -23,6 +23,7 @@ namespace QuantLib {
 	template <class DateType, class PassiveType, class ActiveType>
 	class CommodityPayoffT {
 	protected:
+	    typedef MCPayoffT<DateType, PassiveType, ActiveType>  PayoffType;
 		typedef MCSimulationT<DateType, PassiveType, ActiveType>                 SimulationType;
 		typedef typename MCSimulationT<DateType, PassiveType, ActiveType>::Path  PathType;
 
@@ -40,11 +41,11 @@ namespace QuantLib {
 				                 const std::vector<PassiveType>& settlementWeights,
 					             const PassiveType               strike,
 					             const PassiveType               callOrPut )
-				: MCPayoffT(obsTime), settlementTimes_(settlementTimes), settlementWeights_(settlementWeights), strike_(strike), callOrPut_(callOrPut) { }
+				: PayoffType(obsTime), settlementTimes_(settlementTimes), settlementWeights_(settlementWeights), strike_(strike), callOrPut_(callOrPut) { }
 			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
 				ActiveType fut=0.0;
 				for (size_t k=0; k<settlementTimes_.size(); ++k)
-					if (settlementTimes_[k]>=observationTime()) fut += settlementWeights_[k] * p->futureAsset(observationTime(),settlementTimes_[k],"");
+					if (settlementTimes_[k]>=PayoffType::observationTime()) fut += settlementWeights_[k] * p->futureAsset(PayoffType::observationTime(),settlementTimes_[k],"");
 				ActiveType V  = callOrPut_ * (fut - strike_);
 				return (V>0.0) ? (V) : ((ActiveType)0.0);
 			}
@@ -88,7 +89,7 @@ namespace QuantLib {
 			                         const PassiveType               obsLagB,
 			                         const bool                      useLogReturns,       
 			                         const long                      calcType )
-			: MCPayoffT(0.0), obsTimes_(obsTimes), settlementTimesA_(settlementTimesA), settlementWeightsA_(settlementWeightsA), obsLagA_(obsLagA),
+			: PayoffType(0.0), obsTimes_(obsTimes), settlementTimesA_(settlementTimesA), settlementWeightsA_(settlementWeightsA), obsLagA_(obsLagA),
 			settlementTimesB_(settlementTimesB), settlementWeightsB_(settlementWeightsB), obsLagB_(obsLagB), useLogReturns_(useLogReturns), calcType_(calcType) {}
 		    // payoff should NOT be discounted
 		    inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p); }

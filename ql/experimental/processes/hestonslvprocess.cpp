@@ -1,7 +1,7 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2015 Johannes GÃ¶ttker-Schnetmann
+ Copyright (C) 2015 Johannes Göttker-Schnetmann
  Copyright (C) 2015 Klaus Spanderen
 
  This file is part of QuantLib, a free-software/open-source library
@@ -57,7 +57,7 @@ namespace QuantLib {
 
         tmp[0] = riskFreeRate()->forwardRate(t, t, Continuous)
                - dividendYield()->forwardRate(t, t, Continuous)
-               - 0.5*vol*vol;
+               - 0.5*vol*vol; //-> d(lnSt)
 
         tmp[1] = kappa_*(theta_ - x[1]);
 
@@ -84,6 +84,17 @@ namespace QuantLib {
         Time t0, const Array& x0, Time dt, const Array& dw) const {
         Array retVal(2);
 
+		if (isLocalVolProcess()) {
+			// local vol model
+			Real vol = std::sqrt(dt)*leverageFct()->localVol(t0, x0[0],true);
+			const Real mu = riskFreeRate()->forwardRate(t0, t0 + dt, Continuous)
+				- dividendYield()->forwardRate(t0, t0 + dt, Continuous)
+				- 0.5 * vol*vol;
+			retVal[0] = x0[0] * std::exp( vol * dw[0] + mu);
+			retVal[1] = x0[1];
+			return retVal;
+		}
+
         const Real ex = std::exp(-kappa_*dt);
 
         const Real m  =  theta_+(x0[1]-theta_)*ex;
@@ -106,6 +117,8 @@ namespace QuantLib {
             retVal[1] = ((u <= p) ? 0.0 : std::log((1-p)/(1-u))/beta);
         }
 
+		if (retVal[1] < 0) retVal[1] = 1e-8;
+
         const Real mu = riskFreeRate()->forwardRate(t0, t0+dt, Continuous)
              - dividendYield()->forwardRate(t0, t0+dt, Continuous);
 
@@ -122,4 +135,8 @@ namespace QuantLib {
 
         return retVal;
     }
+
+	bool HestonSLVProcess::isLocalVolProcess() const {
+		return abs(kappa_) < QL_EPSILON && abs(sigma_) < QL_EPSILON && abs(v0_ - 1) < QL_EPSILON;
+	}
 }

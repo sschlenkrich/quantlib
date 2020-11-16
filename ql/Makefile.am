@@ -23,6 +23,7 @@ this_includedir=${includedir}/${subdir}
 this_include_HEADERS = \
 	auto_link.hpp \
 	auto_ptr.hpp \
+    buildinfo.hpp \
 	cashflow.hpp \
 	compounding.hpp \
 	config.hpp \
@@ -63,6 +64,7 @@ this_include_HEADERS = \
 	volatilitymodel.hpp
 
 cpp_files = \
+    buildinfo.cpp \
     cashflow.cpp \
     currency.cpp \
 	discretizedasset.cpp \
