@@ -21,6 +21,7 @@ Docs/.time-stamp
 Docs/.time-stamp-html
 Docs/.time-stamp-online
 Docs/.time-stamp-man
+Docs/LICENSE.TXT
 Docs/reference-*/
 Docs/html/
 Docs/man/
@@ -32,7 +33,6 @@ lib/
 test-suite/bin/QuantLib-test-suite-*.manifest
 test-suite/build/
 test-suite/*.trs
-.vs/
 
 # Build outputs
 **/x64/Debug
@@ -42,17 +42,11 @@ test-suite/*.trs
 **/bin/*.xml
 **/bin/*.manifest
 
-# CLion
-.idea
-cmake-build-debug
-
-# Visual Studio Code
-.vscode
-
 # Artifacts created in multiple directories
 Makefile
 Makefile.in
 unity.cpp
+unity_*.cpp
 testCaseCollection.xml
 .deps
 .libs
@@ -83,6 +77,7 @@ testCaseCollection.xml
 CMakeFiles
 *.cmake
 TAGS
+.dirstamp
 
 # Outputs
 Examples/BasketLosses/BasketLosses
@@ -101,9 +96,9 @@ Examples/GlobalOptimizer/GlobalOptimizer
 Examples/LatentModel/LatentModel
 Examples/MarketModels/MarketModels
 Examples/MultidimIntegral/MultidimIntegral
+Examples/MulticurveBootstrapping/MulticurveBootstrapping
 Examples/Replication/Replication
 Examples/Repo/Repo
-Examples/Swap/SwapValuation
 test-suite/quantlib-test-suite
 test-suite/quantlib-benchmark
 test-suite/bin/*.exp
@@ -111,4 +106,15 @@ test-suite/bin/*.lib
 test-suite/bin/*.pdb
 test-suite/.unit_test_profile.txt
 
+# IDEs
+.vs
+.vscode
+.idea
+cmake-build-debug
+nbproject
+.cproject
 
+# User customizations
+.dir-locals.el
+Build.props
+Directory.Build.props

@@ -54,8 +54,9 @@ namespace QuantLib {
 
     void JamshidianSwaptionEngine::calculate() const {
 
-        QL_REQUIRE(arguments_.settlementType==Settlement::Physical,
-                   "cash-settled swaptions not priced by Jamshidian engine");
+        QL_REQUIRE(arguments_.settlementMethod != Settlement::ParYieldCurve,
+                   "cash settled (ParYieldCurve) swaptions not priced with "
+                   "JamshidianSwaptionEngine");
 
         QL_REQUIRE(arguments_.exercise->type() == Exercise::European,
                    "cannot use the Jamshidian decomposition "
@@ -68,7 +69,7 @@ namespace QuantLib {
 
         ext::shared_ptr<TermStructureConsistentModel> tsmodel =
             ext::dynamic_pointer_cast<TermStructureConsistentModel>(*model_);
-        if (tsmodel) {
+        if (tsmodel != 0) {
             referenceDate = tsmodel->termStructure()->referenceDate();
             dayCounter = tsmodel->termStructure()->dayCounter();
         } else {

@@ -33,7 +33,7 @@ namespace QuantLib {
     //! Cms-spread-rate coupon with digital digital call/put option
     class DigitalCmsSpreadCoupon : public DigitalCoupon {
       public:
-        DigitalCmsSpreadCoupon(
+        explicit DigitalCmsSpreadCoupon(
             const ext::shared_ptr<CmsSpreadCoupon> &underlying,
             Rate callStrike = Null<Rate>(),
             Position::Type callPosition = Position::Long,
@@ -44,7 +44,8 @@ namespace QuantLib {
             bool isPutATMIncluded = false,
             Rate putDigitalPayoff = Null<Rate>(),
             const ext::shared_ptr<DigitalReplication> &replication =
-                ext::shared_ptr<DigitalReplication>(new DigitalReplication));
+                ext::shared_ptr<DigitalReplication>(new DigitalReplication),
+            bool nakedOption = false);
 
         //! \name Visitability
         //@{
@@ -84,6 +85,7 @@ namespace QuantLib {
         DigitalCmsSpreadLeg& withReplication(
             const ext::shared_ptr<DigitalReplication> &replication =
                 ext::shared_ptr<DigitalReplication>(new DigitalReplication));
+        DigitalCmsSpreadLeg& withNakedOption(bool nakedOption = true);
 
         operator Leg() const;
       private:
@@ -103,6 +105,7 @@ namespace QuantLib {
         Position::Type longPutOption_;
         bool putATM_;
         ext::shared_ptr<DigitalReplication> replication_;
+        bool nakedOption_;
     };
 
 }

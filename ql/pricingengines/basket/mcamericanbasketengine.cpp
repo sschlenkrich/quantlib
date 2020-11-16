@@ -21,7 +21,7 @@
 #include <ql/pricingengines/basket/mcamericanbasketengine.hpp>
 #include <ql/math/functional.hpp>
 #include <ql/methods/montecarlo/lsmbasissystem.hpp>
-#include <ql/bind.hpp>
+#include <ql/functional.hpp>
 
 namespace QuantLib {
 
@@ -50,7 +50,7 @@ namespace QuantLib {
         const ext::shared_ptr<StrikedTypePayoff> strikePayoff
             = ext::dynamic_pointer_cast<StrikedTypePayoff>(basketPayoff->basePayoff());
 
-        if (strikePayoff) {
+        if (strikePayoff != 0) {
             scalingValue_/=strikePayoff->strike();
         }
 

@@ -34,7 +34,8 @@ namespace QuantLib {
         Real strike,
         bool localVol,
         Real illegalLocalVolOverwrite,
-        Size direction)
+        Size direction,
+        const ext::shared_ptr<FdmQuantoHelper>& quantoHelper)
     : mesher_(mesher),
       rTS_   (bsProcess->riskFreeRate().currentLink()),
       qTS_   (bsProcess->dividendYield().currentLink()),
@@ -47,14 +48,15 @@ namespace QuantLib {
       mapT_  (direction, mesher),
       strike_(strike),
       illegalLocalVolOverwrite_(illegalLocalVolOverwrite),
-      direction_(direction) {
+      direction_(direction),
+      quantoHelper_(quantoHelper) {
     }
 
     void FdmBlackScholesOp::setTime(Time t1, Time t2) {
         const Rate r = rTS_->forwardRate(t1, t2, Continuous).rate();
         const Rate q = qTS_->forwardRate(t1, t2, Continuous).rate();
 
-        if (localVol_) {
+        if (localVol_ != 0) {
             const ext::shared_ptr<FdmLinearOpLayout> layout=mesher_->layout();
             const FdmLinearOpIterator endIter = layout->end();
 
@@ -77,21 +79,39 @@ namespace QuantLib {
 
                 }
             }
-            mapT_.axpyb(r - q - 0.5*v, dxMap_,
-                        dxxMap_.mult(0.5*v), Array(1, -r));
+
+            if (quantoHelper_ != 0) {
+                mapT_.axpyb(r - q - 0.5*v
+                    - quantoHelper_->quantoAdjustment(Sqrt(v), t1, t2),
+                    dxMap_, dxxMap_.mult(0.5*v), Array(1, -r));
+            }
+            else {
+                mapT_.axpyb(r - q - 0.5*v, dxMap_,
+                            dxxMap_.mult(0.5*v), Array(1, -r));
+            }
         }
         else {
             const Real v
                 = volTS_->blackForwardVariance(t1, t2, strike_)/(t2-t1);
-            mapT_.axpyb(Array(1, r - q - 0.5*v), dxMap_,
-                        dxxMap_.mult(0.5*Array(mesher_->layout()->size(), v)),
-                        Array(1, -r));
+
+            if (quantoHelper_ != 0) {
+                mapT_.axpyb(
+                    Array(1, r - q - 0.5*v)
+                        - quantoHelper_->quantoAdjustment(
+                            Array(1, std::sqrt(v)), t1, t2),
+                    dxMap_,
+                    dxxMap_.mult(0.5*Array(mesher_->layout()->size(), v)),
+                    Array(1, -r));
+            }
+            else {
+                mapT_.axpyb(Array(1, r - q - 0.5*v), dxMap_,
+                    dxxMap_.mult(0.5*Array(mesher_->layout()->size(), v)),
+                    Array(1, -r));
+            }
         }
     }
 
-    Size FdmBlackScholesOp::size() const {
-        return 1u;
-    }
+    Size FdmBlackScholesOp::size() const { return 1U; }
 
     Disposable<Array> FdmBlackScholesOp::apply(const Array& u) const {
         return mapT_.apply(u);

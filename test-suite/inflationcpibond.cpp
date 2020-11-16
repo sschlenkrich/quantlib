@@ -42,7 +42,7 @@ using namespace boost::unit_test_framework;
 
 #include <iostream>
 
-namespace {
+namespace inflation_cpi_bond_test {
 
     struct Datum {
         Date date;
@@ -57,7 +57,8 @@ namespace {
         const Period& observationLag,
         const Calendar& calendar,
         const BusinessDayConvention& bdc,
-        const DayCounter& dc) {
+        const DayCounter& dc,
+        const Handle<YieldTermStructure>& yTS) {
 
         std::vector<ext::shared_ptr<Helper> > instruments;
         for (Size i=0; i<N; i++) {
@@ -67,7 +68,7 @@ namespace {
             ext::shared_ptr<Helper> h(
                       new ZeroCouponInflationSwapHelper(quote, observationLag,
                                                         maturity, calendar,
-                                                        bdc, dc, ii));
+                                                        bdc, dc, ii, yTS));
             instruments.push_back(h);
         }
         return instruments;
@@ -152,14 +153,14 @@ namespace {
 
             std::vector<ext::shared_ptr<Helper> > helpers =
                 makeHelpers(zciisData, LENGTH(zciisData), ii,
-                            observationLag, calendar, convention, dayCounter);
+                            observationLag, calendar, convention, dayCounter, yTS);
 
             Rate baseZeroRate = zciisData[0].rate/100.0;
             cpiTS.linkTo(ext::shared_ptr<ZeroInflationTermStructure>(
                   new PiecewiseZeroInflationCurve<Linear>(
                          evaluationDate, calendar, dayCounter, observationLag,
                          ii->frequency(),ii->interpolated(), baseZeroRate,
-                         Handle<YieldTermStructure>(yTS), helpers)));
+                         helpers)));
         }
 
         // teardown
@@ -174,6 +175,8 @@ namespace {
 
 void InflationCPIBondTest::testCleanPrice() {
     IndexManager::instance().clearHistories();
+
+    using namespace inflation_cpi_bond_test;
   
     CommonVars common;
 
@@ -206,7 +209,11 @@ void InflationCPIBondTest::testCleanPrice() {
 
     ext::shared_ptr<DiscountingBondEngine> engine(
                                  new DiscountingBondEngine(common.yTS));
+    ext::shared_ptr<InflationCouponPricer> pricer =
+        ext::make_shared<CPICouponPricer>(common.yTS);
+
     bond.setPricingEngine(engine);
+    setCouponPricer(bond.cashflows(), pricer);
 
     Real storedPrice = 383.01816406;
     Real calculated = bond.cleanPrice();

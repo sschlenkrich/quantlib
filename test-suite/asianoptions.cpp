@@ -41,6 +41,7 @@
 using namespace QuantLib;
 using namespace boost::unit_test_framework;
 
+#undef REPORT_FAILURE
 #define REPORT_FAILURE(greekName, averageType, \
                        runningAccumulator, pastFixings, \
                        fixingDates, payoff, exercise, s, q, r, today, v, \
@@ -362,7 +363,7 @@ void AsianOptionTest::testAnalyticDiscreteGeometricAveragePrice() {
     ext::shared_ptr<Exercise> exercise(new EuropeanExercise(exerciseDate));
 
     std::vector<Date> fixingDates(futureFixings);
-    Integer dt = Integer(360/futureFixings+0.5);
+    Integer dt = Integer(360.0/futureFixings+0.5);
     fixingDates[0] = today + dt;
     for (Size j=1; j<futureFixings; j++)
         fixingDates[j] = fixingDates[j-1] + dt;
@@ -421,7 +422,7 @@ void AsianOptionTest::testAnalyticDiscreteGeometricAverageStrike() {
     ext::shared_ptr<Exercise> exercise(new EuropeanExercise(exerciseDate));
 
     std::vector<Date> fixingDates(futureFixings);
-    Integer dt = Integer(360/futureFixings+0.5);
+    Integer dt = Integer(360.0/futureFixings+0.5);
     fixingDates[0] = today + dt;
     for (Size j=1; j<futureFixings; j++)
         fixingDates[j] = fixingDates[j-1] + dt;
@@ -487,7 +488,7 @@ void AsianOptionTest::testMCDiscreteGeometricAveragePrice() {
     ext::shared_ptr<Exercise> exercise(new EuropeanExercise(exerciseDate));
 
     std::vector<Date> fixingDates(futureFixings);
-    Integer dt = Integer(360/futureFixings+0.5);
+    Integer dt = Integer(360.0/futureFixings+0.5);
     fixingDates[0] = today + dt;
     for (Size j=1; j<futureFixings; j++)
         fixingDates[j] = fixingDates[j-1] + dt;
@@ -536,8 +537,6 @@ void AsianOptionTest::testMCDiscreteArithmeticAveragePrice() {
 
     BOOST_TEST_MESSAGE(
            "Testing Monte Carlo discrete arithmetic average-price Asians...");
-
-    QL_TEST_START_TIMING
 
     // data from "Asian Option", Levy, 1997
     // in "Exotic Options: The State of the Art",
@@ -691,8 +690,6 @@ void AsianOptionTest::testMCDiscreteArithmeticAverageStrike() {
 
     BOOST_TEST_MESSAGE(
           "Testing Monte Carlo discrete arithmetic average-strike Asians...");
-
-    QL_TEST_START_TIMING
 
     // data from "Asian Option", Levy, 1997
     // in "Exotic Options: The State of the Art",
@@ -1153,7 +1150,8 @@ void AsianOptionTest::testAllFixingsInThePast() {
     Date exerciseDate = today + 2*Weeks;
     Date startDate = exerciseDate - 1*Years;
     std::vector<Date> fixingDates;
-    for (Integer i=0; i<12; ++i)
+    fixingDates.reserve(12);
+    for (Integer i = 0; i < 12; ++i)
         fixingDates.push_back(startDate + i*Months);
     Size pastFixings = 12;
 

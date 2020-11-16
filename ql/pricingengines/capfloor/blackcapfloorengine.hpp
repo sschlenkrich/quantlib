@@ -53,7 +53,8 @@ namespace QuantLib {
         virtual void calculate() const;
         Handle<YieldTermStructure> termStructure() const { return discountCurve_; }
         Handle<OptionletVolatilityStructure> volatility() const { return vol_; }
-        Real displacement() { return displacement_; }
+        Real displacement() const { return displacement_; }
+
       private:
         Handle<YieldTermStructure> discountCurve_;
         Handle<OptionletVolatilityStructure> vol_;

@@ -30,16 +30,16 @@
 #include <ql/math/integrals/integral.hpp>
 #include <ql/math/comparison.hpp>
 #include <ql/shared_ptr.hpp>
-
+#include <algorithm>
 #include <vector>
 
 namespace QuantLib {
 
 class PiecewiseIntegral : public Integrator {
   public:
-    PiecewiseIntegral(const ext::shared_ptr<Integrator> &integrator,
-                      const std::vector<Real> &criticalPoints,
-                      const bool avoidCriticalPoints = true);
+    PiecewiseIntegral(const ext::shared_ptr<Integrator>& integrator,
+                      const std::vector<Real>& criticalPoints,
+                      bool avoidCriticalPoints = true);
 
   protected:
     Real integrate(const ext::function<Real(Real)> &f, Real a, Real b) const;

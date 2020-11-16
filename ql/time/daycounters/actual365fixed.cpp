@@ -2,6 +2,7 @@
 
 /*
  Copyright (C) 2000, 2001, 2002, 2003 RiskMap srl
+ Copyright (C) 2013 BGC Partners L.P.
 
  This file is part of QuantLib, a free-software/open-source library
  for financial quantitative analysts and developers - http://quantlib.org/
@@ -54,7 +55,7 @@ namespace QuantLib {
                    "must be longer than a month");
         Integer frequency = Integer(12/months);
 
-        if (dcs < 365/frequency)
+        if (dcs < Integer(365/frequency))
             return dcs/365.0;
 
         return 1./frequency - (dcc-dcs)/365.0;

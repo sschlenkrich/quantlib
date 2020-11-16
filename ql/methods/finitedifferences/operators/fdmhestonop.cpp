@@ -4,7 +4,7 @@
  Copyright (C) 2008 Andreas Gaida
  Copyright (C) 2008 Ralph Schreyer
  Copyright (C) 2008, 2014, 2015 Klaus Spanderen
- Copyright (C) 2015 Johannes Goettker-Schnetmann
+ Copyright (C) 2015 Johannes Göttker-Schnetmann
 
  This file is part of QuantLib, a free-software/open-source library
  for financial quantitative analysts and developers - http://quantlib.org/
@@ -63,16 +63,16 @@ namespace QuantLib {
         const Rate r = rTS_->forwardRate(t1, t2, Continuous).rate();
         const Rate q = qTS_->forwardRate(t1, t2, Continuous).rate();
 
-        if (quantoHelper_) {
-            mapT_.axpyb(r - q - varianceValues_
+        L_ = getLeverageFctSlice(t1, t2);
+        const Array Lsquare = L_*L_;
+
+        if (quantoHelper_ != 0) {
+            mapT_.axpyb(r - q - varianceValues_*Lsquare
                 - quantoHelper_->quantoAdjustment(
-                volatilityValues_, t1, t2),
-                dxMap_, dxxMap_, Array(1, -0.5*r));
+                    volatilityValues_*L_, t1, t2),
+                dxMap_, dxxMap_.mult(Lsquare), Array(1, -0.5*r));
         }
         else {
-            L_ = getLeverageFctSlice(t1, t2);
-            const Array Lsquare = L_*L_;
-
             mapT_.axpyb(r - q - varianceValues_*Lsquare, dxMap_,
                         dxxMap_.mult(Lsquare), Array(1, -0.5*r));
         }
@@ -115,9 +115,9 @@ namespace QuantLib {
     FdmHestonVariancePart::FdmHestonVariancePart(
         const ext::shared_ptr<FdmMesher>& mesher,
         const ext::shared_ptr<YieldTermStructure>& rTS,
-        Real sigma, Real kappa, Real theta)
+        Real mixedSigma, Real kappa, Real theta)
     : dyMap_(SecondDerivativeOp(1, mesher)
-                .mult(0.5*sigma*sigma*mesher->locations(1))
+                .mult(0.5*mixedSigma*mixedSigma*mesher->locations(1))
              .add(FirstDerivativeOp(1, mesher)
                   .mult(kappa*(theta - mesher->locations(1))))),
       mapT_(1, mesher),
@@ -137,12 +137,14 @@ namespace QuantLib {
         const ext::shared_ptr<FdmMesher>& mesher,
         const ext::shared_ptr<HestonProcess> & hestonProcess,
         const ext::shared_ptr<FdmQuantoHelper>& quantoHelper,
-        const ext::shared_ptr<LocalVolTermStructure>& leverageFct)
+        const ext::shared_ptr<LocalVolTermStructure>& leverageFct,
+        const Real mixingFactor)
     : correlationMap_(SecondOrderMixedDerivativeOp(0, 1, mesher)
                         .mult(hestonProcess->rho()*hestonProcess->sigma()
+                                *mixingFactor
                                 *mesher->locations(1))),
       dyMap_(mesher, hestonProcess->riskFreeRate().currentLink(),
-              hestonProcess->sigma(), 
+              hestonProcess->sigma()*mixingFactor,
               hestonProcess->kappa(), 
               hestonProcess->theta()),
       dxMap_(mesher,

@@ -2,7 +2,7 @@
 
 /*
  Copyright (C) 2009 Ralph Schreyer
- Copyright (C) 2014 Johannes Goettker-Schnetmann
+ Copyright (C) 2014 Johannes Göttker-Schnetmann
  Copyright (C) 2014 Klaus Spanderen
  Copyright (C) 2015 Peter Caspers
 
@@ -34,8 +34,7 @@
 #include <ql/math/interpolations/linearinterpolation.hpp>
 #include <ql/math/ode/adaptiverungekutta.hpp>
 #include <ql/methods/finitedifferences/meshers/concentrating1dmesher.hpp>
-
-#include <ql/bind.hpp>
+#include <ql/functional.hpp>
 #include <cmath>
 
 // asinh is missing in WIN32 (and possibly on other compilers)
@@ -151,7 +150,7 @@ namespace QuantLib {
 
     Concentrating1dMesher::Concentrating1dMesher(
         Real start, Real end, Size size,
-        const std::vector<boost::tuple<Real, Real, bool> >& cPoints,
+        const std::vector<ext::tuple<Real, Real, bool> >& cPoints,
         Real tol)
     : Fdm1dMesher(size) {
         using namespace ext::placeholders;
@@ -159,10 +158,10 @@ namespace QuantLib {
         QL_REQUIRE(end > start, "end must be larger than start");
 
         std::vector<Real> points, betas;
-        for (std::vector<boost::tuple<Real, Real, bool> >::const_iterator
+        for (std::vector<ext::tuple<Real, Real, bool> >::const_iterator
                 iter = cPoints.begin(); iter != cPoints.end(); ++iter) {
-            points.push_back(iter->get<0>());
-            betas.push_back(square<Real>()(iter->get<1>()*(end-start)));
+            points.push_back(ext::get<0>(*iter));
+            betas.push_back(square<Real>()(ext::get<1>(*iter)*(end-start)));
         }
 
         // get scaling factor a so that y(1) = end
@@ -201,7 +200,7 @@ namespace QuantLib {
         std::vector<std::pair<Real, Real> > w(1, std::make_pair(0.0, 0.0));
 
         for (Size i=0; i < points.size(); ++i) {
-            if (cPoints[i].get<2>() && points[i] > start && points[i] < end) {
+            if (ext::get<2>(cPoints[i]) && points[i] > start && points[i] < end) {
 
                 const Size j = std::distance(y.begin(),
                         std::lower_bound(y.begin(), y.end(), points[i]));

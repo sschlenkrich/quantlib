@@ -61,15 +61,13 @@ namespace QuantLib {
           are no constraints on forward baskets but models assigned
           should be consistent.)
         */
-        Basket(
-            const Date& refDate,
-            const std::vector<std::string>& names,
-            const std::vector<Real>& notionals,
-            const ext::shared_ptr<Pool> pool,
-            Real attachmentRatio = 0.0,
-            Real detachmentRatio = 1.0,
-            const ext::shared_ptr<Claim>& claim =
-                ext::shared_ptr<Claim>(new FaceValueClaim()));
+        Basket(const Date& refDate,
+               const std::vector<std::string>& names,
+               const std::vector<Real>& notionals,
+               const ext::shared_ptr<Pool>& pool,
+               Real attachmentRatio = 0.0,
+               Real detachmentRatio = 1.0,
+               const ext::shared_ptr<Claim>& claim = ext::shared_ptr<Claim>(new FaceValueClaim()));
         void update() {
             computeBasket();
             LazyObject::update();
@@ -99,7 +97,7 @@ namespace QuantLib {
         //! Basket counterparties notionals at inception.
         const std::vector<Real>& notionals() const;
         //! Basket total notional at inception.
-        Real notional();
+        Real notional() const;
         //! Returns the total expected exposures for that name.
         Real exposure(const std::string& name, const Date& = Date()) const;
         //! Underlying pool

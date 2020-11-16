@@ -72,12 +72,8 @@ namespace QuantLib {
             return observationTimes_;
         }
 
-        const ext::shared_ptr<Schedule> observationsSchedule() const {
-            return observationsSchedule_;
-        }
+        ext::shared_ptr<Schedule> observationsSchedule() const { return observationsSchedule_; }
 
-        Real priceWithoutOptionality(
-                       const Handle<YieldTermStructure>& discountCurve) const;
         //! \name Visitability
         //@{
         virtual void accept(AcyclicVisitor&);

@@ -86,29 +86,24 @@ namespace QuantLib {
             specifications.
 
             To be precisely consistent with the ISDA specification
-            QL_USE_INDEXED_COUPON
-            must not be defined. This is not checked in order not to
+                static bool IborCoupon::usingAtParCoupons();
+            must be true. This is not checked in order not to
             kill the engine completely in this case.
 
             Furthermore, the ibor index in the swap rate helpers should not
             provide the evaluation date's fixing.
         */
 
-        IsdaCdsEngine(
-            const Handle<DefaultProbabilityTermStructure> &probability,
-            Real recoveryRate,
-            const Handle<YieldTermStructure> &discountCurve,
-            boost::optional<bool> includeSettlementDateFlows = boost::none,
-            const NumericalFix numericalFix = Taylor,
-            const AccrualBias accrualBias = HalfDayBias,
-            const ForwardsInCouponPeriod forwardsInCouponPeriod = Piecewise);
+        IsdaCdsEngine(const Handle<DefaultProbabilityTermStructure>& probability,
+                      Real recoveryRate,
+                      const Handle<YieldTermStructure>& discountCurve,
+                      const boost::optional<bool>& includeSettlementDateFlows = boost::none,
+                      NumericalFix numericalFix = Taylor,
+                      AccrualBias accrualBias = HalfDayBias,
+                      ForwardsInCouponPeriod forwardsInCouponPeriod = Piecewise);
 
-        const Handle<YieldTermStructure> isdaRateCurve() const {
-            return discountCurve_;
-        }
-        const Handle<DefaultProbabilityTermStructure> isdaCreditCurve() const {
-            return probability_;
-        }
+        Handle<YieldTermStructure> isdaRateCurve() const { return discountCurve_; }
+        Handle<DefaultProbabilityTermStructure> isdaCreditCurve() const { return probability_; }
 
         void calculate() const;
 

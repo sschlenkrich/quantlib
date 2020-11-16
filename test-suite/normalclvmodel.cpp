@@ -42,20 +42,12 @@
 
 #include <ql/experimental/models/normalclvmodel.hpp>
 #include <ql/experimental/volatility/sabrvoltermstructure.hpp>
-#include <ql/experimental/finitedifferences/bsmrndcalculator.hpp>
-#include <ql/experimental/finitedifferences/hestonrndcalculator.hpp>
+#include <ql/methods/finitedifferences/utilities/bsmrndcalculator.hpp>
+#include <ql/methods/finitedifferences/utilities/hestonrndcalculator.hpp>
 #include <ql/experimental/finitedifferences/fdornsteinuhlenbeckvanillaengine.hpp>
 #include <ql/experimental/barrieroption/doublebarrieroption.hpp>
 #include <ql/experimental/barrieroption/analyticdoublebarrierbinaryengine.hpp>
-
-#if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#endif
-#include <ql/bind.hpp>
-#if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
-#pragma GCC diagnostic pop
-#endif
+#include <ql/functional.hpp>
 
 #include <boost/assign/std/vector.hpp>
 
@@ -278,13 +270,11 @@ void NormalCLVModelTest::testIllustrative1DExample() {
     }
 }
 
-namespace {
+namespace normal_clv_model_test {
     class CLVModelPayoff : public PlainVanillaPayoff {
       public:
-        CLVModelPayoff(Option::Type type, Real strike,
-                             const ext::function<Real(Real)> g)
-        : PlainVanillaPayoff(type, strike),
-          g_(g) { }
+        CLVModelPayoff(Option::Type type, Real strike, const ext::function<Real(Real)>& g)
+        : PlainVanillaPayoff(type, strike), g_(g) {}
 
         Real operator()(Real x) const {
             return PlainVanillaPayoff::operator()(g_(x));
@@ -299,6 +289,7 @@ void NormalCLVModelTest::testMonteCarloBSOptionPricing() {
     BOOST_TEST_MESSAGE("Testing Monte Carlo BS option pricing...");
 
     using namespace ext::placeholders;
+    using namespace normal_clv_model_test;
 
     SavedSettings backup;
 

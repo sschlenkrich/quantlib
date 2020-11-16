@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -59,6 +59,9 @@
     <ClCompile Include="calendars.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="callablebonds.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="capfloor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -90,6 +93,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="commodityunitofmeasure.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="compiledboostversion.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="compoundoption.cpp">
@@ -161,6 +167,9 @@
     <ClCompile Include="fdheston.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fdcir.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="fdmlinearop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -189,6 +198,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="hybridhestonhullwhiteprocess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="indexes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="inflation.cpp">
@@ -344,6 +356,9 @@
     <ClCompile Include="shortratemodels.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sofrfutures.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="solvers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -372,6 +387,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="termstructures.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="timegrid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="timeseries.cpp">
@@ -444,6 +462,21 @@
     <ClCompile Include="normalclvmodel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="basismodels.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fdcev.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fdsabr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fittedbonddiscountcurve.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ultimateforwardtermstructure.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="americanoption.hpp">
@@ -494,6 +527,9 @@
     <ClInclude Include="calendars.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="callablebonds.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="capfloor.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -525,6 +561,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="commodityunitofmeasure.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="compiledboostversion.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="compoundoption.hpp">
@@ -596,6 +635,9 @@
     <ClInclude Include="fdheston.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="fdcir.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="fdmlinearop.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -624,6 +666,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="hybridhestonhullwhiteprocess.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="indexes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inflation.hpp">
@@ -782,6 +827,9 @@
     <ClInclude Include="shortratemodels.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="sofrfutures.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="solvers.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -816,6 +864,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="termstructures.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="timegrid.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="timeseries.hpp">
@@ -885,6 +936,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="normalclvmodel.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="basismodels.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fdcev.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fdsabr.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fittedbonddiscountcurve.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ultimateforwardtermstructure.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -29,15 +29,14 @@
 #include <ql/pricingengines/vanilla/bjerksundstenslandengine.hpp>
 #include <ql/pricingengines/vanilla/batesengine.hpp>
 #include <ql/pricingengines/vanilla/integralengine.hpp>
-#include <ql/pricingengines/vanilla/fdeuropeanengine.hpp>
-#include <ql/pricingengines/vanilla/fdbermudanengine.hpp>
-#include <ql/pricingengines/vanilla/fdamericanengine.hpp>
+#include <ql/pricingengines/vanilla/fdblackscholesvanillaengine.hpp>
 #include <ql/pricingengines/vanilla/mceuropeanengine.hpp>
 #include <ql/pricingengines/vanilla/mcamericanengine.hpp>
+#include <ql/pricingengines/vanilla/analyticeuropeanvasicekengine.hpp>
 #include <ql/time/calendars/target.hpp>
 #include <ql/utilities/dataformatters.hpp>
+#include <ql/models/shortrate/onefactormodels/vasicek.hpp>
 
-#include <boost/timer.hpp>
 #include <iostream>
 #include <iomanip>
 
@@ -46,7 +45,7 @@ using namespace QuantLib;
 #if defined(QL_ENABLE_SESSIONS)
 namespace QuantLib {
 
-    Integer sessionId() { return 0; }
+    ThreadKey sessionId() { return 0; }
 
 }
 #endif
@@ -56,7 +55,6 @@ int main(int, char* []) {
 
     try {
 
-        boost::timer timer;
         std::cout << std::endl;
 
         // set up dates
@@ -149,6 +147,24 @@ int main(int, char* []) {
                   << std::setw(widths[3]) << std::left << "N/A"
                   << std::endl;
 
+        //Vasicek rates model for European
+        method = "Black Vasicek Model";
+        Real r0 = riskFreeRate;
+        Real a = 0.3;
+        Real b = 0.3;
+        Real sigma_r = 0.15;
+        Real riskPremium = 0.0;
+        Real correlation = 0.5;
+        ext::shared_ptr<Vasicek> vasicekProcess(new Vasicek(r0, a, b, sigma_r, riskPremium));
+        europeanOption.setPricingEngine(ext::shared_ptr<PricingEngine>(
+                new AnalyticBlackVasicekEngine(bsmProcess, vasicekProcess, correlation)));
+        std::cout << std::setw(widths[0]) << std::left << method
+                  << std::fixed
+                  << std::setw(widths[1]) << std::left << europeanOption.NPV()
+                  << std::setw(widths[2]) << std::left << "N/A"
+                  << std::setw(widths[3]) << std::left << "N/A"
+                  << std::endl;
+
         // semi-analytic Heston for European
         method = "Heston semi-analytic";
         ext::shared_ptr<HestonProcess> hestonProcess(
@@ -219,15 +235,13 @@ int main(int, char* []) {
         // Finite differences
         Size timeSteps = 801;
         method = "Finite differences";
-        europeanOption.setPricingEngine(ext::shared_ptr<PricingEngine>(
-                 new FDEuropeanEngine<CrankNicolson>(bsmProcess,
-                                                     timeSteps,timeSteps-1)));
-        bermudanOption.setPricingEngine(ext::shared_ptr<PricingEngine>(
-                 new FDBermudanEngine<CrankNicolson>(bsmProcess,
-                                                     timeSteps,timeSteps-1)));
-        americanOption.setPricingEngine(ext::shared_ptr<PricingEngine>(
-                 new FDAmericanEngine<CrankNicolson>(bsmProcess,
-                                                     timeSteps,timeSteps-1)));
+        ext::shared_ptr<PricingEngine> fdengine =
+            ext::make_shared<FdBlackScholesVanillaEngine>(bsmProcess,
+                                                          timeSteps,
+                                                          timeSteps-1);
+        europeanOption.setPricingEngine(fdengine);
+        bermudanOption.setPricingEngine(fdengine);
+        americanOption.setPricingEngine(fdengine);
         std::cout << std::setw(widths[0]) << std::left << method
                   << std::fixed
                   << std::setw(widths[1]) << std::left << europeanOption.NPV()
@@ -396,18 +410,6 @@ int main(int, char* []) {
                   << std::endl;
 
         // End test
-        double seconds = timer.elapsed();
-        Integer hours = int(seconds/3600);
-        seconds -= hours * 3600;
-        Integer minutes = int(seconds/60);
-        seconds -= minutes * 60;
-        std::cout << " \nRun completed in ";
-        if (hours > 0)
-            std::cout << hours << " h ";
-        if (hours > 0 || minutes > 0)
-            std::cout << minutes << " m ";
-        std::cout << std::fixed << std::setprecision(0)
-                  << seconds << " s\n" << std::endl;
         return 0;
 
     } catch (std::exception& e) {

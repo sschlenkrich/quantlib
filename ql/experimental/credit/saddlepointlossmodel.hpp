@@ -20,6 +20,7 @@
 #ifndef quantlib_saddle_point_lossmodel_hpp
 #define quantlib_saddle_point_lossmodel_hpp
 
+#include <ql/tuple.hpp>
 #include <ql/math/solvers1d/brent.hpp>
 #include <ql/math/solvers1d/newton.hpp>
 #include <ql/math/functional.hpp>
@@ -152,11 +153,11 @@ namespace QuantLib {
           Included for optimization, most methods work on expansion of these 
           terms.
           Alternatively use a local private buffer member? */
-        boost::tuples::tuple<Real, Real, Real, Real> CumGen0234DerivCond(
+        ext::tuple<Real, Real, Real, Real> CumGen0234DerivCond(
             const std::vector<Real>& invUncondProbs,
             Real saddle, 
             const std::vector<Real>&  mktFactor) const;
-        boost::tuples::tuple<Real, Real> CumGen02DerivCond(
+        ext::tuple<Real, Real> CumGen02DerivCond(
             const std::vector<Real>& invUncondProbs,
             Real saddle, 
             const std::vector<Real>&  mktFactor) const;
@@ -342,7 +343,7 @@ namespace QuantLib {
                 / basket_->remainingNotional(), 1.);
             copula_->resetBasket(basket_.currentLink());
         }
-    protected:
+
         const ext::shared_ptr<ConstantLossLatentmodel<CP> > copula_;
         // cached todays arguments values
         mutable Size remainingSize_;
@@ -385,6 +386,8 @@ namespace QuantLib {
     inline Real SaddlePointLossModel<CP>::CumulantGenerating(
         const Date& date, Real s) const 
     {
+        using namespace ext::placeholders;
+
         std::vector<Real> invUncondProbs = 
             basket_->remainingProbabilities(date);
         for(Size i=0; i<invUncondProbs.size(); i++)
@@ -407,6 +410,8 @@ namespace QuantLib {
     inline Real SaddlePointLossModel<CP>::CumGen1stDerivative(
         const Date& date, Real s) const 
     {
+        using namespace ext::placeholders;
+
         std::vector<Real> invUncondProbs = 
             basket_->remainingProbabilities(date);
         for(Size i=0; i<invUncondProbs.size(); i++)
@@ -429,6 +434,8 @@ namespace QuantLib {
     inline Real SaddlePointLossModel<CP>::CumGen2ndDerivative(
         const Date& date, Real s) const 
     {
+        using namespace ext::placeholders;
+
         std::vector<Real> invUncondProbs = 
             basket_->remainingProbabilities(date);
         for(Size i=0; i<invUncondProbs.size(); i++)
@@ -451,6 +458,8 @@ namespace QuantLib {
     inline Real SaddlePointLossModel<CP>::CumGen3rdDerivative(
         const Date& date, Real s) const 
     {
+        using namespace ext::placeholders;
+
         std::vector<Real> invUncondProbs = 
             basket_->remainingProbabilities(date);
         for(Size i=0; i<invUncondProbs.size(); i++)
@@ -473,6 +482,8 @@ namespace QuantLib {
     inline Real SaddlePointLossModel<CP>::CumGen4thDerivative(
         const Date& date, Real s) const 
     {
+        using namespace ext::placeholders;
+
         std::vector<Real> invUncondProbs = 
             basket_->remainingProbabilities(date);
         for(Size i=0; i<invUncondProbs.size(); i++)
@@ -495,6 +506,8 @@ namespace QuantLib {
     inline Probability SaddlePointLossModel<CP>::probOverLoss(
         const Date& d, Real trancheLossFract) const 
     {
+        using namespace ext::placeholders;
+
         // avoid computation:
         if (trancheLossFract >= 
             // time dependent soon:
@@ -522,6 +535,8 @@ namespace QuantLib {
     inline Probability SaddlePointLossModel<CP>::probOverPortfLoss(
         const Date& d, Real loss) const 
     {
+        using namespace ext::placeholders;
+
         std::vector<Probability> invUncondProbs = 
             basket_->remainingProbabilities(d);
         for(Size i=0; i<invUncondProbs.size(); i++)
@@ -544,6 +559,8 @@ namespace QuantLib {
     inline Real SaddlePointLossModel<CP>::expectedTrancheLoss(
         const Date& d) const 
     {
+        using namespace ext::placeholders;
+
         std::vector<Real> invUncondProbs = 
             basket_->remainingProbabilities(d);
         for(Size i=0; i<invUncondProbs.size(); i++)
@@ -565,6 +582,8 @@ namespace QuantLib {
     inline Probability SaddlePointLossModel<CP>::probDensity(
         const Date& d, Real loss) const 
     {
+        using namespace ext::placeholders;
+
         std::vector<Real> invUncondProbs = 
             basket_->remainingProbabilities(d);
         for(Size i=0; i<invUncondProbs.size(); i++)
@@ -587,6 +606,8 @@ namespace QuantLib {
     inline Disposable<std::vector<Real> > 
     SaddlePointLossModel<CP>::splitVaRLevel(const Date& date, Real s) const 
     {
+        using namespace ext::placeholders;
+
         std::vector<Real> invUncondProbs = 
             basket_->remainingProbabilities(date);
         for(Size i=0; i<invUncondProbs.size(); i++)
@@ -755,7 +776,7 @@ namespace QuantLib {
     }
 
     template<class CP>
-    boost::tuples::tuple<Real, Real, Real, Real> /// DISPOSABLE????
+    ext::tuple<Real, Real, Real, Real> /// DISPOSABLE????
         SaddlePointLossModel<CP>::CumGen0234DerivCond(
         const std::vector<Real>& invUncondProbs,
         Real saddle, 
@@ -794,12 +815,12 @@ namespace QuantLib {
                 (12.*suma1*suma1*suma2 - 
                     6.*std::pow(suma1,4.)/suma0)/suma0)/suma0)/suma0;
         }
-        return boost::tuples::tuple<Real, Real, Real, Real>(deriv0, deriv2, 
+        return ext::tuple<Real, Real, Real, Real>(deriv0, deriv2, 
             deriv3, deriv4);
     }
 
     template<class CP>
-    boost::tuples::tuple<Real, Real> /// DISPOSABLE???? 
+    ext::tuple<Real, Real> /// DISPOSABLE???? 
         SaddlePointLossModel<CP>::CumGen02DerivCond(
         const std::vector<Real>& invUncondProbs,
         Real saddle, 
@@ -829,7 +850,7 @@ namespace QuantLib {
             //deriv1 += suma1 / suma0;
             deriv2 += suma2 / suma0 - std::pow(suma1 / suma0 , 2.);
         }
-        return boost::tuples::tuple<Real, Real>(deriv0, deriv2);
+        return ext::tuple<Real, Real>(deriv0, deriv2);
     }
 
     // ----- Saddle point search ----------------------------------------------
@@ -1009,13 +1030,13 @@ namespace QuantLib {
         Real saddlePt = findSaddle(invUncondProbs,
             relativeLoss, mktFactor);
 
-        boost::tuples::tuple<Real, Real, Real, Real> cumulants = 
+        ext::tuple<Real, Real, Real, Real> cumulants = 
             CumGen0234DerivCond(invUncondProbs, 
                 saddlePt, mktFactor);
-        Real baseVal = cumulants.get<0>();
-        Real secondVal = cumulants.get<1>();
-        Real K3Saddle = cumulants.get<2>();
-        Real K4Saddle = cumulants.get<3>();
+        Real baseVal = ext::get<0>(cumulants);
+        Real secondVal = ext::get<1>(cumulants);
+        Real K3Saddle = ext::get<2>(cumulants);
+        Real K4Saddle = ext::get<3>(cumulants);
 
         Real saddleTo2 = saddlePt * saddlePt;
         Real saddleTo3 = saddleTo2 * saddlePt;
@@ -1098,11 +1119,11 @@ namespace QuantLib {
         Real saddlePt = findSaddle(invUncondPs,
             relativeLoss, mktFactor);
 
-        boost::tuples::tuple<Real, Real> cumulants = 
+        ext::tuple<Real, Real> cumulants = 
             CumGen02DerivCond(invUncondPs,
                 saddlePt, mktFactor);
-        Real baseVal = cumulants.get<0>();
-        Real secondVal = cumulants.get<1>();
+        Real baseVal = ext::get<0>(cumulants);
+        Real secondVal = ext::get<1>(cumulants);
 
         Real saddleTo2 = saddlePt * saddlePt;
 
@@ -1153,14 +1174,14 @@ namespace QuantLib {
         Real saddlePt = findSaddle(invUncondPs,
             relativeLoss, mktFactor);
 
-        boost::tuples::tuple<Real, Real, Real, Real> cumulants = 
+        ext::tuple<Real, Real, Real, Real> cumulants = 
             CumGen0234DerivCond(invUncondPs,
             saddlePt, mktFactor);
         /// access them directly rather than through this copy
-        Real K0Saddle = cumulants.get<0>();
-        Real K2Saddle = cumulants.get<1>();
-        Real K3Saddle = cumulants.get<2>();
-        Real K4Saddle = cumulants.get<3>();
+        Real K0Saddle = ext::get<0>(cumulants);
+        Real K2Saddle = ext::get<1>(cumulants);
+        Real K3Saddle = ext::get<2>(cumulants);
+        Real K4Saddle = ext::get<3>(cumulants);
         /* see, for instance R.Martin "he saddle point method and portfolio 
         optionalities." in Risk December 2006 p.93 */
         //\todo the exponentials below are dangerous and agressive, tame them.
@@ -1297,7 +1318,7 @@ namespace QuantLib {
         Probability percentile,
         const std::vector<Real>& mktFactor) const 
     {
-        /* TO DO: this is too crude, a general expresion valid for all 
+        /* TO DO: this is too crude, a general expression valid for all 
         situations is possible (with no extra cost as long as the loss limits 
         are checked).
         */
@@ -1364,11 +1385,11 @@ namespace QuantLib {
         // Broda and Paolella:
         Real elCondRatio = elCond / remainingNotional_;
 
-        boost::tuples::tuple<Real, Real, Real, Real> cumulants = 
+        ext::tuple<Real, Real, Real, Real> cumulants = 
             CumGen0234DerivCond(uncondProbs, 
                 saddlePt, mktFactor);
-        Real K0Saddle = cumulants.get<0>();///USE THEM DIRECTLY
-        Real K2Saddle = cumulants.get<1>();
+        Real K0Saddle = ext::get<0>(cumulants);///USE THEM DIRECTLY
+        Real K2Saddle = ext::get<1>(cumulants);
 
         Real wq = std::sqrt(2. * saddlePt * lossPercRatio - 2. * K0Saddle);
         //std::sqrt(-2. * saddlePt * lossPerc + 2. * K0Saddle);????
@@ -1393,6 +1414,8 @@ namespace QuantLib {
     Real SaddlePointLossModel<CP>::expectedShortfall(const Date&d, 
         Probability percProb) const 
     {
+        using namespace ext::placeholders;
+
         // assuming I have the tranched one.
         Real lossPerc = percentile(d, percProb);
 

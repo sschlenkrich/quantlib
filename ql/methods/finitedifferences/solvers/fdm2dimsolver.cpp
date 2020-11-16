@@ -59,10 +59,10 @@ namespace QuantLib {
                  = solverDesc_.calculator->avgInnerValue(iter,
                                                          solverDesc.maturity);
 
-            if (!iter.coordinates()[1]) {
+            if (iter.coordinates()[1] == 0U) {
                 x_.push_back(mesher->location(iter, 0));
             }
-            if (!iter.coordinates()[0]) {
+            if (iter.coordinates()[0] == 0U) {
                 y_.push_back(mesher->location(iter, 1));
             }
         }
@@ -89,8 +89,8 @@ namespace QuantLib {
     }
 
     Real Fdm2DimSolver::thetaAt(Real x, Real y) const {
-        QL_REQUIRE(conditions_->stoppingTimes().front() > 0.0,
-                   "stopping time at zero-> can't calculate theta");
+        if (conditions_->stoppingTimes().front() == 0.0)
+            return Null<Real>();
 
         calculate();
         Matrix thetaValues(resultValues_.rows(), resultValues_.columns());

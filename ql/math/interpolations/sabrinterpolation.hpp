@@ -75,12 +75,10 @@ struct SABRSpecs {
             params[1] = 0.5;
         if (params[0] == Null<Real>())
             // adapt alpha to beta level
-            params[0] = 0.2 * (params[1] < 0.9999
-                                   ? std::pow(forward + (addParams.size() == 0
-                                                             ? 0.0
-                                                             : addParams[0]),
-                                              1.0 - params[1])
-                                   : 1.0);
+            params[0] = 0.2 * (params[1] < 0.9999 ?
+                                   std::pow(forward + (addParams.empty() ? 0.0 : addParams[0]),
+                                            1.0 - params[1]) :
+                                   1.0);
         if (params[2] == Null<Real>())
             params[2] = std::sqrt(0.4);
         if (params[3] == Null<Real>())
@@ -96,9 +94,8 @@ struct SABRSpecs {
             values[0] = (1.0 - 2E-6) * r[j++] + 1E-6; // lognormal vol guess
             // adapt this to beta level
             if (values[1] < 0.999)
-                values[0] *= std::pow(
-                    forward + (addParams.size() == 0 ? 0.0 : addParams[0]),
-                    1.0 - values[1]);
+                values[0] *=
+                    std::pow(forward + (addParams.empty() ? 0.0 : addParams[0]), 1.0 - values[1]);
         }
         if (!paramIsFixed[2])
             values[2] = 1.5 * r[j++] + 1E-6;
@@ -210,21 +207,29 @@ class SABRInterpolation : public Interpolation {
 /*! \ingroup interpolations */
 class SABR {
   public:
-    SABR(Time t, Real forward, Real alpha, Real beta, Real nu, Real rho,
-         bool alphaIsFixed, bool betaIsFixed, bool nuIsFixed, bool rhoIsFixed,
+    SABR(Time t,
+         Real forward,
+         Real alpha,
+         Real beta,
+         Real nu,
+         Real rho,
+         bool alphaIsFixed,
+         bool betaIsFixed,
+         bool nuIsFixed,
+         bool rhoIsFixed,
          bool vegaWeighted = false,
-         const ext::shared_ptr<EndCriteria> endCriteria =
-             ext::shared_ptr<EndCriteria>(),
-         const ext::shared_ptr<OptimizationMethod> optMethod =
+         const ext::shared_ptr<EndCriteria>& endCriteria = ext::shared_ptr<EndCriteria>(),
+         const ext::shared_ptr<OptimizationMethod>& optMethod =
              ext::shared_ptr<OptimizationMethod>(),
-         const Real errorAccept = 0.0020, const bool useMaxError = false,
-         const Size maxGuesses = 50, const Real shift = 0.0)
-        : t_(t), forward_(forward), alpha_(alpha), beta_(beta), nu_(nu),
-          rho_(rho), alphaIsFixed_(alphaIsFixed), betaIsFixed_(betaIsFixed),
-          nuIsFixed_(nuIsFixed), rhoIsFixed_(rhoIsFixed),
-          vegaWeighted_(vegaWeighted), endCriteria_(endCriteria),
-          optMethod_(optMethod), errorAccept_(errorAccept),
-          useMaxError_(useMaxError), maxGuesses_(maxGuesses), shift_(shift) {}
+         const Real errorAccept = 0.0020,
+         const bool useMaxError = false,
+         const Size maxGuesses = 50,
+         const Real shift = 0.0)
+    : t_(t), forward_(forward), alpha_(alpha), beta_(beta), nu_(nu), rho_(rho),
+      alphaIsFixed_(alphaIsFixed), betaIsFixed_(betaIsFixed), nuIsFixed_(nuIsFixed),
+      rhoIsFixed_(rhoIsFixed), vegaWeighted_(vegaWeighted), endCriteria_(endCriteria),
+      optMethod_(optMethod), errorAccept_(errorAccept), useMaxError_(useMaxError),
+      maxGuesses_(maxGuesses), shift_(shift) {}
     template <class I1, class I2>
     Interpolation interpolate(const I1 &xBegin, const I1 &xEnd,
                               const I2 &yBegin) const {

@@ -24,9 +24,9 @@ FOR A PARTICULAR PURPOSE.  See the license for more details.
 #include <ql/experimental/math/multidimintegrator.hpp>
 #include <ql/experimental/math/multidimquadrature.hpp>
 #include <ql/math/integrals/trapezoidintegral.hpp>
+#include <ql/patterns/singleton.hpp>
+#include <ql/functional.hpp>
 
-#include <ql/function.hpp>
-#include <boost/timer.hpp>
 
 #include <iostream>
 #include <iomanip>
@@ -37,7 +37,7 @@ using namespace std;
 #if defined(QL_ENABLE_SESSIONS)
 namespace QuantLib {
 
-    Integer sessionId() { return 0; }
+    ThreadKey sessionId() { return 0; }
 
 }
 #endif
@@ -53,7 +53,9 @@ struct integrand {
 };
 
 int main() {
-    boost::timer timer;
+
+  try {
+
     std::cout << std::endl;
 
     /* 
@@ -73,9 +75,7 @@ int main() {
     #ifndef QL_PATCH_SOLARIS
     GaussianQuadMultidimIntegrator intg(dimension, 15);
 
-    timer.restart();
     Real valueQuad = intg(f);
-    Real secondsQuad = timer.elapsed();
     #endif
 
     std::vector<ext::shared_ptr<Integrator> > integrals;
@@ -86,9 +86,7 @@ int main() {
     std::vector<Real> b_limits(integrals.size(), 4.);
     MultidimIntegral testIntg(integrals);
 
-    timer.restart();
     Real valueGrid = testIntg(f, a_limits, b_limits);
-    Real secondsGrid = timer.elapsed();
 
     cout << fixed << setprecision(4);
     cout << endl << "-------------- " << endl
@@ -99,10 +97,13 @@ int main() {
          << "Grid: " << valueGrid << endl
          << endl;
 
-    cout
-        #ifndef QL_PATCH_SOLARIS
-        << "Seconds for Quad: " << secondsQuad << endl
-        #endif
-        << "Seconds for Grid: " << secondsGrid << endl;
     return 0;
+
+  } catch (std::exception& e) {
+      std::cerr << e.what() << std::endl;
+      return 1;
+  } catch (...) {
+      std::cerr << "unknown error" << std::endl;
+      return 1;
+  }
 }

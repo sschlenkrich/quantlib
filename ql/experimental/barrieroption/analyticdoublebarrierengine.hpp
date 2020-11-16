@@ -48,7 +48,7 @@ namespace QuantLib {
     */
     class AnalyticDoubleBarrierEngine : public DoubleBarrierOption::engine {
       public:
-        AnalyticDoubleBarrierEngine(
+        explicit AnalyticDoubleBarrierEngine(
             const ext::shared_ptr<GeneralizedBlackScholesProcess>& process, 
             int series = 5);
         void calculate() const;
@@ -64,7 +64,6 @@ namespace QuantLib {
         Real volatilitySquared() const;
         Real barrierLo() const;
         Real barrierHi() const;
-        Real rebate() const;
         Real stdDeviation() const;
         Rate riskFreeRate() const;
         DiscountFactor riskFreeDiscount() const;

@@ -22,36 +22,26 @@
 #include <ql/math/matrixutilities/gmres.hpp>
 #include <ql/math/matrixutilities/bicgstab.hpp>
 #include <ql/methods/finitedifferences/schemes/impliciteulerscheme.hpp>
-#if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#endif
-#include <ql/bind.hpp>
-#if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
-#pragma GCC diagnostic pop
-#endif
-#include <ql/function.hpp>
+#include <ql/functional.hpp>
 
 namespace QuantLib {
 
-    ImplicitEulerScheme::ImplicitEulerScheme(
-        const ext::shared_ptr<FdmLinearOpComposite>& map,
-        const bc_set& bcSet,
-        Real relTol,
-        SolverType solverType)
-    : dt_        (Null<Real>()),
-      iterations_(ext::make_shared<Size>(0u)),
-      relTol_    (relTol),
-      map_       (map),
-      bcSet_     (bcSet),
-      solverType_(solverType){
-    }
+    ImplicitEulerScheme::ImplicitEulerScheme(const ext::shared_ptr<FdmLinearOpComposite>& map,
+                                             const bc_set& bcSet,
+                                             Real relTol,
+                                             SolverType solverType)
+    : dt_(Null<Real>()), iterations_(ext::make_shared<Size>(0U)), relTol_(relTol), map_(map),
+      bcSet_(bcSet), solverType_(solverType) {}
 
-    Disposable<Array> ImplicitEulerScheme::apply(const Array& r) const {
-        return r - dt_*map_->apply(r);
+    Disposable<Array> ImplicitEulerScheme::apply(const Array& r, Real theta) const {
+        return r - (theta*dt_)*map_->apply(r);
     }
 
     void ImplicitEulerScheme::step(array_type& a, Time t) {
+        step(a, t, 1.0);
+    }
+
+    void ImplicitEulerScheme::step(array_type& a, Time t, Real theta) {
         using namespace ext::placeholders;
         QL_REQUIRE(t-dt_ > -1e-8, "a step towards negative time given");
         map_->setTime(std::max(0.0, t-dt_), t);
@@ -60,15 +50,15 @@ namespace QuantLib {
         bcSet_.applyBeforeSolving(*map_, a);
 
         if (map_->size() == 1) {
-            a = map_->solve_splitting(0, a, -dt_);
+            a = map_->solve_splitting(0, a, -theta*dt_);
         }
         else {
             const ext::function<Disposable<Array>(const Array&)>
                 preconditioner(ext::bind(
-                    &FdmLinearOpComposite::preconditioner, map_, _1, -dt_));
+                    &FdmLinearOpComposite::preconditioner, map_, _1, -theta*dt_));
 
             const ext::function<Disposable<Array>(const Array&)> applyF(
-                ext::bind(&ImplicitEulerScheme::apply, this, _1));
+                ext::bind(&ImplicitEulerScheme::apply, this, _1, theta));
 
             if (solverType_ == BiCGstab) {
                 const BiCGStabResult result =
@@ -80,8 +70,9 @@ namespace QuantLib {
             }
             else if (solverType_ == GMRES) {
                 const GMRESResult result =
-                    QuantLib::GMRES(applyF, std::max(Size(10), a.size()/10u),
-                        relTol_, preconditioner).solve(a, a);
+                    QuantLib::GMRES(applyF, std::max(Size(10), a.size() / 10U), relTol_,
+                                    preconditioner)
+                        .solve(a, a);
 
                 (*iterations_) += result.errors.size();
                 a = result.x;

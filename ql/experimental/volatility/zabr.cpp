@@ -34,8 +34,7 @@
 #include <ql/methods/finitedifferences/solvers/fdmbackwardsolver.hpp>
 #include <ql/experimental/finitedifferences/fdmdupire1dop.hpp>
 #include <ql/experimental/finitedifferences/fdmzabrop.hpp>
-#include <ql/function.hpp>
-#include <ql/bind.hpp>
+#include <ql/functional.hpp>
 
 using std::pow;
 
@@ -283,9 +282,9 @@ Real ZabrModel::fullFdPrice(const Real strike) const {
         Real f = mesher->location(iter, 0);
         // Real v = mesher->location(iter, 0);
         rhs[iter.index()] = std::max(f - strike, 0.0);
-        if (!iter.coordinates()[1])
+        if (iter.coordinates()[1] == 0U)
             f_.push_back(mesher->location(iter, 0));
-        if (!iter.coordinates()[0])
+        if (iter.coordinates()[0] == 0U)
             v_.push_back(mesher->location(iter, 1));
     }
 

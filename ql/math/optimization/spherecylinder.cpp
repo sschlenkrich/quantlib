@@ -19,14 +19,7 @@
 
 #include <ql/math/optimization/spherecylinder.hpp>
 #include <ql/errors.hpp>
-#if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#endif
-#include <ql/bind.hpp>
-#if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
-#pragma GCC diagnostic pop
-#endif
+#include <ql/functional.hpp>
 #include <algorithm>
 
 namespace QuantLib {
@@ -97,17 +90,13 @@ namespace QuantLib {
          QL_REQUIRE(alpha>0,
                    "cylinder centre must have positive coordinate");
 
-        if (std::fabs(alpha-s) > r )
-            nonEmpty_=false;
-        else
-            nonEmpty_=true;
+         nonEmpty_ = std::fabs(alpha - s) <= r;
 
-        Real cylinderInside = r*r - (s + alpha)*(s+alpha);
+         Real cylinderInside = r * r - (s + alpha) * (s + alpha);
 
-        if (cylinderInside >0.0)
-        {
-            topValue_ = alpha+s;
-            bottomValue_ = alpha-s;
+         if (cylinderInside > 0.0) {
+             topValue_ = alpha + s;
+             bottomValue_ = alpha - s;
         }
         else
         {
@@ -126,7 +115,6 @@ namespace QuantLib {
                 topValue_ = alpha+ tmp/(2.0*alpha);
 
             }
-
 
         }
 

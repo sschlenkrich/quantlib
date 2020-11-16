@@ -70,6 +70,8 @@
 #include <ql/methods/finitedifferences/operators/secondderivativeop.hpp>
 #include <ql/methods/finitedifferences/operators/secondordermixedderivativeop.hpp>
 #include <ql/math/matrixutilities/sparseilupreconditioner.hpp>
+#include <ql/functional.hpp>
+
 #if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
@@ -78,11 +80,9 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/operation.hpp>
 #endif
-#include <ql/bind.hpp>
 #if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
 #pragma GCC diagnostic pop
 #endif
-
 
 #include <numeric>
 
@@ -1483,7 +1483,7 @@ void FdmLinearOpTest::testSpareMatrixReference() {
     const Size nMatrices = 5;
     const Size nElements = 50;
 
-    PseudoRandom::urng_type rng(1234ul);
+    PseudoRandom::urng_type rng(1234UL);
 
     SparseMatrix expected(rows, columns);
     std::vector<SparseMatrix> v(nMatrices, SparseMatrix(rows, columns));
@@ -1537,7 +1537,7 @@ void FdmLinearOpTest::testSparseMatrixZeroAssignment() {
     BOOST_TEST_MESSAGE("Testing assignment to zero in sparse matrix...");
 
     SparseMatrix m(5,5);
-    if (nrElementsOfSparseMatrix(m)) {
+    if (nrElementsOfSparseMatrix(m) != 0U) {
         BOOST_FAIL("non zero return for an emtpy matrix");
     }
     m(0, 0) = 0.0; m(1, 2) = 0.0;

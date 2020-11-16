@@ -35,14 +35,16 @@ namespace QuantLib {
             const ext::shared_ptr<HestonModel>& model,
             Size tGrid, Size xGrid, Size vGrid, Size dampingSteps,
             const FdmSchemeDesc& schemeDesc,
-            const ext::shared_ptr<LocalVolTermStructure>& leverageFct)
+            const ext::shared_ptr<LocalVolTermStructure>& leverageFct,
+            const Real mixingFactor)
     : GenericModelEngine<HestonModel,
                         DividendBarrierOption::arguments,
                         DividendBarrierOption::results>(model),
       tGrid_(tGrid), xGrid_(xGrid), vGrid_(vGrid), 
       dampingSteps_(dampingSteps),
       schemeDesc_(schemeDesc),
-      leverageFct_(leverageFct) {
+      leverageFct_(leverageFct),
+      mixingFactor_(mixingFactor) {
     }
 
     void FdHestonRebateEngine::calculate() const {
@@ -53,9 +55,11 @@ namespace QuantLib {
 
         // 1.1 The variance mesher
         const Size tGridMin = 5;
-        const ext::shared_ptr<FdmHestonVarianceMesher> varianceMesher(
-            new FdmHestonVarianceMesher(vGrid_, process, maturity,
-                                        std::max(tGridMin, tGrid_/50)));
+        const Size tGridAvgSteps = std::max(tGridMin, tGrid_/50);
+
+        const ext::shared_ptr<FdmHestonLocalVolatilityVarianceMesher> vMesher
+            = ext::make_shared<FdmHestonLocalVolatilityVarianceMesher>(
+                  vGrid_, process, leverageFct_, maturity, tGridAvgSteps, 0.0001, mixingFactor_);
 
         // 1.2 The equity mesher
         const ext::shared_ptr<StrikedTypePayoff> payoff =
@@ -77,14 +81,14 @@ namespace QuantLib {
                 xGrid_,
                 FdmBlackScholesMesher::processHelper(
                     process->s0(), process->dividendYield(),
-                    process->riskFreeRate(), varianceMesher->volaEstimate()),
+                    process->riskFreeRate(), vMesher->volaEstimate()),
                 maturity, payoff->strike(),
                 xMin, xMax, 0.0001, 1.5,
                 std::make_pair(Null<Real>(), Null<Real>()),
                 arguments_.cashFlow));
 
         const ext::shared_ptr<FdmMesher> mesher (
-            new FdmMesherComposite(equityMesher, varianceMesher));
+            new FdmMesherComposite(equityMesher, vMesher));
 
         // 2. Calculator
         const ext::shared_ptr<StrikedTypePayoff> rebatePayoff(
@@ -126,7 +130,7 @@ namespace QuantLib {
 
         ext::shared_ptr<FdmHestonSolver> solver(new FdmHestonSolver(
                     Handle<HestonProcess>(process), solverDesc, schemeDesc_,
-                    Handle<FdmQuantoHelper>(), leverageFct_));
+                    Handle<FdmQuantoHelper>(), leverageFct_, mixingFactor_));
 
         const Real spot = process->s0()->value();
         results_.value = solver->valueAt(spot, process->v0());

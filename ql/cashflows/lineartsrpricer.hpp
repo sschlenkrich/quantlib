@@ -1,4 +1,5 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
 /*
   Copyright (C) 2014, 2016 Peter Caspers
 
@@ -188,8 +189,8 @@ namespace QuantLib {
       private:
 
         Real GsrG(const Date &d) const;
-        Real singularTerms(const Option::Type type, const Real strike) const;
-        Real integrand(const Real strike) const;
+        Real singularTerms(Option::Type type, Real strike) const;
+        Real integrand(Real strike) const;
         Real a_, b_;
 
         class integrand_f;

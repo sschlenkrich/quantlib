@@ -29,7 +29,7 @@
 #include <ql/types.hpp>
 #include <ql/utilities/null.hpp>
 #include <ql/math/integrals/integral.hpp>
-#include <ql/function.hpp>
+#include <ql/functional.hpp>
 
 namespace QuantLib {
 
@@ -85,8 +85,8 @@ namespace QuantLib {
     */
     class GaussKronrodAdaptive : public Integrator {
       public:
-          GaussKronrodAdaptive(Real tolerance,
-                               Size maxFunctionEvaluations = Null<Size>());
+        explicit GaussKronrodAdaptive(Real tolerance,
+                                      Size maxFunctionEvaluations = Null<Size>());
       protected:
           Real integrate(const ext::function<Real (Real)>& f,
                          Real a,

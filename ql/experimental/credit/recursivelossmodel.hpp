@@ -22,15 +22,7 @@
 
 #include <ql/experimental/credit/constantlosslatentmodel.hpp>
 #include <ql/experimental/credit/defaultlossmodel.hpp>
-
-#if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#endif
-#include <ql/bind.hpp>
-#if defined(__GNUC__) && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || (__GNUC__ > 4))
-#pragma GCC diagnostic pop
-#endif
+#include <ql/functional.hpp>
 #include <map>
 #include <algorithm>
 
@@ -55,35 +47,35 @@ namespace QuantLib {
     template<class copulaPolicy> 
     class RecursiveLossModel : public DefaultLossModel {
     public:
-        RecursiveLossModel(
-            const ext::shared_ptr<ConstantLossLatentmodel<copulaPolicy> >& m,
-// nope! use max common divisor. See O'Kane. Or give both options at least.
-            Size nbuckets  = 1)
-        : copula_(m), nBuckets_(nbuckets), wk_() { }
-      private:
-          /*!
-          @param pDefDate Vector of unconditional default probabilities for each
-          live name (at the current evaluation date). This is passed instead of 
-          the date for performance reasons (if in the future other magnitudes 
-          -e.g. lgd- are contingent on the date they shouldd be passed too).
-          */
-        Disposable<std::map<Real, Probability> > conditionalLossDistrib(
-            const std::vector<Probability>& pDefDate, 
-            const std::vector<Real>& mktFactor) const;
-        Real expectedConditionalLoss(const std::vector<Probability>& pDefDate, //<< never used!!
-            const std::vector<Real>& mktFactor) const;
-        Disposable<std::vector<Real> > conditionalLossProb(
-            const std::vector<Probability>& pDefDate, 
-            //const Date& date,
-            const std::vector<Real>& mktFactor) const;
-        //versions using the P-inverse, deprecate the former
-        Disposable<std::map<Real, Probability> > conditionalLossDistribInvP(
-            const std::vector<Real>& pDefDate, 
-            //const Date& date,
-            const std::vector<Real>& mktFactor) const;
-        Real expectedConditionalLossInvP(const std::vector<Real>& pDefDate, 
-            //const Date& date,
-            const std::vector<Real>& mktFactor) const;
+      explicit RecursiveLossModel(
+          const ext::shared_ptr<ConstantLossLatentmodel<copulaPolicy> >& m,
+          // nope! use max common divisor. See O'Kane. Or give both options at least.
+          Size nbuckets = 1)
+      : copula_(m), nBuckets_(nbuckets) {}
+
+    private:
+      /*!
+      @param pDefDate Vector of unconditional default probabilities for each
+      live name (at the current evaluation date). This is passed instead of
+      the date for performance reasons (if in the future other magnitudes
+      -e.g. lgd- are contingent on the date they shouldd be passed too).
+      */
+      Disposable<std::map<Real, Probability> >
+      conditionalLossDistrib(const std::vector<Probability>& pDefDate,
+                             const std::vector<Real>& mktFactor) const;
+      Real expectedConditionalLoss(const std::vector<Probability>& pDefDate, //<< never used!!
+                                   const std::vector<Real>& mktFactor) const;
+      Disposable<std::vector<Real> > conditionalLossProb(const std::vector<Probability>& pDefDate,
+                                                         // const Date& date,
+                                                         const std::vector<Real>& mktFactor) const;
+      // versions using the P-inverse, deprecate the former
+      Disposable<std::map<Real, Probability> >
+      conditionalLossDistribInvP(const std::vector<Real>& pDefDate,
+                                 // const Date& date,
+                                 const std::vector<Real>& mktFactor) const;
+      Real expectedConditionalLossInvP(const std::vector<Real>& pDefDate,
+                                       // const Date& date,
+                                       const std::vector<Real>& mktFactor) const;
     protected:
         void resetModel();
     public:
@@ -177,6 +169,8 @@ namespace QuantLib {
             );
             */
 /**/
+        using namespace ext::placeholders;
+
         std::vector<Probability> uncDefProb = 
             basket_->remainingProbabilities(date);
         std::vector<Real> invProb;
@@ -197,7 +191,9 @@ namespace QuantLib {
 
     template<class CP>
     inline Disposable<std::vector<Real> > 
-        RecursiveLossModel<CP>::lossProbability(const Date& date) const {
+    RecursiveLossModel<CP>::lossProbability(const Date& date) const {
+
+        using namespace ext::placeholders;
 
         std::vector<Probability> uncDefProb = 
             basket_->remainingProbabilities(date);

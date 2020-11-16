@@ -19,6 +19,7 @@
 
 #include <ql/legacy/libormarketmodels/liborforwardmodel.hpp>
 #include <ql/pricingengines/blackformula.hpp>
+#include <ql/time/calendars/nullcalendar.hpp>
 #include <limits>
 
 namespace QuantLib {
@@ -145,7 +146,7 @@ namespace QuantLib {
     // same frequency
     ext::shared_ptr<SwaptionVolatilityMatrix>
         LiborForwardModel::getSwaptionVolatilityMatrix() const {
-        if (swaptionVola) {
+        if (swaptionVola != 0) {
             return swaptionVola;
         }
 
@@ -192,9 +193,9 @@ namespace QuantLib {
         }
 
         return swaptionVola = ext::make_shared<SwaptionVolatilityMatrix>(
-             today, exercises, lengths,
-                                          volatilities,
-                                          index->dayCounter());
+            today, NullCalendar(), Following,
+            exercises, lengths, volatilities,
+            index->dayCounter());
     }
 
     // the next two methods are meaningless within this context

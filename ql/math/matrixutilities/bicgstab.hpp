@@ -19,14 +19,14 @@
 */
 
 /*! \file bicgstab.hpp
-    \brief bi-conjugated gradient stableized algorithm
+    \brief Biconjugate gradient stabilized method
 */
 
 #ifndef quantlib_bicgstab_hpp
 #define quantlib_bicgstab_hpp
 
 #include <ql/math/array.hpp>
-#include <ql/function.hpp>
+#include <ql/functional.hpp>
 
 namespace QuantLib {
 
@@ -46,12 +46,6 @@ namespace QuantLib {
         BiCGStabResult solve(const Array& b, const Array& x0 = Array()) const;
         
       protected:
-        /*! \deprecated use Norm2(a).
-                        Deprecated in version 1.11.
-        */
-        QL_DEPRECATED
-        Real norm2(const Array& a) const;
-
         const MatrixMult A_, M_;
         const Size maxIter_;
         const Real relTol_;  

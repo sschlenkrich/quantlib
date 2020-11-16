@@ -26,11 +26,10 @@
 #include <ql/experimental/math/fireflyalgorithm.hpp>
 #include <ql/experimental/math/hybridsimulatedannealing.hpp>
 #include <ql/experimental/math/particleswarmoptimization.hpp>
+#include <ql/functional.hpp>
 
-#include <boost/timer.hpp>
-#include <ql/function.hpp>
-#include <ql/bind.hpp>
-#include <boost/tuple/tuple.hpp>
+
+#include <ql/tuple.hpp>
 #include <iostream>
 #include <iomanip>
 
@@ -39,7 +38,7 @@ using namespace QuantLib;
 #if defined(QL_ENABLE_SESSIONS)
 namespace QuantLib {
 
-    Integer sessionId() { return 0; }
+    ThreadKey sessionId() { return 0; }
 
 }
 #endif
@@ -144,8 +143,8 @@ class TestFunction : public CostFunction {
 public:
     typedef ext::function<Real(const Array&)> RealFunc;
     typedef ext::function<Disposable<Array>(const Array&)> ArrayFunc;
-    TestFunction(const RealFunc & f, const ArrayFunc & fs = ArrayFunc()) : f_(f), fs_(fs) {}
-    TestFunction(Real(*f)(const Array&), Disposable<Array>(*fs)(const Array&) = NULL) : f_(f), fs_(fs) {}
+    explicit TestFunction(const RealFunc & f, const ArrayFunc & fs = ArrayFunc()) : f_(f), fs_(fs) {}
+    explicit TestFunction(Real(*f)(const Array&), Disposable<Array>(*fs)(const Array&) = NULL) : f_(f), fs_(fs) {}
     virtual ~TestFunction(){}
     virtual Real value(const Array& x) const {
         return f_(x);
@@ -163,7 +162,7 @@ private:
 int test(OptimizationMethod& method, CostFunction& f, const EndCriteria& endCriteria,
           const Array& start, const Constraint& constraint = Constraint(),
           const Array& optimum = Array()) {
-    QL_REQUIRE(start.size() > 0, "Input size needs to be at least 1");
+    QL_REQUIRE(!start.empty(), "Input size needs to be at least 1");
     std::cout << "Starting point: ";
     Constraint c;
     if (!constraint.empty())
@@ -175,17 +174,16 @@ int test(OptimizationMethod& method, CostFunction& f, const EndCriteria& endCrit
     Real val = printFunction(p, p.currentValue());
     if(!optimum.empty())
     {
-        std::cout << "Global optimium: ";
+        std::cout << "Global optimum: ";
         Real optimVal = printFunction(p, optimum);
         if(std::abs(optimVal) < 1e-13)
-            return std::abs(val-optimVal) < 1e-6;
+            return static_cast<int>(std::abs(val - optimVal) < 1e-6);
         else
-            return std::abs((val-optimVal)/optimVal) < 1e-6;
+            return static_cast<int>(std::abs((val - optimVal) / optimVal) < 1e-6);
     }
     return 1;
 }
 
-#if BOOST_VERSION >= 104700
 void testFirefly() {
     /*
     The Eggholder function is only in 2 dimensions, it has a multitude
@@ -212,7 +210,6 @@ void testFirefly() {
     test(fa, f, ec, x, constraint, optimum);
     std::cout << "================================================================" << std::endl;
 }
-#endif
 
 void testSimulatedAnnealing(Size dimension, Size maxSteps, Size staticSteps){
 
@@ -254,12 +251,18 @@ void testSimulatedAnnealing(Size dimension, Size maxSteps, Size staticSteps){
     std::cout << "================================================================" << std::endl;
 }
 
-void testGaussianSA(Size dimension, Size maxSteps, Size staticSteps, Real initialTemp,
+void testGaussianSA(Size dimension,
+                    Size maxSteps,
+                    Size staticSteps,
+                    Real initialTemp,
                     Real finalTemp,
-                    GaussianSimulatedAnnealing::ResetScheme resetScheme = GaussianSimulatedAnnealing::ResetToBestPoint,
+                    GaussianSimulatedAnnealing::ResetScheme resetScheme =
+                        GaussianSimulatedAnnealing::ResetToBestPoint,
                     Size resetSteps = 150,
-                    GaussianSimulatedAnnealing::LocalOptimizeScheme optimizeScheme = GaussianSimulatedAnnealing::EveryBestPoint,
-                    ext::shared_ptr<OptimizationMethod> localOptimizer = ext::make_shared<LevenbergMarquardt>()){
+                    GaussianSimulatedAnnealing::LocalOptimizeScheme optimizeScheme =
+                        GaussianSimulatedAnnealing::EveryBestPoint,
+                    const ext::shared_ptr<OptimizationMethod>& localOptimizer =
+                        ext::make_shared<LevenbergMarquardt>()) {
 
     /*The ackley function has a large amount of local minima, but the
      * structure is symmetric, so if one could simply just ignore the
@@ -298,7 +301,6 @@ void testGaussianSA(Size dimension, Size maxSteps, Size staticSteps, Real initia
     std::cout << "================================================================" << std::endl;
 }
 
-#if BOOST_VERSION >= 104700
 void testPSO(Size n){
     /*The Rosenbrock function has a global minima at (1.0, ...) and a local minima at (-1.0, 1.0, ...)
     The difficulty lies in the weird shape of the function*/
@@ -321,7 +323,6 @@ void testPSO(Size n){
     test(pso, f, ec, x, constraint, optimum);
     std::cout << "================================================================" << std::endl;
 }
-#endif
 
 void testDifferentialEvolution(Size n, Size agents){
     /*The Rosenbrock function has a global minima at (1.0, ...) and a local minima at (-1.0, 1.0, ...)
@@ -354,34 +355,17 @@ void testDifferentialEvolution(Size n, Size agents){
     std::cout << "================================================================" << std::endl;
 }
 
-void printTime(double seconds){
-    Integer hours = int(seconds/3600);
-    seconds -= hours * 3600;
-    Integer minutes = int(seconds/60);
-    seconds -= minutes * 60;
-    std::cout << " \nRun completed in ";
-    if (hours > 0)
-        std::cout << hours << " h ";
-    if (hours > 0 || minutes > 0)
-        std::cout << minutes << " m ";
-    std::cout << std::fixed << std::setprecision(0)
-              << seconds << " s\n" << std::endl;
-}
 
 int main(int, char* []) {
 
     try {
         std::cout << std::endl;
-        boost::timer timer;
 
-#if BOOST_VERSION >= 104700
         std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
         std::cout << "Firefly Algorithm Test" << std::endl;
         std::cout << "----------------------------------------------------------------" << std::endl;
         testFirefly();
 
-        printTime(timer.elapsed());
-#endif
 
         std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
         std::cout << "Hybrid Simulated Annealing Test" << std::endl;
@@ -390,9 +374,7 @@ int main(int, char* []) {
         testGaussianSA(10, 500, 200, 100.0, 0.1, GaussianSimulatedAnnealing::ResetToBestPoint, 150, GaussianSimulatedAnnealing::EveryNewPoint);
         testGaussianSA(30, 500, 200, 100.0, 0.1, GaussianSimulatedAnnealing::ResetToBestPoint, 150, GaussianSimulatedAnnealing::EveryNewPoint);
 
-        printTime(timer.elapsed());
 
-#if BOOST_VERSION >= 104700
         std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
         std::cout << "Particle Swarm Optimization Test" << std::endl;
         std::cout << "----------------------------------------------------------------" << std::endl;
@@ -400,8 +382,6 @@ int main(int, char* []) {
         testPSO(10);
         testPSO(30);
 
-        printTime(timer.elapsed());
-#endif
 
         std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
         std::cout << "Simulated Annealing Test" << std::endl;
@@ -410,7 +390,6 @@ int main(int, char* []) {
         testSimulatedAnnealing(10, 10000, 4000);
         testSimulatedAnnealing(30, 10000, 4000);
 
-        printTime(timer.elapsed());
 
         std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
         std::cout << "Differential Evolution Test" << std::endl;
@@ -418,8 +397,6 @@ int main(int, char* []) {
         testDifferentialEvolution(3, 50);
         testDifferentialEvolution(10, 150);
         testDifferentialEvolution(30, 450);
-
-        printTime(timer.elapsed());
 
         return 0;
     } catch (std::exception& e) {

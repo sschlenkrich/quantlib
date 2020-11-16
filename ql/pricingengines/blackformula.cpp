@@ -1,5 +1,6 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+
 /*
  Copyright (C) 2001, 2002, 2003 Sadruddin Rejeb
  Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2012 Ferdinando Ametrano
@@ -10,6 +11,8 @@
  Copyright (C) 2013 Gary Kennedy
  Copyright (C) 2015 Peter Caspers
  Copyright (C) 2017 Klaus Spanderen
+ Copyright (C) 2019 Wojciech Ślusarski
+ Copyright (C) 2020 Marcin Rybacki
 
  This file is part of QuantLib, a free-software/open-source library
  for financial quantitative analysts and developers - http://quantlib.org/
@@ -105,6 +108,43 @@ namespace QuantLib {
                       Real discount,
                       Real displacement) {
         return blackFormula(payoff->optionType(),
+            payoff->strike(), forward, stdDev, discount, displacement);
+    }
+
+    Real blackFormulaForwardDerivative(Option::Type optionType,
+                                       Real strike,
+                                       Real forward,
+                                       Real stdDev,
+                                       Real discount,
+                                       Real displacement)
+    {
+        checkParameters(strike, forward, displacement);
+        QL_REQUIRE(stdDev>=0.0,
+                   "stdDev (" << stdDev << ") must be non-negative");
+        QL_REQUIRE(discount>0.0,
+                   "discount (" << discount << ") must be positive");
+        
+        if (stdDev==0.0)
+            return optionType * std::max(1.0 * boost::math::sign((forward - strike) * optionType), 0.0) * discount;
+
+        forward = forward + displacement;
+        strike = strike + displacement;
+
+        if (strike==0.0)
+            return (optionType==Option::Call ? discount : 0.0);
+
+        Real d1 = std::log(forward/strike)/stdDev + 0.5*stdDev;
+        CumulativeNormalDistribution phi;
+        return optionType * phi(optionType * d1) * discount;                        
+    }
+
+    Real blackFormulaForwardDerivative(const ext::shared_ptr<PlainVanillaPayoff>& payoff,
+                                       Real forward,
+                                       Real stdDev,
+                                       Real discount,
+                                       Real displacement) 
+    {
+        return blackFormulaForwardDerivative(payoff->optionType(),
             payoff->strike(), forward, stdDev, discount, displacement);
     }
 
@@ -548,6 +588,34 @@ namespace QuantLib {
             payoff->strike(), forward, stdDev , displacement);
     }
 
+    Real blackFormulaAssetItmProbability(
+                        Option::Type optionType,
+                        Real strike,
+                        Real forward,
+                        Real stdDev,
+                        Real displacement) {
+        checkParameters(strike, forward, displacement);
+        if (stdDev==0.0)
+            return (forward*optionType < strike*optionType ? 1.0 : 0.0);
+
+        forward = forward + displacement;
+        strike = strike + displacement;
+        if (strike==0.0)
+            return (optionType==Option::Call ? 1.0 : 0.0);
+        Real d1 = std::log(forward/strike)/stdDev + 0.5*stdDev;
+        CumulativeNormalDistribution phi;
+        return phi(optionType*d1);
+    }
+
+    Real blackFormulaAssetItmProbability(
+                        const ext::shared_ptr<PlainVanillaPayoff>& payoff,
+                        Real forward,
+                        Real stdDev,
+                        Real displacement) {
+        return blackFormulaAssetItmProbability(payoff->optionType(),
+            payoff->strike(), forward, stdDev , displacement);
+    }
+
     Real blackFormulaVolDerivative(Rate strike,
                                       Rate forward,
                                       Real stdDev,
@@ -662,6 +730,30 @@ namespace QuantLib {
             payoff->strike(), forward, stdDev, discount);
     }
 
+    Real bachelierBlackFormulaForwardDerivative(
+        Option::Type optionType, Real strike, Real forward, Real stdDev, Real discount)
+    {
+        QL_REQUIRE(stdDev>=0.0,
+                   "stdDev (" << stdDev << ") must be non-negative");
+        QL_REQUIRE(discount>0.0,
+                   "discount (" << discount << ") must be positive");
+        if (stdDev==0.0)
+            return optionType * std::max(1.0 * boost::math::sign((forward - strike) * optionType), 0.0) * discount;
+        Real d = (forward-strike)*optionType, h = d/stdDev;
+        CumulativeNormalDistribution phi;
+        return optionType * phi(h) * discount;
+    }
+
+    Real bachelierBlackFormulaForwardDerivative(
+        const ext::shared_ptr<PlainVanillaPayoff>& payoff,
+        Real forward,
+        Real stdDev,
+        Real discount)
+    {
+        return bachelierBlackFormulaForwardDerivative(payoff->optionType(),
+            payoff->strike(), forward, stdDev, discount);
+    }
+
     static Real h(Real eta) {
 
         const static Real  A0          = 3.994961687345134e-1;
@@ -762,6 +854,29 @@ namespace QuantLib {
                         Real discount) {
         return bachelierBlackFormulaStdDevDerivative(payoff->strike(), forward,
                                      stdDev, discount);
+    }
+
+    Real bachelierBlackFormulaAssetItmProbability(
+                        Option::Type optionType,
+                        Real strike,
+                        Real forward,
+                        Real stdDev) {
+        QL_REQUIRE(stdDev>=0.0,
+                   "stdDev (" << stdDev << ") must be non-negative");
+        Real d = (forward-strike)*optionType, h = d/stdDev;
+        if (stdDev==0.0)
+            return std::max(d, 0.0);
+        CumulativeNormalDistribution phi;
+        Real result = phi(h);
+        return result;
+    }
+	
+    Real bachelierBlackFormulaAssetItmProbability(
+                        const ext::shared_ptr<PlainVanillaPayoff>& payoff,
+                        Real forward,
+                        Real stdDev) {
+        return bachelierBlackFormulaAssetItmProbability(payoff->optionType(),
+            payoff->strike(), forward, stdDev);
     }
 
     Real bachelierBlackFormulaDelta(Option::Type optionType,

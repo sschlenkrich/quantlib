@@ -58,7 +58,6 @@
 #include <ql/time/calendars/target.hpp>
 #include <ql/time/daycounters/actual365fixed.hpp>
 
-#include <boost/timer.hpp>
 #include <iostream>
 #include <iomanip>
 
@@ -67,7 +66,7 @@ using namespace QuantLib;
 #if defined(QL_ENABLE_SESSIONS)
 namespace QuantLib {
 
-    Integer sessionId() { return 0; }
+    ThreadKey sessionId() { return 0; }
 
 }
 #endif
@@ -172,7 +171,6 @@ int main(int, char* []) {
 
     try {
 
-        boost::timer timer;
         std::cout << std::endl;
 
         Time maturity = 1.0/12.0;   // 1 month
@@ -191,19 +189,6 @@ int main(int, char* []) {
 
         hedgesNum = 84;
         rp.compute(hedgesNum, scenarios);
-
-        double seconds = timer.elapsed();
-        Integer hours = int(seconds/3600);
-        seconds -= hours * 3600;
-        Integer minutes = int(seconds/60);
-        seconds -= minutes * 60;
-        std::cout << " \nRun completed in ";
-        if (hours > 0)
-            std::cout << hours << " h ";
-        if (hours > 0 || minutes > 0)
-            std::cout << minutes << " m ";
-        std::cout << std::fixed << std::setprecision(0)
-                  << seconds << " s\n" << std::endl;
 
         return 0;
     } catch (std::exception& e) {
