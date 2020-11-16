@@ -361,9 +361,6 @@
     <Filter Include="experimental\templatemodels\commodity">
       <UniqueIdentifier>{aebe4800-14a1-4aeb-9af0-947c2ec2a87c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="experimental\basismodels">
-      <UniqueIdentifier>{1962ba2e-2566-41c0-88b4-1c76448cec8d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="experimental\templatemodels\montecarlo\scripting">
       <UniqueIdentifier>{9bd815cd-26da-4760-a907-2aa4bae7caa2}</UniqueIdentifier>
     </Filter>
@@ -4376,7 +4373,6 @@
     <ClInclude Include="ql\termstructures\yield\ultimateforwardtermstructure.hpp">
       <Filter>termstructures\yield</Filter>
     </ClInclude>
-  </ItemGroup>
     <ClInclude Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.hpp">
       <Filter>experimental\sabrswaptioncube</Filter>
     </ClInclude>
@@ -4576,6 +4572,7 @@
     <ClInclude Include="ql\experimental\templatemodels\qgaussian2\qglsvmodel.hpp">
       <Filter>experimental\templatemodels\qgaussian2</Filter>
     </ClInclude>
+    <ClInclude Include="ql\methods\finitedifferences\operatorfactory.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -6781,7 +6778,6 @@
       <Filter>cashflows</Filter>
     </ClCompile>
     <ClCompile Include="ql\instruments\cpicapfloor.cpp">
-    <ClCompile Include="ql\instruments\cpicapfloor.cpp">
       <Filter>instruments</Filter>
     </ClCompile>
     <ClCompile Include="ql\instruments\cpiswap.cpp">
@@ -7243,7 +7239,6 @@
     <ClCompile Include="ql\math\integrals\exponentialintegrals.cpp">
       <Filter>math\integrals</Filter>
     </ClCompile>
-  </ItemGroup>
     <ClCompile Include="ql\experimental\sabrswaptioncube\sabrswaptioncube.cpp">
       <Filter>experimental\sabrswaptioncube</Filter>
     </ClCompile>
@@ -7306,9 +7301,6 @@
     </ClCompile>
     <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.cpp">
       <Filter>experimental\templatemodels\multiasset</Filter>
-    </ClCompile>
-    <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\ExpressionParser.cpp">
-      <Filter>experimental\templatemodels\montecarlo\scripting</Filter>
     </ClCompile>
     <ClCompile Include="ql\experimental\templatemodels\vanillalocalvol\vanillalocalvolsmilesection.cpp">
       <Filter>experimental\templatemodels\vanillalocalvol</Filter>
