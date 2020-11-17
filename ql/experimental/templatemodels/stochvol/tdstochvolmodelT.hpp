@@ -11,7 +11,7 @@
 #define quantlib_templatetdstochvolmodel_hpp
 
 #include <complex>
-#include <boost/shared_ptr.hpp>
+#include <ql/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <ql/errors.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
@@ -387,8 +387,8 @@ namespace QuantLib {
 	    // piecewise constant parameters and numerical integration
         class PWCAnalytical : public TimeDependentStochVolModelT {
 		private:
-			boost::shared_ptr<PieceWiseConstant>    pwc_;
-			boost::shared_ptr<MidPointIntegration>  mp_;
+			ext::shared_ptr<PieceWiseConstant>    pwc_;
+			ext::shared_ptr<MidPointIntegration>  mp_;
 			VolEvolv volEvolv_;
 		public:
 			PWCAnalytical(const std::vector<DateType>&    times,

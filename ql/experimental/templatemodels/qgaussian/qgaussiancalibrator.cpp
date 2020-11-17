@@ -19,7 +19,7 @@ namespace QuantLib {
 		            Real                                 lambda,
 					Real                                 b,
 					Real                                 eta,
-					const boost::shared_ptr<Swaption>&   swaption,
+					const ext::shared_ptr<Swaption>&     swaption,
 			        const Handle<YieldTermStructure>&    discountCurve,
 				    bool                                 contTenorSpread,
 					Real                                 modelTimesStepSize )
@@ -42,7 +42,7 @@ namespace QuantLib {
 				  const std::vector< std::vector< Real > >&  isOutput ) 
 	    : calibrator_(calibrator), isInput_(isInput), isOutput_(isOutput) {
 		// copy model initial values
-		// model_ = boost::shared_ptr<RealQuasiGaussianModel>(new RealQuasiGaussianModel(*calibrator->model_));
+		// model_ = ext::shared_ptr<RealQuasiGaussianModel>(new RealQuasiGaussianModel(*calibrator->model_));
 		model_ = calibrator->model_->clone();
 		// checking dimensions
 	    QL_REQUIRE(isInput_.size()==model_->times().size(),"QuasiGaussianModelCalibrator::Objective: wrong input dimension.");
@@ -72,7 +72,7 @@ namespace QuantLib {
 					isOutput_[i][j+calibrator_->swaptions_[i].size()]>0.0 || 
 					isOutput_[i][j+2*calibrator_->swaptions_[i].size()]>0.0 ) {
 					// assume equal dimension of lambda, b, eta and swaptions
-					calibSwaptions_[i][j] = boost::shared_ptr<CalibSwaption>(new CalibSwaption(calibrator_->lambda_[i][j],calibrator_->b_[i][j],calibrator_->eta_[i][j],calibrator_->swaptions_[i][j],model_->termStructure(), true, calibrator_->modelTimesStepSize_) );
+					calibSwaptions_[i][j] = ext::shared_ptr<CalibSwaption>(new CalibSwaption(calibrator_->lambda_[i][j],calibrator_->b_[i][j],calibrator_->eta_[i][j],calibrator_->swaptions_[i][j],model_->termStructure(), true, calibrator_->modelTimesStepSize_) );
 				}
 			}
 		}
@@ -146,14 +146,14 @@ namespace QuantLib {
 	Disposable<Array> QuasiGaussianModelCalibrator::Objective::values(const Array& x) const {
 		update(x);
 		// we may have a swaption model for each swaption
-		std::vector< std::vector< boost::shared_ptr<RealQGSwaptionModel> > > swaptionModels;
+		std::vector< std::vector< ext::shared_ptr<RealQGSwaptionModel> > > swaptionModels;
 		// however we build the model only if neccessary
 		swaptionModels.resize(calibrator_->swaptions_.size());
 		for (size_t i=0; i<swaptionModels.size(); ++i) {
 			swaptionModels[i].resize(calibrator_->swaptions_[i].size());
 			for (size_t j=0; j<swaptionModels[i].size(); ++j) {
 				if (calibSwaptions_[i][j]) {										
-					swaptionModels[i][j] = boost::shared_ptr<RealQGSwaptionModel>( new RealQGSwaptionModel( model_, calibSwaptions_[i][j]->floatTimes(), calibSwaptions_[i][j]->floatWeights(), calibSwaptions_[i][j]->fixedTimes(), calibSwaptions_[i][j]->annuityWeights(),calibSwaptions_[i][j]->modelTimes(), calibrator_->useExpectedXY_ ) );
+					swaptionModels[i][j] = ext::shared_ptr<RealQGSwaptionModel>( new RealQGSwaptionModel( model_, calibSwaptions_[i][j]->floatTimes(), calibSwaptions_[i][j]->floatWeights(), calibSwaptions_[i][j]->fixedTimes(), calibSwaptions_[i][j]->annuityWeights(),calibSwaptions_[i][j]->modelTimes(), calibrator_->useExpectedXY_ ) );
 				}
 			}
 		}
@@ -191,16 +191,16 @@ namespace QuantLib {
 		return 0.5*sum;
 	}
 
-	const boost::shared_ptr<RealQuasiGaussianModel> QuasiGaussianModelCalibrator::Objective::model(const Array& x) {
+	const ext::shared_ptr<RealQuasiGaussianModel> QuasiGaussianModelCalibrator::Objective::model(const Array& x) {
 		update(x);
 		return model_;
 	}
 
 	// constructor
 	QuasiGaussianModelCalibrator::QuasiGaussianModelCalibrator(
-		                              boost::shared_ptr<RealQuasiGaussianModel> model,
-			                          boost::shared_ptr<RealMCSimulation>       mcSimulation,
-									  std::vector< std::vector< boost::shared_ptr<Swaption> > > swaptions,
+		                              ext::shared_ptr<RealQuasiGaussianModel> model,
+			                          ext::shared_ptr<RealMCSimulation>       mcSimulation,
+									  std::vector< std::vector< ext::shared_ptr<Swaption> > > swaptions,
 									  std::vector< std::vector< Real > > lambda,
                                       std::vector< std::vector< Real > > b,
                                       std::vector< std::vector< Real > > eta,

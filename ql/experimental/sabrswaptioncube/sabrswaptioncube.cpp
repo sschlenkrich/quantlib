@@ -47,12 +47,12 @@ namespace QuantLib {
             }
         }
         // set up bilinear interpolators
-        boost::shared_ptr<Interpolation2D> interpolation;
-        alphaInterp_ = boost::shared_ptr<Interpolation2D>( new FlatExtrapolator2D( boost::shared_ptr<Interpolation2D>(new BilinearInterpolation (swapTimes_.begin(), swapTimes_.end(), optionTimes_.begin(), optionTimes_.end(), alpha_))));
-        betaInterp_  = boost::shared_ptr<Interpolation2D>( new FlatExtrapolator2D( boost::shared_ptr<Interpolation2D>(new BilinearInterpolation (swapTimes_.begin(), swapTimes_.end(), optionTimes_.begin(), optionTimes_.end(), beta_))));
-        rhoInterp_   = boost::shared_ptr<Interpolation2D>( new FlatExtrapolator2D( boost::shared_ptr<Interpolation2D>(new BilinearInterpolation (swapTimes_.begin(), swapTimes_.end(), optionTimes_.begin(), optionTimes_.end(), rho_))));
-        nuInterp_    = boost::shared_ptr<Interpolation2D>( new FlatExtrapolator2D( boost::shared_ptr<Interpolation2D>(new BilinearInterpolation (swapTimes_.begin(), swapTimes_.end(), optionTimes_.begin(), optionTimes_.end(), nu_))));
-        fwdInterp_   = boost::shared_ptr<Interpolation2D>( new FlatExtrapolator2D( boost::shared_ptr<Interpolation2D>(new BilinearInterpolation (swapTimes_.begin(), swapTimes_.end(), optionTimes_.begin(), optionTimes_.end(), fwd_))));
+        ext::shared_ptr<Interpolation2D> interpolation;
+        alphaInterp_ = ext::shared_ptr<Interpolation2D>( new FlatExtrapolator2D( ext::shared_ptr<Interpolation2D>(new BilinearInterpolation (swapTimes_.begin(), swapTimes_.end(), optionTimes_.begin(), optionTimes_.end(), alpha_))));
+        betaInterp_  = ext::shared_ptr<Interpolation2D>( new FlatExtrapolator2D( ext::shared_ptr<Interpolation2D>(new BilinearInterpolation (swapTimes_.begin(), swapTimes_.end(), optionTimes_.begin(), optionTimes_.end(), beta_))));
+        rhoInterp_   = ext::shared_ptr<Interpolation2D>( new FlatExtrapolator2D( ext::shared_ptr<Interpolation2D>(new BilinearInterpolation (swapTimes_.begin(), swapTimes_.end(), optionTimes_.begin(), optionTimes_.end(), rho_))));
+        nuInterp_    = ext::shared_ptr<Interpolation2D>( new FlatExtrapolator2D( ext::shared_ptr<Interpolation2D>(new BilinearInterpolation (swapTimes_.begin(), swapTimes_.end(), optionTimes_.begin(), optionTimes_.end(), nu_))));
+        fwdInterp_   = ext::shared_ptr<Interpolation2D>( new FlatExtrapolator2D( ext::shared_ptr<Interpolation2D>(new BilinearInterpolation (swapTimes_.begin(), swapTimes_.end(), optionTimes_.begin(), optionTimes_.end(), fwd_))));
         alphaInterp_->enableExtrapolation();
         betaInterp_->enableExtrapolation();
         rhoInterp_->enableExtrapolation();
@@ -61,7 +61,7 @@ namespace QuantLib {
     }
 
 
-    boost::shared_ptr<SmileSection> SabrSwaptionCube::smileSectionImpl(
+    ext::shared_ptr<SmileSection> SabrSwaptionCube::smileSectionImpl(
                            Time optionTime,
                            Time swapLength) const {
         // interpolate and set up smile section
@@ -71,7 +71,7 @@ namespace QuantLib {
         sabrParameters[2] = (*nuInterp_)(swapLength, optionTime);
         sabrParameters[3] = (*rhoInterp_)(swapLength, optionTime);
         Real fwd = (*fwdInterp_)(swapLength, optionTime);
-        return boost::shared_ptr<SmileSection>( new SabrSmileSection(optionTime, fwd, sabrParameters,0.0,useNormalVols_));
+        return ext::shared_ptr<SmileSection>( new SabrSmileSection(optionTime, fwd, sabrParameters,0.0,useNormalVols_));
     }
 
 }

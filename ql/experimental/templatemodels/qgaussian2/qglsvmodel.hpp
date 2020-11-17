@@ -28,7 +28,7 @@ namespace QuantLib {
 			const Real                                             chi,
 			const Real                                             theta,
 			const Real                                             eta,
-			const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			const ext::shared_ptr<SwapIndex>&                      swapIndex,
 			const std::vector<Real>&                               times,
 			const size_t                                           nStrikes,
 			const bool                                             calcStochVolAdjustment,

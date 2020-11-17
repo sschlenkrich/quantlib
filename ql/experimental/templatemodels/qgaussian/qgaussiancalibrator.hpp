@@ -33,18 +33,18 @@ namespace QuantLib {
     class QuasiGaussianModelCalibrator { 
 
 		// the Quasi-Gaussian model aimed to be calibrated
-		boost::shared_ptr<RealQuasiGaussianModel> model_;
+		ext::shared_ptr<RealQuasiGaussianModel> model_;
 
 		// the resulting calibrated Quasi-Gaussian model
-		boost::shared_ptr<RealQuasiGaussianModel> calibratedModel_;
+		ext::shared_ptr<RealQuasiGaussianModel> calibratedModel_;
 
 		// we may use a MC simulation to adjust for closed form vs MC bias
-		boost::shared_ptr<RealMCSimulation> mcSimulation_;
+		ext::shared_ptr<RealMCSimulation> mcSimulation_;
 
 		// calibration targets
 
 		// grid of reference (ATM) swaptions as calibration instruments, swaptions_[exercise][swapterm]
-		std::vector< std::vector< boost::shared_ptr<Swaption> > > swaptions_;
+		std::vector< std::vector< ext::shared_ptr<Swaption> > > swaptions_;
 
 		// grid of reference swaption stoch vol model parameters
 		// user supplied or calculated
@@ -75,7 +75,7 @@ namespace QuantLib {
 			// reference to access model, swaptions and targets
 			QuasiGaussianModelCalibrator  *calibrator_;
 			// we work on a copy of the initial model (better safe then sorry)
-			boost::shared_ptr<RealQuasiGaussianModel> model_;
+			ext::shared_ptr<RealQuasiGaussianModel> model_;
 			// specify parameters used for optimisation; dimension [modeltimes] x [ d (lambda) + d (b) + 1 (eta) ]
 			std::vector< std::vector< Real > > isInput_;
 			// specify targets used for optimisation; dimension [exercises] x [ swapterm (lambda) + swapterm (b) + swapterm (eta) ]
@@ -95,7 +95,7 @@ namespace QuantLib {
 				CalibSwaption ( Real                               lambda,
 					            Real                               b,
 								Real                               eta,
-					            const boost::shared_ptr<Swaption>& swaption,
+					            const ext::shared_ptr<Swaption>& swaption,
 			                    const Handle<YieldTermStructure>&  discountCurve,
 						        bool                               contTenorSpread = true,
 								Real                               modelTimesStepSize = 1.0/12.0);
@@ -105,7 +105,7 @@ namespace QuantLib {
 				inline Real eta()    const { return eta_;    }
 				inline const std::vector<Real>& modelTimes() const { return modelTimes_; }
 			};
-			std::vector< std::vector< boost::shared_ptr<CalibSwaption> > > calibSwaptions_;
+			std::vector< std::vector< ext::shared_ptr<CalibSwaption> > > calibSwaptions_;
 			
 		public:
 			const Size inputSize()  const { return inputSize_; }
@@ -146,15 +146,15 @@ namespace QuantLib {
             virtual Real value(const Array& x) const;
 
 			// return the model for a given input state
-			const boost::shared_ptr<RealQuasiGaussianModel> model(const Array& x);
+			const ext::shared_ptr<RealQuasiGaussianModel> model(const Array& x);
 		};
 
 	public:
 
 		// constructor
-		QuasiGaussianModelCalibrator( boost::shared_ptr<RealQuasiGaussianModel> model,
-			                          boost::shared_ptr<RealMCSimulation>       mcSimulation,
-									  std::vector< std::vector< boost::shared_ptr<Swaption> > > swaptions,
+		QuasiGaussianModelCalibrator( ext::shared_ptr<RealQuasiGaussianModel> model,
+			                          ext::shared_ptr<RealMCSimulation>       mcSimulation,
+									  std::vector< std::vector< ext::shared_ptr<Swaption> > > swaptions,
 									  std::vector< std::vector< Real > > lambda,
                                       std::vector< std::vector< Real > > b,
                                       std::vector< std::vector< Real > > eta,
@@ -177,13 +177,13 @@ namespace QuantLib {
 		                   Size                                       maxfev = 10000    );
 
 		// inspectors
-		inline const boost::shared_ptr<RealQuasiGaussianModel> calibratedModel() const { return calibratedModel_; }
+		inline const ext::shared_ptr<RealQuasiGaussianModel> calibratedModel() const { return calibratedModel_; }
 
 		inline void acceptCalibration() { model_ = calibratedModel_; }
 
-		// inline const boost::shared_ptr<RealQuasiGaussianModel> model()        { return model_;        }
-		// inline const boost::shared_ptr<RealMCSimulation>       mcSimulation() { return mcSimulation_; }
-		// inline const std::vector< std::vector< boost::shared_ptr<Swaption> > >& swaptions() { return swaptions_; }
+		// inline const ext::shared_ptr<RealQuasiGaussianModel> model()        { return model_;        }
+		// inline const ext::shared_ptr<RealMCSimulation>       mcSimulation() { return mcSimulation_; }
+		// inline const std::vector< std::vector< ext::shared_ptr<Swaption> > >& swaptions() { return swaptions_; }
 		// inline const std::vector< std::vector< Real > >& lambda() { return lambda_; }
 		// inline const std::vector< std::vector< Real > >& b()      { return b_;      }
 		// inline const std::vector< std::vector< Real > >& eta()    { return eta_;    }

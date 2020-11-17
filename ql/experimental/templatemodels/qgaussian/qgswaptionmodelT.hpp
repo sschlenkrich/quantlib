@@ -31,7 +31,7 @@
 #ifndef quantlib_templateqgswaptionmodel_hpp
 #define quantlib_templateqgswaptionmodel_hpp
 
-#include <boost/shared_ptr.hpp>
+#include <ql/shared_ptr.hpp>
 #include <ql/types.hpp>
 
 #include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
@@ -72,10 +72,10 @@ namespace QuantLib {
 		};
 
 		// reference to QG modelspecs
-		boost::shared_ptr< QuasiGaussianModelT<DateType,PassiveType,ActiveType> >   model_;
+		ext::shared_ptr< QuasiGaussianModelT<DateType,PassiveType,ActiveType> >   model_;
 
 		// reference to averaging algorithm
-		boost::shared_ptr< TimeDependentStochVolModelT<DateType,PassiveType,ActiveType>::MidPointIntegration>  mp_;
+		ext::shared_ptr< TimeDependentStochVolModelT<DateType,PassiveType,ActiveType>::MidPointIntegration>  mp_;
 
 		// vanilla swap specs for this model
 		Swap               swap_;
@@ -447,7 +447,7 @@ namespace QuantLib {
 
 		// constructor
 		QGSwaptionModelT (
-			const boost::shared_ptr< QuasiGaussianModelT<DateType,PassiveType,ActiveType> >&          model,
+			const ext::shared_ptr< QuasiGaussianModelT<DateType,PassiveType,ActiveType> >&          model,
 			const VecD&                                                                               floatTimes,    // T[1], ..., T[M]
 			const VecD&                                                                               floatWeights,  // u[1], ..., u[M]
 			const VecD&                                                                               fixedTimes,    // T[1], ..., T[N]

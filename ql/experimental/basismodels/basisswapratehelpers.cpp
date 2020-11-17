@@ -29,9 +29,9 @@ namespace QuantLib {
                              BusinessDayConvention         paymentBDC,
 							 bool                          spreadOnRecLeg,
                              // pay leg details are taken from IborIndex
-							 const boost::shared_ptr<IborIndex>&  payIndex,
+							 const ext::shared_ptr<IborIndex>&  payIndex,
 							 // rec leg details are taken from IborIndex
-							 const boost::shared_ptr<IborIndex>&  recIndex,
+							 const ext::shared_ptr<IborIndex>&  recIndex,
 							 // discount curve, forward curves are taken from Ibor indices
 							 const Handle<YieldTermStructure>& discountCurve )
 			: BasisSwapRateHelper(rate),
@@ -96,16 +96,16 @@ namespace QuantLib {
 	   std::vector<bool> payer(2);
 	   payer[0] = true;
 	   payer[1] = false;
-	   basisSwap_ = boost::shared_ptr<BasisSwap>(new BasisSwap(legs, payer, (spreadOnRecLeg_ ? 1 : 0), true));
+	   basisSwap_ = ext::shared_ptr<BasisSwap>(new BasisSwap(legs, payer, (spreadOnRecLeg_ ? 1 : 0), true));
 	   earliestDate_ = basisSwap_->startDate();
 	   latestDate_   = basisSwap_->maturityDate();
 	   // we set up pricing engine here coz it's associated to instrument
-	   basisSwap_->setPricingEngine(boost::shared_ptr<PricingEngine>(new DiscountingSwapEngine(discountRelinkableHandle_, false)));
+	   basisSwap_->setPricingEngine(ext::shared_ptr<PricingEngine>(new DiscountingSwapEngine(discountRelinkableHandle_, false)));
 	}
 
     void TenorSwapRateHelper::setTermStructure(YieldTermStructure* ts) {
 		// this initialisation is intended to be done only once
-		boost::shared_ptr<YieldTermStructure> temp(ts, no_deletion);
+		ext::shared_ptr<YieldTermStructure> temp(ts, no_deletion);
 		if (useForDiscount_)    discountRelinkableHandle_.linkTo(temp,false);
 		if (useForPayForward_)  payRelinkableHandle_.linkTo(temp,false);
 		if (useForRecForward_)  recRelinkableHandle_.linkTo(temp,false);
@@ -131,9 +131,9 @@ namespace QuantLib {
                              BusinessDayConvention         recBDC,
 							 bool                          spreadOnRecLeg,
                              // pay leg details are taken from IborIndex
-							 const boost::shared_ptr<IborIndex>&  payIndex,
+							 const ext::shared_ptr<IborIndex>&  payIndex,
 							 // rec leg details are taken from IborIndex
-							 const boost::shared_ptr<IborIndex>&  recIndex,
+							 const ext::shared_ptr<IborIndex>&  recIndex,
 							 // discount curve, forward curves are taken from Ibor indices
 							 const Handle<YieldTermStructure>&    payDiscCurve,
 							 const Handle<YieldTermStructure>&    recDiscCurve,
@@ -181,7 +181,7 @@ namespace QuantLib {
 
     void XCCYSwapRateHelper::setTermStructure(YieldTermStructure* ts) {
 		// this initialisation is intended to be done only once
-		boost::shared_ptr<YieldTermStructure> temp(ts, no_deletion);
+		ext::shared_ptr<YieldTermStructure> temp(ts, no_deletion);
 		if (useForPayDiscount_) payDisRelinkableHandle_.linkTo(temp,false);
 		if (useForRecDiscount_) recDisRelinkableHandle_.linkTo(temp,false);
 		if (useForPayForward_)  payForRelinkableHandle_.linkTo(temp,false);
@@ -238,15 +238,15 @@ namespace QuantLib {
 					 .withFixingDays(recIndex_->fixingDays());
 		// notional payment legs...
 		Leg payNtlExchange, recNtlExchange;
-		boost::shared_ptr<Coupon> coupon; // temp variable for easy access
+		ext::shared_ptr<Coupon> coupon; // temp variable for easy access
         coupon = boost::dynamic_pointer_cast<Coupon>(payLeg.front());
-		payNtlExchange.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(-payNotionals[0],coupon->accrualStartDate())));
+		payNtlExchange.push_back(ext::shared_ptr<CashFlow>(new SimpleCashFlow(-payNotionals[0],coupon->accrualStartDate())));
         coupon = boost::dynamic_pointer_cast<Coupon>(payLeg.back());
-		payNtlExchange.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(+payNotionals[0],coupon->date())));
+		payNtlExchange.push_back(ext::shared_ptr<CashFlow>(new SimpleCashFlow(+payNotionals[0],coupon->date())));
         coupon = boost::dynamic_pointer_cast<Coupon>(recLeg.front());
-		recNtlExchange.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(-recNotionals[0],coupon->accrualStartDate())));
+		recNtlExchange.push_back(ext::shared_ptr<CashFlow>(new SimpleCashFlow(-recNotionals[0],coupon->accrualStartDate())));
         coupon = boost::dynamic_pointer_cast<Coupon>(recLeg.back());
-		recNtlExchange.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(+recNotionals[0],coupon->date())));
+		recNtlExchange.push_back(ext::shared_ptr<CashFlow>(new SimpleCashFlow(+recNotionals[0],coupon->date())));
 		if (fxResetable) {
 			// we need to calculate variable notionals and rebuild the respective legs
 			// note, this approach neglegts convexity between FX and OIS-Libor-spread and FX timing adjustment
@@ -265,11 +265,11 @@ namespace QuantLib {
 					 .withPaymentAdjustment(payBDC_)
 					 .withFixingDays(payIndex_->fixingDays());
 				payNtlExchange.clear();
-                payNtlExchange.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(-payNotionals[0],coupon->accrualStartDate())));
+                payNtlExchange.push_back(ext::shared_ptr<CashFlow>(new SimpleCashFlow(-payNotionals[0],coupon->accrualStartDate())));
 				for (Size i=1; i<payNotionals.size(); ++i) {
-					payNtlExchange.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(payNotionals[i-1]-payNotionals[i],payLeg[i-1]->date())));
+					payNtlExchange.push_back(ext::shared_ptr<CashFlow>(new SimpleCashFlow(payNotionals[i-1]-payNotionals[i],payLeg[i-1]->date())));
 				}
-				payNtlExchange.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(payNotionals[payNotionals.size()-1],payLeg[payLeg.size()-1]->date())));
+				payNtlExchange.push_back(ext::shared_ptr<CashFlow>(new SimpleCashFlow(payNotionals[payNotionals.size()-1],payLeg[payLeg.size()-1]->date())));
 			} else { // adjust the receive leg
                 coupon = boost::dynamic_pointer_cast<Coupon>(recLeg.front());
                 recNotionals[0] = 1.0/recFxForDom_ * payDisRelinkableHandle_->discount(coupon->accrualStartDate())/recDisRelinkableHandle_->discount(coupon->accrualStartDate());
@@ -282,11 +282,11 @@ namespace QuantLib {
 					 .withPaymentAdjustment(recBDC_)
 					 .withFixingDays(recIndex_->fixingDays());
 				recNtlExchange.clear();
-				recNtlExchange.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(-recNotionals[0],coupon->accrualStartDate())));
+				recNtlExchange.push_back(ext::shared_ptr<CashFlow>(new SimpleCashFlow(-recNotionals[0],coupon->accrualStartDate())));
 				for (Size i=1; i<recNotionals.size(); ++i) {
-					recNtlExchange.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(recNotionals[i-1]-recNotionals[i],recLeg[i-1]->date())));
+					recNtlExchange.push_back(ext::shared_ptr<CashFlow>(new SimpleCashFlow(recNotionals[i-1]-recNotionals[i],recLeg[i-1]->date())));
 				}
-				recNtlExchange.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(recNotionals[recNotionals.size()-1],recLeg[recLeg.size()-1]->date())));
+				recNtlExchange.push_back(ext::shared_ptr<CashFlow>(new SimpleCashFlow(recNotionals[recNotionals.size()-1],recLeg[recLeg.size()-1]->date())));
 			}
 		}
 		// now we can assemble the swap
@@ -300,7 +300,7 @@ namespace QuantLib {
 	    payer[1] = false;
 	    payer[2] = true;
 	    payer[3] = false;
-	    basisSwap_ = boost::shared_ptr<BasisSwap>(new BasisSwap(legs, payer, (spreadOnRecLeg_ ? 1 : 0), true));
+	    basisSwap_ = ext::shared_ptr<BasisSwap>(new BasisSwap(legs, payer, (spreadOnRecLeg_ ? 1 : 0), true));
 	    // we set up pricing engine here coz it's associated to instrument
         std::vector<Handle<YieldTermStructure>> discCurves(4);
         discCurves[0] = payDisRelinkableHandle_;
@@ -312,7 +312,7 @@ namespace QuantLib {
         fxForDom[1] = recFxForDom_;
         fxForDom[2] = payFxForDom_;
         fxForDom[3] = recFxForDom_;
-	    basisSwap_->setPricingEngine(boost::shared_ptr<PricingEngine>(new 
+	    basisSwap_->setPricingEngine(ext::shared_ptr<PricingEngine>(new 
 			BasisSwapEngine(discCurves, fxForDom, false)));
 	}
 

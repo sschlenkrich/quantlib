@@ -31,7 +31,7 @@
 #ifndef quantlib_templateqgswapratemodelT_hpp
 #define quantlib_templateqgswapratemodelT_hpp
 
-#include <boost/shared_ptr.hpp>
+#include <ql/shared_ptr.hpp>
 
 #include <ql/experimental/templatemodels/qgaussian2/quasigaussianmodel2T.hpp>
 
@@ -64,7 +64,7 @@ namespace QuantLib {
 		};
 
 		// reference to QG modelspecs
-		boost::shared_ptr< QuasiGaussianModel2T<DateType,PassiveType,ActiveType> >   model_;
+		ext::shared_ptr< QuasiGaussianModel2T<DateType,PassiveType,ActiveType> >   model_;
 
 		// vanilla swap specs for this model
 		Swap               swap_;
@@ -397,7 +397,7 @@ namespace QuantLib {
 
 		// constructor
 		QGSwaprateModelT (
-			const boost::shared_ptr< QuasiGaussianModel2T<DateType,PassiveType,ActiveType> >&          model,
+			const ext::shared_ptr< QuasiGaussianModel2T<DateType,PassiveType,ActiveType> >&           model,
 			const VecD&                                                                               floatTimes,    // T[1], ..., T[M]
 			const VecD&                                                                               floatWeights,  // u[1], ..., u[M]
 			const VecD&                                                                               fixedTimes,    // T[1], ..., T[N]
@@ -439,7 +439,7 @@ namespace QuantLib {
 			}
 		}
 
-		inline const boost::shared_ptr< QuasiGaussianModel2T<DateType, PassiveType, ActiveType> >&  model() { return model_; }
+		inline const ext::shared_ptr< QuasiGaussianModel2T<DateType, PassiveType, ActiveType> >&  model() { return model_; }
 		inline const VecD& floatTimes()    { return swap_.floatTimes;   }
 		inline const VecD& floatWeights()  { return swap_.floatWeights; }
 		inline const VecD& fixedTimes()    { return swap_.fixedTimes;   }

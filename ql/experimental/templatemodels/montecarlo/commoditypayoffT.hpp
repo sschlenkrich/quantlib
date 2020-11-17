@@ -42,7 +42,7 @@ namespace QuantLib {
 					             const PassiveType               strike,
 					             const PassiveType               callOrPut )
 				: PayoffType(obsTime), settlementTimes_(settlementTimes), settlementWeights_(settlementWeights), strike_(strike), callOrPut_(callOrPut) { }
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				ActiveType fut=0.0;
 				for (size_t k=0; k<settlementTimes_.size(); ++k)
 					if (settlementTimes_[k]>=PayoffType::observationTime()) fut += settlementWeights_[k] * p->futureAsset(PayoffType::observationTime(),settlementTimes_[k],"");
@@ -74,7 +74,7 @@ namespace QuantLib {
 			    PassiveType rollPeriod = settlementTimes[settlementTimes.size()-1] - settlementTimes[0] + 1.0/365.0;
 			    for (size_t k=0; k<settlementTimes.size(); ++k) settlementTimes[k] += rollPeriod;
 			}
-			ActiveType averageFuture(const boost::shared_ptr<PathType>& p, const DateType t, const std::vector<DateType>& settlementTimes, const std::vector<PassiveType>& settlementWeights ) {
+			ActiveType averageFuture(const ext::shared_ptr<PathType>& p, const DateType t, const std::vector<DateType>& settlementTimes, const std::vector<PassiveType>& settlementWeights ) {
 				ActiveType fut=0.0;
 				for (size_t k=0; k<settlementTimes.size(); ++k) if (settlementTimes[k]>=t) fut += settlementWeights[k] * p->futureAsset(t,settlementTimes[k],"");
 				return fut;
@@ -92,8 +92,8 @@ namespace QuantLib {
 			: PayoffType(0.0), obsTimes_(obsTimes), settlementTimesA_(settlementTimesA), settlementWeightsA_(settlementWeightsA), obsLagA_(obsLagA),
 			settlementTimesB_(settlementTimesB), settlementWeightsB_(settlementWeightsB), obsLagB_(obsLagB), useLogReturns_(useLogReturns), calcType_(calcType) {}
 		    // payoff should NOT be discounted
-		    inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p); }
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+		    inline virtual ActiveType discountedAt(const ext::shared_ptr<PathType>& p) { return at(p); }
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				// if only one observation time then return [FutA * FutB] for autocorrelation estimation
 				if (obsTimes_.size()==1) return averageFuture(p,settlementTimesA_[0],settlementTimesA_,settlementWeightsA_) * averageFuture(p,settlementTimesB_[0],settlementTimesB_,settlementWeightsB_);
 				std::vector<ActiveType> dFutA(obsTimes_.size()-1), dFutB(obsTimes_.size()-1), dSprd(obsTimes_.size()-1);

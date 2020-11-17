@@ -18,7 +18,7 @@ namespace QuantLib {
 	LocalCorrelationSLVModel::LocalCorrelationSLVModel(
 		const Handle<YieldTermStructure>&                                               termStructure,
 		const std::vector<std::string>&                                                 aliases,
-		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes,
+		const std::vector<ext::shared_ptr<QuantLib::HestonSLVProcess>>&				    processes,
 		const Handle<LocalCorrTermStructure>&											localCorrTermStructure)
 		: MultiAssetSLVModel(termStructure, aliases, processes),
 		localCorrTermStructure_(localCorrTermStructure) {

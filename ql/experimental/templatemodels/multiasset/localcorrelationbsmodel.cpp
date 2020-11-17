@@ -18,7 +18,7 @@ namespace QuantLib {
 	LocalCorrelationBSModel::LocalCorrelationBSModel(
 		const Handle<YieldTermStructure>&                                               termStructure,
 		const std::vector<std::string>&                                                 aliases,
-		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
+		const std::vector<ext::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>&   processes,
 		const Handle<LocalCorrTermStructure>& localCorrTermStructure)
 	: MultiAssetBSModel(termStructure,aliases,processes), 
 		localCorrTermStructure_(localCorrTermStructure) {
@@ -29,7 +29,7 @@ namespace QuantLib {
 
 	LocalCorrelationBSModel::LocalCorrelationBSModel(const Handle<YieldTermStructure>&                termStructure,
 		const std::vector<std::string>&																  aliases,
-		const std::vector<boost::shared_ptr<QuantLib::LocalVolSurface>>&				              localVolSurfaces,
+		const std::vector<ext::shared_ptr<QuantLib::LocalVolSurface>>&				                  localVolSurfaces,
 		const Handle<LocalCorrTermStructure>&											              localCorrTermStructure) 
 		: MultiAssetBSModel(termStructure, aliases, localVolSurfaces),
 		localCorrTermStructure_(localCorrTermStructure)

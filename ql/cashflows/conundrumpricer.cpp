@@ -1009,8 +1009,8 @@ namespace QuantLib {
 //===========================================================================//
 
     GFunctionFactory::GFunctionAffine::GFunctionAffine(const CmsCoupon& coupon){
-        const boost::shared_ptr<SwapIndex>&    swapIndex = coupon.swapIndex();
-        const boost::shared_ptr<VanillaSwap>&  swap      = swapIndex->underlyingSwap(coupon.fixingDate());
+        const ext::shared_ptr<SwapIndex>&      swapIndex = coupon.swapIndex();
+        const ext::shared_ptr<VanillaSwap>&    swap      = swapIndex->underlyingSwap(coupon.fixingDate());
         Handle<YieldTermStructure>             discCurve = swapIndex->discountingTermStructure();
 		// constant part of GFunction
 		const Real basisPoint = 1.0e-4;
@@ -1018,7 +1018,7 @@ namespace QuantLib {
 		annuity_  = swap->fixedLegBPS() / basisPoint;
 		discount_ = discCurve->discount(coupon.date());
 		// a(T_p) = u (T_N - T_p) + v
-		SwaptionCashFlows cfs(boost::shared_ptr<Swaption>(new Swaption(swap, boost::shared_ptr<Exercise>(new EuropeanExercise(coupon.fixingDate())))), discCurve);
+		SwaptionCashFlows cfs(ext::shared_ptr<Swaption>(new Swaption(swap, ext::shared_ptr<Exercise>(new EuropeanExercise(coupon.fixingDate())))), discCurve);
 		// Sum tau_j   (fixed leg)
 		Real sumTauj = 0.0;
 		for (Size k=0; k<cfs.annuityWeights().size(); ++k) sumTauj += cfs.annuityWeights()[k];
@@ -1040,8 +1040,8 @@ namespace QuantLib {
 		a_       = u*(cfs.fixedTimes().back() - T_p) + v;
     }
 
-    boost::shared_ptr<GFunction> GFunctionFactory::newGFunctionAffine(const CmsCoupon& coupon) {
-        return boost::shared_ptr<GFunction>(new GFunctionAffine(coupon));
+    ext::shared_ptr<GFunction> GFunctionFactory::newGFunctionAffine(const CmsCoupon& coupon) {
+        return ext::shared_ptr<GFunction>(new GFunctionAffine(coupon));
     }
 
 

@@ -30,10 +30,10 @@ namespace QuantLib {
     // interface for RateHelpers basd on BasisSwap
     class BasisSwapRateHelper : public RelativeDateRateHelper {
 	protected:
-		mutable boost::shared_ptr<BasisSwap> basisSwap_; // reference instrument
+		mutable ext::shared_ptr<BasisSwap> basisSwap_; // reference instrument
 	public:
 		BasisSwapRateHelper( Real rate ) : RelativeDateRateHelper(rate) { }
-		const boost::shared_ptr<BasisSwap> basisSwap() { return basisSwap_; }
+		const ext::shared_ptr<BasisSwap> basisSwap() { return basisSwap_; }
 	};
 
 	// assume a tenor swap pay xM IborLeg vs. receive yM IborLeg
@@ -47,8 +47,8 @@ namespace QuantLib {
 		Calendar               paymentCalendar_;
         BusinessDayConvention  paymentBDC_;
 		bool                   spreadOnRecLeg_;
-		boost::shared_ptr<IborIndex>  payIndex_;
-		boost::shared_ptr<IborIndex>  recIndex_;
+		ext::shared_ptr<IborIndex>  payIndex_;
+		ext::shared_ptr<IborIndex>  recIndex_;
 		// discount curve, forward curves are taken from Ibor indices
 		RelinkableHandle<YieldTermStructure> discountRelinkableHandle_;
 		RelinkableHandle<YieldTermStructure> payRelinkableHandle_;
@@ -69,9 +69,9 @@ namespace QuantLib {
                              BusinessDayConvention         paymentBDC,
 							 bool                          spreadOnRecLeg,
                              // pay leg details are taken from IborIndex
-							 const boost::shared_ptr<IborIndex>&  payIndex,
+							 const ext::shared_ptr<IborIndex>&  payIndex,
 							 // rec leg details are taken from IborIndex
-							 const boost::shared_ptr<IborIndex>&  recIndex,
+							 const ext::shared_ptr<IborIndex>&  recIndex,
 							 // discount curve, forward curves are taken from Ibor indices
 							 const Handle<YieldTermStructure>& discountCurve );
 	};
@@ -85,8 +85,8 @@ namespace QuantLib {
         BusinessDayConvention  payBDC_;
         BusinessDayConvention  recBDC_;
 		bool                   spreadOnRecLeg_;
-		boost::shared_ptr<IborIndex>  payIndex_;
-		boost::shared_ptr<IborIndex>  recIndex_;
+		ext::shared_ptr<IborIndex>  payIndex_;
+		ext::shared_ptr<IborIndex>  recIndex_;
 		// discount curve, forward curves are taken from Ibor indices
 		RelinkableHandle<YieldTermStructure> payDisRelinkableHandle_;
 		RelinkableHandle<YieldTermStructure> recDisRelinkableHandle_;
@@ -115,9 +115,9 @@ namespace QuantLib {
                              BusinessDayConvention         recBDC,
 							 bool                          spreadOnRecLeg,
                              // pay leg details are taken from IborIndex
-							 const boost::shared_ptr<IborIndex>&  payIndex,
+							 const ext::shared_ptr<IborIndex>&  payIndex,
 							 // rec leg details are taken from IborIndex
-							 const boost::shared_ptr<IborIndex>&  recIndex,
+							 const ext::shared_ptr<IborIndex>&  recIndex,
 							 // discount curve, forward curves are taken from Ibor indices
 							 const Handle<YieldTermStructure>&    payDiscCurve,
 							 const Handle<YieldTermStructure>&    recDiscCurve,

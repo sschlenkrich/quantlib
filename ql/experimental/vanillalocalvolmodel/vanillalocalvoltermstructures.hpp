@@ -24,7 +24,7 @@ FOR A PARTICULAR PURPOSE.  See the license for more details.
 #ifndef quantlib_vanillalocalvoltermstructures_hpp
 #define quantlib_vanillalocalvoltermstructures_hpp
 
-#include <boost/shared_ptr.hpp>
+#include <ql/shared_ptr.hpp>
 
 #include <ql/termstructures/volatility/smilesection.hpp>
 #include <ql/termstructures/volatility/swaption/swaptionvolstructure.hpp>

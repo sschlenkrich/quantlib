@@ -19,7 +19,7 @@
 #ifndef quantlib_templateqgaverageswapratemodelT_hpp
 #define quantlib_templateqgaverageswapratemodelT_hpp
 
-#include <boost/shared_ptr.hpp>
+#include <ql/shared_ptr.hpp>
 
 #include <ql/experimental/templatemodels/stochvol/hestonmodelT.hpp>
 #include <ql/experimental/templatemodels/qgaussian2/qgswapratemodelT.hpp>
@@ -39,7 +39,7 @@ namespace QuantLib {
 
 		// Vanilla option pricing
 		enum { Heston, ShiftedLogNormal, Normal, StochVolNormal } type_;
-		boost::shared_ptr< HestonModelT<DateType, PassiveType, ActiveType> > hestonModel_;
+		ext::shared_ptr< HestonModelT<DateType, PassiveType, ActiveType> > hestonModel_;
 		ActiveType S0_;
 		ActiveType shift_;
 
@@ -90,7 +90,7 @@ namespace QuantLib {
 
 		// constructor
 		QGAverageSwaprateModelT(
-			const boost::shared_ptr< QGSwaprateModelT<DateType,PassiveType,ActiveType> >&   model)
+			const ext::shared_ptr< QGSwaprateModelT<DateType,PassiveType,ActiveType> >&   model)
 			: QGSwaprateModelT<DateType,PassiveType,ActiveType>(*model) {
 			// set up averaging
 			eta_ = averageEta();
@@ -112,7 +112,7 @@ namespace QuantLib {
 			S0_ = QGSwaprateModelT<DateType,PassiveType,ActiveType>::S0();
 			if ((type_ == ShiftedLogNormal) || (type_ == Heston)) shift_ = sigma_ / slope_ - S0_;
 			if (type_ == Heston) {
-				hestonModel_ = boost::shared_ptr< HestonModelT<DateType, PassiveType, ActiveType> >(
+				hestonModel_ = ext::shared_ptr< HestonModelT<DateType, PassiveType, ActiveType> >(
 					new HestonModelT<DateType, PassiveType, ActiveType>(
 						// state transformations ~S(t) = S(t) + shift, v(t) = z(t) slope^2
 						QGSwaprateModelT<DateType,PassiveType,ActiveType>::theta(),               // kappa

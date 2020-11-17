@@ -55,10 +55,10 @@ namespace QuantLib {
 		typedef std::vector< std::vector<ActiveType> >     MatA;
 
 		// default pseudo random numbers
-		boost::shared_ptr<PseudoRandom::rsg_type> rsg_;
+		ext::shared_ptr<PseudoRandom::rsg_type> rsg_;
 
 		// the link to the process/model
-		boost::shared_ptr<ProcessType>            process_;
+		ext::shared_ptr<ProcessType>            process_;
 
 		// time grid for process simulation
         VecD simTimes_;
@@ -81,7 +81,7 @@ namespace QuantLib {
 
 		// additional states calculated via interpolation; (*Y_[addObsTimes])[paths][size]
 		VecD addObsTimes_;
-		std::vector< boost::shared_ptr< MatA > > Y_;
+		std::vector< ext::shared_ptr< MatA > > Y_;
 
 		// adjust numeraire by exp{adj(t)*t} to meet E{ 1/N(t) } = P(0,t)
 		bool applyNumeraireAdjuster_;
@@ -133,7 +133,7 @@ namespace QuantLib {
 
 		inline void initialiseRSG() { // this is applied for path-wise simulation
 			size_t ndWt = ((richardsonExtrapolation_) ? 2 : 1) * (simTimes_.size()-1);
-			rsg_ = boost::shared_ptr<PseudoRandom::rsg_type>(new PseudoRandom::rsg_type(PseudoRandom::make_sequence_generator(ndWt * process_->factors(), seed_)));
+			rsg_ = ext::shared_ptr<PseudoRandom::rsg_type>(new PseudoRandom::rsg_type(PseudoRandom::make_sequence_generator(ndWt * process_->factors(), seed_)));
 		}
 
 		// return the next Brownian motion path increments from random sequence generator
@@ -210,11 +210,11 @@ namespace QuantLib {
 		// not need to care about the actual simulation
 		class Path {
 		protected:
-			boost::shared_ptr<ProcessType>    process_;
+			ext::shared_ptr<ProcessType>    process_;
 			MCSimulationT*                    sim_;
 			size_t                            idx_;
 		public:
-			Path(const boost::shared_ptr<ProcessType>           process,
+			Path(const ext::shared_ptr<ProcessType>           process,
 				 MCSimulationT*                                 sim,
 				 const size_t                                   idx )
 				 : process_(process), sim_(sim), idx_(idx) {}
@@ -291,7 +291,7 @@ namespace QuantLib {
 		};
 
 
-		MCSimulationT( const boost::shared_ptr<ProcessType> process,
+		MCSimulationT( const ext::shared_ptr<ProcessType>   process,
 			           const VecD&                          simTimes,
 					   const VecD&                          obsTimes,
 					   size_t                               nPaths,
@@ -369,7 +369,7 @@ namespace QuantLib {
 				for (size_t k = 0; k < dW_.size(); ++k) dW_[k] = getNextBrownianIncrements();
 			}
 			else { // in this case we need to set up the random sequence generator differently
-				rsg_ = boost::shared_ptr<PseudoRandom::rsg_type>(new PseudoRandom::rsg_type(PseudoRandom::make_sequence_generator(process_->factors(), seed_)));
+				rsg_ = ext::shared_ptr<PseudoRandom::rsg_type>(new PseudoRandom::rsg_type(PseudoRandom::make_sequence_generator(process_->factors(), seed_)));
 				dW_[0].resize(2); // for Richardson extrapolation we need two slices ob BM's
 			}
 			// better set a flag that indicates that all is ready for simulation
@@ -435,14 +435,14 @@ namespace QuantLib {
 
 		// inspectors
 
-		inline const boost::shared_ptr<ProcessType> process() { return process_; }
+		inline const ext::shared_ptr<ProcessType> process() { return process_; }
 
 		inline const VecD& simTimes() { return simTimes_; }
 		inline const VecD& obsTimes() { return obsTimes_; }
 		inline size_t      nPaths()   { return X_.size(); }
 
-		inline const boost::shared_ptr<Path> path(const size_t idx) {
-			return boost::shared_ptr<Path>(new Path(process_,this,idx));
+		inline const ext::shared_ptr<Path> path(const size_t idx) {
+			return ext::shared_ptr<Path>(new Path(process_,this,idx));
 		}
 
 		inline const MatA& observedPath(const size_t idx) {
@@ -467,7 +467,7 @@ namespace QuantLib {
 				if (t == addObsTimes_[t_addIdx]) return (*Y_[t_addIdx])[idx];
 			}
 			// if we end up here we truely need to interpolate
-			boost::shared_ptr<MatA> y(new MatA(nPaths(), VecA(process_->size())));
+			ext::shared_ptr<MatA> y(new MatA(nPaths(), VecA(process_->size())));
 			// linear state interpolation (this is very crude) 
 			DateType rho = (t - obsTimes_[t_idx - 1]) / (obsTimes_[t_idx] - obsTimes_[t_idx - 1]);
 			for (size_t p = 0; p < nPaths(); ++p)
@@ -482,7 +482,7 @@ namespace QuantLib {
 			std::sort(sorted.begin(), sorted.end(), LessByVector(addObsTimes_));
 			VecD tmpTimes(addObsTimes_);
 			for (size_t k = 0; k < addObsTimes_.size(); ++k) addObsTimes_[k] = tmpTimes[sorted[k]];
-			std::vector< boost::shared_ptr< MatA > > tmpY(Y_);
+			std::vector< ext::shared_ptr< MatA > > tmpY(Y_);
 			for (size_t k = 0; k < Y_.size(); ++k) Y_[k] = tmpY[sorted[k]];
 			// all done. now we only need to return the current interpolated state...
 			return (*y)[idx];

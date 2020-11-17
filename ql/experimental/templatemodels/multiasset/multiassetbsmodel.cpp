@@ -18,7 +18,7 @@ namespace QuantLib {
 	MultiAssetBSModel::MultiAssetBSModel(
 		const Handle<YieldTermStructure>&                                               termStructure,
 		const std::vector<std::string>&                                                 aliases,
-		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes,
+		const std::vector<ext::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>&   processes,
 		const RealStochasticProcess::MatA&                                              correlations)
 	: termStructure_(termStructure), processes_(processes) {
 		QL_REQUIRE(processes_.size() > 0, "No BS processes supplied");
@@ -59,7 +59,7 @@ namespace QuantLib {
 	MultiAssetBSModel::MultiAssetBSModel(
 		const Handle<YieldTermStructure>&                                               termStructure,
 		const std::vector<std::string>&                                                 aliases,
-		const std::vector<boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>& processes)
+		const std::vector<ext::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>>&   processes)
 		: termStructure_(termStructure), processes_(processes) {
 		QL_REQUIRE(processes_.size() > 0, "No BS processes supplied");
 		//no correlation matrix means, we simply assume independence
@@ -83,7 +83,7 @@ namespace QuantLib {
 
 	MultiAssetBSModel::MultiAssetBSModel(const Handle<YieldTermStructure>&              termStructure,
 		const std::vector<std::string>&                                                 aliases,
-		const std::vector<boost::shared_ptr<QuantLib::LocalVolSurface>>&                localVolSurfaces,
+		const std::vector<ext::shared_ptr<QuantLib::LocalVolSurface>>&                  localVolSurfaces,
 		const RealStochasticProcess::MatA&                                              correlations)
 		: localVolSurfaces_(localVolSurfaces), termStructure_(termStructure){
 	
@@ -94,7 +94,7 @@ namespace QuantLib {
 
 	MultiAssetBSModel::MultiAssetBSModel(const Handle<YieldTermStructure>&              termStructure,
 		const std::vector<std::string>&                                                 aliases,
-		const std::vector<boost::shared_ptr<QuantLib::LocalVolSurface>>&				localVolSurfaces)
+		const std::vector<ext::shared_ptr<QuantLib::LocalVolSurface>>&				    localVolSurfaces)
 	{
 		RealStochasticProcess::MatA corrM = RealStochasticProcess::MatA(localVolSurfaces.size());
 		for (size_t k = 0; k<corrM.size(); ++k) corrM[k].resize(localVolSurfaces.size());
@@ -167,7 +167,7 @@ namespace QuantLib {
 			processes_.resize(localVolSurfaces_.size());
 			for (size_t i = 0; i < localVolSurfaces_.size(); i++)
 			{
-				processes_[i] = boost::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>(new GeneralizedBlackScholesProcess(
+				processes_[i] = ext::shared_ptr<QuantLib::GeneralizedBlackScholesProcess>(new GeneralizedBlackScholesProcess(
 					localVolSurfaces_[i]->getUnderlying(),
 					localVolSurfaces_[i]->getDividendTS(),
 					localVolSurfaces_[i]->getInterestRateTS(),

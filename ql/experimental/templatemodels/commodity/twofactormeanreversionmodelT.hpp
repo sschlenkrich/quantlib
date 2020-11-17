@@ -10,7 +10,7 @@
 #ifndef quantlib_template2fmeanreversionmodel_hpp
 #define quantlib_template2fmeanreversionmodel_hpp
 
-#include <boost/shared_ptr.hpp>
+#include <ql/shared_ptr.hpp>
 #include <ql/errors.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/integratorsT.hpp>

@@ -15,7 +15,7 @@
 
 #include <stdio.h>
 
-#include <boost/shared_ptr.hpp>
+#include <ql/shared_ptr.hpp>
 #include <ql/errors.hpp>
 
 #include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>

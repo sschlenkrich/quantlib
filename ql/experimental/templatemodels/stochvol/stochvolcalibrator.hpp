@@ -91,10 +91,10 @@ namespace QuantLib {
 		const Real  rho()	 const { return rho_;	 }
 
 		// factory
-		boost::shared_ptr<RealStochVolModel> model() {
-			return boost::shared_ptr<RealStochVolModel>(new RealStochVolModel(lambda_,b_,L_,theta_,m_,eta_,z0_,rho_));
+		ext::shared_ptr<RealStochVolModel> model() {
+			return ext::shared_ptr<RealStochVolModel>(new RealStochVolModel(lambda_,b_,L_,theta_,m_,eta_,z0_,rho_));
 		}
-		boost::shared_ptr<RealStochVolModel> model(const Array& X) const;
+		ext::shared_ptr<RealStochVolModel> model(const Array& X) const;
 		// count number of effective states
 		size_t xDim() const;
 		// update model parameters with state X

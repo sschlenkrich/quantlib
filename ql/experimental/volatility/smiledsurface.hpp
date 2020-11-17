@@ -32,19 +32,19 @@ namespace QuantLib {
     class SmiledSurface : public BlackVolTermStructure {
      public:
 
-        SmiledSurface(const std::vector<boost::shared_ptr<SmileSection>>  smiles,
+        SmiledSurface(const std::vector<ext::shared_ptr<SmileSection>>    smiles,
 			          BusinessDayConvention                               bdc = Following,
                       const DayCounter&                                   dc = DayCounter())
 					  : BlackVolTermStructure(bdc,dc), smiles_(smiles) {}
 
-        SmiledSurface(const std::vector<boost::shared_ptr<SmileSection>>  smiles,
+        SmiledSurface(const std::vector<ext::shared_ptr<SmileSection>>    smiles,
 			          const Date&                                         referenceDate,
                       const Calendar&                                     cal = Calendar(),
                       BusinessDayConvention                               bdc = Following,
                       const DayCounter&                                   dc = DayCounter())
 					  : BlackVolTermStructure(referenceDate,cal,bdc,dc), smiles_(smiles) {}
 
-        SmiledSurface(const std::vector<boost::shared_ptr<SmileSection>>  smiles,
+        SmiledSurface(const std::vector<ext::shared_ptr<SmileSection>>    smiles,
 			          Natural                                             settlementDays,
                       const Calendar&                                     cal,
                       BusinessDayConvention                               bdc = Following,
@@ -62,7 +62,7 @@ namespace QuantLib {
         virtual Date maxDate() const;
 
 	protected:
-	    std::vector<boost::shared_ptr<SmileSection>>  smiles_;
+	    std::vector<ext::shared_ptr<SmileSection>>  smiles_;
 
 		//! Black variance calculation
         virtual Real blackVarianceImpl(Time t, Real strike) const;

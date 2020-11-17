@@ -18,7 +18,7 @@ namespace QuantLib {
 
 	QGCalibrator::Objective::CalibSwaption::CalibSwaption (
 		Date                                expiryDate,
-		const boost::shared_ptr<SwapIndex>& swapindex,
+		const ext::shared_ptr<SwapIndex>&   swapindex,
 		const Handle<YieldTermStructure>&   discountCurve,
 		const Handle<SwaptionVolatilityStructure> volTS,
 		bool                                contTenorSpread,
@@ -82,7 +82,7 @@ namespace QuantLib {
 				if (isOutput_[i][j]>0.0                                       ||
 					isOutput_[i][j+     calibrator_->swapIndices_.size()]>0.0 ||
 					isOutput_[i][j+ 2 * calibrator_->swapIndices_.size()]>0.0 ) {
-					calibSwaptions_[i][j] = boost::shared_ptr<CalibSwaption>(
+					calibSwaptions_[i][j] = ext::shared_ptr<CalibSwaption>(
 						new CalibSwaption(expiryDate, calibrator_->swapIndices_[j], calibrator_->model_->termStructure(), calibrator_->volTS_, true, calibrator_->modelTimesStepSize_));
 				}
 			}
@@ -157,15 +157,15 @@ namespace QuantLib {
 	Disposable<Array> QGCalibrator::Objective::values(const Array& x) const {
 		update(x);
 		// we may have a swaption model for each swaption
-		std::vector< std::vector< boost::shared_ptr<QGAverageSwaprateModel> > > swaprateModels;
+		std::vector< std::vector< ext::shared_ptr<QGAverageSwaprateModel> > > swaprateModels;
 		// however we build the model only if neccessary
 		swaprateModels.resize(calibSwaptions_.size());
 		for (size_t i=0; i<swaprateModels.size(); ++i) {
 			swaprateModels[i].resize(calibSwaptions_[i].size());
 			for (size_t j=0; j<swaprateModels[i].size(); ++j) {
 				if (calibSwaptions_[i][j]) {
-					boost::shared_ptr<QGSwaprateModel> tmp(new QGSwaprateModel(model_, calibSwaptions_[i][j]->floatTimes(), calibSwaptions_[i][j]->floatWeights(), calibSwaptions_[i][j]->fixedTimes(), calibSwaptions_[i][j]->annuityWeights(), calibSwaptions_[i][j]->modelTimes(), calibrator_->useExpectedXY_));
-					swaprateModels[i][j] = boost::shared_ptr<QGAverageSwaprateModel>( new QGAverageSwaprateModel( tmp ) );
+					ext::shared_ptr<QGSwaprateModel> tmp(new QGSwaprateModel(model_, calibSwaptions_[i][j]->floatTimes(), calibSwaptions_[i][j]->floatWeights(), calibSwaptions_[i][j]->fixedTimes(), calibSwaptions_[i][j]->annuityWeights(), calibSwaptions_[i][j]->modelTimes(), calibrator_->useExpectedXY_));
+					swaprateModels[i][j] = ext::shared_ptr<QGAverageSwaprateModel>( new QGAverageSwaprateModel( tmp ) );
 				}
 			}
 		}
@@ -268,16 +268,16 @@ namespace QuantLib {
 		return 0.5*sum;
 	}
 
-	const boost::shared_ptr<QuasiGaussianModel> QGCalibrator::Objective::model(const Array& x) {
+	const ext::shared_ptr<QuasiGaussianModel> QGCalibrator::Objective::model(const Array& x) {
 		update(x);
 		return model_;
 	}
 
 	// constructor
 	QGCalibrator::QGCalibrator(
-		const boost::shared_ptr<QuasiGaussianModel>&          model,
+		const ext::shared_ptr<QuasiGaussianModel>&          model,
 		const Handle<SwaptionVolatilityStructure>&            volTS,
-		const std::vector< boost::shared_ptr<SwapIndex> >&    swapIndices,
+		const std::vector< ext::shared_ptr<SwapIndex> >&    swapIndices,
 		const Real                                            modelTimesStepSize,
 		const bool                                            useExpectedXY,
 		const Real                                            sigmaMax,

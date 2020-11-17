@@ -324,7 +324,7 @@ namespace QuantLib {
 
 
 		// clone the model
-		virtual boost::shared_ptr<QuasiGaussianModel2T> clone() { return boost::shared_ptr<QuasiGaussianModel2T>(new QuasiGaussianModel2T(*this)); }
+		virtual ext::shared_ptr<QuasiGaussianModel2T> clone() { return ext::shared_ptr<QuasiGaussianModel2T>(new QuasiGaussianModel2T(*this)); }
 
 		// inspectors
 		inline const Handle<YieldTermStructure> termStructure() { return termStructure_; }

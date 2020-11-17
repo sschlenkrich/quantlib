@@ -21,7 +21,7 @@ namespace QuantLib {
 
 		// constructor to map a swaption to bond option according to spread model
 	FixedRateBondOption::FixedRateBondOption (
-						const boost::shared_ptr<Swaption>& swaption,
+						const ext::shared_ptr<Swaption>& swaption,
 						const Handle<YieldTermStructure>& discountCurve,
 						bool                              contTenorSpread ) {
 		// evaluate callOrPut_, exerciseDates_, dirtyStrikeValues_, and cashFlows_
@@ -49,7 +49,7 @@ namespace QuantLib {
 		// evaluate floating leg deterministic spreads
 		Leg spreadLeg;
 		for (Size k=0; k<floatLeg.size(); ++k) {
-			boost::shared_ptr<Coupon> coupon = boost::dynamic_pointer_cast<Coupon>(floatLeg[k]);
+			ext::shared_ptr<Coupon> coupon = boost::dynamic_pointer_cast<Coupon>(floatLeg[k]);
 			if (!coupon) QL_FAIL("FloatingLeg CashFlow is no Coupon.");
 			Date startDate = coupon->accrualStartDate();
 			if (startDate>Settings::instance().evaluationDate()) { // consider only future cash flows
@@ -68,7 +68,7 @@ namespace QuantLib {
 					spread = liborForwardRate - discForwardRate;
 					payDate = coupon->date();
 				}
-				spreadLeg.push_back(boost::shared_ptr<CashFlow>(new FixedRateCoupon(payDate,-1.0*coupon->nominal(),spread,coupon->dayCounter(),startDate,endDate)));
+				spreadLeg.push_back(ext::shared_ptr<CashFlow>(new FixedRateCoupon(payDate,-1.0*coupon->nominal(),spread,coupon->dayCounter(),startDate,endDate)));
 			}  // if ...
 		}  // for ...
 		// merge fixed leg and spreads according to start date
@@ -78,22 +78,22 @@ namespace QuantLib {
 			if (i>=fixedLeg.size())  { cashflows_.push_back(spreadLeg[j]); ++j; continue; }
 			if (j>=spreadLeg.size()) { cashflows_.push_back(fixedLeg[i]);  ++i; continue; }
 			// here we have i<fixedLeg.size() && j<spreadLeg.size()
-			boost::shared_ptr<Coupon> fixedCoupon = boost::dynamic_pointer_cast<Coupon>(fixedLeg[i]);
+			ext::shared_ptr<Coupon> fixedCoupon = boost::dynamic_pointer_cast<Coupon>(fixedLeg[i]);
 			if (!fixedCoupon) QL_FAIL("FixedLeg CashFlow is no Coupon.");
-			boost::shared_ptr<Coupon> spreadCoupon = boost::dynamic_pointer_cast<Coupon>(spreadLeg[j]);
+			ext::shared_ptr<Coupon> spreadCoupon = boost::dynamic_pointer_cast<Coupon>(spreadLeg[j]);
 			if (!spreadCoupon) QL_FAIL("SpreadLeg CashFlow is no Coupon.");
 			if (fixedCoupon->accrualStartDate()<=spreadCoupon->accrualStartDate()) { cashflows_.push_back(fixedLeg[i]);  ++i; }
 			else                                                                   { cashflows_.push_back(spreadLeg[j]); ++j; }
 		}  // while ...
 		// finally, add the notional at the last date
-		boost::shared_ptr<Coupon> lastFloatCoupon = boost::dynamic_pointer_cast<Coupon>(floatLeg.back());
-		cashflows_.push_back(boost::shared_ptr<CashFlow>(new SimpleCashFlow(lastFloatCoupon->nominal(),lastFloatCoupon->accrualEndDate())));
+		ext::shared_ptr<Coupon> lastFloatCoupon = boost::dynamic_pointer_cast<Coupon>(floatLeg.back());
+		cashflows_.push_back(ext::shared_ptr<CashFlow>(new SimpleCashFlow(lastFloatCoupon->nominal(),lastFloatCoupon->accrualEndDate())));
 	}
 
      const std::vector< QuantLib::Date > FixedRateBondOption::startDates() {
          std::vector< QuantLib::Date > dates;
          for (Size k=0; k<cashflows_.size(); ++k) {
-             boost::shared_ptr<Coupon> coupon = boost::dynamic_pointer_cast<Coupon>(cashflows_[k]);
+             ext::shared_ptr<Coupon> coupon = boost::dynamic_pointer_cast<Coupon>(cashflows_[k]);
              Date startDate = cashflows_[k]->date(); // default, e.g. for redemptions
 			 if (coupon) startDate = coupon->accrualStartDate();
              dates.push_back(startDate);

@@ -18,7 +18,7 @@ namespace QuantLib {
 		const Handle<YieldTermStructure>&                      termStructure,
 		const Handle<SwaptionVolatilityStructure>&             volTS,
 		const Real                                             chi,
-		const boost::shared_ptr<SwapIndex>&                    swapIndex,
+		const ext::shared_ptr<SwapIndex>&                      swapIndex,
 		const std::vector< Real >&                             times,
 		const std::vector<Real>&                               stdDevGrid,
 		const size_t                                           nPaths,
@@ -45,7 +45,7 @@ namespace QuantLib {
 		const Real                                             chi,
 		const Real                                             theta,
 		const Real                                             eta,
-		const boost::shared_ptr<SwapIndex>&                    swapIndex,
+		const ext::shared_ptr<SwapIndex>&                      swapIndex,
 		const std::vector< Real >&                             times,
 		const std::vector<Real>&                               stdDevGrid,
 		const bool                                             calcStochVolAdjustment,
@@ -115,25 +115,25 @@ namespace QuantLib {
 
 	// we cache the float leg and fixed leg valuation to speed-up MC simulation
 	QGLocalvolModel::SwaptionFactory::SwaptionFactory(const Time obsTime, const SwapCashFlows& scf)
-		: floatLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Cache(
-			boost::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.floatTimes(), scf.floatWeights()))))),
-		annuityLeg_(boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Cache(
-			boost::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.fixedTimes(), scf.annuityWeights())))))
+		: floatLeg_(ext::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Cache(
+			ext::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.floatTimes(), scf.floatWeights()))))),
+		annuityLeg_(ext::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Cache(
+			ext::shared_ptr<QGLocalvolModel::MCPayoff>(new MCAnnuity(obsTime, scf.fixedTimes(), scf.annuityWeights())))))
 	{}
 
-	boost::shared_ptr<QGLocalvolModel::MCPayoff> QGLocalvolModel::SwaptionFactory::swaption(const Real strike, const Real callOrPut) {
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedRate(new QGLocalvolModel::MCBase::FixedAmount(strike));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> fixedLeg(new QGLocalvolModel::MCBase::Mult(fixedRate, annuityLeg_));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> swap;
+	ext::shared_ptr<QGLocalvolModel::MCPayoff> QGLocalvolModel::SwaptionFactory::swaption(const Real strike, const Real callOrPut) {
+		ext::shared_ptr<QGLocalvolModel::MCPayoff> fixedRate(new QGLocalvolModel::MCBase::FixedAmount(strike));
+		ext::shared_ptr<QGLocalvolModel::MCPayoff> fixedLeg(new QGLocalvolModel::MCBase::Mult(fixedRate, annuityLeg_));
+		ext::shared_ptr<QGLocalvolModel::MCPayoff> swap;
 		if (callOrPut == 1.0) {
-			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Axpy(-1.0, fixedLeg, floatLeg_));
+			swap = ext::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Axpy(-1.0, fixedLeg, floatLeg_));
 		}
 		else {
-			swap = boost::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Axpy(-1.0, floatLeg_, fixedLeg));
+			swap = ext::shared_ptr<QGLocalvolModel::MCPayoff>(new QGLocalvolModel::MCBase::Axpy(-1.0, floatLeg_, fixedLeg));
 		}
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> zero(new QGLocalvolModel::MCBase::FixedAmount(0.0));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> swpt(new QGLocalvolModel::MCBase::Max(swap, zero));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> pay(new QGLocalvolModel::MCBase::Pay(swpt, floatLeg_->observationTime()));
+		ext::shared_ptr<QGLocalvolModel::MCPayoff> zero(new QGLocalvolModel::MCBase::FixedAmount(0.0));
+		ext::shared_ptr<QGLocalvolModel::MCPayoff> swpt(new QGLocalvolModel::MCBase::Max(swap, zero));
+		ext::shared_ptr<QGLocalvolModel::MCPayoff> pay(new QGLocalvolModel::MCBase::Pay(swpt, floatLeg_->observationTime()));
 		return pay;
 	}
 
@@ -181,12 +181,12 @@ namespace QuantLib {
 			Real swapRate = floatLeg / annuity;
 
 			// set up smile section and strike grid
-			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(exerciseTime, swapIndex_->tenor(), true);
+			ext::shared_ptr<SmileSection> smileSection = volTS_->smileSection(exerciseTime, swapIndex_->tenor(), true);
 			Real stdDev = smileSection->optionPrice(swapRate, Option::Call) / M_1_SQRTPI / M_SQRT_2;
 			std::vector<Real> strikeGrid(stdDevStrikes);
 			for (size_t k = 0; k < strikeGrid.size(); ++k) strikeGrid[k] = strikeGrid[k] * stdDev + swapRate;
 
-			std::vector< boost::shared_ptr<MCPayoff> > options;
+			std::vector< ext::shared_ptr<MCPayoff> > options;
 			for (size_t k = 0; k < strikeGrid.size(); ++k) {
 				options.push_back(testFactory.swaption(strikeGrid[k], 1.0));   // call
 				options.push_back(testFactory.swaption(strikeGrid[k], -1.0));  // put
@@ -246,17 +246,17 @@ namespace QuantLib {
 		return b;
 	}
 
-	boost::shared_ptr<QGLocalvolModel::QGSwaprateModel> QGLocalvolModel::qGSwapRateModel(const SwapCashFlows& scf, const Real obsTime) {
+	ext::shared_ptr<QGLocalvolModel::QGSwaprateModel> QGLocalvolModel::qGSwapRateModel(const SwapCashFlows& scf, const Real obsTime) {
 		std::vector<Real> swapRateModelTimes{ 0.0, obsTime };
 		sigmaMode_ = Parent; // switch-off sigma_x calculation; we only need yield curve information
-		boost::shared_ptr<QGSwaprateModel> swapRateModel(new QGSwaprateModel(boost::static_pointer_cast<QuasiGaussianModel>(shared_from_this()),
+		ext::shared_ptr<QGSwaprateModel> swapRateModel(new QGSwaprateModel(boost::static_pointer_cast<QuasiGaussianModel>(shared_from_this()),
 			scf.floatTimes(), scf.floatWeights(), scf.fixedTimes(), scf.annuityWeights(), swapRateModelTimes, false));
 		sigmaMode_ = Calibration; // switch-on sigma_x calculation for simulation and evolve calls
 		return swapRateModel;
 	}
 
 
-	QGLocalvolModel::Initialiser::Initialiser(boost::shared_ptr<QGLocalvolModel> model) {
+	QGLocalvolModel::Initialiser::Initialiser(ext::shared_ptr<QGLocalvolModel> model) {
 		// reset local volatility attributes and debugging
 		model->debugLog_.clear();
 		model->sigmaS_.clear();
@@ -264,7 +264,7 @@ namespace QuantLib {
 		model->locvolGrid_.clear();
 
 		// initialise MC simulation
-		model->simulation_ = boost::shared_ptr<MCSimulation>(new MCSimulation(model, model->times(), model->times(), model->nPaths_, model->seed_, false, true, true));
+		model->simulation_ = ext::shared_ptr<MCSimulation>(new MCSimulation(model, model->times(), model->times(), model->nPaths_, model->seed_, false, true, true));
 		model->simulation_->prepareForSlicedSimulation();
 		model->simulation_->simulate(0);
 		QL_REQUIRE(model->simulation_->simTimes().size() == model->times().size() + 1, "simulation_->simTimes().size()==times().size()+1 required.");
@@ -301,12 +301,12 @@ namespace QuantLib {
 		swapRateSample_(model->simulation_->nPaths(), 0.0),
 		vanillaOptions_(smileStrikeGrid.size(), 0.0),
 		avgCalcStrikes_(0.0) {
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFloatLeg(new MCAnnuity(obsTime, scf.floatTimes(), scf.floatWeights()));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFixedLeg(new MCAnnuity(obsTime, scf.fixedTimes(), scf.annuityWeights()));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCBase::FixedAmount(1.0));
-		boost::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCBase::Pay(one, obsTime));
+		ext::shared_ptr<QGLocalvolModel::MCPayoff> mcFloatLeg(new MCAnnuity(obsTime, scf.floatTimes(), scf.floatWeights()));
+		ext::shared_ptr<QGLocalvolModel::MCPayoff> mcFixedLeg(new MCAnnuity(obsTime, scf.fixedTimes(), scf.annuityWeights()));
+		ext::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCBase::FixedAmount(1.0));
+		ext::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCBase::Pay(one, obsTime));
 		for (size_t k = 0; k < model->simulation_->nPaths(); ++k) {
-			boost::shared_ptr<MCSimulation::Path> p = model->simulation_->path(k);
+			ext::shared_ptr<MCSimulation::Path> p = model->simulation_->path(k);
 			oneOverBSample_[k] = oneAtT->discountedAt(p);
 			annuitySample_[k] = mcFixedLeg->at(p);
 			swapRateSample_[k] = mcFloatLeg->at(p) / annuitySample_[k];
@@ -432,10 +432,10 @@ namespace QuantLib {
 		                                        const std::vector<Real>& smileStrikeGrid ) {
 		SwaptionFactory testFactory(obsTime, scf);
 		for (size_t k = 0; k < smileStrikeGrid.size(); ++k) {
-			boost::shared_ptr<MCPayoff> mcCall = testFactory.swaption(smileStrikeGrid[k], 1.0);
-			boost::shared_ptr<MCPayoff> mcPut = testFactory.swaption(smileStrikeGrid[k], -1.0);
-			Real testCall = MCPayoff::Pricer::NPV(std::vector< boost::shared_ptr<MCPayoff> >(1, mcCall), simulation_);
-			Real testPut = MCPayoff::Pricer::NPV(std::vector< boost::shared_ptr<MCPayoff> >(1, mcPut), simulation_);
+			ext::shared_ptr<MCPayoff> mcCall = testFactory.swaption(smileStrikeGrid[k], 1.0);
+			ext::shared_ptr<MCPayoff> mcPut = testFactory.swaption(smileStrikeGrid[k], -1.0);
+			Real testCall = MCPayoff::Pricer::NPV(std::vector< ext::shared_ptr<MCPayoff> >(1, mcCall), simulation_);
+			Real testPut = MCPayoff::Pricer::NPV(std::vector< ext::shared_ptr<MCPayoff> >(1, mcPut), simulation_);
 			testCall /= annuity;
 			testPut /= annuity;
 			debugLog_.push_back("T = " + std::to_string(obsTime) + ", swapRate = " + std::to_string(swapRate) + ", k = " + std::to_string(k) + ", strike = " + std::to_string(smileStrikeGrid[k]) + ", testCall = " + std::to_string(testCall) + ", testPut = " + std::to_string(testPut) );
@@ -464,7 +464,7 @@ namespace QuantLib {
 			SwapRate swapRate(this, init.today(), times()[idx]);
 
 			// set up smile section and strike grid
-			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);
+			ext::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);
 			Real stdDev = smileSection->optionPrice(swapRate.swapRate(), Option::Call) / M_1_SQRTPI / M_SQRT_2;
 			std::vector<Real> initialStrikeGrid(stdDevGrid_);
 			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate.swapRate();
@@ -555,7 +555,7 @@ namespace QuantLib {
 			SwapRate swapRate(this, init.today(), times()[idx]);
 
 			// set up smile section and strike grid
-			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
+			ext::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
 			Real stdDev = smileSection->volatility(swapRate.swapRate()) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
 			std::vector<Real> initialStrikeGrid(stdDevGrid_);
 			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate.swapRate();
@@ -654,7 +654,7 @@ namespace QuantLib {
 			SwapRate swapRate(this, init.today(), times()[idx]);
 
 			// set up smile section and strike grid
-			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
+			ext::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
 			Real stdDev = smileSection->volatility(swapRate.swapRate()) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
 			std::vector<Real> initialStrikeGrid(stdDevGrid_);
 			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate.swapRate();
@@ -745,7 +745,7 @@ namespace QuantLib {
 			SwapRate swapRate(this, init.today(), times()[idx]);
 
 			// set up smile section and strike grid
-			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
+			ext::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
 			Real stdDev = smileSection->volatility(swapRate.swapRate()) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
 			std::vector<Real> initialStrikeGrid(stdDevGrid_);
 			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate.swapRate();
@@ -853,7 +853,7 @@ namespace QuantLib {
 			SwapRate swapRate(this, init.today(), times()[idx]);
 
 			// set up smile section and strike grid
-			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
+			ext::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);  // the vanilla model only provides terminal distribution of swap rate at T[idx]; at T[idx-1] it is a different swap rate
 			Real stdDev = smileSection->volatility(swapRate.swapRate()) * sqrt(times()[idx - 1]);  // approximated ATM forward vol
 			std::vector<Real> initialStrikeGrid(stdDevGrid_);
 			for (size_t k = 0; k < initialStrikeGrid.size(); ++k) initialStrikeGrid[k] = initialStrikeGrid[k] * stdDev + swapRate.swapRate();

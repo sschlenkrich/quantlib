@@ -35,12 +35,12 @@ namespace QuantLib {
 	protected:
 		std::vector<Date>                dates_;
 		std::vector<Real>                values_;
-        boost::shared_ptr<Interpolation> timeInterpol_;
+        ext::shared_ptr<Interpolation>   timeInterpol_;
 		inline void setupInterpolation() {
 			std::vector<Time> times(dates_.size());
 			for (Size i=0; i<dates_.size(); ++i) times[i] = dayCounter().yearFraction(referenceDate(),dates_[i]);
 			// for the moment we leave it with hard-coded cubic interpolation
-			timeInterpol_ = boost::shared_ptr<Interpolation>( new Interpolation(Cubic().interpolate(times.begin(),times.end(),values_.begin())) );
+			timeInterpol_ = ext::shared_ptr<Interpolation>( new Interpolation(Cubic().interpolate(times.begin(),times.end(),values_.begin())) );
 		}
 	public:
 		/*! \name Constructors
@@ -52,7 +52,7 @@ namespace QuantLib {
 			const DayCounter&                  dc     = DayCounter(),
 			const std::vector<Date>&           dates  = std::vector<Date>(),
 			const std::vector<Real>&           values = std::vector<Real>(),
-			const boost::shared_ptr<Interpolation>&   timeInterpol = boost::shared_ptr<Interpolation>()
+			const ext::shared_ptr<Interpolation>&   timeInterpol = ext::shared_ptr<Interpolation>()
 			) : TermStructure(dc), dates_(dates), values_(values), timeInterpol_(timeInterpol) {
 				setupInterpolation();
 		}
@@ -79,7 +79,7 @@ namespace QuantLib {
 			const Date&                        referenceDate,
 			const Calendar&                    cal    = Calendar(),
 			const DayCounter&                  dc     = DayCounter(),
-			const boost::shared_ptr<Interpolation>&   timeInterpol = boost::shared_ptr<Interpolation>()
+			const ext::shared_ptr<Interpolation>&   timeInterpol = ext::shared_ptr<Interpolation>()
 			) : TermStructure(referenceDate,cal,dc), timeInterpol_(timeInterpol) { }
 
  	    inline Real value ( Time t, bool extrapolate = true) const {

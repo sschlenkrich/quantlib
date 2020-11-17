@@ -32,7 +32,7 @@ namespace QuantLib {
 		// independant variables
 		std::vector<ActiveType> avolaValues_;
         // a clone of the model with active data types
-		boost::shared_ptr< HullWhiteModelT<QuantLib::Time,QuantLib::Real,ActiveType> > amodel_;
+		ext::shared_ptr< HullWhiteModelT<QuantLib::Time,QuantLib::Real,ActiveType> > amodel_;
 		// derivatives evaluated
 		std::vector< std::vector<QuantLib::Real> > calibrationJacobian_;
 		std::vector< std::vector<QuantLib::Real> > europeansAnalyticalVega_;

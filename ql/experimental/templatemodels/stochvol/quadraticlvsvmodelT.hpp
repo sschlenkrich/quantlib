@@ -10,7 +10,7 @@
 #ifndef quantlib_templatequadraticlvsvmodel_hpp
 #define quantlib_templatequadraticlvsvmodel_hpp
 
-#include <boost/shared_ptr.hpp>
+#include <ql/shared_ptr.hpp>
 #include <ql/errors.hpp>
 #include <ql/experimental/templatemodels/stochasticprocessT.hpp>
 

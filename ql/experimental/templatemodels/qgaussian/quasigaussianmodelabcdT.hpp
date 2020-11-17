@@ -159,7 +159,7 @@ namespace QuantLib {
 			}
 
 		// clone the model
-		virtual boost::shared_ptr<QuasiGaussianModelT> clone() { return boost::shared_ptr<QuasiGaussianModelT>(new QuasiGaussianModelAbcdT(*this)); }
+		virtual ext::shared_ptr<QuasiGaussianModelT> clone() { return ext::shared_ptr<QuasiGaussianModelT>(new QuasiGaussianModelAbcdT(*this)); }
 
 		// parameter functions based on abcd parametrisation
 		// f(t) = [ a + b*t ] e^{-c*t} + d

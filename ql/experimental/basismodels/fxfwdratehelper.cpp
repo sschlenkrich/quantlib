@@ -22,7 +22,6 @@
 #include <ql/currency.hpp>
 #include <ql/cashflows/cashflows.hpp>
 
-using boost::shared_ptr;
 
 namespace QuantLib {
 
@@ -76,7 +75,7 @@ namespace QuantLib {
         // force recalculation when needed
         bool observer = false;
 
-        shared_ptr<YieldTermStructure> temp(t, no_deletion);
+        ext::shared_ptr<YieldTermStructure> temp(t, no_deletion);
 
 		if(bootstrapBaseOrCounter_ == FxFwdRateHelper::Base){
            cntrCcyDiscRelinkableHandle_.linkTo(*cntrCcyDiscTermStructureHandle_, observer);

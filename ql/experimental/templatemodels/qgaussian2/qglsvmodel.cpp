@@ -72,12 +72,12 @@ namespace QuantLib {
 			std::vector<Real> annuitySample(simulation_->nPaths(), 0.0);
 			std::vector<Real> swapRateSample(simulation_->nPaths(), 0.0);
 			std::vector<Real> stochVarianceSample(simulation_->nPaths(), 0.0);
-			boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFloatLeg(new MCAnnuity(times()[idx - 1], swapRate.scf().floatTimes(), swapRate.scf().floatWeights()));
-			boost::shared_ptr<QGLocalvolModel::MCPayoff> mcFixedLeg(new MCAnnuity(times()[idx - 1], swapRate.scf().fixedTimes(), swapRate.scf().annuityWeights()));
-			boost::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCBase::FixedAmount(1.0));
-			boost::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCBase::Pay(one, times()[idx - 1]));
+			ext::shared_ptr<QGLocalvolModel::MCPayoff> mcFloatLeg(new MCAnnuity(times()[idx - 1], swapRate.scf().floatTimes(), swapRate.scf().floatWeights()));
+			ext::shared_ptr<QGLocalvolModel::MCPayoff> mcFixedLeg(new MCAnnuity(times()[idx - 1], swapRate.scf().fixedTimes(), swapRate.scf().annuityWeights()));
+			ext::shared_ptr<QGLocalvolModel::MCPayoff> one(new QGLocalvolModel::MCBase::FixedAmount(1.0));
+			ext::shared_ptr<QGLocalvolModel::MCPayoff> oneAtT(new QGLocalvolModel::MCBase::Pay(one, times()[idx - 1]));
 			for (size_t k = 0; k < simulation_->nPaths(); ++k) {
-				boost::shared_ptr<MCSimulation::Path> p = simulation_->path(k);
+				ext::shared_ptr<MCSimulation::Path> p = simulation_->path(k);
 				oneOverBSample[k] = oneAtT->discountedAt(p);
 				annuitySample[k] = mcFixedLeg->at(p);
 				swapRateSample[k] = mcFloatLeg->at(p) / annuitySample[k];
@@ -161,7 +161,7 @@ namespace QuantLib {
 			std::vector<Real> dProbdK(nStrikes_, 0.0);  // debugging and benchmarking
 			std::vector<Real> tmpStrikes;
 			std::vector<Real> tmpLocalVol;
-			boost::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);
+			ext::shared_ptr<SmileSection> smileSection = volTS_->smileSection(times()[idx], swapIndex_->tenor(), true);
 			for (size_t k = 0; k < strikes.size(); ++k) {
 				smileCall[k] = smileSection->optionPrice(strikes[k], Option::Call);
 				dCalldT[k] = (smileCall[k] - mcCall[k]) / (times()[idx] - times()[idx - 1]);

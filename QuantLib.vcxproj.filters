@@ -4581,6 +4581,19 @@
     <ClInclude Include="ql\experimental\vanillalocalvolmodel\vanillalocalvoltermstructures.hpp">
       <Filter>experimental\vanillalocalvolmodel</Filter>
     </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.hpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.hpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.hpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.hpp">
+      <Filter>experimental\templatemodels\qgaussian2</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\buildinfo.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">
@@ -7328,6 +7341,19 @@
     <ClCompile Include="ql\experimental\vanillalocalvolmodel\vanillalocalvoltermstructures.cpp">
       <Filter>experimental\vanillalocalvolmodel</Filter>
     </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.cpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.cpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.cpp">
+      <Filter>experimental\templatemodels\multiasset</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.cpp">
+      <Filter>experimental\templatemodels\qgaussian2</Filter>
+    </ClCompile>
+    <ClCompile Include="ql\buildinfo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Flex Include="ql\experimental\templatemodels\montecarlo\scripting\lexer.l">

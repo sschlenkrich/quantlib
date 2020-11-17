@@ -39,11 +39,11 @@ namespace QuantLib {
 		// calculate observation times recursively
 		inline virtual std::set<DateType> observationTimes() { std::set<DateType> s; s.insert(observationTime_); return s; }
 		// generic payoff(observationTime, p) needs to be implemented by derived classes
-		virtual ActiveType at(const boost::shared_ptr<PathType>& p) = 0;
+		virtual ActiveType at(const ext::shared_ptr<PathType>& p) = 0;
 		// discounted payoff for NPV valuation
-		inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p) / p->numeraire(observationTime_); }
+		inline virtual ActiveType discountedAt(const ext::shared_ptr<PathType>& p) { return at(p) / p->numeraire(observationTime_); }
 		// return a clone but with changed observation time; this effectively allows considering a payoff as an index
-		inline virtual boost::shared_ptr<MCPayoffT> at(const DateType t) { QL_FAIL("at(t) not implemented."); }
+		inline virtual ext::shared_ptr<MCPayoffT> at(const DateType t) { QL_FAIL("at(t) not implemented."); }
 
 		// for convenience, derive a union of two sets and return a new set
 		static std::set<DateType> unionTimes(const std::set<DateType> s1, const std::set<DateType> s2) {
@@ -55,26 +55,26 @@ namespace QuantLib {
 		// generic pricer
 		class Pricer {
 		protected:
-			std::vector< boost::shared_ptr<MCPayoffT> > payoffs_;
-			boost::shared_ptr<SimulationType>           simulation_;
+			std::vector< ext::shared_ptr<MCPayoffT> > payoffs_;
+			ext::shared_ptr<SimulationType>           simulation_;
 		public:
 
-			inline static std::vector<ActiveType> at(const boost::shared_ptr<MCPayoffT>&       payoff,
-				const boost::shared_ptr<SimulationType>&  simulation) {
+			inline static std::vector<ActiveType> at(const ext::shared_ptr<MCPayoffT>&       payoff,
+				const ext::shared_ptr<SimulationType>&  simulation) {
 				std::vector<ActiveType> res(simulation->nPaths());
 				for (size_t k = 0; k < simulation->nPaths(); ++k) res[k] = payoff->at(simulation->path(k));
 				return res;
 			}
 
-			inline static std::vector<ActiveType> discountedAt(const boost::shared_ptr<MCPayoffT>&       payoff,
-				const boost::shared_ptr<SimulationType>&  simulation) {
+			inline static std::vector<ActiveType> discountedAt(const ext::shared_ptr<MCPayoffT>&       payoff,
+				const ext::shared_ptr<SimulationType>&  simulation) {
 				std::vector<ActiveType> res(simulation->nPaths());
 				for (size_t k = 0; k < simulation->nPaths(); ++k) res[k] = payoff->discountedAt(simulation->path(k));
 				return res;
 			}
 
-			inline static ActiveType NPV(const std::vector< boost::shared_ptr<MCPayoffT> >&  payoffs,
-				const boost::shared_ptr<SimulationType>&            simulation) {
+			inline static ActiveType NPV(const std::vector< ext::shared_ptr<MCPayoffT> >&  payoffs,
+				const ext::shared_ptr<SimulationType>&            simulation) {
 				ActiveType npv = 0.0;
 				for (size_t k = 0; k < payoffs.size(); ++k) {
 					ActiveType npvk = 0;
@@ -86,8 +86,8 @@ namespace QuantLib {
 				return npv / simulation->nPaths();
 			}
 
-			inline static std::vector<ActiveType> NPVs(const std::vector< boost::shared_ptr<MCPayoffT> >&  payoffs,
-				                                       const boost::shared_ptr<SimulationType>&            simulation) {
+			inline static std::vector<ActiveType> NPVs(const std::vector< ext::shared_ptr<MCPayoffT> >&  payoffs,
+				                                       const ext::shared_ptr<SimulationType>&            simulation) {
 				std::vector<ActiveType> res(payoffs.size());
 				for (size_t n = 0; n < simulation->nPaths(); ++n) {
 					for (size_t k = 0; k < payoffs.size(); ++k) {
@@ -100,8 +100,8 @@ namespace QuantLib {
 				return res;
 			}
 
-			Pricer(const std::vector< boost::shared_ptr<MCPayoffT> >&   payoffs,
-				const boost::shared_ptr<SimulationType>&             simulation)
+			Pricer(const std::vector< ext::shared_ptr<MCPayoffT> >&   payoffs,
+				   const ext::shared_ptr<SimulationType>&             simulation)
 				: payoffs_(payoffs), simulation_(simulation) { }
 
 			inline ActiveType NPV() { return NPV(payoffs_, simulation_); }
@@ -121,12 +121,12 @@ namespace QuantLib {
 
 		class Clone : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_;
+			ext::shared_ptr<PayoffType> x_;
 		public:
-			Clone(const boost::shared_ptr<PayoffType>&   x,
+			Clone(const ext::shared_ptr<PayoffType>&   x,
 				  const DateType                        observationTime) : PayoffType(observationTime), x_(x->at(observationTime)) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) { return x_->at(p); }
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Clone(x_, t)); }
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) { return x_->at(p); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Clone(x_, t)); }
 			inline virtual std::set<DateType> observationTimes() { return x_->observationTimes(); }
 		};
 
@@ -136,20 +136,20 @@ namespace QuantLib {
 			ActiveType amount_;
 		public:
 			FixedAmount(const ActiveType amount) : PayoffType(0.0), amount_(amount) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) { return amount_; }
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new FixedAmount(amount_)); }
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) { return amount_; }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new FixedAmount(amount_)); }
 		};
 
 		// (re-)set paydate of a payoff (for discounting)
 		class Pay : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_;
+			ext::shared_ptr<PayoffType> x_;
 		public:
-			Pay(const boost::shared_ptr<PayoffType>&   x,
+			Pay(const ext::shared_ptr<PayoffType>&   x,
 				const DateType                        payTime)
 				: PayoffType(payTime), x_(x) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) { return x_->at(p); }
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Pay(x_->at(t), PayoffType::observationTime())); }
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) { return x_->at(p); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Pay(x_->at(t), PayoffType::observationTime())); }
 			inline virtual std::set<DateType> observationTimes() { return PayoffType::unionTimes(PayoffType::observationTimes(), x_->observationTimes()); }
 		};
 
@@ -159,11 +159,11 @@ namespace QuantLib {
 			DateType payTime_;
 		public:
 			Cash(DateType obsTime, DateType payTime) : PayoffType(obsTime), payTime_(payTime) { }
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				//if (payTime_<=observationTime()) return (ActiveType)1.0;
 				return p->zeroBond(PayoffType::observationTime(), payTime_);  // catch any exception in path, simulation or model
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Cash(t, payTime_)); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Cash(t, payTime_)); }
 
 		};
 
@@ -175,11 +175,11 @@ namespace QuantLib {
 		public:
 			ZeroBond(DateType obsTime, DateType payTime, const std::string alias)
 				: PayoffType(obsTime), payTime_(payTime), alias_(alias) { }
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				//if (payTime_<=observationTime()) return (ActiveType)1.0;
 				return p->zeroBond(PayoffType::observationTime(), payTime_, alias_);  // catch any exception in path, simulation or model
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new ZeroBond(t, payTime_, alias_)); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new ZeroBond(t, payTime_, alias_)); }
 		};
 
 		// 1 unit of modelled asset
@@ -194,13 +194,13 @@ namespace QuantLib {
 				PayoffType(obsTime), alias_(alias) {
 				addFixings(fixings);
 			}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				if ((PayoffType::observationTime() < 0.0) && (history_.size() > 0) && (history_[0].first <= PayoffType::observationTime()))
 					return fixedAssetValue_;  // past values are fixed
 				// we ask the model if we don't have a history
 				else return p->asset(PayoffType::observationTime(), alias_); // this is the default behaviour
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Asset(t, alias_, history_)); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Asset(t, alias_, history_)); }
 
 			// synchronise past fixings and set a fixed asset value
 			void addFixings(const std::vector< std::pair<DateType, PassiveType> >& fixings) {
@@ -244,7 +244,7 @@ namespace QuantLib {
 				QL_REQUIRE(tStart_ < tEnd_, "AssetBarrierNoHit: tStart < tEnd required.");
 				QL_REQUIRE(downBarrier_ < upBarrier_, "AssetBarrierNoHit: downBarrier < upBarrier required.");
 			}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) { return p->assetBarrierNoHit(tStart_, tEnd_, downBarrier_, upBarrier_, downOrUpOrBoth_, alias_); }
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) { return p->assetBarrierNoHit(tStart_, tEnd_, downBarrier_, upBarrier_, downOrUpOrBoth_, alias_); }
 			inline virtual std::set<DateType> observationTimes() { std::set<DateType> s; s.insert(tStart_); s.insert(tEnd_); return s; }
 		};
 
@@ -257,7 +257,7 @@ namespace QuantLib {
 			PassiveType strike_;
 		public:
 			VanillaOption(DateType obsTime, const std::string alias, PassiveType strike, PassiveType callOrPut) : PayoffType(obsTime), alias_(alias), strike_(strike), callOrPut_(callOrPut) { }
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				ActiveType S = p->asset(PayoffType::observationTime(), alias_);
 				ActiveType V = callOrPut_ * (S - strike_);
 				return (V > 0.0) ? (V) : ((ActiveType)0.0);
@@ -267,19 +267,19 @@ namespace QuantLib {
 		// cache result in case it is requested repeatedly
 		class Cache : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_;
-			boost::shared_ptr<PathType> lastPath_;
+			ext::shared_ptr<PayoffType> x_;
+			ext::shared_ptr<PathType> lastPath_;
 			ActiveType                  lastPayoff_;
 		public:
-			Cache(const boost::shared_ptr<PayoffType>&   x) : PayoffType(x->observationTime()), x_(x) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			Cache(const ext::shared_ptr<PayoffType>&   x) : PayoffType(x->observationTime()), x_(x) {}
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				if (lastPath_ != p) {
 					lastPath_ = p;
 					lastPayoff_ = x_->at(p);
 				}
 				return lastPayoff_;
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Cache(x_->at(t))); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Cache(x_->at(t))); }
 			inline virtual std::set<DateType> observationTimes() { return x_->observationTimes(); }
 		};
 
@@ -289,18 +289,18 @@ namespace QuantLib {
 		class Axpy : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
 			ActiveType a_;
-			boost::shared_ptr<PayoffType> x_, y_;
+			ext::shared_ptr<PayoffType> x_, y_;
 		public:
 			Axpy(const ActiveType                      a,
-				const boost::shared_ptr<PayoffType>&   x,
-				const boost::shared_ptr<PayoffType>&   y)
+				const ext::shared_ptr<PayoffType>&   x,
+				const ext::shared_ptr<PayoffType>&   y)
 				: PayoffType(0.0), a_(a), x_(x), y_(y) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				ActiveType res = a_ * x_->at(p);
 				if (y_) res += y_->at(p);
 				return res;
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Axpy(a_, x_->at(t), y_->at(t))); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Axpy(a_, x_->at(t), y_->at(t))); }
 			inline virtual std::set<DateType> observationTimes() { 
 				return (y_)?(PayoffType::unionTimes(x_->observationTimes(), y_->observationTimes())):(x_->observationTimes());
 			}
@@ -309,99 +309,99 @@ namespace QuantLib {
 		// x * y  (undiscounted)		
 		class Mult : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_, y_;
+			ext::shared_ptr<PayoffType> x_, y_;
 		public:
-			Mult(const boost::shared_ptr<PayoffType>&   x,
-				const boost::shared_ptr<PayoffType>&   y)
+			Mult(const ext::shared_ptr<PayoffType>&   x,
+				const ext::shared_ptr<PayoffType>&   y)
 				: PayoffType(0.0), x_(x), y_(y) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				return x_->at(p) * y_->at(p);
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Mult(x_->at(t), y_->at(t))); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Mult(x_->at(t), y_->at(t))); }
 			inline virtual std::set<DateType> observationTimes() { return PayoffType::unionTimes(x_->observationTimes(), y_->observationTimes()); }
 		};
 
 		// x / y  (undiscounted)		
 		class Division : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_, y_;
+			ext::shared_ptr<PayoffType> x_, y_;
 		public:
-			Division(const boost::shared_ptr<PayoffType>&   x,
-				const boost::shared_ptr<PayoffType>&   y)
+			Division(const ext::shared_ptr<PayoffType>&   x,
+				const ext::shared_ptr<PayoffType>&   y)
 				: PayoffType(0.0), x_(x), y_(y) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				return x_->at(p) / y_->at(p);
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Division(x_->at(t), y_->at(t))); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Division(x_->at(t), y_->at(t))); }
 			inline virtual std::set<DateType> observationTimes() { return PayoffType::unionTimes(x_->observationTimes(), y_->observationTimes()); }
 		};
 
 		// max{x,y}  (undiscounted)
 		class Max : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_, y_;
+			ext::shared_ptr<PayoffType> x_, y_;
 		public:
-			Max(const boost::shared_ptr<PayoffType>&   x,
-				const boost::shared_ptr<PayoffType>&   y)
+			Max(const ext::shared_ptr<PayoffType>&   x,
+				const ext::shared_ptr<PayoffType>&   y)
 				: PayoffType(0.0), x_(x), y_(y) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				return (x_->at(p) > y_->at(p)) ? (x_->at(p)) : (y_->at(p));
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Max(x_->at(t), y_->at(t))); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Max(x_->at(t), y_->at(t))); }
 			inline virtual std::set<DateType> observationTimes() { return PayoffType::unionTimes(x_->observationTimes(), y_->observationTimes()); }
 		};
 
 		// min{x,y}  (undiscounted)
 		class Min : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_, y_;
+			ext::shared_ptr<PayoffType> x_, y_;
 		public:
-			Min(const boost::shared_ptr<PayoffType>&   x,
-				const boost::shared_ptr<PayoffType>&   y)
+			Min(const ext::shared_ptr<PayoffType>&   x,
+				const ext::shared_ptr<PayoffType>&   y)
 				: PayoffType(0.0), x_(x), y_(y) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				return (x_->at(p) < y_->at(p)) ? (x_->at(p)) : (y_->at(p));
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Min(x_->at(t), y_->at(t))); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Min(x_->at(t), y_->at(t))); }
 			inline virtual std::set<DateType> observationTimes() { return PayoffType::unionTimes(x_->observationTimes(), y_->observationTimes()); }
 		};
 
 		// Exponential function
 		class Exponential : public MCPayoffT<DateType, PassiveType, ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_;
+			ext::shared_ptr<PayoffType> x_;
 		public:
-			Exponential(const boost::shared_ptr<PayoffType>&   x) : PayoffType(0.0), x_(x) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			Exponential(const ext::shared_ptr<PayoffType>&   x) : PayoffType(0.0), x_(x) {}
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				return exp(x_->at(p));
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Exponential(x_->at(t))); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Exponential(x_->at(t))); }
 			inline virtual std::set<DateType> observationTimes() { return x_->observationTimes(); }
 		};
 
 		// Natural logarithm function
 		class Logarithm : public MCPayoffT<DateType, PassiveType, ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_;
+			ext::shared_ptr<PayoffType> x_;
 		public:
-			Logarithm(const boost::shared_ptr<PayoffType>&   x) : PayoffType(0.0), x_(x) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			Logarithm(const ext::shared_ptr<PayoffType>&   x) : PayoffType(0.0), x_(x) {}
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				return log(x_->at(p));
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Logarithm(x_->at(t))); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Logarithm(x_->at(t))); }
 			inline virtual std::set<DateType> observationTimes() { return x_->observationTimes(); }
 		};
 
 		// Sqareroot function
 		class Squareroot : public MCPayoffT<DateType, PassiveType, ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_;
+			ext::shared_ptr<PayoffType> x_;
 		public:
-			Squareroot(const boost::shared_ptr<PayoffType>&   x) : PayoffType(0.0), x_(x) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			Squareroot(const ext::shared_ptr<PayoffType>&   x) : PayoffType(0.0), x_(x) {}
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				return sqrt(x_->at(p));
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) { return boost::shared_ptr<PayoffType>(new Squareroot(x_->at(t))); }
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) { return ext::shared_ptr<PayoffType>(new Squareroot(x_->at(t))); }
 			inline virtual std::set<DateType> observationTimes() { return x_->observationTimes(); }
 		};
 
@@ -420,10 +420,10 @@ namespace QuantLib {
 			// this is the actual pointer to the operator
 			bool(*op_)(const ActiveType&, const ActiveType&);
 			// these are the operands
-			boost::shared_ptr<PayoffType> x_, y_;
+			ext::shared_ptr<PayoffType> x_, y_;
 		public:
-			Logical(const boost::shared_ptr<PayoffType>&   x,
-				const boost::shared_ptr<PayoffType>&   y,
+			Logical(const ext::shared_ptr<PayoffType>&   x,
+				const ext::shared_ptr<PayoffType>&   y,
 				const std::string&                    op) : PayoffType(0.0), x_(x), y_(y) {
 				op_ = &equal; // this is a very bad default
 				if (op == "==") op_ = &equal;
@@ -435,7 +435,7 @@ namespace QuantLib {
 				if (op == "&&") op_ = &and_;
 				if (op == "||") op_ = &or_;
 			}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				if ((*op_)(x_->at(p), y_->at(p))) return (ActiveType)(1.0);
 				else return (ActiveType)(0.0);
 			}
@@ -444,12 +444,12 @@ namespace QuantLib {
 
 		class IfThenElse : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_, y_, z_;
+			ext::shared_ptr<PayoffType> x_, y_, z_;
 		public:
-			IfThenElse(const boost::shared_ptr<PayoffType>&   x,
-				const boost::shared_ptr<PayoffType>&   y,
-				const boost::shared_ptr<PayoffType>&   z) : PayoffType(0.0), x_(x), y_(y), z_(z) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			IfThenElse(const ext::shared_ptr<PayoffType>&   x,
+				const ext::shared_ptr<PayoffType>&   y,
+				const ext::shared_ptr<PayoffType>&   z) : PayoffType(0.0), x_(x), y_(y), z_(z) {}
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				if (x_->at(p) != ((ActiveType)0.0)) return y_->at(p);
 				return z_->at(p);
 			}
@@ -458,35 +458,35 @@ namespace QuantLib {
 
 		class Basket : public MCPayoffT<DateType,PassiveType,ActiveType> {
 		protected:
-			std::vector< boost::shared_ptr<PayoffType> > underlyings_;
+			std::vector< ext::shared_ptr<PayoffType> > underlyings_;
 			std::vector< PassiveType > weights_;
 			bool rainbow_;
 			class Descending {
-				const boost::shared_ptr<PathType>& p_;
+				const ext::shared_ptr<PathType>& p_;
 			public:
-				Descending(const boost::shared_ptr<PathType>& p) : p_(p) {}
-				inline bool operator() (const boost::shared_ptr<PayoffType>& x, const boost::shared_ptr<PayoffType>& y) {
+				Descending(const ext::shared_ptr<PathType>& p) : p_(p) {}
+				inline bool operator() (const ext::shared_ptr<PayoffType>& x, const ext::shared_ptr<PayoffType>& y) {
 					return (x->at(p_) > y->at(p_));
 				}
 			};
 		public:
-			Basket(const std::vector<boost::shared_ptr<PayoffType>>& underlyings,
+			Basket(const std::vector<ext::shared_ptr<PayoffType>>& underlyings,
 				const std::vector< PassiveType >                 weights,
 				bool                                             rainbow)
 				: PayoffType(0.0), underlyings_(underlyings), weights_(weights), rainbow_(rainbow) {
 				QL_REQUIRE(underlyings_.size() > 0, "Basket underlyings required");
 				QL_REQUIRE(underlyings_.size() == weights_.size(), "Basket dimension mismatch");
 			}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				if (rainbow_) std::sort(underlyings_.begin(), underlyings_.end(), Descending(p));
 				ActiveType res = 0;
 				for (size_t k = 0; k < underlyings_.size(); ++k) res += weights_[k] * underlyings_[k]->at(p);
 				return res;
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) {
-				std::vector<boost::shared_ptr<PayoffType>> underlyingsAt;
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) {
+				std::vector<ext::shared_ptr<PayoffType>> underlyingsAt;
 				for (size_t k = 0; k < underlyings_.size(); ++k) underlyingsAt.push_back(underlyings_[k]->at(t));
-				return boost::shared_ptr<PayoffType>(new Basket(underlyingsAt, weights_, rainbow_));
+				return ext::shared_ptr<PayoffType>(new Basket(underlyingsAt, weights_, rainbow_));
 			}
 			inline virtual std::set<DateType> observationTimes() {
 				std::set<DateType> s;

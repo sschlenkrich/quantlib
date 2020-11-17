@@ -42,8 +42,8 @@ namespace QuantLib {
 		typedef std::vector< std::vector<ActiveType> >     MatA;
 
 		// references
-		boost::shared_ptr<NoteType>         note_;
-		boost::shared_ptr<SimulationType>   simulation_;
+		ext::shared_ptr<NoteType>         note_;
+		ext::shared_ptr<SimulationType>   simulation_;
 
 		// MC data [paths][exercises[+1]]
 		MatA                X_;    // discounted (!) accumulated coupons  X_i(T_i)/B(T_i)
@@ -63,7 +63,7 @@ namespace QuantLib {
 		// we separate the regression operator from the AMC algorithm...
 		PassiveType                                        regressionFraction_;  // partition of paths used to calculate regression
 		size_t                                             maxPolynDegree_;
-		std::vector< boost::shared_ptr<RegressionType> >   regressions_;
+		std::vector< ext::shared_ptr<RegressionType> >     regressions_;
 
 		inline void checkNote() { // check that note is set up correctly
 			QL_REQUIRE(note_->earlyRedemptions().size()   ==note_->callTimes().size(), "AMC error: wrong number of redemption legs.");
@@ -112,7 +112,7 @@ namespace QuantLib {
 			QL_REQUIRE(nPaths==X_.size(),"AMC error: wrong dimensions");  // basic consistency check
 			size_t nCalls = note_->callTimes().size();
 			for (size_t k=0; k<nPaths; ++k) {
-				boost::shared_ptr<PathType> p = simulation_->path(idxStart+k);
+				ext::shared_ptr<PathType> p = simulation_->path(idxStart+k);
 
 				// check each leg for coupons prior to exercise date
 				for (size_t i=0; i<note_->underlyings().size(); ++i) {
@@ -173,7 +173,7 @@ namespace QuantLib {
 					T_[j-1][k] = G_[j-1][k] - B_[k][j-1]*R_[k][j-1];
 				}
 				if (calculateRegression) { // regression is not (re-)calculated in valuation run
-					regressions_[j-1] = boost::shared_ptr<RegressionType>( new RegressionType(xi_[j-1],T_[j-1],maxPolynDegree_) );
+					regressions_[j-1] = ext::shared_ptr<RegressionType>( new RegressionType(xi_[j-1],T_[j-1],maxPolynDegree_) );
 				}
 				if (regressions_[j-1]) {  // if there is no regression we look into the future
 					for (size_t k=0; k<nPaths; ++k) T_[j-1][k] = regressions_[j-1]->value(xi_[j-1][k]);
@@ -183,8 +183,8 @@ namespace QuantLib {
 
 	public:
 
-		AMCPricerT( const boost::shared_ptr<NoteType>        note,
-			        const boost::shared_ptr<SimulationType>  simulation,
+		AMCPricerT( const ext::shared_ptr<NoteType>        note,
+			        const ext::shared_ptr<SimulationType>  simulation,
 					const PassiveType                        regressionFraction,
 					const size_t                             maxPolynDegree
 					// maybe some more arguments to control AMC
@@ -256,38 +256,38 @@ namespace QuantLib {
 		// we combine minimum and maximum calculation to bundle essential source code
 		class MinMax : public PayoffType {
 		private:
-			std::vector<boost::shared_ptr<PayoffType>> x_;  // first argument min/max
-			std::vector<boost::shared_ptr<PayoffType>> y_;  // second argument min/max
-			std::vector<boost::shared_ptr<PayoffType>> z_;  // regression variables
+			std::vector<ext::shared_ptr<PayoffType>>   x_;  // first argument min/max
+			std::vector<ext::shared_ptr<PayoffType>>   y_;  // second argument min/max
+			std::vector<ext::shared_ptr<PayoffType>>   z_;  // regression variables
 			PassiveType                                minMax_;          // minimum (-1) or maximum (+1) payoff
-			boost::shared_ptr<SimulationType>          simulation_;      // we need a simulation for regression calculation
+			ext::shared_ptr<SimulationType>            simulation_;      // we need a simulation for regression calculation
 			size_t                                     maxPolynDegree_;  // maximum polynomial degree for regression variables
-			boost::shared_ptr<RegressionType>          regression_;      // we regress z vs. trigger = (x - y)
+			ext::shared_ptr<RegressionType>            regression_;      // we regress z vs. trigger = (x - y)
 		public:
-			MinMax(const std::vector<boost::shared_ptr<PayoffType>>& x,
-				const std::vector<boost::shared_ptr<PayoffType>>& y,
-				const std::vector<boost::shared_ptr<PayoffType>>& z,
+			MinMax(const std::vector<ext::shared_ptr<PayoffType>>& x,
+				const std::vector<ext::shared_ptr<PayoffType>>&   y,
+				const std::vector<ext::shared_ptr<PayoffType>>&   z,
 				const DateType                                    observationTime,
 				const PassiveType                                 minMax, // minimum (-1) or maximum (+1) payoff
-				const boost::shared_ptr<SimulationType>           simulation,
+				const ext::shared_ptr<SimulationType>             simulation,
 				size_t                                            maxPolynDegree)
 				: x_(x), y_(y), z_(z), minMax_(minMax), simulation_(simulation), maxPolynDegree_(maxPolynDegree), PayoffType(observationTime) {
 				// we do nothing here, all the work is postponed to the (first) call of at
 			}
 
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				if ((!regression_) && (z_.size() > 0) && (simulation_)) {  // only in this case we calculate the regression
 					VecA T(simulation_->nPaths(), (ActiveType)0.0);  // the actual trigger used for regression
 					MatA Z(simulation_->nPaths(), VecA(z_.size(), (ActiveType)0.0));
 					for (size_t k = 0; k < simulation_->nPaths(); ++k) {
-						boost::shared_ptr<PathType> p = simulation_->path(k); // this p shadows input p
+						ext::shared_ptr<PathType> p = simulation_->path(k); // this p shadows input p
 						ActiveType numeraire = p->numeraire(PayoffType::observationTime());
 						for (size_t i = 0; i < x_.size(); ++i) T[k] += x_[i]->discountedAt(p);
 						for (size_t i = 0; i < y_.size(); ++i) T[k] -= y_[i]->discountedAt(p);
 						T[k] *= numeraire;
 						for (size_t i = 0; i < z_.size(); ++i) Z[k][i] = z_[i]->at(p);
 					}
-					regression_ = boost::shared_ptr<RegressionType>(new RegressionType(Z, T, maxPolynDegree_));
+					regression_ = ext::shared_ptr<RegressionType>(new RegressionType(Z, T, maxPolynDegree_));
 				}
 				// now we come to the actual payoff calculation
 				ActiveType x = 0.0;
@@ -310,38 +310,38 @@ namespace QuantLib {
 			// this class is mostly equivalent to MinMax
 			class One : public PayoffType {
 			private:
-				std::vector<boost::shared_ptr<PayoffType>> x_;  // first argument
-				std::vector<boost::shared_ptr<PayoffType>> y_;  // second argument
-				std::vector<boost::shared_ptr<PayoffType>> z_;  // regression variables
+				std::vector<ext::shared_ptr<PayoffType>>   x_;  // first argument
+				std::vector<ext::shared_ptr<PayoffType>>   y_;  // second argument
+				std::vector<ext::shared_ptr<PayoffType>>   z_;  // regression variables
 				PassiveType                                largerLess_;      // 'less than' (-1) or 'larger than' (+1) indicator
-				boost::shared_ptr<SimulationType>          simulation_;      // we need a simulation for regression calculation
+				ext::shared_ptr<SimulationType>            simulation_;      // we need a simulation for regression calculation
 				size_t                                     maxPolynDegree_;  // maximum polynomial degree for regression variables
-				boost::shared_ptr<RegressionType>          regression_;      // we regress z vs. trigger = (x - y)
+				ext::shared_ptr<RegressionType>            regression_;      // we regress z vs. trigger = (x - y)
 			public:
-				One(const std::vector<boost::shared_ptr<PayoffType>>& x,
-					const std::vector<boost::shared_ptr<PayoffType>>& y,
-					const std::vector<boost::shared_ptr<PayoffType>>& z,
+				One(const std::vector<ext::shared_ptr<PayoffType>>&   x,
+					const std::vector<ext::shared_ptr<PayoffType>>&   y,
+					const std::vector<ext::shared_ptr<PayoffType>>&   z,
 					const DateType                                    observationTime,
 					const PassiveType                                 largerLess, // 'less than' (-1) or 'larger than' (+1) indicator
-					const boost::shared_ptr<SimulationType>           simulation,
+					const ext::shared_ptr<SimulationType>             simulation,
 					size_t                                            maxPolynDegree)
 					: x_(x), y_(y), z_(z), largerLess_(largerLess), simulation_(simulation), maxPolynDegree_(maxPolynDegree), PayoffType(observationTime) {
 					// we do nothing here, all the work is postponed to the (first) call of at
 				}
 
-				inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 					if ((!regression_) && (z_.size() > 0) && (simulation_)) {  // only in this case we calculate the regression
 						VecA T(simulation_->nPaths(), (ActiveType)0.0);  // the actual trigger used for regression
 						MatA Z(simulation_->nPaths(), VecA(z_.size(), (ActiveType)0.0));
 						for (size_t k = 0; k < simulation_->nPaths(); ++k) {
-							boost::shared_ptr<PathType> p = simulation_->path(k); // this p shadows input p
+							ext::shared_ptr<PathType> p = simulation_->path(k); // this p shadows input p
 							ActiveType numeraire = p->numeraire(PayoffType::observationTime());
 							for (size_t i = 0; i < x_.size(); ++i) T[k] += x_[i]->discountedAt(p);
 							for (size_t i = 0; i < y_.size(); ++i) T[k] -= y_[i]->discountedAt(p);
 							T[k] *= numeraire;
 							for (size_t i = 0; i < z_.size(); ++i) Z[k][i] = z_[i]->at(p);
 						}
-						regression_ = boost::shared_ptr<RegressionType>(new RegressionType(Z, T, maxPolynDegree_));
+						regression_ = ext::shared_ptr<RegressionType>(new RegressionType(Z, T, maxPolynDegree_));
 					}
 					// now we come to the actual payoff calculation
 					ActiveType x = 0.0;
@@ -364,33 +364,33 @@ namespace QuantLib {
 			// this class follows the procedures in MinMax
 			class Sum : public PayoffType {
 			private:
-				std::vector<boost::shared_ptr<PayoffType>> x_;  // first argument
-				std::vector<boost::shared_ptr<PayoffType>> z_;  // regression variables
-				boost::shared_ptr<SimulationType>          simulation_;      // we need a simulation for regression calculation
+				std::vector<ext::shared_ptr<PayoffType>>   x_;  // first argument
+				std::vector<ext::shared_ptr<PayoffType>>   z_;  // regression variables
+				ext::shared_ptr<SimulationType>            simulation_;      // we need a simulation for regression calculation
 				size_t                                     maxPolynDegree_;  // maximum polynomial degree for regression variables
-				boost::shared_ptr<RegressionType>          regression_;      // we regress z vs. trigger = (x - y)
+				ext::shared_ptr<RegressionType>            regression_;      // we regress z vs. trigger = (x - y)
 			public:
-				Sum(const std::vector<boost::shared_ptr<PayoffType>>& x,
-					const std::vector<boost::shared_ptr<PayoffType>>& z,
+				Sum(const std::vector<ext::shared_ptr<PayoffType>>&   x,
+					const std::vector<ext::shared_ptr<PayoffType>>&   z,
 					const DateType                                    observationTime,
-					const boost::shared_ptr<SimulationType>           simulation,
+					const ext::shared_ptr<SimulationType>             simulation,
 					size_t                                            maxPolynDegree)
 					: x_(x), z_(z), simulation_(simulation), maxPolynDegree_(maxPolynDegree), PayoffType(observationTime) {
 					// we do nothing here, all the work is postponed to the (first) call of at
 				}
 
-				inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+				inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 					if ((!regression_) && (z_.size() > 0) && (simulation_)) {  // only in this case we calculate the regression
 						VecA T(simulation_->nPaths(), (ActiveType)0.0);  // the actual input used for regression
 						MatA Z(simulation_->nPaths(), VecA(z_.size(), (ActiveType)0.0));
 						for (size_t k = 0; k < simulation_->nPaths(); ++k) {
-							boost::shared_ptr<PathType> p = simulation_->path(k); // this p shadows input p
+							ext::shared_ptr<PathType> p = simulation_->path(k); // this p shadows input p
 							ActiveType numeraire = p->numeraire(PayoffType::observationTime());
 							for (size_t i = 0; i < x_.size(); ++i) T[k] += x_[i]->discountedAt(p);
 							T[k] *= numeraire;
 							for (size_t i = 0; i < z_.size(); ++i) Z[k][i] = z_[i]->at(p);
 						}
-						regression_ = boost::shared_ptr<RegressionType>(new RegressionType(Z, T, maxPolynDegree_));
+						regression_ = ext::shared_ptr<RegressionType>(new RegressionType(Z, T, maxPolynDegree_));
 					}
 					// now we come to the actual payoff calculation
 					if (regression_) {

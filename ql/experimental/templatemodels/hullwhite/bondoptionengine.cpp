@@ -22,7 +22,7 @@
 namespace QuantLib {
 
 	// calibrate model based on given swaptions
-	void BondOptionEngine::calibrateModel( std::vector< boost::shared_ptr<Swaption> >        swaptions,
+	void BondOptionEngine::calibrateModel( std::vector< ext::shared_ptr<Swaption> >          swaptions,
 		                                   const bool                                        contTenorSpread,
 										   const Real                                        tolVola) {
 		std::sort(swaptions.begin(), swaptions.end(), lessByExerciseFirstDate);
@@ -71,7 +71,7 @@ namespace QuantLib {
 		DayCounter dayCounter = model_->termStructure()->dayCounter();
 		Date today = model_->termStructure()->referenceDate();
 		Date startDate;
-		boost::shared_ptr<Coupon> coupon;
+		ext::shared_ptr<Coupon> coupon;
 		// set up cash flows
 		for (Size i=0; i<arguments_.cashflows.size(); ++i) {
 			coupon = boost::dynamic_pointer_cast<Coupon>(arguments_.cashflows[i]);
@@ -136,7 +136,7 @@ namespace QuantLib {
 			}
 		}
 		// if we have an AD-enabeled model report vega(s) here...
-		boost::shared_ptr<MinimADHullWhiteModel> amodel = boost::dynamic_pointer_cast<MinimADHullWhiteModel>(model_);
+		ext::shared_ptr<MinimADHullWhiteModel> amodel = boost::dynamic_pointer_cast<MinimADHullWhiteModel>(model_);
 		if (amodel) {
 			// derivative of Bermudan price w.r.t. short rate vola
 			std::vector<QuantLib::Real> vegas = amodel->bermudanVega();

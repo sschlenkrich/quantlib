@@ -10,7 +10,7 @@
 #ifndef quantlib_templateg2pp_hpp
 #define quantlib_templateg2pp_hpp
 
-#include <boost/shared_ptr.hpp>
+#include <ql/shared_ptr.hpp>
 #include <ql/errors.hpp>
 #include <ql/termstructures/yieldtermstructure.hpp>
 #include <ql/experimental/templatemodels/stochasticprocessT.hpp>

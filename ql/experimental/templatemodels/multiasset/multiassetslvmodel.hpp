@@ -29,16 +29,16 @@ namespace QuantLib {
 		RealStochasticProcess::MatA getPureHestonImpliedCorrelationMatrix();
 		Handle<YieldTermStructure>                                               termStructure_;  // domestic discounting term structure
 		std::map<std::string, size_t>                                            index_;
-		std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>				 processes_;
+		std::vector<ext::shared_ptr<QuantLib::HestonSLVProcess>>				 processes_;
 		RealStochasticProcess::MatA                                              DT_;  // D^T D = Correlations
 	public:
 		MultiAssetSLVModel(const Handle<YieldTermStructure>&                                               termStructure,
 			              const std::vector<std::string>&                                                 aliases,
-			              const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				  processes,
+			              const std::vector<ext::shared_ptr<QuantLib::HestonSLVProcess>>&				  processes,
 			              const RealStochasticProcess::MatA&                                              correlations);
 		MultiAssetSLVModel(const Handle<YieldTermStructure>&                                               termStructure,
 			const std::vector<std::string>&                                                 aliases,
-			const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes);
+			const std::vector<ext::shared_ptr<QuantLib::HestonSLVProcess>>&				    processes);
 
 		// dimension of X -> [x1,x2,....,v1, v2,....]
 		virtual size_t size() { return processes_.size()*2; }

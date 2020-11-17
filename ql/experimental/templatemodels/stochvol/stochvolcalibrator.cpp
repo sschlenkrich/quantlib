@@ -79,7 +79,7 @@ namespace QuantLib {
 		}
 
 		// create model for given state vector
-		boost::shared_ptr<RealStochVolModel> StochVolModelCalibrator::model(const Array& X) const {
+		ext::shared_ptr<RealStochVolModel> StochVolModelCalibrator::model(const Array& X) const {
 		    // model parameters
 		    Real  lambda;
 		    Real  b;
@@ -100,11 +100,11 @@ namespace QuantLib {
 			if (!etaIsFixed_	) { eta    = X[idx];  ++idx; } else { eta    = eta_;    }
 			if (!z0IsFixed_		) { z0     = X[idx];  ++idx; } else { z0     = z0_;     }
 			if (!rhoIsFixed_	) { rho    = X[idx];  ++idx; } else { rho    = rho_;    }
-			return boost::shared_ptr<RealStochVolModel>(new RealStochVolModel(lambda,b,L,theta,m,eta,z0,rho));
+			return ext::shared_ptr<RealStochVolModel>(new RealStochVolModel(lambda,b,L,theta,m,eta,z0,rho));
 		}
 
 		Disposable<Array> StochVolModelCalibrator::values(const Array& x) const {
-			boost::shared_ptr<RealStochVolModel> m = model(direct(x));
+			ext::shared_ptr<RealStochVolModel> m = model(direct(x));
 			std::vector<Real>          fwPrices(strikes_.size());
 			std::vector<Option::Type>  callOrPut(strikes_.size());
 			std::vector<Real>          normalVols(strikes_.size());

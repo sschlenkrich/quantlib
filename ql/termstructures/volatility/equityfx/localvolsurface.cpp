@@ -182,16 +182,16 @@ namespace QuantLib {
 		std::vector<Time> gridTimes;
 		gridTimes.push_back(blackTS->dayCounter().yearFraction(blackTS->referenceDate(), blackTS->maxDate()));
 
-		boost::shared_ptr<TimeGrid> timeGrid;
+		ext::shared_ptr<TimeGrid> timeGrid;
 		timeGrid = boost::make_shared<TimeGrid>(gridTimes.begin(), gridTimes.end(),
 			std::max(Size(2), Size(gridTimes.back()*timeStepsPerYear)));
 		
 		Size timeGridAmt = timeGrid->size();
 
 
-		const boost::shared_ptr<Matrix> localVolMatrix(new Matrix(strikeGridAmt, timeGridAmt));
+		const ext::shared_ptr<Matrix> localVolMatrix(new Matrix(strikeGridAmt, timeGridAmt));
 
-		strikes_ = std::vector<boost::shared_ptr<std::vector<Real> > >(timeGridAmt);
+		strikes_ = std::vector<ext::shared_ptr<std::vector<Real> > >(timeGridAmt);
 
 		Real ds;
 

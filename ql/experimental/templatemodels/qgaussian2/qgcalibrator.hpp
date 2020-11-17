@@ -36,19 +36,19 @@ namespace QuantLib {
     class QGCalibrator { 
 
 		// the Quasi-Gaussian model aimed to be calibrated
-		boost::shared_ptr<QuasiGaussianModel> model_;
+		ext::shared_ptr<QuasiGaussianModel> model_;
 
 		// the resulting calibrated Quasi-Gaussian model
-		boost::shared_ptr<QuasiGaussianModel> calibratedModel_;
+		ext::shared_ptr<QuasiGaussianModel> calibratedModel_;
 
 		// we may use a MC simulation to adjust for closed form vs MC bias
-		// boost::shared_ptr<RealMCSimulation> mcSimulation_;
+		// ext::shared_ptr<RealMCSimulation> mcSimulation_;
 
 		// calibration target volatilities
 		Handle<SwaptionVolatilityStructure> volTS_;
         
 		// we calibrate to strips of swaption volatilities; maybe also co-terminals can be relevant
-		std::vector< boost::shared_ptr<SwapIndex> > swapIndices_;
+		std::vector< ext::shared_ptr<SwapIndex> > swapIndices_;
 
 		// we want to control calibration by individual weights
 		Real sigmaWeight_, slopeWeight_, etaWeight_;
@@ -87,7 +87,7 @@ namespace QuantLib {
 			// reference to access model, swaptions and targets
 			QGCalibrator  *calibrator_;
 			// we work on a copy of the initial model (better safe then sorry)
-			boost::shared_ptr<QuasiGaussianModel> model_;
+			ext::shared_ptr<QuasiGaussianModel> model_;
 			// specify parameters used for optimisation; dimension [modeltimes] x [ d (sigma) + d (slope) + 1 (eta) ]
 			std::vector< std::vector< Real > > isInput_;
 			// specify targets used for optimisation; dimension [exercises] x [ swapterm (SigmaATM) + swapterm (Skew) + swapterm (Smile) ]
@@ -105,7 +105,7 @@ namespace QuantLib {
 				std::vector< Real > modelTimes_;
 			public:
 				CalibSwaption ( Date                                expiryDate,
-					            const boost::shared_ptr<SwapIndex>& swapindex,
+					            const ext::shared_ptr<SwapIndex>&   swapindex,
 			                    const Handle<YieldTermStructure>&   discountCurve,
 					            const Handle<SwaptionVolatilityStructure> volTS,
 						        bool                                contTenorSpread = true,
@@ -116,7 +116,7 @@ namespace QuantLib {
 				inline Real smile()    const { return smile_;    }
 				inline const std::vector<Real>& modelTimes() const { return modelTimes_; }
 			};
-			std::vector< std::vector< boost::shared_ptr<CalibSwaption> > > calibSwaptions_;
+			std::vector< std::vector< ext::shared_ptr<CalibSwaption> > > calibSwaptions_;
 			
 		public:
 			const Size inputSize()  const { return inputSize_; }
@@ -157,15 +157,15 @@ namespace QuantLib {
             virtual Real value(const Array& x) const;
 
 			// return the model for a given input state
-			const boost::shared_ptr<QuasiGaussianModel> model(const Array& x);
+			const ext::shared_ptr<QuasiGaussianModel> model(const Array& x);
 		};
 
 	public:
 
 		// constructor
-		QGCalibrator( const boost::shared_ptr<QuasiGaussianModel>&          model,
+		QGCalibrator( const ext::shared_ptr<QuasiGaussianModel>&          model,
 			          const Handle<SwaptionVolatilityStructure>&            volTS,
-			          const std::vector< boost::shared_ptr<SwapIndex> >&    swapIndices,
+			          const std::vector< ext::shared_ptr<SwapIndex> >&    swapIndices,
 					  const Real                                            modelTimesStepSize,
                       const bool                                            useExpectedXY,
                       const Real                                            sigmaMax,
@@ -185,7 +185,7 @@ namespace QuantLib {
 		                   Real                                       epsfcn = 1.0e-4 );  // delta for finite differences
 
 		// inspectors
-		inline const boost::shared_ptr<QuasiGaussianModel> calibratedModel() const { return calibratedModel_; }
+		inline const ext::shared_ptr<QuasiGaussianModel> calibratedModel() const { return calibratedModel_; }
 		inline const std::vector<std::string>& debugLog() const { return debugLog_; }
 
 		inline void acceptCalibration() { model_ = calibratedModel_; }

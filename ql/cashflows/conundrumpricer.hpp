@@ -85,7 +85,7 @@ namespace QuantLib {
         static ext::shared_ptr<GFunction>
         newGFunctionWithShifts(const CmsCoupon& coupon,
                                const Handle<Quote>& meanReversion);
-        static boost::shared_ptr<GFunction>
+        static ext::shared_ptr<GFunction>
         newGFunctionAffine(const CmsCoupon& coupon);
       private:
         GFunctionFactory();

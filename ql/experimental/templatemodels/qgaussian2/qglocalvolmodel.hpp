@@ -47,10 +47,10 @@ namespace QuantLib {
 		// because we can't initialise simulation within constructor
 		size_t     nPaths_;
 		BigNatural seed_;
-		boost::shared_ptr<MCSimulation> simulation_;
+		ext::shared_ptr<MCSimulation> simulation_;
         
 		// we calibrate to a strip of swaption volatilities; maybe also co-terminals can be relevant
-		boost::shared_ptr<SwapIndex> swapIndex_;
+		ext::shared_ptr<SwapIndex> swapIndex_;
 
         // we describe local volatility sigmaS as a set of 1-D interpolations per time step 1 to N (excluding 0)
         std::vector< Interpolation > sigmaS_;
@@ -73,15 +73,15 @@ namespace QuantLib {
 		std::vector<Real> stdDevGrid_;
 
         // we need to cache the swap rate model and observation time for the current time step
-		boost::shared_ptr<QGSwaprateModel> swapRateModel_;
+		ext::shared_ptr<QGSwaprateModel> swapRateModel_;
 
 		// we need a factory for MC swaptions for efficient calculation
 		class SwaptionFactory {
-			boost::shared_ptr<MCPayoff> floatLeg_;
-			boost::shared_ptr<MCPayoff> annuityLeg_;
+			ext::shared_ptr<MCPayoff> floatLeg_;
+			ext::shared_ptr<MCPayoff> annuityLeg_;
 		public:
 			SwaptionFactory(const Time obsTime, const SwapCashFlows& scf);
-			boost::shared_ptr<MCPayoff> swaption(const Real strike, const Real CallOrPut);
+			ext::shared_ptr<MCPayoff> swaption(const Real strike, const Real CallOrPut);
 		};
 
 		// some helpers and subroutines to structure the methodologies
@@ -89,14 +89,14 @@ namespace QuantLib {
 		// find idx = min_j{ x <= X[j] }
 		inline static size_t minIdx(const std::vector<Real>& X, const Real x);
 
-		boost::shared_ptr<QGSwaprateModel> qGSwapRateModel(const SwapCashFlows& scf, const Real obsTime);
+		ext::shared_ptr<QGSwaprateModel> qGSwapRateModel(const SwapCashFlows& scf, const Real obsTime);
 
 		// encapsulate initial set up
 		class Initialiser {
 		private:
 			Date today_;
 		public:
-			Initialiser(boost::shared_ptr<QGLocalvolModel> model);
+			Initialiser(ext::shared_ptr<QGLocalvolModel> model);
 			const Date& today() const { return today_; }
 		};
 
@@ -169,7 +169,7 @@ namespace QuantLib {
 		QGLocalvolModel( const Handle<YieldTermStructure>&                      termStructure,
 			             const Handle<SwaptionVolatilityStructure>&             volTS,
 			             const Real                                             chi,
-			             const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			             const ext::shared_ptr<SwapIndex>&                    swapIndex,
 			             const std::vector<Real>&                               times,
 			             const std::vector<Real>&                               stdDevGrid,
 			             const size_t                                           nPaths,
@@ -182,7 +182,7 @@ namespace QuantLib {
 			            const Real                                             chi,
 			            const Real                                             theta,
 			            const Real                                             eta,
-			            const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			            const ext::shared_ptr<SwapIndex>&                    swapIndex,
 			            const std::vector<Real>&                               times,
 			            const std::vector<Real>&                               stdDevGrid,
 			            const bool                                             calcStochVolAdjustment,
@@ -197,7 +197,7 @@ namespace QuantLib {
 		virtual std::vector< std::vector<Real> > sigma_xT(const Real t, const State& s);
 
 		// inspectors
-		inline const boost::shared_ptr<MCSimulation> simulation() { return simulation_; }
+		inline const ext::shared_ptr<MCSimulation> simulation() { return simulation_; }
 		inline const Real sigmaS(const size_t idx, const Real s) { return sigmaS_[idx](s); }
 
 		std::vector<std::string> debugLog() { return debugLog_; }
@@ -216,7 +216,7 @@ namespace QuantLib {
 			const Real                                             chi,
 			const Real                                             theta,
 			const Real                                             eta,
-			const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			const ext::shared_ptr<SwapIndex>&                    swapIndex,
 			const std::vector<Real>&                               times,
 			const std::vector<Real>&                               stdDevGrid,
 			const bool                                             calcStochVolAdjustment,
@@ -238,7 +238,7 @@ namespace QuantLib {
 			const Real                                             chi,
 			const Real                                             theta,
 			const Real                                             eta,
-			const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			const ext::shared_ptr<SwapIndex>&                    swapIndex,
 			const std::vector<Real>&                               times,
 			const std::vector<Real>&                               stdDevGrid,
 			const bool                                             calcStochVolAdjustment,
@@ -258,7 +258,7 @@ namespace QuantLib {
 			const Handle<YieldTermStructure>&                      termStructure,
 			const Handle<SwaptionVolatilityStructure>&             volTS,
 			const Real                                             chi,
-			const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			const ext::shared_ptr<SwapIndex>&                    swapIndex,
 			const std::vector<Real>&                               times,
 			const std::vector<Real>&                               stdDevGrid,
 			const size_t                                           nPaths,
@@ -278,7 +278,7 @@ namespace QuantLib {
 			const Real                                             chi,
 			const Real                                             theta,
 			const Real                                             eta,
-			const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			const ext::shared_ptr<SwapIndex>&                    swapIndex,
 			const std::vector<Real>&                               times,
 			const std::vector<Real>&                               stdDevGrid,
 			const bool                                             calcStochVolAdjustment,
@@ -301,7 +301,7 @@ namespace QuantLib {
 			const Real                                             chi,
 			const Real                                             theta,
 			const Real                                             eta,
-			const boost::shared_ptr<SwapIndex>&                    swapIndex,
+			const ext::shared_ptr<SwapIndex>&                    swapIndex,
 			const std::vector<Real>&                               times,
 			const std::vector<Real>&                               stdDevGrid,
 			const Real                                             kernelWidth,

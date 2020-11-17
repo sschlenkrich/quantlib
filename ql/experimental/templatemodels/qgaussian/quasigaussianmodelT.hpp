@@ -346,7 +346,7 @@ namespace QuantLib {
 		inline size_t idx( const DateType t ) { return TemplateAuxilliaries::idx(times_,t); }
 
 		// clone the model
-		virtual boost::shared_ptr<QuasiGaussianModelT> clone() { return boost::shared_ptr<QuasiGaussianModelT>(new QuasiGaussianModelT(*this)); }
+		virtual ext::shared_ptr<QuasiGaussianModelT> clone() { return ext::shared_ptr<QuasiGaussianModelT>(new QuasiGaussianModelT(*this)); }
 
 		// inspectors
 		inline const Handle<YieldTermStructure> termStructure() { return termStructure_; }

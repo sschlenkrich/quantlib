@@ -18,7 +18,7 @@ namespace QuantLib {
 	MultiAssetSLVModel::MultiAssetSLVModel(
 		const Handle<YieldTermStructure>&                                               termStructure,
 		const std::vector<std::string>&                                                 aliases,
-		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes,
+		const std::vector<ext::shared_ptr<QuantLib::HestonSLVProcess>>&				    processes,
 		const RealStochasticProcess::MatA&                                              correlations)
 	: termStructure_(termStructure), processes_(processes) {
 		QL_REQUIRE(processes_.size() > 0, "No SLV processes supplied");
@@ -59,7 +59,7 @@ namespace QuantLib {
 	MultiAssetSLVModel::MultiAssetSLVModel(
 		const Handle<YieldTermStructure>&                                               termStructure,
 		const std::vector<std::string>&                                                 aliases,
-		const std::vector<boost::shared_ptr<QuantLib::HestonSLVProcess>>&				processes)
+		const std::vector<ext::shared_ptr<QuantLib::HestonSLVProcess>>&				    processes)
 		: termStructure_(termStructure), processes_(processes) {
 		QL_REQUIRE(processes_.size() > 0, "No SLV processes supplied");
 		//no correlation matrix provided, consequently we simply infer asset-volvol-correlation from heston and assume

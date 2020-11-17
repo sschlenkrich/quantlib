@@ -40,7 +40,7 @@ namespace QuantLib {
 
     class ActiveHestonModel : public RealHestonModel {
     private:
-        boost::shared_ptr< MinimADHestonModel > amodel_;
+        ext::shared_ptr< MinimADHestonModel > amodel_;
     public:
         ActiveHestonModel( Real kappa,
                            Real theta,
@@ -48,7 +48,7 @@ namespace QuantLib {
                            Real rho,
                            Real v0 )
         : RealHestonModel(kappa, theta, sigma, rho, v0) {
-            amodel_ = boost::shared_ptr< MinimADHestonModel >( new MinimADHestonModel(kappa, theta, sigma, rho, v0) );
+            amodel_ = ext::shared_ptr< MinimADHestonModel >( new MinimADHestonModel(kappa, theta, sigma, rho, v0) );
         }
         
         std::vector<Real> vanillaOption(

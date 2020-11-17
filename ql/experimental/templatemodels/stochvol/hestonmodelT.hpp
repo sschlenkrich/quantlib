@@ -11,7 +11,7 @@
 #define quantlib_templatehestonmodels_hpp
 
 #include <complex>
-#include <boost/shared_ptr.hpp>
+#include <ql/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <ql/errors.hpp>
 #include <ql/experimental/templatemodels/auxilliaries/auxilliariesT.hpp>
@@ -197,7 +197,7 @@ namespace QuantLib {
 	class StochVolModelT {
 	protected:
 		enum { Heston, ShiftedLogNormal, Normal, StochVolNormal } type_;
-		boost::shared_ptr< HestonModelT<DateType,PassiveType,ActiveType> > hestonModel_;
+		ext::shared_ptr< HestonModelT<DateType,PassiveType,ActiveType> > hestonModel_;
 		ActiveType                                                         lambda_;
 		ActiveType                                                         b_;
 		ActiveType                                                         L_;
@@ -225,7 +225,7 @@ namespace QuantLib {
 			}
 			// prerequisities
 			if (type_==Heston) {
-				hestonModel_ = boost::shared_ptr< HestonModelT<DateType,PassiveType,ActiveType> >(
+				hestonModel_ = ext::shared_ptr< HestonModelT<DateType,PassiveType,ActiveType> >(
 					             new HestonModelT<DateType,PassiveType,ActiveType>(
 		                              // state transformations ~S(t) = S(t) + (1-b)/b L, v(t) = z(t) lambda^2 b^2
 			                          theta,                // kappa

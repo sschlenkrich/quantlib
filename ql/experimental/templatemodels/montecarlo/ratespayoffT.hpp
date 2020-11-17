@@ -72,7 +72,7 @@ namespace QuantLib {
 			    checkForConsistency();
 			}
 			GeneralSwaption( DateType                              obsTime,    // observation equals fixing time
-					         const boost::shared_ptr<SwapIndex>&   swapIndex,
+					         const ext::shared_ptr<SwapIndex>&   swapIndex,
 					         const Handle<YieldTermStructure>&     discYTS,
 					         PassiveType                           strikeRate,
 					         PassiveType                           payOrRec      )
@@ -88,7 +88,7 @@ namespace QuantLib {
 			    checkForConsistency();
 			}
 
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				ActiveType floatleg = 0.0;
 				ActiveType annuity  = 0.0;
 				// float leg
@@ -108,7 +108,7 @@ namespace QuantLib {
 		// future swap rate
 		class SwapRate : public GeneralSwaption {
 			// we save this to be able to clone the swap rate
-			boost::shared_ptr<SwapIndex>   swapIndex_;
+			ext::shared_ptr<SwapIndex>     swapIndex_;
 			Handle<YieldTermStructure>     discYTS_;
 		public:
 			SwapRate( DateType                        obsTime,    // observation equals fixing time
@@ -119,11 +119,11 @@ namespace QuantLib {
 					  : GeneralSwaption(obsTime,floatTimes,floatWeights,fixedTimes,annuityWeights,0.0,0.0) {}
 
 			SwapRate( const DateType                        fixingTime,
-					  const boost::shared_ptr<SwapIndex>&   swapIndex,
+					  const ext::shared_ptr<SwapIndex>&     swapIndex,
 					  const Handle<YieldTermStructure>&     discYTS    )
 					  : GeneralSwaption(fixingTime,swapIndex,discYTS,0.0,0.0), swapIndex_(swapIndex), discYTS_(discYTS) { }
 
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				ActiveType floatleg = 0.0;
 				ActiveType annuity  = 0.0;
 				// float leg
@@ -132,12 +132,12 @@ namespace QuantLib {
 				for (size_t k=0; k<GeneralSwaption::fixedTimes_.size(); ++k) annuity  += GeneralSwaption::fixedWeights_[k] * p->zeroBond(PayoffType::observationTime(),GeneralSwaption::fixedTimes_[k]);
 				return floatleg / annuity;
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) {
-				if ((swapIndex_!=0)&&(!discYTS_.empty())) return boost::shared_ptr<PayoffType>(new SwapRate(t, swapIndex_, discYTS_));
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) {
+				if ((swapIndex_!=0)&&(!discYTS_.empty())) return ext::shared_ptr<PayoffType>(new SwapRate(t, swapIndex_, discYTS_));
 				QL_FAIL("Can not clone swap rate");
 			}
 		    // payoff should NOT be discounted
-		    inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p); }
+		    inline virtual ActiveType discountedAt(const ext::shared_ptr<PathType>& p) { return at(p); }
 		};
 
 
@@ -145,14 +145,14 @@ namespace QuantLib {
         class LiborRate : public MCPayoffT<DateType, PassiveType, ActiveType> {
 		protected:
 			// we save this to be able to clone the Libor rate
-			boost::shared_ptr<IborIndex>   iborIndex_;
+			ext::shared_ptr<IborIndex>     iborIndex_;
 			Handle<YieldTermStructure>     discYTS_;
 			DateType    fixingTime_, startTime_, endTime_;
 			PassiveType oneOverDaycount_;
 			PassiveType D_; // tenor basis
 		public:
 			LiborRate(const DateType                        fixingTime,
-				      const boost::shared_ptr<IborIndex>&   iborIndex,
+				      const ext::shared_ptr<IborIndex>&     iborIndex,
 				      const Handle<YieldTermStructure>&     discYTS)
 				      : PayoffType(fixingTime), fixingTime_(fixingTime), iborIndex_(iborIndex), discYTS_(discYTS) {
 				Date today = discYTS->referenceDate(); // check if this is the correct date...
@@ -170,7 +170,7 @@ namespace QuantLib {
 		    LiborRate( const DateType                        fixingTime,
 		    	       const DateType                        startTime,  // we don't get start and end date from the index
 		    		   const DateType                        endTime,    // therefore we need to supply it explicitely
-		    		   const boost::shared_ptr<IborIndex>&   iborIndex,
+		    		   const ext::shared_ptr<IborIndex>&     iborIndex,
 		    		   const Handle<YieldTermStructure>&     discYTS )
 		    		   : PayoffType(fixingTime), fixingTime_(fixingTime), startTime_(startTime), endTime_(endTime) {
 		    	Date today      = discYTS->referenceDate(); // check if this is the correct date...
@@ -183,11 +183,11 @@ namespace QuantLib {
 		    	// tenor basis calculation
 		    	D_ = (1.0 + daycount*liborForward) * discYTS->discount(endDate) / discYTS->discount(startDate);
 		    }			        
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				return ( p->zeroBond(fixingTime_,startTime_) / p->zeroBond(fixingTime_,endTime_) * D_ - 1.0 ) * oneOverDaycount_;
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) {
-				if ((iborIndex_!=0)&&(!discYTS_.empty())) return boost::shared_ptr<PayoffType>(new LiborRate(t, iborIndex_, discYTS_));
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) {
+				if ((iborIndex_!=0)&&(!discYTS_.empty())) return ext::shared_ptr<PayoffType>(new LiborRate(t, iborIndex_, discYTS_));
 				QL_FAIL("Can not clone Libor rate");
 			}
 	    };
@@ -198,18 +198,18 @@ namespace QuantLib {
 			std::string alias_;
 		public:
 			LiborRateCcy(const DateType                        fixingTime,
-				         const boost::shared_ptr<IborIndex>&   iborIndex,
+				         const ext::shared_ptr<IborIndex>&     iborIndex,
 				         const Handle<YieldTermStructure>&     discYTS,
 				         const std::string                     alias)
 			: LiborRate(fixingTime, iborIndex, discYTS), alias_(alias) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				return (p->zeroBond(LiborRate::fixingTime_, LiborRate::startTime_, alias_) / 
                         p->zeroBond(LiborRate::fixingTime_, LiborRate::endTime_, alias_) * LiborRate::D_ - 1.0) * 
                        LiborRate::oneOverDaycount_;
 			}
-			inline virtual boost::shared_ptr<PayoffType> at(const DateType t) {
+			inline virtual ext::shared_ptr<PayoffType> at(const DateType t) {
 				if ((LiborRate::iborIndex_ != 0) && (!LiborRate::discYTS_.empty()))
-                    return boost::shared_ptr<PayoffType>(new LiborRateCcy(t, LiborRate::iborIndex_, LiborRate::discYTS_, alias_));
+                    return ext::shared_ptr<PayoffType>(new LiborRateCcy(t, LiborRate::iborIndex_, LiborRate::discYTS_, alias_));
 				QL_FAIL("Can not clone Libor rate");
 			}
 
@@ -218,39 +218,39 @@ namespace QuantLib {
 
 		//class SwapRate : public MCPayoffT<DateType, PassiveType, ActiveType> {
 		//protected:
-		//	boost::shared_ptr<MCPayoffT<DateType, PassiveType, ActiveType>::SwapRate > swaprate_;
+		//	ext::shared_ptr<MCPayoffT<DateType, PassiveType, ActiveType>::SwapRate > swaprate_;
 		//public:
 		//	SwapRate( const DateType                        fixingTime,
-		//			  const boost::shared_ptr<SwapIndex>&   swapIndex,
+		//			  const ext::shared_ptr<SwapIndex>&   swapIndex,
 		//			  const Handle<YieldTermStructure>&     discYTS    ) : TemplateMCPayoff(fixingTime) {
 		//		Date today      = discYTS->referenceDate(); // check if this is the correct date...
 		//		Date fixingDate = today + ((BigInteger)ClosestRounding(0)(fixingTime*365.0)); // assuming act/365 day counting
 		//		SwapCashFlows scf(swapIndex->underlyingSwap(fixingDate),discYTS,true);  // assume continuous tenor spreads
-		//		swaprate_ = boost::shared_ptr<TemplateMCPayoff::SwapRate>(new TemplateMCPayoff::SwapRate(
+		//		swaprate_ = ext::shared_ptr<TemplateMCPayoff::SwapRate>(new TemplateMCPayoff::SwapRate(
 		//			fixingTime, scf.floatTimes(), scf.floatWeights(), scf.fixedTimes(), scf.annuityWeights() ) );
 		//	}
-		//	inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) { return swaprate_->at(p); }
+		//	inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) { return swaprate_->at(p); }
 		//};
 
 
 	    // CashFlow decorating a payoff with start and pay date for organisation in legs
         class CashFlow : public MCPayoffT<DateType, PassiveType, ActiveType> {
 		protected:
-			boost::shared_ptr<PayoffType> x_;
+			ext::shared_ptr<PayoffType> x_;
 			DateType                     startTime_;  // on exercise only cash flows with startTime >= exerciseTime will be considered
 			DateType                     payTime_;
 			bool                         applyZCBAdjuster_;
 		public:
-			CashFlow ( const boost::shared_ptr<PayoffType>&   x,
+			CashFlow ( const ext::shared_ptr<PayoffType>&    x,
 				       const DateType                        startTime,
 				       const DateType                        payTime,
 					   const bool                            applyZCBAdjuster = false)
 		        : PayoffType(payTime), x_(x), startTime_(startTime), payTime_(payTime), applyZCBAdjuster_(applyZCBAdjuster) {}
-			CashFlow ( const boost::shared_ptr<PayoffType>&   x,
+			CashFlow ( const ext::shared_ptr<PayoffType>&   x,
 					   const bool                            applyZCBAdjuster = false)
 				: PayoffType(x->observationTime()), x_(x),
 				  startTime_(x->observationTime()), payTime_(x->observationTime()), applyZCBAdjuster_(applyZCBAdjuster) {}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) { 
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) { 
 				return (applyZCBAdjuster_) ? (p->zeroBond(payTime_,payTime_)*x_->at(p)) : (x_->at(p))  ;
 			}
 			// inspectors
@@ -260,10 +260,10 @@ namespace QuantLib {
 		};
 
 	    // a CashFlow leg as a ordered list of CashFlows
-		class Leg : public std::vector< boost::shared_ptr<CashFlow> > {
+		class Leg : public std::vector< ext::shared_ptr<CashFlow> > {
 		public:
-			static bool firstIsLess( const boost::shared_ptr<CashFlow>& first, const boost::shared_ptr<CashFlow>& second ) { return first->startTime() < second->startTime(); } 
-			Leg ( const std::vector< boost::shared_ptr<CashFlow> >&   cashflows ) : std::vector< boost::shared_ptr<CashFlow> >(cashflows.begin(),cashflows.end())  {
+			static bool firstIsLess( const ext::shared_ptr<CashFlow>& first, const ext::shared_ptr<CashFlow>& second ) { return first->startTime() < second->startTime(); } 
+			Leg ( const std::vector< ext::shared_ptr<CashFlow> >&   cashflows ) : std::vector< ext::shared_ptr<CashFlow> >(cashflows.begin(),cashflows.end())  {
 				// check that all CashFlows are consistent
 				// sort by start time
 				std::sort(this->begin(),this->end(),firstIsLess );
@@ -271,9 +271,9 @@ namespace QuantLib {
 		};
 
 	    // a swap as a set of CashFlow legs (e.g. structured, funding, notional exchanges)
-		class Swap : public std::vector< boost::shared_ptr<Leg> > {
+		class Swap : public std::vector< ext::shared_ptr<Leg> > {
 		public:
-			Swap ( const std::vector< boost::shared_ptr<Leg> >&   legs ) : std::vector< boost::shared_ptr<Leg> >(legs.begin(),legs.end())  { }
+			Swap ( const std::vector< ext::shared_ptr<Leg> >&   legs ) : std::vector< ext::shared_ptr<Leg> >(legs.begin(),legs.end())  { }
 		};
 
 
@@ -281,24 +281,24 @@ namespace QuantLib {
 		class CancellableNote {
 		private:
 			// underlying
-			std::vector< boost::shared_ptr<Leg> >  underlyings_;       // the underlying CashFlow legs
+			std::vector< ext::shared_ptr<Leg> >  underlyings_;       // the underlying CashFlow legs
 			// call features
 			std::vector< DateType >                callTimes_;            // exercise times
-			std::vector< boost::shared_ptr<Leg> >  earlyRedemptions_;     // strikes payed at exercise
-			std::vector< boost::shared_ptr<Leg> >  regressionVariables_;  // regression variables at exercise
+			std::vector< ext::shared_ptr<Leg> >  earlyRedemptions_;     // strikes payed at exercise
+			std::vector< ext::shared_ptr<Leg> >  regressionVariables_;  // regression variables at exercise
 		public:
-			CancellableNote ( const std::vector< boost::shared_ptr<Leg> >&  underlyings,
+			CancellableNote ( const std::vector< ext::shared_ptr<Leg> >&    underlyings,
 				              const std::vector< DateType >&                callTimes,
-							  const std::vector< boost::shared_ptr<Leg> >&  earlyRedemptions,
-							  const std::vector< boost::shared_ptr<Leg> >&  regressionVariables )
+							  const std::vector< ext::shared_ptr<Leg> >&    earlyRedemptions,
+							  const std::vector< ext::shared_ptr<Leg> >&    regressionVariables )
 							  : underlyings_(underlyings), callTimes_(callTimes), earlyRedemptions_(earlyRedemptions), regressionVariables_(regressionVariables) {
 			    // sanity checks
 			}
 			// inspectors
-			inline const std::vector< boost::shared_ptr<Leg> >& underlyings()         const { return underlyings_;         }
+			inline const std::vector< ext::shared_ptr<Leg> >& underlyings()           const { return underlyings_;         }
 			inline const std::vector< DateType >&               callTimes()           const { return callTimes_;           }
-			inline const std::vector< boost::shared_ptr<Leg> >& earlyRedemptions()    const { return earlyRedemptions_;    }
-			inline const std::vector< boost::shared_ptr<Leg> >& regressionVariables() const { return regressionVariables_; }
+			inline const std::vector< ext::shared_ptr<Leg> >& earlyRedemptions()      const { return earlyRedemptions_;    }
+			inline const std::vector< ext::shared_ptr<Leg> >& regressionVariables()   const { return regressionVariables_; }
 		};
 
 
@@ -314,7 +314,7 @@ namespace QuantLib {
 				     const std::vector<DateType>&    payTimes,
 				     const std::vector<PassiveType>& payWeights)
 				: PayoffType(obsTime), payTimes_(payTimes), payWeights_(payWeights) { }
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				ActiveType res = 0.0;
 				size_t N = (payTimes_.size()<payWeights_.size()) ? (payTimes_.size()) : (payWeights_.size());
 				for (size_t k=0; k<N; ++k) {
@@ -351,7 +351,7 @@ namespace QuantLib {
 				}
 				// finished
 			}
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				ActiveType res = 0.0;
 				if (!isConsistent_) return res;
 				// annuity...
@@ -373,7 +373,7 @@ namespace QuantLib {
 		protected:
 			std::vector<DateType> times_;
 			DateType T1_, T2_;
-			ActiveType swapRate(const boost::shared_ptr<PathType>& p, const DateType t, const DateType TN ) {
+			ActiveType swapRate(const ext::shared_ptr<PathType>& p, const DateType t, const DateType TN ) {
 				ActiveType num = p->zeroBond(t,t) - p->zeroBond(t,TN);
 				ActiveType den = 0.0;
 				for (ActiveType Ti = t; Ti<TN; Ti+=1.0) {
@@ -390,8 +390,8 @@ namespace QuantLib {
 				QL_REQUIRE(times_.size()>1,"ModelCorrelation: At least two observation times required.");
 			}
 		    // payoff should NOT be discounted
-		    inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p); }
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+		    inline virtual ActiveType discountedAt(const ext::shared_ptr<PathType>& p) { return at(p); }
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				std::vector<ActiveType> dS1(times_.size()-1), dS2(times_.size()-1);
 				ActiveType EdS1 = 0.0, EdS2 = 0.0; 
 				for (size_t i=1; i<times_.size(); ++i) {
@@ -423,7 +423,7 @@ namespace QuantLib {
 			std::vector<DateType> times_;
 			DateType T1_, Term1_; 
 			DateType T2_, Term2_;
-			ActiveType fwSwapRate(const boost::shared_ptr<PathType>& p, const DateType t, const DateType TSettle, const DateType Term ) {
+			ActiveType fwSwapRate(const ext::shared_ptr<PathType>& p, const DateType t, const DateType TSettle, const DateType Term ) {
 				ActiveType num = p->zeroBond(t,TSettle) - p->zeroBond(t,TSettle+Term);
 				ActiveType den = 0.0;
 				for (ActiveType Ti = TSettle; Ti<TSettle+Term; Ti+=1.0) {
@@ -432,7 +432,7 @@ namespace QuantLib {
 				}
 				return num / den;
 			}
-			ActiveType fraRate(const boost::shared_ptr<PathType>& p, const DateType t, const DateType TSettle, const DateType Term ) {
+			ActiveType fraRate(const ext::shared_ptr<PathType>& p, const DateType t, const DateType TSettle, const DateType Term ) {
 				ActiveType rate = (p->zeroBond(t,TSettle) / p->zeroBond(t,TSettle+Term) - 1.0)/Term;
 				return rate;
 			}
@@ -446,8 +446,8 @@ namespace QuantLib {
 				QL_REQUIRE(times_.size()>1,"ModelCorrelation: At least two observation times required.");
 			}
 		    // payoff should NOT be discounted
-		    inline virtual ActiveType discountedAt(const boost::shared_ptr<PathType>& p) { return at(p); }
-			inline virtual ActiveType at(const boost::shared_ptr<PathType>& p) {
+		    inline virtual ActiveType discountedAt(const ext::shared_ptr<PathType>& p) { return at(p); }
+			inline virtual ActiveType at(const ext::shared_ptr<PathType>& p) {
 				std::vector<ActiveType> dS1(times_.size()-1), dS2(times_.size()-1);
 				ActiveType EdS1 = 0.0, EdS2 = 0.0; 
 				for (size_t i=1; i<times_.size(); ++i) {

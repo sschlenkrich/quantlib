@@ -500,6 +500,7 @@
   <ItemGroup>
     <ClInclude Include="ql\auto_link.hpp" />
     <ClInclude Include="ql\auto_ptr.hpp" />
+    <ClInclude Include="ql\buildinfo.hpp" />
     <ClInclude Include="ql\cashflow.hpp" />
     <ClInclude Include="ql\cashflows\all.hpp" />
     <ClInclude Include="ql\cashflows\averagebmacoupon.hpp" />
@@ -851,7 +852,11 @@
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\position.hh" />
     <ClInclude Include="ql\experimental\templatemodels\montecarlo\scripting\stack.hh" />
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian\qgswaptionmodelT.hpp" />
     <ClInclude Include="ql\experimental\templatemodels\qgaussian\quasigaussianmodelabcdT.hpp" />
@@ -1926,6 +1931,7 @@
     <ClInclude Include="ql\volatilitymodel.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ql\buildinfo.cpp" />
     <ClCompile Include="ql\cashflow.cpp" />
     <ClCompile Include="ql\cashflows\averagebmacoupon.cpp" />
     <ClCompile Include="ql\cashflows\capflooredcoupon.cpp" />
@@ -2162,7 +2168,11 @@
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\flexbisondriver.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Lexer.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\montecarlo\scripting\Parser.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationbsmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\localcorrelationSLVmodel.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetbsmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\multiasset\multiassetslvmodel.cpp" />
+    <ClCompile Include="ql\experimental\templatemodels\qgaussian2\mccalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian\qgaussiancalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qgcalibrator.cpp" />
     <ClCompile Include="ql\experimental\templatemodels\qgaussian2\qglocalvolmodel.cpp" />

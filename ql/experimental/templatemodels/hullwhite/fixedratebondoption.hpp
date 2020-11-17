@@ -27,7 +27,7 @@ namespace QuantLib {
 		Option::Type                         callOrPut_;
 		void setupArguments(PricingEngine::arguments*) const;
 	public:
-		FixedRateBondOption ( const boost::shared_ptr<FixedRateBond>& underlyingBond,
+		FixedRateBondOption ( const ext::shared_ptr<FixedRateBond>& underlyingBond,
 							  const std::vector<Date>& exerciseDates,
 							  const std::vector<Real>& dirtyStrikeValues,
 						      const Option::Type callOrPut )
@@ -35,7 +35,7 @@ namespace QuantLib {
 								dirtyStrikeValues_(dirtyStrikeValues),  callOrPut_(callOrPut) {}
 
 		// constructor to map a swaption to bond option according to spread model
-		FixedRateBondOption ( const boost::shared_ptr<Swaption>& swaption,
+		FixedRateBondOption ( const ext::shared_ptr<Swaption>& swaption,
 			                  const Handle<YieldTermStructure>& discountCurve,
 							  bool                              contTenorSpread = true );
 

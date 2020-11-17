@@ -18,7 +18,7 @@ namespace QuantLib {
 
 	QGMonteCarloCalibrator::Objective::CalibSwaption::CalibSwaption (
 		Date                                expiryDate,
-		const boost::shared_ptr<SwapIndex>& swapindex,
+		const ext::shared_ptr<SwapIndex>&   swapindex,
 		const Handle<YieldTermStructure>&   discountCurve,
 		const Handle<SwaptionVolatilityStructure> volTS,
 		bool                                contTenorSpread)
@@ -84,7 +84,7 @@ namespace QuantLib {
 				if (isOutput_[i][j]>0.0                                       ||
 					isOutput_[i][j+     calibrator_->swapIndices_.size()]>0.0 ||
 					isOutput_[i][j+ 2 * calibrator_->swapIndices_.size()]>0.0 ) {
-					calibSwaptions_[i][j] = boost::shared_ptr<CalibSwaption>(
+					calibSwaptions_[i][j] = ext::shared_ptr<CalibSwaption>(
 						new CalibSwaption(expiryDate, calibrator_->swapIndices_[j], calibrator_->model_->termStructure(), calibrator_->volTS_, true));
 				}
 			}
@@ -228,12 +228,12 @@ namespace QuantLib {
 					std::vector<Real> oneOverBSample(nPaths, 0.0);
 					std::vector<Real> annuitySample(nPaths, 0.0);
 					std::vector<Real> swapRateSample(nPaths, 0.0);
-					boost::shared_ptr<QGMonteCarloCalibrator::MCPayoff> mcFloatLeg(new MCAnnuity(expiryTime, calibSwaptions_[i][j]->floatTimes(), calibSwaptions_[i][j]->floatWeights()));
-					boost::shared_ptr<QGMonteCarloCalibrator::MCPayoff> mcFixedLeg(new MCAnnuity(expiryTime, calibSwaptions_[i][j]->fixedTimes(), calibSwaptions_[i][j]->annuityWeights()));
-					boost::shared_ptr<QGMonteCarloCalibrator::MCPayoff> one(new QGMonteCarloCalibrator::MCBase::FixedAmount(1.0));
-					boost::shared_ptr<QGMonteCarloCalibrator::MCPayoff> oneAtT(new QGMonteCarloCalibrator::MCBase::Pay(one, expiryTime));
+					ext::shared_ptr<QGMonteCarloCalibrator::MCPayoff> mcFloatLeg(new MCAnnuity(expiryTime, calibSwaptions_[i][j]->floatTimes(), calibSwaptions_[i][j]->floatWeights()));
+					ext::shared_ptr<QGMonteCarloCalibrator::MCPayoff> mcFixedLeg(new MCAnnuity(expiryTime, calibSwaptions_[i][j]->fixedTimes(), calibSwaptions_[i][j]->annuityWeights()));
+					ext::shared_ptr<QGMonteCarloCalibrator::MCPayoff> one(new QGMonteCarloCalibrator::MCBase::FixedAmount(1.0));
+					ext::shared_ptr<QGMonteCarloCalibrator::MCPayoff> oneAtT(new QGMonteCarloCalibrator::MCBase::Pay(one, expiryTime));
 					for (size_t k = 0; k < nPaths; ++k) {
-						boost::shared_ptr<MCSimulation::Path> p = calibrator_->mcSimulation_->path(k);
+						ext::shared_ptr<MCSimulation::Path> p = calibrator_->mcSimulation_->path(k);
 						oneOverBSample[k] = oneAtT->discountedAt(p);
 						annuitySample[k] = mcFixedLeg->at(p);
 						swapRateSample[k] = mcFloatLeg->at(p) / annuitySample[k];
@@ -373,16 +373,16 @@ namespace QuantLib {
 		return 0.5*sum;
 	}
 
-	const boost::shared_ptr<QGMonteCarloCalibrator::QuasiGaussianModel> QGMonteCarloCalibrator::Objective::model(const Array& x) {
+	const ext::shared_ptr<QGMonteCarloCalibrator::QuasiGaussianModel> QGMonteCarloCalibrator::Objective::model(const Array& x) {
 		update(x);
 		return calibrator_->model_;
 	}
 
 	// constructor
 	QGMonteCarloCalibrator::QGMonteCarloCalibrator(
-		const boost::shared_ptr<QGMonteCarloCalibrator::QuasiGaussianModel>&  model,
+		const ext::shared_ptr<QGMonteCarloCalibrator::QuasiGaussianModel>&  model,
 		const Handle<SwaptionVolatilityStructure>&            volTS,
-		const std::vector< boost::shared_ptr<SwapIndex> >&    swapIndices,
+		const std::vector< ext::shared_ptr<SwapIndex> >&    swapIndices,
 		const Real                                            monteCarloStepSize,
 		const Size                                            monteCarloPaths,
 		const Real                                            sigmaMax,
@@ -415,7 +415,7 @@ namespace QuantLib {
 			}
 			simulationTimes.push_back(Tnext);
 		}
-		mcSimulation_ = boost::shared_ptr<MCSimulation>(new MCSimulation(model_,
+		mcSimulation_ = ext::shared_ptr<MCSimulation>(new MCSimulation(model_,
 			simulationTimes, simulationTimes, monteCarloPaths, 1234, false, true, true));  // we need to allow time interpolation
 		mcSimulation_->prepareForSlicedSimulation();  // we need this for sliced simulation later on
 		mcSimulation_->simulate(0);  // we want to initialise the initial states
