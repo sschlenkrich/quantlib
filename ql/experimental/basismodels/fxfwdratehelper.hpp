@@ -40,39 +40,39 @@ namespace QuantLib {
  
 
     //! Rate helper for bootstrapping fx points relying on interest rate parity
-	//!
-	//! For a currency pair CCY1/CCY2 the first currency is the base currency, while the second is the counter currency. 
-	//! The fx rate quotes the second (counter) currency in terms of one unit of the first (base) currency. 
-	//!
-	//! Neglecting a spot lag from formal interest rate parity one obtains the number of fx points as: 
-	//!
-	//! FX-Points/units := FX_t - FX_0 = FX_0*[DiscountFactorBase(T)/DiscountFactorCounter(T) - 1]
-	//!
-	//! FX-Points are quoted in terms of a currency pair specific unit, e.g. for EUR/USD this unit is 10000.
-	//!
-	//! The yield curves entered into the rate helper usually are the appropriate OIS-curves of the two currencies. 
-	//!
-	//! The enum bootstrapBaseOrCounter controls, which cross currency curve isgoing to be bootstrapped. The choice 'Base' 
-	//! determines a cross currency curve for the base currency while applying the OIS curve to the counter currency and for
-	//! the choice 'Counter' it is the other way around. 
+    //!
+    //! For a currency pair CCY1/CCY2 the first currency is the base currency, while the second is the counter currency. 
+    //! The fx rate quotes the second (counter) currency in terms of one unit of the first (base) currency. 
+    //!
+    //! Neglecting a spot lag from formal interest rate parity one obtains the number of fx points as: 
+    //!
+    //! FX-Points/units := FX_t - FX_0 = FX_0*[DiscountFactorBase(T)/DiscountFactorCounter(T) - 1]
+    //!
+    //! FX-Points are quoted in terms of a currency pair specific unit, e.g. for EUR/USD this unit is 10000.
+    //!
+    //! The yield curves entered into the rate helper usually are the appropriate OIS-curves of the two currencies. 
+    //!
+    //! The enum bootstrapBaseOrCounter controls, which cross currency curve isgoing to be bootstrapped. The choice 'Base' 
+    //! determines a cross currency curve for the base currency while applying the OIS curve to the counter currency and for
+    //! the choice 'Counter' it is the other way around. 
 
 
-	class FxFwdRateHelper : public RelativeDateRateHelper {
+    class FxFwdRateHelper : public RelativeDateRateHelper {
       public:
-		enum BootstrapType { Base = -1, Counter = 1};
+        enum BootstrapType { Base = -1, Counter = 1};
         FxFwdRateHelper( Currency baseCurrency,
-						 Currency counterCurrency,
-			             Rate   fxSpot,
-						 Natural spotLag,
-		                 Calendar spotLagCal,
-						 BusinessDayConvention spotLagConv,
-						 Period swapTerm,
-						 Handle<Quote> points,
-			             Real   unit,
-					     Handle<YieldTermStructure> baseCcyDiscTermStructureHandle,
-						 Handle<YieldTermStructure> cntrCcyDiscTermStructureHandle,
-						 BootstrapType bootstrapBaseOrCounter
-						 );
+                         Currency counterCurrency,
+                         Rate   fxSpot,
+                         Natural spotLag,
+                         Calendar spotLagCal,
+                         BusinessDayConvention spotLagConv,
+                         Period swapTerm,
+                         Handle<Quote> points,
+                         Real   unit,
+                         Handle<YieldTermStructure> baseCcyDiscTermStructureHandle,
+                         Handle<YieldTermStructure> cntrCcyDiscTermStructureHandle,
+                         BootstrapType bootstrapBaseOrCounter
+                         );
 
         //! \name RateHelper interface
         //@{
@@ -87,26 +87,26 @@ namespace QuantLib {
         void initializeDates();
 
         //Bootstrap direction, i.e. which curve is going to be bootstrapped
-		BootstrapType bootstrapBaseOrCounter_;
+        BootstrapType bootstrapBaseOrCounter_;
 
         //general parameters
-		Natural spotLag_;
-		Calendar spotLagCalendar_;
-		BusinessDayConvention spotLagConvention_;
-		Real   unit_;
-		Period swapTerm_;
+        Natural spotLag_;
+        Calendar spotLagCalendar_;
+        BusinessDayConvention spotLagConvention_;
+        Real   unit_;
+        Period swapTerm_;
 
-		//currency pair
-		Currency baseCurrency_;
-		Currency counterCurrency_;
-		Rate   fxSpot_;
+        //currency pair
+        Currency baseCurrency_;
+        Currency counterCurrency_;
+        Rate   fxSpot_;
 
         Handle<YieldTermStructure> baseCcyDiscTermStructureHandle_;
         Handle<YieldTermStructure> cntrCcyDiscTermStructureHandle_;
         
 
-		//curve going to be optimized
-		RelinkableHandle<YieldTermStructure> baseCcyDiscRelinkableHandle_;
+        //curve going to be optimized
+        RelinkableHandle<YieldTermStructure> baseCcyDiscRelinkableHandle_;
         RelinkableHandle<YieldTermStructure> cntrCcyDiscRelinkableHandle_;
 
      };

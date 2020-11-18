@@ -32,40 +32,40 @@ FOR A PARTICULAR PURPOSE.  See the license for more details.
 
 namespace QuantLib {
 
-	class VanillaLocalVolModelSmileSection;
-	class SwapIndex;
+    class VanillaLocalVolModelSmileSection;
+    class SwapIndex;
 
     class VanillaLocalVolSwaptionVTS : public SwaptionVolatilityStructure {
     private:
-		const Handle<SwaptionVolatilityStructure> atmVolTS_;
-		const std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > > smiles_;
-		const std::vector< Period > swapTerms_;
-		const ext::shared_ptr<SwapIndex> index_;  // a template for all the swap index per swap terms
-	protected:
-		virtual ext::shared_ptr<SmileSection> smileSectionImpl(
-			Time optionTime,
-			Time swapLength) const;
+        const Handle<SwaptionVolatilityStructure> atmVolTS_;
+        const std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > > smiles_;
+        const std::vector< Period > swapTerms_;
+        const ext::shared_ptr<SwapIndex> index_;  // a template for all the swap index per swap terms
+    protected:
+        virtual ext::shared_ptr<SmileSection> smileSectionImpl(
+            Time optionTime,
+            Time swapLength) const;
 
-		virtual Volatility volatilityImpl(Time optionTime,
-			Time swapLength,
-			Rate strike) const {
-			return smileSectionImpl(optionTime, swapLength)->volatility(strike);
-		}
+        virtual Volatility volatilityImpl(Time optionTime,
+            Time swapLength,
+            Rate strike) const {
+            return smileSectionImpl(optionTime, swapLength)->volatility(strike);
+        }
 
     public:
-		VanillaLocalVolSwaptionVTS(
-			const Handle<SwaptionVolatilityStructure>&                                              atmVolTS,
-			const std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > >&  smiles,
-			const std::vector< Period >&                                                            swapTerms,
-			const ext::shared_ptr<SwapIndex>&                                                       index);
+        VanillaLocalVolSwaptionVTS(
+            const Handle<SwaptionVolatilityStructure>&                                              atmVolTS,
+            const std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > >&  smiles,
+            const std::vector< Period >&                                                            swapTerms,
+            const ext::shared_ptr<SwapIndex>&                                                       index);
 
-		virtual VolatilityType volatilityType() const { return atmVolTS_->volatilityType(); }
+        virtual VolatilityType volatilityType() const { return atmVolTS_->volatilityType(); }
 
-		virtual const Date&   referenceDate() const { return atmVolTS_->referenceDate(); }
+        virtual const Date&   referenceDate() const { return atmVolTS_->referenceDate(); }
         virtual const Period& maxSwapTenor()  const { return atmVolTS_->maxSwapTenor();  }
-		virtual       Date    maxDate()       const { return atmVolTS_->maxDate();       }
-		virtual       Rate    minStrike()     const { return atmVolTS_->minStrike();     }
-		virtual       Rate    maxStrike()     const { return atmVolTS_->maxStrike();     }
+        virtual       Date    maxDate()       const { return atmVolTS_->maxDate();       }
+        virtual       Rate    minStrike()     const { return atmVolTS_->minStrike();     }
+        virtual       Rate    maxStrike()     const { return atmVolTS_->maxStrike();     }
 
     };
 

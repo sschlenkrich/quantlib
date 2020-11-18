@@ -22,26 +22,26 @@ namespace QuantLib {
     class FixedRateBondOption : public Instrument {
     protected:
         Leg                                  cashflows_;
-		std::vector<Date>                    exerciseDates_;
-		std::vector<Real>                    dirtyStrikeValues_;
-		Option::Type                         callOrPut_;
-		void setupArguments(PricingEngine::arguments*) const;
-	public:
-		FixedRateBondOption ( const ext::shared_ptr<FixedRateBond>& underlyingBond,
-							  const std::vector<Date>& exerciseDates,
-							  const std::vector<Real>& dirtyStrikeValues,
-						      const Option::Type callOrPut )
-							  : cashflows_(underlyingBond->cashflows()), exerciseDates_(exerciseDates),
-								dirtyStrikeValues_(dirtyStrikeValues),  callOrPut_(callOrPut) {}
+        std::vector<Date>                    exerciseDates_;
+        std::vector<Real>                    dirtyStrikeValues_;
+        Option::Type                         callOrPut_;
+        void setupArguments(PricingEngine::arguments*) const;
+    public:
+        FixedRateBondOption ( const ext::shared_ptr<FixedRateBond>& underlyingBond,
+                              const std::vector<Date>& exerciseDates,
+                              const std::vector<Real>& dirtyStrikeValues,
+                              const Option::Type callOrPut )
+                              : cashflows_(underlyingBond->cashflows()), exerciseDates_(exerciseDates),
+                                dirtyStrikeValues_(dirtyStrikeValues),  callOrPut_(callOrPut) {}
 
-		// constructor to map a swaption to bond option according to spread model
-		FixedRateBondOption ( const ext::shared_ptr<Swaption>& swaption,
-			                  const Handle<YieldTermStructure>& discountCurve,
-							  bool                              contTenorSpread = true );
+        // constructor to map a swaption to bond option according to spread model
+        FixedRateBondOption ( const ext::shared_ptr<Swaption>& swaption,
+                              const Handle<YieldTermStructure>& discountCurve,
+                              bool                              contTenorSpread = true );
 
-		bool isExpired() const { // Instrument interface
-			return exerciseDates_.back()<= Settings::instance().evaluationDate();
-		}
+        bool isExpired() const { // Instrument interface
+            return exerciseDates_.back()<= Settings::instance().evaluationDate();
+        }
 
         // inspectors
         const std::vector<Date>&  exerciseDates()      const { return exerciseDates_; }
@@ -51,25 +51,25 @@ namespace QuantLib {
         const std::vector< QuantLib::Date > payDates();
         const std::vector< QuantLib::Real > cashflowValues();
 
-		class arguments : public PricingEngine::arguments {
-		public:
+        class arguments : public PricingEngine::arguments {
+        public:
             Leg cashflows;
-			std::vector<Date> exerciseDates;
-			std::vector<Real> dirtyStrikeValues;
-			Option::Type callOrPut;
+            std::vector<Date> exerciseDates;
+            std::vector<Real> dirtyStrikeValues;
+            Option::Type callOrPut;
             void validate() const {} // add some meaningfull checks here
-		};
+        };
 
-		class results : public Instrument::results {
-		public:
-			// value (NPV), errorEstimate, additionalResults and valuationDate 
-			// are declared in Instrument::results
-			// here we may add the sensitivities
-			// fetchResults is inherited from Instrument and currently NOT overloaded
-		};
+        class results : public Instrument::results {
+        public:
+            // value (NPV), errorEstimate, additionalResults and valuationDate 
+            // are declared in Instrument::results
+            // here we may add the sensitivities
+            // fetchResults is inherited from Instrument and currently NOT overloaded
+        };
 
-		class engine : public GenericEngine<arguments,results> {};
-		// derived engines have to evaluate
+        class engine : public GenericEngine<arguments,results> {};
+        // derived engines have to evaluate
         // Real value, i.e., NPV
         // Real errorEstimate, i.e., numerical vs. analytical results
         // Date valuationDate, date until discounted

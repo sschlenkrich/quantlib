@@ -31,72 +31,72 @@ FOR A PARTICULAR PURPOSE.  See the license for more details.
 
 namespace QuantLib {
 
-	class IndexTermStructure : public TermStructure {
-	protected:
-		std::vector<Date>                dates_;
-		std::vector<Real>                values_;
+    class IndexTermStructure : public TermStructure {
+    protected:
+        std::vector<Date>                dates_;
+        std::vector<Real>                values_;
         ext::shared_ptr<Interpolation>   timeInterpol_;
-		inline void setupInterpolation() {
-			std::vector<Time> times(dates_.size());
-			for (Size i=0; i<dates_.size(); ++i) times[i] = dayCounter().yearFraction(referenceDate(),dates_[i]);
-			// for the moment we leave it with hard-coded cubic interpolation
-			timeInterpol_ = ext::shared_ptr<Interpolation>( new Interpolation(Cubic().interpolate(times.begin(),times.end(),values_.begin())) );
-		}
-	public:
-		/*! \name Constructors
-		See the TermStructure documentation for issues regarding
-		constructors.
-		*/
-		//@{
-		IndexTermStructure(
-			const DayCounter&                  dc     = DayCounter(),
-			const std::vector<Date>&           dates  = std::vector<Date>(),
-			const std::vector<Real>&           values = std::vector<Real>(),
-			const ext::shared_ptr<Interpolation>&   timeInterpol = ext::shared_ptr<Interpolation>()
-			) : TermStructure(dc), dates_(dates), values_(values), timeInterpol_(timeInterpol) {
-				setupInterpolation();
-		}
-		IndexTermStructure(
-			const Date&                        referenceDate,
-			const Calendar&                    cal    = Calendar(),
-			const DayCounter&                  dc     = DayCounter(),
-			const std::vector<Date>&           dates  = std::vector<Date>(),
-			const std::vector<Real>&           values = std::vector<Real>()
-			) : TermStructure(referenceDate,cal,dc), dates_(dates), values_(values) {
-				setupInterpolation();
-		}
-		IndexTermStructure(
-			Natural                            settlementDays,
-			const Calendar&                    cal,
-			const DayCounter&                  dc     = DayCounter(),
-			const std::vector<Date>&           dates  = std::vector<Date>(),
-			const std::vector<Real>&           values = std::vector<Real>()
-			) : TermStructure(settlementDays,cal,dc), dates_(dates), values_(values) {
-				setupInterpolation();
-		}
-		// let the user specify the time interpolation; only act as a wrapper
-		IndexTermStructure(
-			const Date&                        referenceDate,
-			const Calendar&                    cal    = Calendar(),
-			const DayCounter&                  dc     = DayCounter(),
-			const ext::shared_ptr<Interpolation>&   timeInterpol = ext::shared_ptr<Interpolation>()
-			) : TermStructure(referenceDate,cal,dc), timeInterpol_(timeInterpol) { }
+        inline void setupInterpolation() {
+            std::vector<Time> times(dates_.size());
+            for (Size i=0; i<dates_.size(); ++i) times[i] = dayCounter().yearFraction(referenceDate(),dates_[i]);
+            // for the moment we leave it with hard-coded cubic interpolation
+            timeInterpol_ = ext::shared_ptr<Interpolation>( new Interpolation(Cubic().interpolate(times.begin(),times.end(),values_.begin())) );
+        }
+    public:
+        /*! \name Constructors
+        See the TermStructure documentation for issues regarding
+        constructors.
+        */
+        //@{
+        IndexTermStructure(
+            const DayCounter&                  dc     = DayCounter(),
+            const std::vector<Date>&           dates  = std::vector<Date>(),
+            const std::vector<Real>&           values = std::vector<Real>(),
+            const ext::shared_ptr<Interpolation>&   timeInterpol = ext::shared_ptr<Interpolation>()
+            ) : TermStructure(dc), dates_(dates), values_(values), timeInterpol_(timeInterpol) {
+                setupInterpolation();
+        }
+        IndexTermStructure(
+            const Date&                        referenceDate,
+            const Calendar&                    cal    = Calendar(),
+            const DayCounter&                  dc     = DayCounter(),
+            const std::vector<Date>&           dates  = std::vector<Date>(),
+            const std::vector<Real>&           values = std::vector<Real>()
+            ) : TermStructure(referenceDate,cal,dc), dates_(dates), values_(values) {
+                setupInterpolation();
+        }
+        IndexTermStructure(
+            Natural                            settlementDays,
+            const Calendar&                    cal,
+            const DayCounter&                  dc     = DayCounter(),
+            const std::vector<Date>&           dates  = std::vector<Date>(),
+            const std::vector<Real>&           values = std::vector<Real>()
+            ) : TermStructure(settlementDays,cal,dc), dates_(dates), values_(values) {
+                setupInterpolation();
+        }
+        // let the user specify the time interpolation; only act as a wrapper
+        IndexTermStructure(
+            const Date&                        referenceDate,
+            const Calendar&                    cal    = Calendar(),
+            const DayCounter&                  dc     = DayCounter(),
+            const ext::shared_ptr<Interpolation>&   timeInterpol = ext::shared_ptr<Interpolation>()
+            ) : TermStructure(referenceDate,cal,dc), timeInterpol_(timeInterpol) { }
 
- 	    inline Real value ( Time t, bool extrapolate = true) const {
-			return timeInterpol_->operator()(t,extrapolate);
-		}
+        inline Real value ( Time t, bool extrapolate = true) const {
+            return timeInterpol_->operator()(t,extrapolate);
+        }
 
-		inline Real value (const Date& d, bool extrapolate = true) const {
-			Time t = dayCounter().yearFraction(referenceDate(),d);
+        inline Real value (const Date& d, bool extrapolate = true) const {
+            Time t = dayCounter().yearFraction(referenceDate(),d);
             return value(t,extrapolate);
-		}
+        }
 
-		// TermStructure interface
+        // TermStructure interface
 
-		//! the latest date for which the curve can return values
-		virtual Date maxDate() const { return dates_.back(); }
+        //! the latest date for which the curve can return values
+        virtual Date maxDate() const { return dates_.back(); }
 
-	};
+    };
 
 
 }

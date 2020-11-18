@@ -376,6 +376,9 @@
     <Filter Include="experimental\vanillalocalvolmodel">
       <UniqueIdentifier>{e4548260-cb9c-4d51-97cd-c64d2cdcd980}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experimental\templatemodels\hybrid">
+      <UniqueIdentifier>{db386236-aeb3-422e-86d4-254ea7660c84}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ql\methods\all.hpp">
@@ -4594,6 +4597,24 @@
       <Filter>experimental\templatemodels\qgaussian2</Filter>
     </ClInclude>
     <ClInclude Include="ql\buildinfo.hpp" />
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\all.hpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\assetmodelT.hpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodels.hpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\hybridmodelT.hpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\localvolassetmodel.hpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
+    </ClInclude>
+    <ClInclude Include="ql\experimental\templatemodels\hybrid\spreadmodelT.hpp">
+      <Filter>experimental\templatemodels\hybrid</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ql\methods\montecarlo\brownianbridge.cpp">

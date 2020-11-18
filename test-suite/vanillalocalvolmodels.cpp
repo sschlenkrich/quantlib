@@ -39,22 +39,22 @@ using namespace boost::unit_test_framework;
 
 namespace {
 
-	// auxilliary data
-	Period termsData[] = {
-		Period( 0,Days),
-		Period( 1,Years),
-		Period( 2,Years),
-		Period( 3,Years),
-		Period( 5,Years),
-		Period( 7,Years),
-		Period(10,Years),
-		Period(15,Years),
-		Period(20,Years),
-		Period(61,Years)   // avoid extrapolation issues with 30y caplets
-	};
-	std::vector<Period> terms(termsData, termsData+10);
+    // auxilliary data
+    Period termsData[] = {
+        Period( 0,Days),
+        Period( 1,Years),
+        Period( 2,Years),
+        Period( 3,Years),
+        Period( 5,Years),
+        Period( 7,Years),
+        Period(10,Years),
+        Period(15,Years),
+        Period(20,Years),
+        Period(61,Years)   // avoid extrapolation issues with 30y caplets
+    };
+    std::vector<Period> terms(termsData, termsData+10);
 
-	Real discRatesData[] = {
+    Real discRatesData[] = {
         -0.00147407	  ,
         -0.001761684  ,
         -0.001736745  ,
@@ -65,10 +65,10 @@ namespace {
          0.011391278  ,
          0.013334611  ,
          0.013982809
-	};
-	std::vector<Real> discRates(discRatesData, discRatesData+10);
+    };
+    std::vector<Real> discRates(discRatesData, discRatesData+10);
 
-	Real proj3mRatesData[] = {
+    Real proj3mRatesData[] = {
        -0.000483439	 ,
        -0.000578569	 ,
        -0.000383832	 ,
@@ -79,10 +79,10 @@ namespace {
         0.012788095	 ,
         0.014534052	 ,
         0.014942896
-	};
-	std::vector<Real> proj3mRates(proj3mRatesData, proj3mRatesData+10);
+    };
+    std::vector<Real> proj3mRates(proj3mRatesData, proj3mRatesData+10);
 
-	Real proj6mRatesData[] = {
+    Real proj6mRatesData[] = {
         0.000233608	 ,
         0.000218862	 ,
         0.000504018	 ,
@@ -93,22 +93,22 @@ namespace {
         0.013521628	 ,
         0.015136391	 ,
         0.015377704
-	};
-	std::vector<Real> proj6mRates(proj6mRatesData, proj6mRatesData+10);
+    };
+    std::vector<Real> proj6mRates(proj6mRatesData, proj6mRatesData+10);
 
-	Handle<YieldTermStructure> getYTS(const std::vector<Period>& terms, const std::vector<Real>& rates, const Real spread = 0.0) {
-		Date today = Settings::instance().evaluationDate();
-		std::vector<Date> dates;
-		for (Size k = 0; k < terms.size(); ++k) dates.push_back(NullCalendar().advance(today, terms[k], Unadjusted));
-		std::vector<Real> ratesPlusSpread(rates);
-		for (Size k = 0; k < ratesPlusSpread.size(); ++k) ratesPlusSpread[k] += spread;
-		ext::shared_ptr<YieldTermStructure> ts = ext::shared_ptr<YieldTermStructure>(new InterpolatedZeroCurve<Cubic>(
-			dates, ratesPlusSpread, Actual365Fixed(), NullCalendar()));
-		return RelinkableHandle<YieldTermStructure>(ts);
-	}
+    Handle<YieldTermStructure> getYTS(const std::vector<Period>& terms, const std::vector<Real>& rates, const Real spread = 0.0) {
+        Date today = Settings::instance().evaluationDate();
+        std::vector<Date> dates;
+        for (Size k = 0; k < terms.size(); ++k) dates.push_back(NullCalendar().advance(today, terms[k], Unadjusted));
+        std::vector<Real> ratesPlusSpread(rates);
+        for (Size k = 0; k < ratesPlusSpread.size(); ++k) ratesPlusSpread[k] += spread;
+        ext::shared_ptr<YieldTermStructure> ts = ext::shared_ptr<YieldTermStructure>(new InterpolatedZeroCurve<Cubic>(
+            dates, ratesPlusSpread, Actual365Fixed(), NullCalendar()));
+        return RelinkableHandle<YieldTermStructure>(ts);
+    }
 
 
-	Period swAtmExpiryData[] = {
+    Period swAtmExpiryData[] = {
         Period ( 1, Months),
         Period ( 2, Months),
         Period ( 3, Months),
@@ -129,10 +129,10 @@ namespace {
         Period (20, Years),
         Period (25, Years),
         Period (30, Years)
-	};
-	std::vector<Period> swAtmExpiryTerms(swAtmExpiryData, swAtmExpiryData + 20);
+    };
+    std::vector<Period> swAtmExpiryTerms(swAtmExpiryData, swAtmExpiryData + 20);
 
-	Period swAtmSwapData[] = {
+    Period swAtmSwapData[] = {
         Period ( 1, Years),
         Period ( 2, Years),
         Period ( 3, Years),
@@ -147,8 +147,8 @@ namespace {
         Period (20, Years),
         Period (25, Years),
         Period (30, Years)
-	};
-	std::vector<Period> swAtmSwapTerms(swAtmSwapData, swAtmSwapData + 14);
+    };
+    std::vector<Period> swAtmSwapTerms(swAtmSwapData, swAtmSwapData + 14);
 
     Real swAtmRowData01m[] = {  0.001528,  0.002183,  0.002887,  0.003573,  0.004140,  0.004486,  0.004669,  0.004736,  0.004732,  0.004705,  0.005063,  0.005222,  0.005326,  0.005431 };
     Real swAtmRowData02m[] = {  0.001512,  0.002160,  0.002857,  0.003536,  0.004097,  0.004440,  0.004622,  0.004687,  0.004683,  0.004655,  0.004986,  0.005122,  0.005198,  0.005275 };
@@ -171,38 +171,38 @@ namespace {
     Real swAtmRowData25y[] = {  0.005367,  0.005393,  0.005407,  0.005406,  0.005391,  0.005371,  0.005339,  0.005296,  0.005244,  0.005182,  0.004667,  0.004246,  0.004045,  0.003885 };
     Real swAtmRowData30y[] = {  0.005041,  0.005066,  0.005080,  0.005078,  0.005059,  0.005024,  0.004970,  0.004903,  0.004827,  0.004746,  0.004293,  0.003927,  0.003749,  0.003608 };
     
-	Handle<SwaptionVolatilityStructure> getSwaptionVTS() {
-		std::vector< std::vector<Real> > swaptionVols;
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData01m, swAtmRowData01m + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData02m, swAtmRowData02m + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData03m, swAtmRowData03m + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData06m, swAtmRowData06m + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData09m, swAtmRowData09m + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData01y, swAtmRowData01y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData18m, swAtmRowData18m + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData02y, swAtmRowData02y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData03y, swAtmRowData03y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData04y, swAtmRowData04y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData05y, swAtmRowData05y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData06y, swAtmRowData06y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData07y, swAtmRowData07y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData08y, swAtmRowData08y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData09y, swAtmRowData09y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData10y, swAtmRowData10y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData15y, swAtmRowData15y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData20y, swAtmRowData20y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData25y, swAtmRowData25y + 14));
-		swaptionVols.push_back(std::vector<Real>(swAtmRowData30y, swAtmRowData30y + 14));
-		std::vector< std::vector< Handle<Quote> > > swaptionVolQuotes;
-		for (Size i = 0; i < swaptionVols.size(); ++i) {
-			std::vector< Handle<Quote> > row;
-			for (Size j = 0; j < swaptionVols[i].size(); ++j) row.push_back(
-				RelinkableHandle<Quote>(ext::shared_ptr<Quote>(new SimpleQuote(swaptionVols[i][j]))));
-			swaptionVolQuotes.push_back(row);
-		}
-		ext::shared_ptr<SwaptionVolatilityStructure> tmp(new SwaptionVolatilityMatrix(TARGET(), Following, swAtmExpiryTerms, swAtmSwapTerms, swaptionVolQuotes, Actual365Fixed(),true, Normal));
-		return RelinkableHandle<SwaptionVolatilityStructure>(tmp);
-	}
+    Handle<SwaptionVolatilityStructure> getSwaptionVTS() {
+        std::vector< std::vector<Real> > swaptionVols;
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData01m, swAtmRowData01m + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData02m, swAtmRowData02m + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData03m, swAtmRowData03m + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData06m, swAtmRowData06m + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData09m, swAtmRowData09m + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData01y, swAtmRowData01y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData18m, swAtmRowData18m + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData02y, swAtmRowData02y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData03y, swAtmRowData03y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData04y, swAtmRowData04y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData05y, swAtmRowData05y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData06y, swAtmRowData06y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData07y, swAtmRowData07y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData08y, swAtmRowData08y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData09y, swAtmRowData09y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData10y, swAtmRowData10y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData15y, swAtmRowData15y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData20y, swAtmRowData20y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData25y, swAtmRowData25y + 14));
+        swaptionVols.push_back(std::vector<Real>(swAtmRowData30y, swAtmRowData30y + 14));
+        std::vector< std::vector< Handle<Quote> > > swaptionVolQuotes;
+        for (Size i = 0; i < swaptionVols.size(); ++i) {
+            std::vector< Handle<Quote> > row;
+            for (Size j = 0; j < swaptionVols[i].size(); ++j) row.push_back(
+                RelinkableHandle<Quote>(ext::shared_ptr<Quote>(new SimpleQuote(swaptionVols[i][j]))));
+            swaptionVolQuotes.push_back(row);
+        }
+        ext::shared_ptr<SwaptionVolatilityStructure> tmp(new SwaptionVolatilityMatrix(TARGET(), Following, swAtmExpiryTerms, swAtmSwapTerms, swaptionVolQuotes, Actual365Fixed(),true, Normal));
+        return RelinkableHandle<SwaptionVolatilityStructure>(tmp);
+    }
 
     
     Real relStrikes[] = { -0.0200,  -0.0100,  -0.0050,  -0.0025,   0.0000,   0.0025,   0.0050,   0.0100,   0.0200   };
@@ -214,266 +214,266 @@ namespace {
     Real smile3mx10[] = {  0.006652, 0.005346, 0.004674, 0.004583, 0.004850, 0.005431, 0.006161, 0.007743, 0.010880 };
     Real smile01x10[] = {  0.005443, 0.005228, 0.005271, 0.005398, 0.005600, 0.005879, 0.006203, 0.006952, 0.008603 };
     Real smile02x10[] = {  0.005397, 0.005492, 0.005685, 0.005821, 0.005971, 0.006167, 0.006367, 0.006818, 0.007840 };
-	Real smile05x10[] = {  0.006096, 0.006234, 0.006427, 0.006541, 0.006622, 0.006821, 0.006946, 0.007226, 0.007875 };
+    Real smile05x10[] = {  0.006096, 0.006234, 0.006427, 0.006541, 0.006622, 0.006821, 0.006946, 0.007226, 0.007875 };
     Real smile10x10[] = {  0.006175, 0.006353, 0.006485, 0.006582, 0.006602, 0.006850, 0.006923, 0.007097, 0.007495 };
     Real smile05x30[] = {  0.005560, 0.005660, 0.005792, 0.005871, 0.005958, 0.006147, 0.006233, 0.006458, 0.007048 };
 
-	ext::shared_ptr<VanillaLocalVolModelSmileSection> getSmileSection(const Period& expTerm, const Period& swapTerm, const Real* smileData, const Size smileOffset = 0, bool testSmile = true) {
-		// market data
-		Handle<YieldTermStructure> discYTS = getYTS(terms, discRates);
-		Handle<YieldTermStructure> proj6mYTS = getYTS(terms, proj6mRates);
-		ext::shared_ptr<SwapIndex> index(new EuriborSwapIsdaFixA(swapTerm, proj6mYTS, discYTS));
-		// dates and forward
-		Calendar cal = index->fixingCalendar();
-		Date today = discYTS->referenceDate();
-		Date expiryDate = cal.advance(today, expTerm);
-		Rate S0 = index->fixing(expiryDate);
-		// data
-		std::vector<Rate> relativeStrikes(relStrikes + smileOffset, relStrikes + 9);
-		std::vector<Volatility> smileVolatilities(smileData, smileData + 9 - smileOffset);  // we might have less smile data than strikes
-		Rate extrapolationRelativeStrike = relativeStrikes.back() + 0.05;
-		Real extrapolationSlope = 0.0;
-		// default optimisation parameters should be appropriate to set up the model/smile properly
-		ext::shared_ptr<VanillaLocalVolModelSmileSection> smile(new VanillaLocalVolModelSmileSection(expiryDate, S0, relativeStrikes, smileVolatilities, extrapolationRelativeStrike, extrapolationSlope));
-		//BOOST_TEST_MESSAGE("Smile is set up :)");
-		if (testSmile) {
-			// we check the calibration accuracy here
-			Real smileTol = 2.0e-4; // 2bp is rather relaxed; mostly we would expect much better accuracy
-			for (Size k = smileOffset; k < 9; ++k) {
-				Real modelVol = smile->volatility(S0 + relStrikes[k]);
-				Real inputVol = smileData[k - smileOffset];
-				Real variance = modelVol - inputVol;
-				Time ttE = Actual365Fixed().yearFraction(today, expiryDate);
-				Real vega = bachelierBlackFormulaStdDevDerivative(S0 + relStrikes[k], S0, inputVol*sqrt(ttE))*sqrt(ttE);
-				//BOOST_TEST_MESSAGE("E: " << io::short_period(expTerm) << ", S: " << io::short_period(swapTerm)
-				//	<< ", K: " << relStrikes[k] << ", M: " << modelVol << ", I: " << inputVol << ", D:" << variance	<< ", V:" << vega);
-				Real tol = (relStrikes[k] == 0.0) ? (1.0e-12) : (smileTol);  // for ATM we expect to be spot on
-				if (fabs(variance)>tol)
-					BOOST_ERROR("VanillaLocalVolModel calibration accuracy failed for\n"
-						<< "E: " << io::short_period(expTerm) << ", S: " << io::short_period(swapTerm)
-						<< ", K: " << relStrikes[k] << ", M: " << modelVol << ", I: " << inputVol << ", D:" << variance << ", V:" << vega);
-			}
-		}
-		return smile;
-	}
+    ext::shared_ptr<VanillaLocalVolModelSmileSection> getSmileSection(const Period& expTerm, const Period& swapTerm, const Real* smileData, const Size smileOffset = 0, bool testSmile = true) {
+        // market data
+        Handle<YieldTermStructure> discYTS = getYTS(terms, discRates);
+        Handle<YieldTermStructure> proj6mYTS = getYTS(terms, proj6mRates);
+        ext::shared_ptr<SwapIndex> index(new EuriborSwapIsdaFixA(swapTerm, proj6mYTS, discYTS));
+        // dates and forward
+        Calendar cal = index->fixingCalendar();
+        Date today = discYTS->referenceDate();
+        Date expiryDate = cal.advance(today, expTerm);
+        Rate S0 = index->fixing(expiryDate);
+        // data
+        std::vector<Rate> relativeStrikes(relStrikes + smileOffset, relStrikes + 9);
+        std::vector<Volatility> smileVolatilities(smileData, smileData + 9 - smileOffset);  // we might have less smile data than strikes
+        Rate extrapolationRelativeStrike = relativeStrikes.back() + 0.05;
+        Real extrapolationSlope = 0.0;
+        // default optimisation parameters should be appropriate to set up the model/smile properly
+        ext::shared_ptr<VanillaLocalVolModelSmileSection> smile(new VanillaLocalVolModelSmileSection(expiryDate, S0, relativeStrikes, smileVolatilities, extrapolationRelativeStrike, extrapolationSlope));
+        //BOOST_TEST_MESSAGE("Smile is set up :)");
+        if (testSmile) {
+            // we check the calibration accuracy here
+            Real smileTol = 2.0e-4; // 2bp is rather relaxed; mostly we would expect much better accuracy
+            for (Size k = smileOffset; k < 9; ++k) {
+                Real modelVol = smile->volatility(S0 + relStrikes[k]);
+                Real inputVol = smileData[k - smileOffset];
+                Real variance = modelVol - inputVol;
+                Time ttE = Actual365Fixed().yearFraction(today, expiryDate);
+                Real vega = bachelierBlackFormulaStdDevDerivative(S0 + relStrikes[k], S0, inputVol*sqrt(ttE))*sqrt(ttE);
+                //BOOST_TEST_MESSAGE("E: " << io::short_period(expTerm) << ", S: " << io::short_period(swapTerm)
+                //	<< ", K: " << relStrikes[k] << ", M: " << modelVol << ", I: " << inputVol << ", D:" << variance	<< ", V:" << vega);
+                Real tol = (relStrikes[k] == 0.0) ? (1.0e-12) : (smileTol);  // for ATM we expect to be spot on
+                if (fabs(variance)>tol)
+                    BOOST_ERROR("VanillaLocalVolModel calibration accuracy failed for\n"
+                        << "E: " << io::short_period(expTerm) << ", S: " << io::short_period(swapTerm)
+                        << ", K: " << relStrikes[k] << ", M: " << modelVol << ", I: " << inputVol << ", D:" << variance << ", V:" << vega);
+            }
+        }
+        return smile;
+    }
 
-	void testSwaptionVTSSmileInterpolation(
-		const ext::shared_ptr<SwaptionVolatilityStructure>      swVTS,
-		const ext::shared_ptr<VanillaLocalVolModelSmileSection> smile,
-		const Period&                                           expTerm,
-		const Period&                                           swapTerm,
-		const Real                                              tolerance) {
-		for (Real relStrike = -0.05; relStrike <= 0.05; relStrike += 0.001) {
-			Rate fwd  = smile->atmLevel();
-			Real vol1 = smile->volatility(fwd+relStrike);
-			Real vol2 = swVTS->volatility(expTerm, swapTerm, fwd + relStrike);
-			Real variance = vol2 - vol1;
-			//BOOST_TEST_MESSAGE("K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
-			if (fabs(variance)>tolerance)
-				BOOST_ERROR("VanillaLocalVolSwaptionVTS interpolation failed for\n"
-					<< "Exp: " << io::short_period(expTerm) << ", Swp: " << io::short_period(swapTerm)
-					<< ", rK: " << relStrike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
-		}
-	}
+    void testSwaptionVTSSmileInterpolation(
+        const ext::shared_ptr<SwaptionVolatilityStructure>      swVTS,
+        const ext::shared_ptr<VanillaLocalVolModelSmileSection> smile,
+        const Period&                                           expTerm,
+        const Period&                                           swapTerm,
+        const Real                                              tolerance) {
+        for (Real relStrike = -0.05; relStrike <= 0.05; relStrike += 0.001) {
+            Rate fwd  = smile->atmLevel();
+            Real vol1 = smile->volatility(fwd+relStrike);
+            Real vol2 = swVTS->volatility(expTerm, swapTerm, fwd + relStrike);
+            Real variance = vol2 - vol1;
+            //BOOST_TEST_MESSAGE("K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
+            if (fabs(variance)>tolerance)
+                BOOST_ERROR("VanillaLocalVolSwaptionVTS interpolation failed for\n"
+                    << "Exp: " << io::short_period(expTerm) << ", Swp: " << io::short_period(swapTerm)
+                    << ", rK: " << relStrike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
+        }
+    }
 
 }  // namespace
 
 
 void VanillaLocalVolModelTest::testNormalModelBoundaryCase() {
-	BOOST_TEST_MESSAGE("Testing normal model boundary case...");
-	// model setting
-	Time T = 10.0;
-	Real S0 = 0.05;
-	Real sigmaATM = 0.01;
-	std::vector<Real> Sp(3), Sm(2), Mp(3), Mm(2);
-	Sp[0] = 0.06, Sp[1] = 0.07, Sp[2] = 0.10;
-	Mp[0] = 0.00, Mp[1] = 0.00, Mp[2] = 0.00;  // normal model has zero slope
-	Sm[0] = 0.02, Sm[1] = -0.01;
-	Mm[0] = 0.00, Mm[1] =  0.00;  // normal model has zero slope
-	ext::shared_ptr<VanillaLocalVolModel> model(new VanillaLocalVolModel(T, S0, sigmaATM, Sp, Sm, Mp, Mm));
-	// normal model should not require out-of-the-money adjusters
-	// BOOST_TEST_MESSAGE("alpha-1: " << (model->alpha() - 1.0) << ", nu: " << model->nu() << "\n");
-	if (fabs(model->alpha()-1.0) > 1.0e-12)
-		BOOST_ERROR("VanillaLocalVolModel normal model boundary case failed with alpha-1 = " << model->alpha()-1.0 << ".\n");
-	if (fabs(model->nu()) > 1.0e-12)
-		BOOST_ERROR("VanillaLocalVolModel normal model boundary case failed with nu = " << model->nu() << ".\n");
-	// pricing test settings
-	Real relTol = 1.0e-12;
-	for (Real strike = -0.02; strike < 0.13; strike += 0.01) {
-		Real modelPrice = model->expectation((strike > S0), strike);
-		Real referPrice = bachelierBlackFormula((strike > S0) ? (Option::Call) : (Option::Put), strike, S0, sigmaATM*sqrt(T));
-		Real variance = fabs(modelPrice / referPrice - 1.0);
-		//BOOST_TEST_MESSAGE("K: " << strike << ", Vm: " << modelPrice << ", Vr: " << referPrice << ", Var: " << variance << "\n");
-		if (variance > relTol)
-			BOOST_ERROR("VanillaLocalVolModel normal model boundary case pricing failed.\n"
-				<< "T: " << T << ", S0: " << S0 << ", sigmaATM: " << sigmaATM << ", K: " << strike << "\n"
-				<< "modelPrice: " << modelPrice << ", referPrice: " << referPrice << ", tol: " << relTol << "\n");
-	}
+    BOOST_TEST_MESSAGE("Testing normal model boundary case...");
+    // model setting
+    Time T = 10.0;
+    Real S0 = 0.05;
+    Real sigmaATM = 0.01;
+    std::vector<Real> Sp(3), Sm(2), Mp(3), Mm(2);
+    Sp[0] = 0.06, Sp[1] = 0.07, Sp[2] = 0.10;
+    Mp[0] = 0.00, Mp[1] = 0.00, Mp[2] = 0.00;  // normal model has zero slope
+    Sm[0] = 0.02, Sm[1] = -0.01;
+    Mm[0] = 0.00, Mm[1] =  0.00;  // normal model has zero slope
+    ext::shared_ptr<VanillaLocalVolModel> model(new VanillaLocalVolModel(T, S0, sigmaATM, Sp, Sm, Mp, Mm));
+    // normal model should not require out-of-the-money adjusters
+    // BOOST_TEST_MESSAGE("alpha-1: " << (model->alpha() - 1.0) << ", nu: " << model->nu() << "\n");
+    if (fabs(model->alpha()-1.0) > 1.0e-12)
+        BOOST_ERROR("VanillaLocalVolModel normal model boundary case failed with alpha-1 = " << model->alpha()-1.0 << ".\n");
+    if (fabs(model->nu()) > 1.0e-12)
+        BOOST_ERROR("VanillaLocalVolModel normal model boundary case failed with nu = " << model->nu() << ".\n");
+    // pricing test settings
+    Real relTol = 1.0e-12;
+    for (Real strike = -0.02; strike < 0.13; strike += 0.01) {
+        Real modelPrice = model->expectation((strike > S0), strike);
+        Real referPrice = bachelierBlackFormula((strike > S0) ? (Option::Call) : (Option::Put), strike, S0, sigmaATM*sqrt(T));
+        Real variance = fabs(modelPrice / referPrice - 1.0);
+        //BOOST_TEST_MESSAGE("K: " << strike << ", Vm: " << modelPrice << ", Vr: " << referPrice << ", Var: " << variance << "\n");
+        if (variance > relTol)
+            BOOST_ERROR("VanillaLocalVolModel normal model boundary case pricing failed.\n"
+                << "T: " << T << ", S0: " << S0 << ", sigmaATM: " << sigmaATM << ", K: " << strike << "\n"
+                << "modelPrice: " << modelPrice << ", referPrice: " << referPrice << ", tol: " << relTol << "\n");
+    }
 }
 
 void VanillaLocalVolModelTest::testShiftedLognormalModelBoundaryCase() {
-	BOOST_TEST_MESSAGE("Testing shfted lognormal model boundary case...");       
-	// model setting
-	Time T = 10.0;
-	Real S0 = 0.05;
-	Real sigmaATM = 0.01;
-	Real slpe = 0.20;
-	std::vector<Real> Sp(3), Sm(2), Mp(3), Mm(2);
-	Sp[0] = 0.06, Sp[1] = 0.07, Sp[2] = 0.10;
-	Mp[0] = slpe, Mp[1] = slpe, Mp[2] = slpe;  // shifted lognormal model has constant slope
-	Sm[0] = 0.02, Sm[1] = -0.01;
-	Mm[0] = slpe, Mm[1] = slpe;  // normal model has constant slope
-	ext::shared_ptr<VanillaLocalVolModel> model(new VanillaLocalVolModel(T, S0, sigmaATM, Sp, Sm, Mp, Mm));
-	Real sigma0 = model->localVol(S0);
-	Real shift = sigma0 / slpe - S0;   // localVol: sigma0 + m (S - S0) = m (S + [sigma0/m - S0])
-	//BOOST_TEST_MESSAGE("sigma0: " << sigma0 << ", shift: " << shift << "\n");
-	// shifted lognormal model should not require out-of-the-money adjusters
-	//BOOST_TEST_MESSAGE("alpha-1: " << (model->alpha() - 1.0) << ", nu: " << model->nu() << "\n");
-	if (fabs(model->alpha() - 1.0) > 1.0e-12)
-		BOOST_ERROR("VanillaLocalVolModel shifted lognormal model boundary case failed with alpha-1 = " << model->alpha() - 1.0 << ".\n");
-	if (fabs(model->nu()) > 1.0e-12)
-		BOOST_ERROR("VanillaLocalVolModel shifted lognormal model boundary case failed with nu = " << model->nu() << ".\n");
-	// pricing test settings
-	Real relTol = 1.0e-12;
-	for (Real strike = -0.02; strike < 0.13; strike += 0.01) {
-		Real modelPrice = model->expectation((strike > S0), strike);
-		Real referPrice = 0.0; // default
-		if (strike+shift>=0.0)
-			referPrice = blackFormula((strike > S0) ? (Option::Call) : (Option::Put), strike, S0, slpe*sqrt(T), 1.0, shift);
-		Real variance = fabs(modelPrice / referPrice - 1.0);
-		//BOOST_TEST_MESSAGE("K: " << strike << ", Vm: " << modelPrice << ", Vr: " << referPrice << ", Var: " << variance << "\n");
-		if (variance > relTol)
-			BOOST_ERROR("VanillaLocalVolModel shifted lognormal model boundary case pricing failed.\n"
-				<< "T: " << T << ", S0: " << S0 << ", sigmaATM: " << sigmaATM << ", K: " << strike << "\n"
-				<< "modelPrice: " << modelPrice << ", referPrice: " << referPrice << ", tol: " << relTol << "\n");
-	}
+    BOOST_TEST_MESSAGE("Testing shfted lognormal model boundary case...");       
+    // model setting
+    Time T = 10.0;
+    Real S0 = 0.05;
+    Real sigmaATM = 0.01;
+    Real slpe = 0.20;
+    std::vector<Real> Sp(3), Sm(2), Mp(3), Mm(2);
+    Sp[0] = 0.06, Sp[1] = 0.07, Sp[2] = 0.10;
+    Mp[0] = slpe, Mp[1] = slpe, Mp[2] = slpe;  // shifted lognormal model has constant slope
+    Sm[0] = 0.02, Sm[1] = -0.01;
+    Mm[0] = slpe, Mm[1] = slpe;  // normal model has constant slope
+    ext::shared_ptr<VanillaLocalVolModel> model(new VanillaLocalVolModel(T, S0, sigmaATM, Sp, Sm, Mp, Mm));
+    Real sigma0 = model->localVol(S0);
+    Real shift = sigma0 / slpe - S0;   // localVol: sigma0 + m (S - S0) = m (S + [sigma0/m - S0])
+    //BOOST_TEST_MESSAGE("sigma0: " << sigma0 << ", shift: " << shift << "\n");
+    // shifted lognormal model should not require out-of-the-money adjusters
+    //BOOST_TEST_MESSAGE("alpha-1: " << (model->alpha() - 1.0) << ", nu: " << model->nu() << "\n");
+    if (fabs(model->alpha() - 1.0) > 1.0e-12)
+        BOOST_ERROR("VanillaLocalVolModel shifted lognormal model boundary case failed with alpha-1 = " << model->alpha() - 1.0 << ".\n");
+    if (fabs(model->nu()) > 1.0e-12)
+        BOOST_ERROR("VanillaLocalVolModel shifted lognormal model boundary case failed with nu = " << model->nu() << ".\n");
+    // pricing test settings
+    Real relTol = 1.0e-12;
+    for (Real strike = -0.02; strike < 0.13; strike += 0.01) {
+        Real modelPrice = model->expectation((strike > S0), strike);
+        Real referPrice = 0.0; // default
+        if (strike+shift>=0.0)
+            referPrice = blackFormula((strike > S0) ? (Option::Call) : (Option::Put), strike, S0, slpe*sqrt(T), 1.0, shift);
+        Real variance = fabs(modelPrice / referPrice - 1.0);
+        //BOOST_TEST_MESSAGE("K: " << strike << ", Vm: " << modelPrice << ", Vr: " << referPrice << ", Var: " << variance << "\n");
+        if (variance > relTol)
+            BOOST_ERROR("VanillaLocalVolModel shifted lognormal model boundary case pricing failed.\n"
+                << "T: " << T << ", S0: " << S0 << ", sigmaATM: " << sigmaATM << ", K: " << strike << "\n"
+                << "modelPrice: " << modelPrice << ", referPrice: " << referPrice << ", tol: " << relTol << "\n");
+    }
 }
 
 void VanillaLocalVolModelTest::testSmileCalibration() {
-   	BOOST_TEST_MESSAGE("Testing smile calibration to market data...");
-	std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > > smiles;
-	smiles.resize(5);   // 1y, 2y, 5y, 10y, 30y swaps
-	smiles[0].push_back(getSmileSection(Period( 1, Years), Period( 1, Years), smile01x01, 1));
-	smiles[1].push_back(getSmileSection(Period(3, Months), Period( 2, Years), smile3mx02, 2));
-	smiles[1].push_back(getSmileSection(Period( 2, Years), Period( 2, Years), smile02x02, 1));
-	smiles[2].push_back(getSmileSection(Period( 1, Years), Period( 5, Years), smile01x05, 0));
-	smiles[2].push_back(getSmileSection(Period( 5, Years), Period( 5, Years), smile05x05, 0));
-	smiles[3].push_back(getSmileSection(Period(3, Months), Period(10, Years), smile3mx10, 0));
-	smiles[3].push_back(getSmileSection(Period( 1, Years), Period(10, Years), smile01x10, 0));
-	smiles[3].push_back(getSmileSection(Period( 2, Years), Period(10, Years), smile02x10, 0));
-	smiles[3].push_back(getSmileSection(Period( 5, Years), Period(10, Years), smile05x10, 0));
-	smiles[3].push_back(getSmileSection(Period(10, Years), Period(10, Years), smile10x10, 0));
-	smiles[4].push_back(getSmileSection(Period( 5, Years), Period(30, Years), smile05x30, 0));
+    BOOST_TEST_MESSAGE("Testing smile calibration to market data...");
+    std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > > smiles;
+    smiles.resize(5);   // 1y, 2y, 5y, 10y, 30y swaps
+    smiles[0].push_back(getSmileSection(Period( 1, Years), Period( 1, Years), smile01x01, 1));
+    smiles[1].push_back(getSmileSection(Period(3, Months), Period( 2, Years), smile3mx02, 2));
+    smiles[1].push_back(getSmileSection(Period( 2, Years), Period( 2, Years), smile02x02, 1));
+    smiles[2].push_back(getSmileSection(Period( 1, Years), Period( 5, Years), smile01x05, 0));
+    smiles[2].push_back(getSmileSection(Period( 5, Years), Period( 5, Years), smile05x05, 0));
+    smiles[3].push_back(getSmileSection(Period(3, Months), Period(10, Years), smile3mx10, 0));
+    smiles[3].push_back(getSmileSection(Period( 1, Years), Period(10, Years), smile01x10, 0));
+    smiles[3].push_back(getSmileSection(Period( 2, Years), Period(10, Years), smile02x10, 0));
+    smiles[3].push_back(getSmileSection(Period( 5, Years), Period(10, Years), smile05x10, 0));
+    smiles[3].push_back(getSmileSection(Period(10, Years), Period(10, Years), smile10x10, 0));
+    smiles[4].push_back(getSmileSection(Period( 5, Years), Period(30, Years), smile05x30, 0));
 }
 
 
 void VanillaLocalVolModelTest::testSmileInterpolation() {
-	BOOST_TEST_MESSAGE("Testing smile interpolation accross expiries and swap terms...");
-	std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > > smiles;
-	smiles.resize(5);   // 1y, 2y, 5y, 10y, 30y swaps
-	// we do not want to run the smile calibration test here
-	smiles[0].push_back(getSmileSection(Period( 1, Years), Period( 1, Years), smile01x01, 1, false));
-	smiles[1].push_back(getSmileSection(Period(3, Months), Period( 2, Years), smile3mx02, 2, false));
-	smiles[1].push_back(getSmileSection(Period( 2, Years), Period( 2, Years), smile02x02, 1, false));
-	smiles[2].push_back(getSmileSection(Period( 1, Years), Period( 5, Years), smile01x05, 0, false));
-	smiles[2].push_back(getSmileSection(Period( 5, Years), Period( 5, Years), smile05x05, 0, false));
-	smiles[3].push_back(getSmileSection(Period(3, Months), Period(10, Years), smile3mx10, 0, false));
-	smiles[3].push_back(getSmileSection(Period( 1, Years), Period(10, Years), smile01x10, 0, false));
-	smiles[3].push_back(getSmileSection(Period( 2, Years), Period(10, Years), smile02x10, 0, false));
-	smiles[3].push_back(getSmileSection(Period( 5, Years), Period(10, Years), smile05x10, 0, false));
-	smiles[3].push_back(getSmileSection(Period(10, Years), Period(10, Years), smile10x10, 0, false));
-	smiles[4].push_back(getSmileSection(Period( 5, Years), Period(30, Years), smile05x30, 0, false));
-	// we interpolate 3m2y and 1y5y smile and check boundary cases
-	// we collect essentials for 3m2y smile
-	Date expDate1 = smiles[1][0]->exerciseDate();
-	Rate fwd1     = smiles[1][0]->atmLevel();
-	Real atmVol1  = smiles[1][0]->volatility(fwd1);
-	ext::shared_ptr<VanillaLocalVolModelSmileSection> smile1(new VanillaLocalVolModelSmileSection(expDate1, fwd1, atmVol1, smiles[1][0], smiles[2][0], 0.0));
-	for (Real strike = fwd1 - 0.05; strike <= fwd1 + 0.05; strike += 0.001) {
-		Real vol1 = smiles[1][0]->volatility(strike);
-		Real vol2 = smile1->volatility(strike);
-		Real variance = vol2 - vol1;
-		//BOOST_TEST_MESSAGE("K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
-		if (fabs(variance)>1.0e-12)
-			BOOST_ERROR("VanillaLocalVolModel interpolation failed for 3m2y smile (rho=0)\n"
-				<< "K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
-	}
-	// we collect essentials for 1y5y smile
-	Date expDate2 = smiles[2][0]->exerciseDate();
-	Rate fwd2     = smiles[2][0]->atmLevel();
-	Real atmVol2  = smiles[2][0]->volatility(fwd2);
-	ext::shared_ptr<VanillaLocalVolModelSmileSection> smile2(new VanillaLocalVolModelSmileSection(expDate2, fwd2, atmVol2, smiles[1][0], smiles[2][0], 1.0));
-	for (Real strike = fwd2 - 0.05; strike <= fwd2 + 0.05; strike += 0.001) {
-		Real vol1 = smiles[2][0]->volatility(strike);
-		Real vol2 = smile2->volatility(strike);
-		Real variance = vol2 - vol1;
-		//BOOST_TEST_MESSAGE("K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
-		if (fabs(variance)>1.0e-12)
-			BOOST_ERROR("VanillaLocalVolModel interpolation failed for 1y5y smile (rho=1)\n"
-				<< "K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
-	}
-	// we also interpolate 2y10y and 10y10y smile and compare with calibrated 5y5y smile
-	// we collect essentials for 5y5y smile
-	Date expDate3 = smiles[3][3]->exerciseDate();
-	Rate fwd3     = smiles[3][3]->atmLevel();
-	Real atmVol3  = smiles[3][3]->volatility(fwd3);
-	ext::shared_ptr<VanillaLocalVolModelSmileSection> smile3(new VanillaLocalVolModelSmileSection(expDate3, fwd3, atmVol3, smiles[3][2], smiles[3][4], 0.375));
-	for (Real strike = fwd3 - 0.02; strike <= fwd3 + 0.02; strike += 0.001) {
-		Real vol1 = smiles[3][3]->volatility(strike);
-		Real vol2 = smile3->volatility(strike);
-		Real variance = vol2 - vol1;
-		//BOOST_TEST_MESSAGE("K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
-		if (fabs(variance)>2.5e-4)  // 2.5bp is a fair tolerance for this out-of-the-model test
-			BOOST_ERROR("VanillaLocalVolModel interpolation failed for 5y10y smile (rho=0.375)\n"
-				<< "K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
-	}
+    BOOST_TEST_MESSAGE("Testing smile interpolation accross expiries and swap terms...");
+    std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > > smiles;
+    smiles.resize(5);   // 1y, 2y, 5y, 10y, 30y swaps
+    // we do not want to run the smile calibration test here
+    smiles[0].push_back(getSmileSection(Period( 1, Years), Period( 1, Years), smile01x01, 1, false));
+    smiles[1].push_back(getSmileSection(Period(3, Months), Period( 2, Years), smile3mx02, 2, false));
+    smiles[1].push_back(getSmileSection(Period( 2, Years), Period( 2, Years), smile02x02, 1, false));
+    smiles[2].push_back(getSmileSection(Period( 1, Years), Period( 5, Years), smile01x05, 0, false));
+    smiles[2].push_back(getSmileSection(Period( 5, Years), Period( 5, Years), smile05x05, 0, false));
+    smiles[3].push_back(getSmileSection(Period(3, Months), Period(10, Years), smile3mx10, 0, false));
+    smiles[3].push_back(getSmileSection(Period( 1, Years), Period(10, Years), smile01x10, 0, false));
+    smiles[3].push_back(getSmileSection(Period( 2, Years), Period(10, Years), smile02x10, 0, false));
+    smiles[3].push_back(getSmileSection(Period( 5, Years), Period(10, Years), smile05x10, 0, false));
+    smiles[3].push_back(getSmileSection(Period(10, Years), Period(10, Years), smile10x10, 0, false));
+    smiles[4].push_back(getSmileSection(Period( 5, Years), Period(30, Years), smile05x30, 0, false));
+    // we interpolate 3m2y and 1y5y smile and check boundary cases
+    // we collect essentials for 3m2y smile
+    Date expDate1 = smiles[1][0]->exerciseDate();
+    Rate fwd1     = smiles[1][0]->atmLevel();
+    Real atmVol1  = smiles[1][0]->volatility(fwd1);
+    ext::shared_ptr<VanillaLocalVolModelSmileSection> smile1(new VanillaLocalVolModelSmileSection(expDate1, fwd1, atmVol1, smiles[1][0], smiles[2][0], 0.0));
+    for (Real strike = fwd1 - 0.05; strike <= fwd1 + 0.05; strike += 0.001) {
+        Real vol1 = smiles[1][0]->volatility(strike);
+        Real vol2 = smile1->volatility(strike);
+        Real variance = vol2 - vol1;
+        //BOOST_TEST_MESSAGE("K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
+        if (fabs(variance)>1.0e-12)
+            BOOST_ERROR("VanillaLocalVolModel interpolation failed for 3m2y smile (rho=0)\n"
+                << "K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
+    }
+    // we collect essentials for 1y5y smile
+    Date expDate2 = smiles[2][0]->exerciseDate();
+    Rate fwd2     = smiles[2][0]->atmLevel();
+    Real atmVol2  = smiles[2][0]->volatility(fwd2);
+    ext::shared_ptr<VanillaLocalVolModelSmileSection> smile2(new VanillaLocalVolModelSmileSection(expDate2, fwd2, atmVol2, smiles[1][0], smiles[2][0], 1.0));
+    for (Real strike = fwd2 - 0.05; strike <= fwd2 + 0.05; strike += 0.001) {
+        Real vol1 = smiles[2][0]->volatility(strike);
+        Real vol2 = smile2->volatility(strike);
+        Real variance = vol2 - vol1;
+        //BOOST_TEST_MESSAGE("K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
+        if (fabs(variance)>1.0e-12)
+            BOOST_ERROR("VanillaLocalVolModel interpolation failed for 1y5y smile (rho=1)\n"
+                << "K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
+    }
+    // we also interpolate 2y10y and 10y10y smile and compare with calibrated 5y5y smile
+    // we collect essentials for 5y5y smile
+    Date expDate3 = smiles[3][3]->exerciseDate();
+    Rate fwd3     = smiles[3][3]->atmLevel();
+    Real atmVol3  = smiles[3][3]->volatility(fwd3);
+    ext::shared_ptr<VanillaLocalVolModelSmileSection> smile3(new VanillaLocalVolModelSmileSection(expDate3, fwd3, atmVol3, smiles[3][2], smiles[3][4], 0.375));
+    for (Real strike = fwd3 - 0.02; strike <= fwd3 + 0.02; strike += 0.001) {
+        Real vol1 = smiles[3][3]->volatility(strike);
+        Real vol2 = smile3->volatility(strike);
+        Real variance = vol2 - vol1;
+        //BOOST_TEST_MESSAGE("K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
+        if (fabs(variance)>2.5e-4)  // 2.5bp is a fair tolerance for this out-of-the-model test
+            BOOST_ERROR("VanillaLocalVolModel interpolation failed for 5y10y smile (rho=0.375)\n"
+                << "K: " << strike << ", Vs: " << vol1 << ", Vi: " << vol2 << ", Var: " << variance);
+    }
 
 }
 
 void VanillaLocalVolModelTest::testSwaptionVTSInterpolation() {
-	BOOST_TEST_MESSAGE("Testing interpolation via SwaptionVTS...");   
-	std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > > smiles;
-	smiles.resize(5);   // 1y, 2y, 5y, 10y, 30y swaps
-	// we do not want to run the smile calibration test here
-	smiles[0].push_back(getSmileSection(Period( 1, Years), Period( 1, Years), smile01x01, 1, false));
-	smiles[1].push_back(getSmileSection(Period(3, Months), Period( 2, Years), smile3mx02, 2, false));
-	smiles[1].push_back(getSmileSection(Period( 2, Years), Period( 2, Years), smile02x02, 1, false));
-	smiles[2].push_back(getSmileSection(Period( 1, Years), Period( 5, Years), smile01x05, 0, false));
-	smiles[2].push_back(getSmileSection(Period( 5, Years), Period( 5, Years), smile05x05, 0, false));
-	smiles[3].push_back(getSmileSection(Period(3, Months), Period(10, Years), smile3mx10, 0, false));
-	smiles[3].push_back(getSmileSection(Period( 1, Years), Period(10, Years), smile01x10, 0, false));
-	smiles[3].push_back(getSmileSection(Period( 2, Years), Period(10, Years), smile02x10, 0, false));
-	smiles[3].push_back(getSmileSection(Period( 5, Years), Period(10, Years), smile05x10, 0, false));
-	smiles[3].push_back(getSmileSection(Period(10, Years), Period(10, Years), smile10x10, 0, false));
-	smiles[4].push_back(getSmileSection(Period( 5, Years), Period(30, Years), smile05x30, 0, false));
-	// market data
-	Handle<YieldTermStructure> discYTS = getYTS(terms, discRates);
-	Handle<YieldTermStructure> proj6mYTS = getYTS(terms, proj6mRates);
-	ext::shared_ptr<SwapIndex> index(new EuriborSwapIsdaFixA(Period(10, Years), proj6mYTS, discYTS));
-	Handle<SwaptionVolatilityStructure> swAtmVTS = getSwaptionVTS();
-	Period swSmileSwapData[] = {
-		Period( 1, Years),
-		Period( 2, Years),
-		Period( 5, Years),
-		Period(10, Years),
-		Period(30, Years),
-	};
-	std::vector<Period> swSmileSwapTerms(swSmileSwapData, swSmileSwapData + 5);
-	// now we can set up the volTS...
-	// this requires that testSmileCalibration() was run earlier to set up smiles
-	ext::shared_ptr<SwaptionVolatilityStructure> swVTS(new VanillaLocalVolSwaptionVTS(swAtmVTS, smiles, swSmileSwapTerms, index));
-	//BOOST_TEST_MESSAGE("VTS set up :)");
-	testSwaptionVTSSmileInterpolation(swVTS,smiles[0][0],Period(1, Years),  Period(1, Years) , 1.0e-7 );  // we relax tolerance; small variance probably due to date/period mismatch
-	testSwaptionVTSSmileInterpolation(swVTS,smiles[1][0],Period(3, Months), Period(2, Years) , 1.0e-12 );
-	testSwaptionVTSSmileInterpolation(swVTS,smiles[1][1],Period(2, Years),  Period(2, Years) , 1.0e-12 );
-	testSwaptionVTSSmileInterpolation(swVTS,smiles[2][0],Period(1, Years),  Period(5, Years) , 1.0e-12 );
-	testSwaptionVTSSmileInterpolation(swVTS,smiles[2][1],Period(5, Years),  Period(5, Years) , 1.0e-12 );
-	testSwaptionVTSSmileInterpolation(swVTS,smiles[3][0],Period(3, Months), Period(10, Years), 1.0e-12 );
-	testSwaptionVTSSmileInterpolation(swVTS,smiles[3][1],Period(1, Years),  Period(10, Years), 1.0e-12 );
-	testSwaptionVTSSmileInterpolation(swVTS,smiles[3][2],Period(2, Years),  Period(10, Years), 1.0e-12 );
-	testSwaptionVTSSmileInterpolation(swVTS,smiles[3][3],Period(5, Years),  Period(10, Years), 1.0e-12 );
-	testSwaptionVTSSmileInterpolation(swVTS,smiles[3][4],Period(10, Years), Period(10, Years), 1.0e-12 );
-	testSwaptionVTSSmileInterpolation(swVTS,smiles[4][0],Period(5, Years),  Period(30, Years), 1.0e-12 );
+    BOOST_TEST_MESSAGE("Testing interpolation via SwaptionVTS...");   
+    std::vector< std::vector< ext::shared_ptr<VanillaLocalVolModelSmileSection> > > smiles;
+    smiles.resize(5);   // 1y, 2y, 5y, 10y, 30y swaps
+    // we do not want to run the smile calibration test here
+    smiles[0].push_back(getSmileSection(Period( 1, Years), Period( 1, Years), smile01x01, 1, false));
+    smiles[1].push_back(getSmileSection(Period(3, Months), Period( 2, Years), smile3mx02, 2, false));
+    smiles[1].push_back(getSmileSection(Period( 2, Years), Period( 2, Years), smile02x02, 1, false));
+    smiles[2].push_back(getSmileSection(Period( 1, Years), Period( 5, Years), smile01x05, 0, false));
+    smiles[2].push_back(getSmileSection(Period( 5, Years), Period( 5, Years), smile05x05, 0, false));
+    smiles[3].push_back(getSmileSection(Period(3, Months), Period(10, Years), smile3mx10, 0, false));
+    smiles[3].push_back(getSmileSection(Period( 1, Years), Period(10, Years), smile01x10, 0, false));
+    smiles[3].push_back(getSmileSection(Period( 2, Years), Period(10, Years), smile02x10, 0, false));
+    smiles[3].push_back(getSmileSection(Period( 5, Years), Period(10, Years), smile05x10, 0, false));
+    smiles[3].push_back(getSmileSection(Period(10, Years), Period(10, Years), smile10x10, 0, false));
+    smiles[4].push_back(getSmileSection(Period( 5, Years), Period(30, Years), smile05x30, 0, false));
+    // market data
+    Handle<YieldTermStructure> discYTS = getYTS(terms, discRates);
+    Handle<YieldTermStructure> proj6mYTS = getYTS(terms, proj6mRates);
+    ext::shared_ptr<SwapIndex> index(new EuriborSwapIsdaFixA(Period(10, Years), proj6mYTS, discYTS));
+    Handle<SwaptionVolatilityStructure> swAtmVTS = getSwaptionVTS();
+    Period swSmileSwapData[] = {
+        Period( 1, Years),
+        Period( 2, Years),
+        Period( 5, Years),
+        Period(10, Years),
+        Period(30, Years),
+    };
+    std::vector<Period> swSmileSwapTerms(swSmileSwapData, swSmileSwapData + 5);
+    // now we can set up the volTS...
+    // this requires that testSmileCalibration() was run earlier to set up smiles
+    ext::shared_ptr<SwaptionVolatilityStructure> swVTS(new VanillaLocalVolSwaptionVTS(swAtmVTS, smiles, swSmileSwapTerms, index));
+    //BOOST_TEST_MESSAGE("VTS set up :)");
+    testSwaptionVTSSmileInterpolation(swVTS,smiles[0][0],Period(1, Years),  Period(1, Years) , 1.0e-7 );  // we relax tolerance; small variance probably due to date/period mismatch
+    testSwaptionVTSSmileInterpolation(swVTS,smiles[1][0],Period(3, Months), Period(2, Years) , 1.0e-12 );
+    testSwaptionVTSSmileInterpolation(swVTS,smiles[1][1],Period(2, Years),  Period(2, Years) , 1.0e-12 );
+    testSwaptionVTSSmileInterpolation(swVTS,smiles[2][0],Period(1, Years),  Period(5, Years) , 1.0e-12 );
+    testSwaptionVTSSmileInterpolation(swVTS,smiles[2][1],Period(5, Years),  Period(5, Years) , 1.0e-12 );
+    testSwaptionVTSSmileInterpolation(swVTS,smiles[3][0],Period(3, Months), Period(10, Years), 1.0e-12 );
+    testSwaptionVTSSmileInterpolation(swVTS,smiles[3][1],Period(1, Years),  Period(10, Years), 1.0e-12 );
+    testSwaptionVTSSmileInterpolation(swVTS,smiles[3][2],Period(2, Years),  Period(10, Years), 1.0e-12 );
+    testSwaptionVTSSmileInterpolation(swVTS,smiles[3][3],Period(5, Years),  Period(10, Years), 1.0e-12 );
+    testSwaptionVTSSmileInterpolation(swVTS,smiles[3][4],Period(10, Years), Period(10, Years), 1.0e-12 );
+    testSwaptionVTSSmileInterpolation(swVTS,smiles[4][0],Period(5, Years),  Period(30, Years), 1.0e-12 );
 }
 
 

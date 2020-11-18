@@ -22,9 +22,9 @@ namespace QuantLib {
 
     typedef AssetModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> AssetModel;
 
-	typedef HybridModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> HybridModel;
+    typedef HybridModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> HybridModel;
 
-	typedef SpreadModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> SpreadModel;
+    typedef SpreadModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> SpreadModel;
 
 }
 

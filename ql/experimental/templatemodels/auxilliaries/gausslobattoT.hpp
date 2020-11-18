@@ -20,8 +20,8 @@ namespace TemplateAuxilliaries {
     template <class Type>
     class GaussLobatto {
     private:
-		//! local types
-		typedef double Real;
+        //! local types
+        typedef double Real;
         //! attributes
         mutable Type absAccuracy_;
         mutable Type absError_;
@@ -150,7 +150,7 @@ namespace TemplateAuxilliaries {
                   + adaptivGaussLobattoStep(f,mrr,b,fmrr,fb,acc);
         }
     }
-	
+    
 }
 
 #endif  /* ifndef quantlib_gausslobatto_hpp */

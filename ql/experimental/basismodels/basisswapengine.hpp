@@ -20,22 +20,22 @@
 
 namespace QuantLib {
 
-	class BasisSwapEngine : public BasisSwap::engine {
-	protected:
-		std::vector<Real>                       fxForDom_;
+    class BasisSwapEngine : public BasisSwap::engine {
+    protected:
+        std::vector<Real>                       fxForDom_;
         std::vector<Handle<YieldTermStructure>> discCurves_;
         boost::optional<bool>                   includeSettlementDateFlows_;
         Date                                    settlementDate_, npvDate_;
-	public:
-		BasisSwapEngine( 
+    public:
+        BasisSwapEngine( 
             const std::vector<Handle<YieldTermStructure>>& discCurves,
             const std::vector<Real>&                       fxForDom,
-			boost::optional<bool>                          includeSettlementDateFlows = boost::none,
+            boost::optional<bool>                          includeSettlementDateFlows = boost::none,
             Date                                           settlementDate             = Date(),
             Date                                           npvDate                    = Date()
-			);
-		
-		void calculate() const;
+            );
+        
+        void calculate() const;
     };
 
 

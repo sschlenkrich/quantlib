@@ -17,7 +17,7 @@
 
 namespace QuantLib {
 
-	typedef VanillaLocalVolModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> VanillaLocalVolModelDev;
+    typedef VanillaLocalVolModelT<QuantLib::Time, QuantLib::Real, QuantLib::Real> VanillaLocalVolModelDev;
 
 }
 

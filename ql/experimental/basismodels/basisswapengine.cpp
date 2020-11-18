@@ -18,17 +18,17 @@
 namespace QuantLib {
 
 //
-	BasisSwapEngine::BasisSwapEngine(     
-		const std::vector<Handle<YieldTermStructure>>& discCurves,
+    BasisSwapEngine::BasisSwapEngine(     
+        const std::vector<Handle<YieldTermStructure>>& discCurves,
         const std::vector<Real>&                       fxForDom,
-		boost::optional<bool>                          includeSettlementDateFlows,
+        boost::optional<bool>                          includeSettlementDateFlows,
         Date                                           settlementDate,
         Date                                           npvDate
-		) : discCurves_(discCurves), fxForDom_(fxForDom),
-		    includeSettlementDateFlows_(includeSettlementDateFlows),
+        ) : discCurves_(discCurves), fxForDom_(fxForDom),
+            includeSettlementDateFlows_(includeSettlementDateFlows),
             settlementDate_(settlementDate), npvDate_(npvDate) {
         // consistency checks are postponed to calculate() since curve handles may be empty at this time
-		for (Size i=0; i<discCurves_.size(); ++i) registerWith(discCurves_[i]);
+        for (Size i=0; i<discCurves_.size(); ++i) registerWith(discCurves_[i]);
     }
 
     void BasisSwapEngine::calculate() const {
@@ -37,8 +37,8 @@ namespace QuantLib {
         QL_REQUIRE(!discCurves_.empty(),
                    "discounting term structure handle vector is empty");
         Date refDate = discCurves_[0]->referenceDate();
-		for (Size i=1; i<discCurves_.size(); ++i)
-			QL_REQUIRE(refDate==discCurves_[i]->referenceDate(),
+        for (Size i=1; i<discCurves_.size(); ++i)
+            QL_REQUIRE(refDate==discCurves_[i]->referenceDate(),
                    "discounting term structure reference dates differ");
 
         results_.value = 0.0;
@@ -76,7 +76,7 @@ namespace QuantLib {
 
         for (Size i=0; i<n; ++i) {
             try {
-				const YieldTermStructure& discount_ref = **discCurves_[std::min(i,discCurves_.size()-1)];
+                const YieldTermStructure& discount_ref = **discCurves_[std::min(i,discCurves_.size()-1)];
                 CashFlows::npvbps(arguments_.legs[i],
                                   discount_ref,
                                   includeRefDateFlows,

@@ -16,12 +16,12 @@
 
 namespace QuantLib {
     
-	Real BasisSwap::fairRate() const {
-		Real basisPoint = 1.0e-4;
-		Real num = ( (calcParSpread_) ? 0.0 : legNPV(parLegIndex_) ) - NPV();
-		Real den = legBPS(parLegIndex_) / basisPoint;
-		return num / den;
-	}
+    Real BasisSwap::fairRate() const {
+        Real basisPoint = 1.0e-4;
+        Real num = ( (calcParSpread_) ? 0.0 : legNPV(parLegIndex_) ) - NPV();
+        Real den = legBPS(parLegIndex_) / basisPoint;
+        return num / den;
+    }
 
 }
 

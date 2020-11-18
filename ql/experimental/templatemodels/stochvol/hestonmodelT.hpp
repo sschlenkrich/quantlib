@@ -28,17 +28,17 @@
 namespace QuantLib {
 
     //using namespace std;
-	
-	// heston model with analytic vanilla pricing 
-	//    dS(t) = S(t) sqrt[ v(t) ] dW(t)
+    
+    // heston model with analytic vanilla pricing 
+    //    dS(t) = S(t) sqrt[ v(t) ] dW(t)
     //    dv(t) = kappa [theta - v(t)] dt + sigma sqrt[ v(t) ] dZ(t)
     //    dW(t) dZ(t) = rho dt
 
-	template <class DateType, class PassiveType, class ActiveType>
-	class HestonModelT {
+    template <class DateType, class PassiveType, class ActiveType>
+    class HestonModelT {
     //typedef std::complex<Real> complex;
     typedef Cpx::Complex<ActiveType> complex;
-	protected:
+    protected:
         ActiveType kappa_;    // mean reversion speed of volatility
         ActiveType theta_;    // mean reversion level of volatility
         ActiveType sigma_;    // volatility of volatility
@@ -185,57 +185,57 @@ namespace QuantLib {
 
         }; // class IntegrandGatheral
 
-	};  // TemplateHestonModel        
+    };  // TemplateHestonModel        
 
-	// general stochastic volatility model with constant parameters and analytic vanilla pricing formula
-	//
-	//    dS(t) = lambda [ b S(t) + (1-b) L ] sqrt[z(t)] dW(t)
-	//    dz(t) = theta [ m - z(t) ] dt + eta sqrt[z(t)] dZ(t)
-	//    dW(t) dZ(t) = rho dt
-	//
-	template <class DateType, class PassiveType, class ActiveType>
-	class StochVolModelT {
-	protected:
-		enum { Heston, ShiftedLogNormal, Normal, StochVolNormal } type_;
-		ext::shared_ptr< HestonModelT<DateType,PassiveType,ActiveType> > hestonModel_;
-		ActiveType                                                         lambda_;
-		ActiveType                                                         b_;
-		ActiveType                                                         L_;
-		ActiveType                                                         shift_;
-	public:
-		StochVolModelT ( const ActiveType   lambda,
-			             const ActiveType   b,
-						 const ActiveType   L,
-						 const ActiveType   theta,
-						 const ActiveType   m,
-						 const ActiveType   eta,
-						 const ActiveType   z0,
-						 const ActiveType   rho,
-						 const PassiveType  etaMin = 0.001,
-						 const PassiveType  bMin   = 0.001
-						 )
-		: lambda_(lambda), b_(b), L_(L), shift_( (1.0-b)/b*L) {
-			// define actual model
-			if (eta<etaMin) {
-				if (b<bMin) type_ = Normal;
-				else		type_ = ShiftedLogNormal;
-			} else {
-				if (b<bMin) type_ = StochVolNormal;
-				else		type_ = Heston;
-			}
-			// prerequisities
-			if (type_==Heston) {
-				hestonModel_ = ext::shared_ptr< HestonModelT<DateType,PassiveType,ActiveType> >(
-					             new HestonModelT<DateType,PassiveType,ActiveType>(
-		                              // state transformations ~S(t) = S(t) + (1-b)/b L, v(t) = z(t) lambda^2 b^2
-			                          theta,                // kappa
-			                          m*lambda*lambda*b*b,  // theta
-			                          eta*lambda*b,         // sigma
-			                          rho,                  // rho
-			                          z0*lambda*lambda*b*b  // v0
-			                          ) );
-			}
-		}
+    // general stochastic volatility model with constant parameters and analytic vanilla pricing formula
+    //
+    //    dS(t) = lambda [ b S(t) + (1-b) L ] sqrt[z(t)] dW(t)
+    //    dz(t) = theta [ m - z(t) ] dt + eta sqrt[z(t)] dZ(t)
+    //    dW(t) dZ(t) = rho dt
+    //
+    template <class DateType, class PassiveType, class ActiveType>
+    class StochVolModelT {
+    protected:
+        enum { Heston, ShiftedLogNormal, Normal, StochVolNormal } type_;
+        ext::shared_ptr< HestonModelT<DateType,PassiveType,ActiveType> > hestonModel_;
+        ActiveType                                                         lambda_;
+        ActiveType                                                         b_;
+        ActiveType                                                         L_;
+        ActiveType                                                         shift_;
+    public:
+        StochVolModelT ( const ActiveType   lambda,
+                         const ActiveType   b,
+                         const ActiveType   L,
+                         const ActiveType   theta,
+                         const ActiveType   m,
+                         const ActiveType   eta,
+                         const ActiveType   z0,
+                         const ActiveType   rho,
+                         const PassiveType  etaMin = 0.001,
+                         const PassiveType  bMin   = 0.001
+                         )
+        : lambda_(lambda), b_(b), L_(L), shift_( (1.0-b)/b*L) {
+            // define actual model
+            if (eta<etaMin) {
+                if (b<bMin) type_ = Normal;
+                else		type_ = ShiftedLogNormal;
+            } else {
+                if (b<bMin) type_ = StochVolNormal;
+                else		type_ = Heston;
+            }
+            // prerequisities
+            if (type_==Heston) {
+                hestonModel_ = ext::shared_ptr< HestonModelT<DateType,PassiveType,ActiveType> >(
+                                 new HestonModelT<DateType,PassiveType,ActiveType>(
+                                      // state transformations ~S(t) = S(t) + (1-b)/b L, v(t) = z(t) lambda^2 b^2
+                                      theta,                // kappa
+                                      m*lambda*lambda*b*b,  // theta
+                                      eta*lambda*b,         // sigma
+                                      rho,                  // rho
+                                      z0*lambda*lambda*b*b  // v0
+                                      ) );
+            }
+        }
 
         // undiscounted expectation of vanilla payoff
         inline ActiveType vanillaOption(const PassiveType forwardPrice,
@@ -244,16 +244,16 @@ namespace QuantLib {
                                         const int         callOrPut,
                                         const PassiveType accuracy,
                                         const size_t      maxEvaluations) {
-			if (type_==Heston)
-				return hestonModel_->vanillaOption( forwardPrice+shift_, strikePrice+shift_, term, callOrPut, accuracy, maxEvaluations );
-			if (type_==ShiftedLogNormal)
-				return TemplateAuxilliaries::Black76(forwardPrice+shift_,strikePrice+shift_,lambda_*b_,term,callOrPut);
-			if (type_==Normal)
-				return TemplateAuxilliaries::Bachelier(forwardPrice,strikePrice,lambda_*(b_*forwardPrice+(1.0-b_)*L_),term,callOrPut);
-			QL_REQUIRE( false, "TemplateStochVolModel: unknown model type.");
-			return 0;
-		}
-	};
+            if (type_==Heston)
+                return hestonModel_->vanillaOption( forwardPrice+shift_, strikePrice+shift_, term, callOrPut, accuracy, maxEvaluations );
+            if (type_==ShiftedLogNormal)
+                return TemplateAuxilliaries::Black76(forwardPrice+shift_,strikePrice+shift_,lambda_*b_,term,callOrPut);
+            if (type_==Normal)
+                return TemplateAuxilliaries::Bachelier(forwardPrice,strikePrice,lambda_*(b_*forwardPrice+(1.0-b_)*L_),term,callOrPut);
+            QL_REQUIRE( false, "TemplateStochVolModel: unknown model type.");
+            return 0;
+        }
+    };
 
 }
 

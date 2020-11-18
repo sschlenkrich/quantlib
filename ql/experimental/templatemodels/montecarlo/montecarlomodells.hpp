@@ -28,28 +28,28 @@
 
 namespace QuantLib {
 
-	// basic binding of template parameters
+    // basic binding of template parameters
 
-	typedef MCSimulationT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCSimulation;
+    typedef MCSimulationT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCSimulation;
 
-	typedef MCPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCPayoff;
+    typedef MCPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCPayoff;
 
-	typedef BasePayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCBase;
+    typedef BasePayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCBase;
 
-	typedef RatesPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCRates;
+    typedef RatesPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCRates;
 
-	typedef CommodityPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCCommodity;
+    typedef CommodityPayoffT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealMCCommodity;
 
-	typedef AMCPricerT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealAMCPricer;
+    typedef AMCPricerT< QuantLib::Time,QuantLib::Real,QuantLib::Real> RealAMCPricer;
 
-	typedef RealMCPayoff::Pricer          RealMCPayoffPricer;
-	typedef RealMCRates::CashFlow         RealMCCashFlow;
-	typedef RealMCRates::Leg              RealMCLeg;
-	typedef RealMCRates::CancellableNote  RealMCCancellableNote;
+    typedef RealMCPayoff::Pricer          RealMCPayoffPricer;
+    typedef RealMCRates::CashFlow         RealMCCashFlow;
+    typedef RealMCRates::Leg              RealMCLeg;
+    typedef RealMCRates::CancellableNote  RealMCCancellableNote;
 
-	typedef MCScriptT<QuantLib::Time, QuantLib::Real, QuantLib::Real> RealMCScript;
+    typedef MCScriptT<QuantLib::Time, QuantLib::Real, QuantLib::Real> RealMCScript;
 
-	typedef TemplateAuxilliaries::Regression<QuantLib::Real> RealRegression;
+    typedef TemplateAuxilliaries::Regression<QuantLib::Real> RealRegression;
 
 }
 

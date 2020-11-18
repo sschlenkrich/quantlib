@@ -25,7 +25,7 @@ namespace QuantLib {
                            const std::vector< std::vector< Real > >&  fwd,
                            BusinessDayConvention                      bdc,
                            const DayCounter&                          dc,
-						   const bool                                 useNormalVols)
+                           const bool                                 useNormalVols)
     : SwaptionVolatilityStructure(bdc, dc), 
       optionTimes_(optionTimes), swapTimes_(swapTimes),
       alpha_(optionTimes.size(),swapTimes.size(),0.0), 
@@ -35,7 +35,7 @@ namespace QuantLib {
       fwd_(optionTimes.size(),swapTimes.size(),0.0), 
       maxSwapTenor_(100*Years),
       referenceDate_(Settings::instance().evaluationDate()),
-	  useNormalVols_(useNormalVols) {
+      useNormalVols_(useNormalVols) {
         // transform input data
         for (Size i=0; i<optionTimes.size(); ++i) {
             for (Size j=0; j<swapTimes.size(); ++j) {

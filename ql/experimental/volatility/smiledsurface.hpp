@@ -33,38 +33,38 @@ namespace QuantLib {
      public:
 
         SmiledSurface(const std::vector<ext::shared_ptr<SmileSection>>    smiles,
-			          BusinessDayConvention                               bdc = Following,
+                      BusinessDayConvention                               bdc = Following,
                       const DayCounter&                                   dc = DayCounter())
-					  : BlackVolTermStructure(bdc,dc), smiles_(smiles) {}
+                      : BlackVolTermStructure(bdc,dc), smiles_(smiles) {}
 
         SmiledSurface(const std::vector<ext::shared_ptr<SmileSection>>    smiles,
-			          const Date&                                         referenceDate,
+                      const Date&                                         referenceDate,
                       const Calendar&                                     cal = Calendar(),
                       BusinessDayConvention                               bdc = Following,
                       const DayCounter&                                   dc = DayCounter())
-					  : BlackVolTermStructure(referenceDate,cal,bdc,dc), smiles_(smiles) {}
+                      : BlackVolTermStructure(referenceDate,cal,bdc,dc), smiles_(smiles) {}
 
         SmiledSurface(const std::vector<ext::shared_ptr<SmileSection>>    smiles,
-			          Natural                                             settlementDays,
+                      Natural                                             settlementDays,
                       const Calendar&                                     cal,
                       BusinessDayConvention                               bdc = Following,
                       const DayCounter&                                   dc = DayCounter())
-					  : BlackVolTermStructure(settlementDays,cal,bdc,dc), smiles_(smiles) {}
+                      : BlackVolTermStructure(settlementDays,cal,bdc,dc), smiles_(smiles) {}
 
-		// (Vol)Termstructure interface
+        // (Vol)Termstructure interface
 
         //! the minimum strike for which the term structure can return vols
         virtual Rate minStrike() const;
         //! the maximum strike for which the term structure can return vols
         virtual Rate maxStrike() const;
 
-		//! the latest date for which the curve can return values
+        //! the latest date for which the curve can return values
         virtual Date maxDate() const;
 
-	protected:
-	    std::vector<ext::shared_ptr<SmileSection>>  smiles_;
+    protected:
+        std::vector<ext::shared_ptr<SmileSection>>  smiles_;
 
-		//! Black variance calculation
+        //! Black variance calculation
         virtual Real blackVarianceImpl(Time t, Real strike) const;
 
         //! Black volatility calculation

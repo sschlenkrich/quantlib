@@ -18,14 +18,14 @@
 
 namespace QuantLib {
 
-	// basic binding of template parameters
-	typedef TwoFactorMeanReversionModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FMeanReversionModel;
+    // basic binding of template parameters
+    typedef TwoFactorMeanReversionModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FMeanReversionModel;
 
-	// basic binding of template parameters
-	typedef TwoFactorNormalModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FNormalModel;
+    // basic binding of template parameters
+    typedef TwoFactorNormalModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FNormalModel;
 
-	// basic binding of template parameters
-	typedef TwoFactorLognormalModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FLognormalModel;
+    // basic binding of template parameters
+    typedef TwoFactorLognormalModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> Real2FLognormalModel;
 
 }
 

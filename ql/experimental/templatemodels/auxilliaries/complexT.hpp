@@ -1,7 +1,7 @@
 /*!
      \brief Complex a template implementation for complex arithmetics
-	    Copyright (C) Sebastian Schlenkrich, March 2012
-	    Version 1.0
+        Copyright (C) Sebastian Schlenkrich, March 2012
+        Version 1.0
 */
 
 #ifndef Cpx_Complex_hpp
@@ -57,20 +57,20 @@ namespace Cpx {
         Type real_;
         Type imag_;
     public:
-	    //! "standard" constructor
+        //! "standard" constructor
         Complex( const Type& real, const Type& imag) : real_(real), imag_(imag) {}
-	    //! Type conversion constructor
-	    Complex( const Type& real) : real_(real), imag_(0) {}
-	    //! no standard constructor and default copy constructor
-	    //! inspectors
-	    const Type& real()  const { return real_;  }
-	    const Type& imag() const { return imag_; }
+        //! Type conversion constructor
+        Complex( const Type& real) : real_(real), imag_(0) {}
+        //! no standard constructor and default copy constructor
+        //! inspectors
+        const Type& real()  const { return real_;  }
+        const Type& imag() const { return imag_; }
         //! \section IO steaming
-	    //! Apply IO to the real and imaginary component
+        //! Apply IO to the real and imaginary component
         inline friend std::ostream& operator << (std::ostream &output, const Complex<Type> &x) {
             return output << "(" << x.real_ << "," << x.imag_ << ")";
         }
-	    //! Intrinsic functions
+        //! Intrinsic functions
         inline friend Complex<Type> exp(const Complex<Type> &x) {
             Type r = exp(x.real_);
             return Complex<Type>( r*cos(x.imag_), r*sin(x.imag_) );
@@ -79,21 +79,21 @@ namespace Cpx {
             return Complex<Type>( 0.5*log(x.real_*x.real_ + x.imag_*x.imag_), atan2(x.imag_,x.real_) );
         }
         inline friend Complex<Type> sqrt(const Complex<Type> &x) {
-	        if (x.imag_==0) {
-		        if (x.real_<0) return Complex<Type>( 0, sqrt(-x.real_) );
-		        else           return Complex<Type>( sqrt(x.real_), 0 );
-	        }
-	        if (x.real_==0) {
-		        if (x.imag_<0) {
-		            Type tmp  = sqrt(-x.imag_)*M_SQRT1_2;
-		            return Complex<Type>( tmp, -tmp );
-		        } else {
-		            Type tmp  = sqrt(x.imag_)*M_SQRT1_2;
-		            return Complex<Type>( tmp, tmp );
-		        }
-	        }
+            if (x.imag_==0) {
+                if (x.real_<0) return Complex<Type>( 0, sqrt(-x.real_) );
+                else           return Complex<Type>( sqrt(x.real_), 0 );
+            }
+            if (x.real_==0) {
+                if (x.imag_<0) {
+                    Type tmp  = sqrt(-x.imag_)*M_SQRT1_2;
+                    return Complex<Type>( tmp, -tmp );
+                } else {
+                    Type tmp  = sqrt(x.imag_)*M_SQRT1_2;
+                    return Complex<Type>( tmp, tmp );
+                }
+            }
             Type sqr_r  = sqrt(sqrt(x.real_*x.real_ + x.imag_*x.imag_));
-	        Type phi_2  = atan2(x.imag_,x.real_) / 2;
+            Type phi_2  = atan2(x.imag_,x.real_) / 2;
             return Complex<Type>( sqr_r*cos(phi_2), sqr_r*sin(phi_2) );
         }
 
@@ -116,9 +116,9 @@ namespace Cpx {
             return Complex<Type>( x.real_*y.real_ - x.imag_*y.imag_, x.real_*y.imag_ + x.imag_*y.real_ );
         }
         inline friend Complex<Type> operator / (const Complex<Type> &x, const Complex<Type> &y ) {
-	        Type den = y.real_*y.real_ + y.imag_*y.imag_;
+            Type den = y.real_*y.real_ + y.imag_*y.imag_;
             return Complex<Type>( (x.real_*y.real_ + x.imag_*y.imag_)/den,
-	                      (x.imag_*y.real_ - x.real_*y.imag_)/den );
+                          (x.imag_*y.real_ - x.real_*y.imag_)/den );
         }
         //! Complex x Type
         inline friend Complex<Type> operator + (const Complex<Type> &x, const Type &y ) {
@@ -144,7 +144,7 @@ namespace Cpx {
             return Complex<Type>( x*y.real_, x*y.imag_ );
         }
         inline friend Complex<Type> operator / (const Type &x, const Complex<Type> &y ) {
-	        Type den = y.real_*y.real_ + y.imag_*y.imag_;
+            Type den = y.real_*y.real_ + y.imag_*y.imag_;
             return Complex<Type>( x*y.real_/den, -x*y.imag_/den );
         }
     };
@@ -164,7 +164,7 @@ namespace Cpx {
     }
     template <class Type>
     inline Complex<Type> operator / (const double &x, const Complex<Type> &y ) {
-	    Type den = y.real()*y.real() + y.imag()*y.imag();
+        Type den = y.real()*y.real() + y.imag()*y.imag();
         return Complex<Type>( x*y.real()/den, -x*y.imag()/den );
     }
 
@@ -178,7 +178,7 @@ namespace Cpx {
 int main() {
     typedef Cpx::Complex<double> complex;
     //typedef std::complex<double> complex;
-	
+    
     std::cout << "Cpx Complex (C) Sebastian Schlenktich (2012)"<< std::endl;
     std::cout << std::endl;
     

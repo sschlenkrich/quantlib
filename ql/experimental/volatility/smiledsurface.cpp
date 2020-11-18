@@ -27,45 +27,45 @@
 
 namespace QuantLib {
 
-	Rate SmiledSurface::minStrike() const {
-		QL_REQUIRE(smiles_.size()>0, "SmiledSurface error: no smiles provided");
-		Rate mStrike = smiles_[0]->minStrike();
-		for (Size k=1; k<smiles_.size(); ++k) if (smiles_[k]->minStrike()<mStrike) mStrike = smiles_[k]->minStrike();
-		return mStrike;
-	}
+    Rate SmiledSurface::minStrike() const {
+        QL_REQUIRE(smiles_.size()>0, "SmiledSurface error: no smiles provided");
+        Rate mStrike = smiles_[0]->minStrike();
+        for (Size k=1; k<smiles_.size(); ++k) if (smiles_[k]->minStrike()<mStrike) mStrike = smiles_[k]->minStrike();
+        return mStrike;
+    }
 
-	Rate SmiledSurface::maxStrike() const {
-		QL_REQUIRE(smiles_.size()>0, "SmiledSurface error: no smiles provided");
-		Rate mStrike = smiles_[0]->maxStrike();
-		for (Size k=1; k<smiles_.size(); ++k) if (smiles_[k]->maxStrike()>mStrike) mStrike = smiles_[k]->maxStrike();
-		return mStrike;
-	}
+    Rate SmiledSurface::maxStrike() const {
+        QL_REQUIRE(smiles_.size()>0, "SmiledSurface error: no smiles provided");
+        Rate mStrike = smiles_[0]->maxStrike();
+        for (Size k=1; k<smiles_.size(); ++k) if (smiles_[k]->maxStrike()>mStrike) mStrike = smiles_[k]->maxStrike();
+        return mStrike;
+    }
 
-	Date SmiledSurface::maxDate() const {
-		QL_REQUIRE(smiles_.size()>0, "SmiledSurface error: no smiles provided");
-		Date mDate = smiles_[0]->exerciseDate();
-		for (Size k=1; k<smiles_.size(); ++k) if (smiles_[k]->exerciseDate()>mDate) mDate = smiles_[k]->exerciseDate();
-		return mDate;
-	}
+    Date SmiledSurface::maxDate() const {
+        QL_REQUIRE(smiles_.size()>0, "SmiledSurface error: no smiles provided");
+        Date mDate = smiles_[0]->exerciseDate();
+        for (Size k=1; k<smiles_.size(); ++k) if (smiles_[k]->exerciseDate()>mDate) mDate = smiles_[k]->exerciseDate();
+        return mDate;
+    }
 
-	Real SmiledSurface::blackVarianceImpl(Time t, Real strike) const {
-		QL_REQUIRE(smiles_.size()>0, "SmiledSurface error: no smiles provided");
-		std::vector<Time>       times(smiles_.size());
-		std::vector<Real>       vars(smiles_.size());
-		for (Size k=0; k<smiles_.size(); ++k) {
-			times[k] = smiles_[k]->exerciseTime();       // assume consistent time calculation
-			vars[k]  = smiles_[k]->variance(strike);     // assume no volatility type conversion
-		}
-		MonotonicCubicNaturalSpline interp(times.begin(),times.end(),vars.begin());  // assume ascending times
-		Real unSafeVariance = interp(t, true);
-		Real minVariance = 1.0e-8 * t;  // assume 1bp minimum volatility
-		Real safeVariance = (unSafeVariance < minVariance) ? (minVariance) : (unSafeVariance);
-		return safeVariance;
-	}
+    Real SmiledSurface::blackVarianceImpl(Time t, Real strike) const {
+        QL_REQUIRE(smiles_.size()>0, "SmiledSurface error: no smiles provided");
+        std::vector<Time>       times(smiles_.size());
+        std::vector<Real>       vars(smiles_.size());
+        for (Size k=0; k<smiles_.size(); ++k) {
+            times[k] = smiles_[k]->exerciseTime();       // assume consistent time calculation
+            vars[k]  = smiles_[k]->variance(strike);     // assume no volatility type conversion
+        }
+        MonotonicCubicNaturalSpline interp(times.begin(),times.end(),vars.begin());  // assume ascending times
+        Real unSafeVariance = interp(t, true);
+        Real minVariance = 1.0e-8 * t;  // assume 1bp minimum volatility
+        Real safeVariance = (unSafeVariance < minVariance) ? (minVariance) : (unSafeVariance);
+        return safeVariance;
+    }
 
-	Volatility SmiledSurface::blackVolImpl(Time t, Real strike) const {
-		QL_REQUIRE(t>0, "SmiledSurface error: positive time required");
-		return sqrt(blackVarianceImpl(t,strike) / t);
-	}
+    Volatility SmiledSurface::blackVolImpl(Time t, Real strike) const {
+        QL_REQUIRE(t>0, "SmiledSurface error: positive time required");
+        return sqrt(blackVarianceImpl(t,strike) / t);
+    }
 }
 

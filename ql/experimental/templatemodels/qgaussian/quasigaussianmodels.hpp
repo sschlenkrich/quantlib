@@ -26,11 +26,11 @@
 namespace QuantLib {
 
 
-	// basic binding of template parameters
-	typedef QuasiGaussianModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQuasiGaussianModel;
-	typedef QuasiGaussianModelAbcdT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQuasiGaussianModelAbcd;
+    // basic binding of template parameters
+    typedef QuasiGaussianModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQuasiGaussianModel;
+    typedef QuasiGaussianModelAbcdT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQuasiGaussianModelAbcd;
 
-	typedef QGSwaptionModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQGSwaptionModel;
+    typedef QGSwaptionModelT<QuantLib::Time,QuantLib::Real,QuantLib::Real> RealQGSwaptionModel;
 
 }
 
