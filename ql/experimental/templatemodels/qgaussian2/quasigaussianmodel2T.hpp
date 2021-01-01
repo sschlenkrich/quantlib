@@ -533,7 +533,7 @@ namespace QuantLib {
             ActiveType averageZ = 0.5*(X0[X0.size() - 2] + X1[X1.size() - 2]);  // we freeze z for subsequent calculation
             // next we need V = z * sigmaxT sigmax
             State state(X0, d_);
-            MatA sigmaxT = sigma_xT(t0, state);
+            MatA sigmaxT = sigma_xT(t0+0.5*dt, state);  // assume constant vol on (t0, t0+dt)
             MatA V(d_, VecA(d_, 0.0));
             for (size_t i = 0; i < d_; ++i) {
                 for (size_t j = 0; j <= i; ++j) {
@@ -616,7 +616,7 @@ namespace QuantLib {
             // sigma_r^T = sigma_x^T sqrt(z) 
             // sigma_P^T = G(t,T)^T sigma_x^T sqrt(z)
             State state(X, d_);
-            MatA sigmaxT = sigma_xT(t, state); // maybe incorporate a reference t here...
+            MatA sigmaxT = sigma_xT(0.5*(t+T), state);  // assume constant vol on (t, T)
             VecA sigmaPT(sigmaxT.size(),0.0);
             for (size_t j = 0; j < sigmaPT.size(); ++j) {
                 for (size_t i = 0; i < sigmaxT.size(); ++i)
@@ -630,7 +630,7 @@ namespace QuantLib {
             // sigma_r^T = sigma_x^T sqrt(z) 
             // sigma_P^T = G(t,T)^T sigma_x^T sqrt(z)
             State state(X, d_);
-            MatA sigmaxT = sigma_xT(t, state); // maybe incorporate a reference t here...
+            MatA sigmaxT = sigma_xT(0.5*(t+T), state); // assume constant vol on (t, T)
             VecA sigmaPT(sigmaxT.size(), 0.0);
             for (size_t j = 0; j < sigmaPT.size(); ++j) {
                 for (size_t i = 0; i < sigmaxT.size(); ++i) {
